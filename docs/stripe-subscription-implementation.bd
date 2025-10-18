@@ -1,0 +1,235 @@
+# Stripe Subscription System Implementation
+
+## Overview
+Implemented complete Stripe subscription payment system for Sparka AI with monthly and annual plans.
+
+## Implementation Date
+October 17, 2025
+
+## Features Implemented
+
+### Subscription Plans
+- **Monthly Plan**: $7/month, 1,000 credits
+- **Annual Plan**: $50/year, 12,000 credits (40% savings)
+- **Free Plan**: 100 credits (default)
+
+### Backend Infrastructure
+
+#### Database Schema
+- Created `Subscription` table with fields:
+  - `id` (primary key)
+  - `userId` (foreign key to user)
+  - `stripeCustomerId`
+  - `stripeSubscriptionId`
+  - `stripePriceId`
+  - `status` (active, canceled, past_due, etc.)
+  - `plan` (monthly, annual)
+  - `currentPeriodStart`, `currentPeriodEnd`
+  - `cancelAtPeriodEnd`
+  - `createdAt`, `updatedAt`
+
+#### API Routes
+- `POST /api/stripe/checkout` - Create checkout sessions
+- `POST /api/stripe/portal` - Access customer portal
+- `POST /api/stripe/webhook` - Handle Stripe events
+
+#### tRPC Router
+- `subscription.getCurrentSubscription` - Get user's subscription
+- `subscription.createCheckoutSession` - Type-safe checkout
+- `subscription.createPortalSession` - Type-safe portal access
+
+#### Credits System
+- `getUserSubscriptionStatus()` - Check active subscription
+- `refreshSubscriptionCredits()` - Refresh credits by tier
+- Updated `getUserCredits` query in credits router
+
+### Frontend Components
+
+#### Pages
+- `/subscription` - Main subscription management page
+  - Shows current plan status
+  - Displays pricing cards for upgrades
+  - Manages subscription via Stripe portal
+
+#### UI Components
+- `PricingCards` - Display subscription plans
+- `SubscriptionStatusCard` - Show current subscription
+- `ManageSubscriptionButton` - Access Stripe portal
+
+#### Navigation Updates
+- Added "Subscription" to user dropdown menu
+- Added "Manage Subscription" button to sidebar
+- Added "Upgrade to Pro" button (when credits ≤ 10)
+
+### Webhook Events Handled
+- `checkout.session.completed` - Create subscription, allocate credits
+- `customer.subscription.updated` - Update subscription status
+- `customer.subscription.deleted` - Cancel subscription, reset credits
+- `invoice.payment_succeeded` - Refresh credits for billing period
+- `invoice.payment_failed` - Log payment failures
+
+## Files Created
+
+### Backend
+- `lib/subscription/stripe.ts` - Stripe client configuration
+- `lib/subscription/subscription-plans.ts` - Plan constants (shared)
+- `lib/subscription/subscription-utils.ts` - Server-only utilities
+- `lib/db/queries-subscription.ts` - Database queries
+- `app/api/stripe/checkout/route.ts` - Checkout endpoint
+- `app/api/stripe/portal/route.ts` - Portal endpoint
+- `app/api/stripe/webhook/route.ts` - Webhook handler
+- `trpc/routers/subscription.router.ts` - tRPC router
+
+### Frontend
+- `app/(subscription)/layout.tsx` - Route layout
+- `app/(subscription)/subscription/page.tsx` - Server component
+- `app/(subscription)/subscription/subscription-page-client.tsx` - Client logic
+- `components/subscription/pricing-cards.tsx` - Pricing display
+- `components/subscription/subscription-status-card.tsx` - Status display
+- `components/subscription/manage-subscription-button.tsx` - Portal button
+
+### Documentation
+- `STRIPE_SETUP.md` - Comprehensive setup guide
+- `STRIPE_IMPLEMENTATION_SUMMARY.md` - Implementation overview
+- `docs/stripe-subscription-implementation.bd` - This file
+
+## Files Modified
+
+### Database
+- `lib/db/schema.ts` - Added Subscription table
+- `lib/db/migrations/0027_yummy_the_leader.sql` - Migration generated
+
+### Configuration
+- `lib/env.ts` - Added Stripe environment variables
+- `.env.example` - Added Stripe keys documentation
+- `package.json` - Added stripe and @stripe/stripe-js dependencies
+
+### Credits System
+- `lib/repositories/credits.ts` - Added subscription-aware functions
+- `trpc/routers/credits.router.ts` - Added getUserCredits query
+
+### Navigation
+- `components/sidebar-user-nav.tsx` - Added Subscription menu item
+- `components/sidebar-credits.tsx` - Added subscription buttons
+- `components/upgrade-cta/limit-display.tsx` - Added upgrade prompts
+
+### Router
+- `trpc/routers/_app.ts` - Registered subscription router
+
+## Environment Variables Required
+
+```env
+# Stripe Keys
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+
+# Optional: Price IDs
+STRIPE_MONTHLY_PRICE_ID=price_...
+STRIPE_ANNUAL_PRICE_ID=price_...
+```
+
+## Setup Steps Required
+
+1. **Run database migration**: `bun db:migrate`
+2. **Create Stripe products** in Dashboard
+3. **Configure environment variables**
+4. **Set up webhooks** (local: Stripe CLI, prod: Dashboard)
+5. **Enable Customer Portal** in Stripe settings
+6. **Test with test cards** before going live
+
+## Credit Allocation Logic
+
+- **Free users**: 100 credits (default in UserCredit table)
+- **Monthly subscribers**: 1,000 credits allocated on subscription
+- **Annual subscribers**: 12,000 credits allocated on subscription
+- **Credit refresh**: On `invoice.payment_succeeded` webhook
+- **Cancellation**: Credits reset to 100 on subscription deletion
+
+## Security Features
+
+- Webhook signature verification using STRIPE_WEBHOOK_SECRET
+- Server-side subscription validation
+- Authentication required for all subscription operations
+- No client-side exposure of secret keys
+- Type-safe API with tRPC
+
+## User Flow
+
+1. User navigates to `/subscription`
+2. Sees current plan (Free) and pricing options
+3. Clicks "Subscribe Monthly" or "Subscribe Annually"
+4. Redirected to Stripe Checkout
+5. Completes payment with card details
+6. Webhook creates subscription in database
+7. Credits allocated based on plan tier
+8. Redirected back to `/subscription?success=true`
+9. Can manage subscription via "Manage Subscription" button
+10. Access Stripe Customer Portal for updates/cancellation
+
+## Known Issues & Solutions
+
+### Build Error (Fixed)
+**Issue**: `'server-only'` directive in file imported by client component
+
+**Solution**: Split utilities into:
+- `subscription-plans.ts` - Shared constants (no server-only)
+- `subscription-utils.ts` - Server-only functions
+
+### Type Errors (Fixed)
+- Fixed Stripe API version to `2025-09-30.clover`
+- Added type casts for Stripe webhook properties
+- Fixed SessionProvider prop name to `initialSession`
+- Added `getUserCredits` query to credits router
+
+## Testing Checklist
+
+- [x] TypeScript compilation passes
+- [ ] Database migration runs successfully
+- [ ] Checkout flow completes
+- [ ] Webhook events are received
+- [ ] Credits are allocated correctly
+- [ ] Subscription status displays correctly
+- [ ] Customer portal works
+- [ ] Cancellation flow works
+- [ ] Failed payments are handled
+
+## Production Deployment Checklist
+
+- [ ] Complete Stripe account verification
+- [ ] Create live products in Stripe
+- [ ] Update environment variables with live keys
+- [ ] Configure production webhook endpoint
+- [ ] Test in production with real card
+- [ ] Monitor webhook delivery in Stripe Dashboard
+- [ ] Verify credit allocation
+- [ ] Test customer portal access
+- [ ] Set up error monitoring
+
+## Metrics to Monitor
+
+- Subscription conversion rate
+- Failed payment rate
+- Churn rate
+- Average revenue per user (ARPU)
+- Credit usage patterns
+- Webhook delivery success rate
+
+## Support Resources
+
+- Stripe Documentation: https://stripe.com/docs
+- Stripe Dashboard: https://dashboard.stripe.com
+- Webhook Testing: Use Stripe CLI
+- Test Cards: https://stripe.com/docs/testing
+
+## Future Enhancements
+
+- [ ] Add more subscription tiers
+- [ ] Implement usage-based pricing
+- [ ] Add subscription upgrade/downgrade
+- [ ] Implement proration for plan changes
+- [ ] Add referral credits
+- [ ] Implement team subscriptions
+- [ ] Add yearly discount promotions
+- [ ] Email notifications for billing events
+- [ ] Analytics dashboard for subscription metrics

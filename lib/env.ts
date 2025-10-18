@@ -26,6 +26,10 @@ export const env = createEnv({
     FIRECRAWL_API_KEY: z.string().optional(),
     SANDBOX_TEMPLATE_ID: z.string().optional(),
 
+    // Stripe
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
+
     // Misc / platform
     LOG_LEVEL: z.string().optional(),
     VERCEL_URL: z.string().optional(),
@@ -33,6 +37,7 @@ export const env = createEnv({
     CONTEXT_SIZE: z.string().optional(),
   },
   client: {
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
     NEXT_PUBLIC_SANDBOX_AVAILABLE: z.boolean().optional(),
     NEXT_PUBLIC_TAVILY_AVAILABLE: z.boolean().optional(),
     NEXT_PUBLIC_OPENAI_AVAILABLE: z.boolean().optional(),
@@ -56,7 +61,10 @@ export const env = createEnv({
     EXA_API_KEY: process.env.EXA_API_KEY,
     FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY,
     SANDBOX_TEMPLATE_ID: process.env.SANDBOX_TEMPLATE_ID,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     LOG_LEVEL: process.env.LOG_LEVEL,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,

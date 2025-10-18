@@ -25,6 +25,38 @@ export const userCredit = pgTable('UserCredit', {
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
 
+export const subscription = pgTable('Subscription', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  stripeCustomerId: text('stripeCustomerId').notNull(),
+  stripeSubscriptionId: text('stripeSubscriptionId').notNull(),
+  stripePriceId: text('stripePriceId').notNull(),
+  status: varchar('status', {
+    enum: [
+      'active',
+      'canceled',
+      'past_due',
+      'trialing',
+      'incomplete',
+      'incomplete_expired',
+      'unpaid',
+    ],
+  }).notNull(),
+  plan: varchar('plan', { enum: ['monthly', 'annual'] }).notNull(),
+  currentPeriodStart: timestamp('currentPeriodStart').notNull(),
+  currentPeriodEnd: timestamp('currentPeriodEnd').notNull(),
+  cancelAtPeriodEnd: boolean('cancelAtPeriodEnd').notNull().default(false),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export type Subscription = InferSelectModel<typeof subscription>;
+
 export const chat = pgTable('Chat', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
   createdAt: timestamp('createdAt').notNull(),

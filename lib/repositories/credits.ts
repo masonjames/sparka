@@ -3,6 +3,11 @@ import { and, eq, gte, sql } from 'drizzle-orm';
 
 import { userCredit } from '../db/schema';
 import { db } from '../db/client';
+import { getSubscriptionByUserId } from '../db/queries-subscription';
+import {
+  hasActiveSubscription,
+  getCreditsForPlan,
+} from '../subscription/subscription-utils';
 
 async function ensureUserCreditRow(userId: string) {
   await db.insert(userCredit).values({ userId }).onConflictDoNothing();
@@ -38,6 +43,39 @@ export async function getUserCreditsInfo({ userId }: { userId: string }) {
     availableCredits: userInfo.credits - userInfo.reservedCredits,
     reservedCredits: userInfo.reservedCredits,
   };
+}
+
+export async function getUserSubscriptionStatus({ userId }: { userId: string }) {
+  const subscription = await getSubscriptionByUserId({ userId });
+  
+  if (!subscription) {
+    return { hasActiveSubscription: false, plan: null };
+  }
+
+  const isActive = hasActiveSubscription({
+    status: subscription.status,
+    currentPeriodEnd: subscription.currentPeriodEnd,
+  });
+
+  return {
+    hasActiveSubscription: isActive,
+    plan: isActive ? subscription.plan : null,
+  };
+}
+
+export async function refreshSubscriptionCredits({ userId }: { userId: string }) {
+  const subscriptionStatus = await getUserSubscriptionStatus({ userId });
+  
+  if (!subscriptionStatus.hasActiveSubscription) {
+    return;
+  }
+
+  const credits = getCreditsForPlan(subscriptionStatus.plan);
+  
+  await db
+    .update(userCredit)
+    .set({ credits })
+    .where(eq(userCredit.userId, userId));
 }
 
 export async function reserveAvailableCredits({

@@ -12,4 +12,14 @@ export const creditsRouter = createTRPCRouter({
       }
     );
   }),
+  getUserCredits: protectedProcedure.query(async ({ ctx }) => {
+    const creditsInfo = await getUserCreditsInfo({ userId: ctx.user.id });
+    return (
+      creditsInfo || {
+        totalCredits: 0,
+        availableCredits: 0,
+        reservedCredits: 0,
+      }
+    );
+  }),
 });

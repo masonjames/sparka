@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogIn, Coins } from 'lucide-react';
+import { LogIn, Coins, CreditCard, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGetCredits } from '@/hooks/chat-sync-hooks';
 import { useSession } from '@/providers/session-provider';
@@ -34,7 +34,7 @@ export function SidebarCredits() {
         </div>
       </div>
 
-      {!isAuthenticated && (
+      {!isAuthenticated ? (
         <Button
           variant="outline"
           className="w-full justify-start gap-2"
@@ -46,6 +46,31 @@ export function SidebarCredits() {
           <LogIn className="h-4 w-4" />
           Sign in to reset your limits
         </Button>
+      ) : (
+        <div className="space-y-2">
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            onClick={() => {
+              router.push('/subscription');
+            }}
+          >
+            <CreditCard className="h-4 w-4" />
+            Manage Subscription
+          </Button>
+          {remaining <= 10 && (
+            <Button
+              variant="default"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                router.push('/subscription');
+              }}
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              Upgrade to Pro
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

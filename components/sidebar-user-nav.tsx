@@ -1,5 +1,5 @@
 'use client';
-import { Coins } from 'lucide-react';
+import { Coins, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import type { Session } from '@/lib/auth';
 import authClient from '@/lib/auth-client';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useGetCredits } from '@/hooks/chat-sync-hooks';
+import Link from 'next/link';
 
 export function HeaderUserNav({
   user,
@@ -49,6 +50,13 @@ export function HeaderUserNav({
             <Coins className="size-4 mr-1" />
             <span>Credits: {credits ?? 'Loading...'}</span>
           </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/subscription" className="cursor-pointer">
+            <CreditCard className="size-4 mr-2" />
+            Subscription
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

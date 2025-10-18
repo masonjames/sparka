@@ -30,10 +30,10 @@ const VARIANT_CONFIG: Record<
         <span>
           You&apos;ve reached your credit limit.{' '}
           <Link
-            href="/login"
+            href="/subscription"
             className="text-red-700 dark:text-red-300 underline font-medium hover:no-underline"
           >
-            Sign in to reset your limits
+            Upgrade to Pro for more credits
           </Link>
         </span>
       ) : (
@@ -44,10 +44,10 @@ const VARIANT_CONFIG: Record<
           </strong>{' '}
           left.{' '}
           <Link
-            href="/login"
+            href="/subscription"
             className="text-amber-700 dark:text-amber-300 underline font-medium hover:no-underline"
           >
-            Sign in to reset your limits
+            Upgrade to Pro
           </Link>
         </span>
       ),
@@ -91,11 +91,79 @@ export function LimitDisplay({
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
   const [dismissed, setDismissed] = useState(false);
+  const variant = forceVariant ?? 'credits';
 
-  // Don't show for authenticated users
+  // For authenticated users, show upgrade prompt when low on credits
+  if (isAuthenticated && variant === 'credits') {
+    const remaining = credits ?? 0;
+    const isLow = remaining <= 10;
+    const isAtLimit = remaining <= 0;
+    
+    if (!isLow && !isAtLimit) return null;
+    
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.2 }}
+          className={cn('w-full', className)}
+        >
+          <div
+            className={cn(
+              'flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-sm ',
+              isAtLimit
+                ? 'bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200'
+                : 'bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200',
+            )}
+          >
+            <div className="flex-1">
+              {isAtLimit ? (
+                <span>
+                  You&apos;ve run out of credits.{' '}
+                  <Link
+                    href="/subscription"
+                    className="text-red-700 dark:text-red-300 underline font-medium hover:no-underline"
+                  >
+                    Upgrade to Pro for unlimited access
+                  </Link>
+                </span>
+              ) : (
+                <span>
+                  You only have{' '}
+                  <strong>
+                    {remaining} credit{remaining !== 1 ? 's' : ''}
+                  </strong>{' '}
+                  left.{' '}
+                  <Link
+                    href="/subscription"
+                    className="text-amber-700 dark:text-amber-300 underline font-medium hover:no-underline"
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </span>
+              )}
+            </div>
+            {!dismissed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 hover:bg-transparent"
+                onClick={() => setDismissed(true)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+  
+  // Don't show for other authenticated scenarios
   if (isAuthenticated) return null;
 
-  const variant = forceVariant ?? 'credits';
   const config = VARIANT_CONFIG[variant];
 
   // Credits variant relies on credits API state
