@@ -1,19 +1,19 @@
-"use client";
-import type { ModelId } from "@ai-models/vercel-gateway";
-import { type Dispatch, type SetStateAction, useCallback } from "react";
-import type { ChatMessage } from "@/lib/ai/types";
-import { useChatStatus } from "@/lib/stores/hooks";
+'use client';
+import type { ModelId } from '@ai-registry/vercel-gateway';
+import { type Dispatch, type SetStateAction, useCallback } from 'react';
+import type { ChatMessage } from '@/lib/ai/types';
+import { useChatStatus } from '@/lib/stores/hooks';
 import {
   getAttachmentsFromMessage,
   getTextContentFromMessage,
-} from "@/lib/utils";
-import { ChatInputProvider } from "@/providers/chat-input-provider";
-import { MultimodalInput } from "./multimodal-input";
+} from '@/lib/utils';
+import { ChatInputProvider } from '@/providers/chat-input-provider';
+import { MultimodalInput } from './multimodal-input';
 
 export type MessageEditorProps = {
   chatId: string;
   message: ChatMessage;
-  setMode: Dispatch<SetStateAction<"view" | "edit">>;
+  setMode: Dispatch<SetStateAction<'view' | 'edit'>>;
   parentMessageId: string | null;
 };
 
@@ -26,9 +26,9 @@ function MessageEditorContent({
 
   const handleOnSendMessage = useCallback(
     (_: ChatMessage) => {
-      setMode("view");
+      setMode('view');
     },
-    [setMode]
+    [setMode],
   );
 
   return (
@@ -45,7 +45,7 @@ function MessageEditorContent({
 }
 
 export function MessageEditor(
-  props: MessageEditorProps & { onModelChange?: (modelId: string) => void }
+  props: MessageEditorProps & { onModelChange?: (modelId: string) => void },
 ) {
   // Get the initial input value from the message content
   const initialInput = getTextContentFromMessage(props.message);

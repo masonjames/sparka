@@ -1,14 +1,14 @@
-import type { ModelId } from "@ai-models/vercel-gateway";
-import { generateObject, generateText, type ModelMessage } from "ai";
-import { z } from "zod";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { truncateMessages } from "@/lib/ai/token-utils";
-import { ReportDocumentWriter } from "@/lib/artifacts/text/reportServer";
-import type { Session } from "@/lib/auth";
-import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
-import type { StreamWriter } from "../../types";
-import { createDocument } from "../create-document";
-import type { DeepResearchConfig } from "./configuration";
+import type { ModelId } from '@ai-registry/vercel-gateway';
+import { generateObject, generateText, type ModelMessage } from 'ai';
+import { z } from 'zod';
+import { getLanguageModel } from '@/lib/ai/providers';
+import { truncateMessages } from '@/lib/ai/token-utils';
+import { ReportDocumentWriter } from '@/lib/artifacts/text/reportServer';
+import type { Session } from '@/lib/auth';
+import { generateUUID, getTextContentFromModelMessage } from '@/lib/utils';
+import type { StreamWriter } from '../../types';
+import { createDocument } from '../create-document';
+import type { DeepResearchConfig } from './configuration';
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -18,7 +18,7 @@ import {
   researchSystemPrompt,
   statusUpdatePrompt,
   transformMessagesIntoResearchTopicPrompt,
-} from "./prompts";
+} from './prompts';
 import {
   type AgentInputState,
   type AgentState,
@@ -39,13 +39,13 @@ import {
   type SupervisorToolsOutput,
   type WriteResearchBriefInput,
   type WriteResearchBriefOutput,
-} from "./state";
+} from './state';
 import {
   getAllTools,
   getModelContextWindow,
   getNotesFromToolCalls,
   getTodayStr,
-} from "./utils";
+} from './utils';
 
 // Agent result types (instead of commands)
 type ClarificationResult =
@@ -53,14 +53,14 @@ type ClarificationResult =
   | { needsClarification: false };
 
 type SupervisorResult = {
-  status: "complete";
+  status: 'complete';
   data: { notes: string[] };
 };
 
 function messagesToString(messages: ModelMessage[]): string {
   return messages
     .map((m) => `${m.role}: ${JSON.stringify(m.content)}`)
-    .join("\n");
+    .join('\n');
 }
 
 async function generateStatusUpdate(
@@ -69,12 +69,12 @@ async function generateStatusUpdate(
   config: DeepResearchConfig,
   requestId: string,
   messageId: string,
-  context?: string
+  context?: string,
 ): Promise<{ title: string; message: string }> {
   const model = getLanguageModel(config.research_model as ModelId);
 
   const messagesContent = messagesToString(messages);
-  const contextInfo = context ? `\n\nAdditional context: ${context}` : "";
+  const contextInfo = context ? `\n\nAdditional context: ${context}` : '';
 
   const prompt = statusUpdatePrompt({
     actionType,
@@ -88,19 +88,19 @@ async function generateStatusUpdate(
       title: z
         .string()
         .describe(
-          'A specific, action-focused title reflecting what just completed (max 50 characters). Avoid generic "I\'m researching" phrases.'
+          'A specific, action-focused title reflecting what just completed (max 50 characters). Avoid generic "I\'m researching" phrases.',
         ),
       message: z
         .string()
         .describe(
-          "A concrete description of what was accomplished in this step, including specific details, numbers, or findings when available (max 200 characters)"
+          'A concrete description of what was accomplished in this step, including specific details, numbers, or findings when available (max 200 characters)',
         ),
     }),
-    messages: [{ role: "user", content: prompt }],
+    messages: [{ role: 'user', content: prompt }],
     maxOutputTokens: 200,
     experimental_telemetry: {
       isEnabled: true,
-      functionId: "statusUpdate",
+      functionId: 'statusUpdate',
       metadata: {
         messageId,
         langfuseTraceId: requestId,
@@ -115,7 +115,7 @@ async function generateStatusUpdate(
 // Helper function to filter messages by type
 function filterMessages(
   messages: ModelMessage[],
-  includeTypes: string[]
+  includeTypes: string[],
 ): ModelMessage[] {
   return messages.filter((m) => includeTypes.includes(m.role));
 }
@@ -123,7 +123,7 @@ function filterMessages(
 async function clarifyWithUser(
   state: ClarifyWithUserInput,
   config: DeepResearchConfig,
-  messageId: string
+  messageId: string,
 ): Promise<ClarificationResult> {
   if (!config.allow_clarification) {
     return { needsClarification: false };
@@ -134,13 +134,13 @@ async function clarifyWithUser(
 
   // Get model token limit and reserve space for output tokens
   const clarifyModelContextWindow = getModelContextWindow(
-    config.research_model as ModelId
+    config.research_model as ModelId,
   );
 
   // Create messages and truncate to fit within token limit
   const clarifyMessages = [
     {
-      role: "user" as const,
+      role: 'user' as const,
       content: clarifyWithUserInstructions({
         messages: messagesToString(messages),
         date: getTodayStr(),
@@ -149,7 +149,7 @@ async function clarifyWithUser(
   ];
   const truncatedClarifyMessages = truncateMessages(
     clarifyMessages,
-    clarifyModelContextWindow
+    clarifyModelContextWindow,
   );
 
   const response = await generateObject({
@@ -159,7 +159,7 @@ async function clarifyWithUser(
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: {
       isEnabled: true,
-      functionId: "clarifyWithUser",
+      functionId: 'clarifyWithUser',
       metadata: {
         messageId,
         langfuseTraceId: state.requestId,
@@ -181,29 +181,29 @@ async function writeResearchBrief(
   state: WriteResearchBriefInput,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  messageId: string
+  messageId: string,
 ): Promise<WriteResearchBriefOutput> {
   const model = getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
   dataStream.write({
     id: dataPartId,
-    type: "data-researchUpdate",
+    type: 'data-researchUpdate',
     data: {
-      title: "Writing research brief",
-      type: "writing",
-      status: "running",
+      title: 'Writing research brief',
+      type: 'writing',
+      status: 'running',
     },
   });
 
   // Get model token limit and reserve space for output tokens
   const briefModelContextWindow = getModelContextWindow(
-    config.research_model as ModelId
+    config.research_model as ModelId,
   );
 
   // Create messages and truncate to fit within token limit
   const briefMessages = [
     {
-      role: "user" as const,
+      role: 'user' as const,
       content: transformMessagesIntoResearchTopicPrompt({
         messages: messagesToString(state.messages || []),
         date: getTodayStr(),
@@ -212,7 +212,7 @@ async function writeResearchBrief(
   ];
   const truncatedBriefMessages = truncateMessages(
     briefMessages,
-    briefModelContextWindow
+    briefModelContextWindow,
   );
 
   const result = await generateObject({
@@ -222,7 +222,7 @@ async function writeResearchBrief(
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: {
       isEnabled: true,
-      functionId: "writeResearchBrief",
+      functionId: 'writeResearchBrief',
       metadata: {
         messageId,
         langfuseTraceId: state.requestId,
@@ -233,12 +233,12 @@ async function writeResearchBrief(
 
   dataStream.write({
     id: dataPartId,
-    type: "data-researchUpdate",
+    type: 'data-researchUpdate',
     data: {
-      title: "Writing research brief",
+      title: 'Writing research brief',
       message: result.object.research_brief,
-      type: "writing",
-      status: "completed",
+      type: 'writing',
+      status: 'completed',
     },
   });
 
@@ -256,7 +256,7 @@ abstract class Agent {
   constructor(
     protected config: DeepResearchConfig,
     protected dataStream: StreamWriter,
-    messageId: string
+    messageId: string,
   ) {
     this.agentId = generateUUID();
     this.messageId = messageId;
@@ -266,9 +266,9 @@ abstract class Agent {
 // Researcher Agent class
 class ResearcherAgent extends Agent {
   private async research(
-    state: ResearcherInput
+    state: ResearcherInput,
   ): Promise<CompressResearchInput> {
-    console.log("=== RESEARCHER START ===", {
+    console.log('=== RESEARCHER START ===', {
       research_topic: state.research_topic,
       messages_count: state.researcher_messages?.length || 0,
     });
@@ -277,33 +277,33 @@ class ResearcherAgent extends Agent {
     const tools = await getAllTools(
       this.config,
       this.dataStream,
-      state.requestId
+      state.requestId,
     );
     if (Object.keys(tools).length === 0) {
       throw new Error(
-        "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
+        'No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration.',
       );
     }
 
     this.dataStream.write({
-      type: "data-researchUpdate",
+      type: 'data-researchUpdate',
       data: {
-        title: "Starting research on topic",
+        title: 'Starting research on topic',
         message: state.research_topic,
-        type: "thoughts",
-        status: "completed",
+        type: 'thoughts',
+        status: 'completed',
       },
     });
 
     // Get model token limit and reserve space for output tokens
     const researchModelContextWindow = getModelContextWindow(
-      this.config.research_model as ModelId
+      this.config.research_model as ModelId,
     );
 
     // Truncate messages to fit within token limit
     const truncatedResearcherMessages = truncateMessages(
       researcherMessages,
-      researchModelContextWindow
+      researchModelContextWindow,
     );
 
     const result = await generateText({
@@ -313,7 +313,7 @@ class ResearcherAgent extends Agent {
       maxOutputTokens: this.config.research_model_max_tokens,
       experimental_telemetry: {
         isEnabled: true,
-        functionId: "researcher",
+        functionId: 'researcher',
         metadata: {
           agentId: this.agentId,
           messageId: this.messageId,
@@ -324,21 +324,21 @@ class ResearcherAgent extends Agent {
     });
 
     const completedUpdate = await generateStatusUpdate(
-      "research_completion",
+      'research_completion',
       [...researcherMessages, ...result.response.messages],
       this.config,
       state.requestId,
       this.messageId,
-      `Research phase completed with ${result.response.messages.length} new messages`
+      `Research phase completed with ${result.response.messages.length} new messages`,
     );
 
     this.dataStream.write({
-      type: "data-researchUpdate",
+      type: 'data-researchUpdate',
       data: {
         title: completedUpdate.title,
-        type: "thoughts",
+        type: 'thoughts',
         message: completedUpdate.message,
-        status: "completed",
+        status: 'completed',
       },
     });
 
@@ -349,7 +349,7 @@ class ResearcherAgent extends Agent {
   }
 
   private async compressResearch(
-    state: CompressResearchInput
+    state: CompressResearchInput,
   ): Promise<ResearcherOutputState> {
     const model = getLanguageModel(this.config.compression_model as ModelId);
 
@@ -357,23 +357,23 @@ class ResearcherAgent extends Agent {
 
     // Update the system prompt to focus on compression
     researcherMessages[0] = {
-      role: "system" as const,
+      role: 'system' as const,
       content: compressResearchSystemPrompt({ date: getTodayStr() }),
     };
     researcherMessages.push({
-      role: "user" as const,
+      role: 'user' as const,
       content: compressResearchSimpleHumanMessage,
     });
 
     // Get model token limit and reserve space for output tokens
     const compressionModelContextWindow = getModelContextWindow(
-      this.config.compression_model as ModelId
+      this.config.compression_model as ModelId,
     );
 
     // Truncate messages to fit within token limit
     const truncatedMessages = truncateMessages(
       researcherMessages,
-      compressionModelContextWindow
+      compressionModelContextWindow,
     );
 
     const response = await generateText({
@@ -382,7 +382,7 @@ class ResearcherAgent extends Agent {
       maxOutputTokens: this.config.compression_model_max_tokens,
       experimental_telemetry: {
         isEnabled: true,
-        functionId: "compressResearch",
+        functionId: 'compressResearch',
         metadata: {
           agentId: this.agentId,
           messageId: this.messageId,
@@ -394,38 +394,38 @@ class ResearcherAgent extends Agent {
     });
 
     const completedUpdate = await generateStatusUpdate(
-      "research_compression",
+      'research_compression',
       truncatedMessages,
       this.config,
       state.requestId,
       this.messageId,
-      `Compressed ${researcherMessages.length} messages into summary`
+      `Compressed ${researcherMessages.length} messages into summary`,
     );
 
     this.dataStream.write({
-      type: "data-researchUpdate",
+      type: 'data-researchUpdate',
       data: {
         title: completedUpdate.title,
-        type: "thoughts",
+        type: 'thoughts',
         message: completedUpdate.message,
-        status: "completed",
+        status: 'completed',
       },
     });
 
     return {
       compressed_research: response.response.messages
         .map((m) => getTextContentFromModelMessage(m))
-        .join("\n"),
+        .join('\n'),
       raw_notes: [
-        filterMessages(researcherMessages, ["tool", "assistant"])
+        filterMessages(researcherMessages, ['tool', 'assistant'])
           .map((m) => String(m.content))
-          .join("\n"),
+          .join('\n'),
       ],
     };
   }
 
   async executeResearchSubgraph(
-    initialState: ResearcherState
+    initialState: ResearcherState,
   ): Promise<ResearcherOutputState> {
     const result = await this.research({
       requestId: initialState.requestId,
@@ -448,14 +448,14 @@ class SupervisorAgent extends Agent {
   constructor(
     config: DeepResearchConfig,
     dataStream: StreamWriter,
-    messageId: string
+    messageId: string,
   ) {
     super(config, dataStream, messageId);
     this.researcherAgent = new ResearcherAgent(config, dataStream, messageId);
   }
 
   private async supervise(state: SupervisorInput): Promise<SupervisorOutput> {
-    console.log("=== SUPERVISOR START ===", {
+    console.log('=== SUPERVISOR START ===', {
       research_iterations: state.research_iterations,
       max_iterations: this.config.max_researcher_iterations,
       messages_count: state.supervisor_messages?.length || 0,
@@ -465,13 +465,13 @@ class SupervisorAgent extends Agent {
 
     // Get model token limit and reserve space for output tokens
     const supervisorModelContextWindow = getModelContextWindow(
-      this.config.research_model as ModelId
+      this.config.research_model as ModelId,
     );
 
     // Truncate messages to fit within token limit
     const truncatedSupervisorMessages = truncateMessages(
       state.supervisor_messages,
-      supervisorModelContextWindow
+      supervisorModelContextWindow,
     );
 
     const result = await generateText({
@@ -481,7 +481,7 @@ class SupervisorAgent extends Agent {
       maxOutputTokens: this.config.research_model_max_tokens,
       experimental_telemetry: {
         isEnabled: true,
-        functionId: "supervisor",
+        functionId: 'supervisor',
         metadata: {
           agentId: this.agentId,
           messageId: this.messageId,
@@ -494,7 +494,7 @@ class SupervisorAgent extends Agent {
     });
 
     const lastAssistantMessage = result.response.messages.find(
-      (m) => m.role === "assistant"
+      (m) => m.role === 'assistant',
     );
 
     const supervisorMessageText =
@@ -502,28 +502,28 @@ class SupervisorAgent extends Agent {
       getTextContentFromModelMessage(lastAssistantMessage);
 
     const completedUpdate = await generateStatusUpdate(
-      "supervisor_evaluation",
+      'supervisor_evaluation',
       truncatedSupervisorMessages,
       this.config,
       state.requestId,
       this.messageId,
-      supervisorMessageText || "Coordinated investigation efforts"
+      supervisorMessageText || 'Coordinated investigation efforts',
     );
 
     this.dataStream.write({
-      type: "data-researchUpdate",
+      type: 'data-researchUpdate',
       data: {
         title: completedUpdate.title,
         message: completedUpdate.message,
-        type: "thoughts",
-        status: "completed",
+        type: 'thoughts',
+        status: 'completed',
       },
     });
 
     const responseMessages = result.response.messages;
-    if (result.finishReason !== "tool-calls") {
+    if (result.finishReason !== 'tool-calls') {
       console.dir(result, { depth: null });
-      throw new Error("Expected tool calls, but got: $result.finishReason");
+      throw new Error('Expected tool calls, but got: $result.finishReason');
     }
     return {
       supervisor_messages: [
@@ -536,7 +536,7 @@ class SupervisorAgent extends Agent {
   }
 
   async runSupervisorGraph(
-    initialState: SupervisorState
+    initialState: SupervisorState,
   ): Promise<SupervisorResult> {
     let supervisorState: SupervisorInput = {
       requestId: initialState.requestId,
@@ -562,9 +562,9 @@ class SupervisorAgent extends Agent {
 
       const toolsResult = await this.executeTools(toolsInput);
 
-      if (toolsResult.status === "complete") {
+      if (toolsResult.status === 'complete') {
         return {
-          status: "complete",
+          status: 'complete',
           data: {
             notes: toolsResult.data.notes,
           },
@@ -588,12 +588,12 @@ class SupervisorAgent extends Agent {
   }
 
   private async executeTools(
-    state: SupervisorToolsInput
+    state: SupervisorToolsInput,
   ): Promise<
-    | { status: "complete"; data: { notes: string[] } }
-    | { status: "continue"; data: SupervisorToolsOutput }
+    | { status: 'complete'; data: { notes: string[] } }
+    | { status: 'continue'; data: SupervisorToolsOutput }
   > {
-    console.log("=== SUPERVISOR TOOLS START ===", {
+    console.log('=== SUPERVISOR TOOLS START ===', {
       research_iterations: state.research_iterations,
       max_iterations: this.config.max_researcher_iterations,
       tool_calls_count: state.tool_calls?.length || 0,
@@ -610,12 +610,12 @@ class SupervisorAgent extends Agent {
     const toolCalls = state.tool_calls;
     const noToolCalls = !toolCalls || toolCalls.length === 0;
     const researchCompleteToolCall = toolCalls?.some(
-      (toolCall) => toolCall.toolName === "researchComplete"
+      (toolCall) => toolCall.toolName === 'researchComplete',
     );
 
     if (exceededAllowedIterations || noToolCalls || researchCompleteToolCall) {
       return {
-        status: "complete",
+        status: 'complete',
         data: {
           notes: getNotesFromToolCalls(supervisorMessages),
         },
@@ -625,39 +625,39 @@ class SupervisorAgent extends Agent {
     // Otherwise, conduct research and gather results
     const allConductResearchCalls =
       toolCalls?.filter(
-        (toolCall) => toolCall.toolName === "conductResearch"
+        (toolCall) => toolCall.toolName === 'conductResearch',
       ) || [];
 
     const conductResearchCalls = allConductResearchCalls.slice(
       0,
-      this.config.max_concurrent_research_units
+      this.config.max_concurrent_research_units,
     );
     const overflowConductResearchCalls = allConductResearchCalls.slice(
-      this.config.max_concurrent_research_units
+      this.config.max_concurrent_research_units,
     );
 
     const researcherSystemPromptText = researchSystemPrompt({
-      mcp_prompt: this.config.mcp_prompt || "",
+      mcp_prompt: this.config.mcp_prompt || '',
       date: getTodayStr(),
       max_search_queries: this.config.search_api_max_queries,
     });
 
     const completedUpdate = await generateStatusUpdate(
-      "continuing_research_tasks",
+      'continuing_research_tasks',
       supervisorMessages,
       this.config,
       state.requestId,
       this.messageId,
-      `Need research the research about the topics [${conductResearchCalls.map((c) => c.input.research_topic).join("], [")}]`
+      `Need research the research about the topics [${conductResearchCalls.map((c) => c.input.research_topic).join('], [')}]`,
     );
 
     this.dataStream.write({
-      type: "data-researchUpdate",
+      type: 'data-researchUpdate',
       data: {
         title: completedUpdate.title,
         message: completedUpdate.message,
-        type: "thoughts",
-        status: "completed",
+        type: 'thoughts',
+        status: 'completed',
       },
     });
     const toolResults = [];
@@ -667,13 +667,13 @@ class SupervisorAgent extends Agent {
       const result = await this.researcherAgent.executeResearchSubgraph({
         requestId: state.requestId,
         researcher_messages: [
-          { role: "system" as const, content: researcherSystemPromptText },
-          { role: "user" as const, content: toolCall.input.research_topic },
+          { role: 'system' as const, content: researcherSystemPromptText },
+          { role: 'user' as const, content: toolCall.input.research_topic },
         ],
         tool_calls: [],
         research_topic: toolCall.input.research_topic,
         tool_call_iterations: 0,
-        compressed_research: "",
+        compressed_research: '',
         raw_notes: [],
       });
       toolResults.push(result);
@@ -681,34 +681,34 @@ class SupervisorAgent extends Agent {
 
     const toolResultsMessages: ResponseMessage[] = toolResults.map(
       (observation, index) => ({
-        role: "tool" as const,
+        role: 'tool' as const,
         content: [
           {
-            toolName: "conductResearch",
+            toolName: 'conductResearch',
             toolCallId: conductResearchCalls[index].toolCallId,
-            type: "tool-result",
+            type: 'tool-result',
             output: {
-              type: "text",
+              type: 'text',
               value:
                 observation.compressed_research ||
-                "Error synthesizing research report: Maximum retries exceeded",
+                'Error synthesizing research report: Maximum retries exceeded',
             },
           },
         ],
-      })
+      }),
     );
 
     // Handle overflow tool calls
     for (const overflowCall of overflowConductResearchCalls) {
       toolResultsMessages.push({
-        role: "tool" as const,
+        role: 'tool' as const,
         content: [
           {
-            toolName: "conductResearch",
+            toolName: 'conductResearch',
             toolCallId: overflowCall.toolCallId,
-            type: "tool-result",
+            type: 'tool-result',
             output: {
-              type: "text",
+              type: 'text',
               value: `Error: Did not run this research as you have already exceeded the maximum number of concurrent research units. Please try again with ${this.config.max_concurrent_research_units} or fewer research units.`,
             }, // update depending on the tool's output format
           },
@@ -717,11 +717,11 @@ class SupervisorAgent extends Agent {
     }
 
     const rawNotesConcat = toolResults
-      .map((observation) => observation.raw_notes.join("\n"))
-      .join("\n");
+      .map((observation) => observation.raw_notes.join('\n'))
+      .join('\n');
 
     return {
-      status: "continue",
+      status: 'continue',
       data: {
         supervisor_messages: [...supervisorMessages, ...toolResultsMessages],
         raw_notes: [rawNotesConcat],
@@ -736,15 +736,15 @@ async function finalReportGeneration(
   dataStream: StreamWriter,
   session: Session,
   messageId: string,
-  reportTitle: string
-): Promise<Pick<AgentState, "final_report" | "reportResult">> {
+  reportTitle: string,
+): Promise<Pick<AgentState, 'final_report' | 'reportResult'>> {
   const notes = state.notes || [];
 
   const model = getLanguageModel(config.final_report_model as ModelId);
-  const findings = notes.join("\n");
+  const findings = notes.join('\n');
 
   const finalReportPromptText = finalReportGenerationPrompt({
-    research_brief: state.research_brief || "",
+    research_brief: state.research_brief || '',
     findings,
     date: getTodayStr(),
   });
@@ -752,26 +752,26 @@ async function finalReportGeneration(
   const finalReportUpdateId = generateUUID();
   dataStream.write({
     id: finalReportUpdateId,
-    type: "data-researchUpdate",
+    type: 'data-researchUpdate',
     data: {
-      title: "Writing final report",
-      type: "writing",
-      status: "running",
+      title: 'Writing final report',
+      type: 'writing',
+      status: 'running',
     },
   });
 
   // Get model token limit and reserve space for output tokens
   const finalReportModelContextWindow = getModelContextWindow(
-    config.final_report_model as ModelId
+    config.final_report_model as ModelId,
   );
 
   // Truncate messages to fit within token limit
   const finalReportMessages = [
-    { role: "user" as const, content: finalReportPromptText },
+    { role: 'user' as const, content: finalReportPromptText },
   ];
   const truncatedFinalMessages = truncateMessages(
     finalReportMessages,
-    finalReportModelContextWindow
+    finalReportModelContextWindow,
   );
 
   const reportDocumentHandler = new ReportDocumentWriter({
@@ -780,7 +780,7 @@ async function finalReportGeneration(
     maxOutputTokens: config.final_report_model_max_tokens,
     experimental_telemetry: {
       isEnabled: true,
-      functionId: "finalReportGeneration",
+      functionId: 'finalReportGeneration',
       metadata: {
         messageId,
         langfuseTraceId: state.requestId,
@@ -792,9 +792,9 @@ async function finalReportGeneration(
 
   const reportResult = await createDocument({
     dataStream,
-    kind: "text",
+    kind: 'text',
     title: reportTitle,
-    description: "",
+    description: '',
     session,
     prompt: finalReportPromptText,
     messageId,
@@ -804,11 +804,11 @@ async function finalReportGeneration(
 
   dataStream.write({
     id: finalReportUpdateId,
-    type: "data-researchUpdate",
+    type: 'data-researchUpdate',
     data: {
-      title: "Writing final report",
-      type: "writing",
-      status: "completed",
+      title: 'Writing final report',
+      type: 'writing',
+      status: 'completed',
     },
   });
 
@@ -823,9 +823,9 @@ export async function runDeepResearcher(
   input: AgentInputState,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  session: Session
+  session: Session,
 ): Promise<DeepResearchResult> {
-  console.log("runDeepResearcher invoked", {
+  console.log('runDeepResearcher invoked', {
     requestId: input.requestId,
     messageId: input.messageId,
   });
@@ -835,12 +835,12 @@ export async function runDeepResearcher(
     supervisor_messages: [],
     raw_notes: [],
     notes: [],
-    final_report: "",
+    final_report: '',
     reportResult: {
-      id: "",
-      title: "",
-      kind: "text",
-      content: "",
+      id: '',
+      title: '',
+      kind: 'text',
+      content: '',
     },
   };
 
@@ -848,21 +848,21 @@ export async function runDeepResearcher(
   const clarifyResult = await clarifyWithUser(
     { requestId: currentState.requestId, messages: currentState.inputMessages },
     config,
-    input.messageId
+    input.messageId,
   );
 
   if (clarifyResult.needsClarification) {
     return {
-      type: "clarifying_question",
-      data: clarifyResult.clarificationMessage || "Clarification needed",
+      type: 'clarifying_question',
+      data: clarifyResult.clarificationMessage || 'Clarification needed',
     };
   }
 
   dataStream.write({
-    type: "data-researchUpdate",
+    type: 'data-researchUpdate',
     data: {
-      title: "Starting research",
-      type: "started",
+      title: 'Starting research',
+      type: 'started',
       timestamp: Date.now(),
     },
   });
@@ -872,7 +872,7 @@ export async function runDeepResearcher(
     { requestId: currentState.requestId, messages: currentState.inputMessages },
     config,
     dataStream,
-    input.messageId
+    input.messageId,
   );
   currentState.research_brief = briefResult.research_brief;
   const reportTitle = briefResult.title;
@@ -881,25 +881,25 @@ export async function runDeepResearcher(
   const supervisorAgent = new SupervisorAgent(
     config,
     dataStream,
-    input.messageId
+    input.messageId,
   );
 
   const supervisorResult = await supervisorAgent.runSupervisorGraph({
     requestId: currentState.requestId,
     supervisor_messages: [
       {
-        role: "system" as const,
+        role: 'system' as const,
         content: leadResearcherPrompt({
           date: getTodayStr(),
           max_concurrent_research_units: config.max_concurrent_research_units,
         }),
       },
       {
-        role: "user" as const,
+        role: 'user' as const,
         content: briefResult.research_brief,
       },
     ],
-    research_brief: currentState.research_brief || "",
+    research_brief: currentState.research_brief || '',
     notes: currentState.notes,
     research_iterations: 0,
     raw_notes: currentState.raw_notes,
@@ -918,14 +918,14 @@ export async function runDeepResearcher(
     dataStream,
     session,
     input.messageId,
-    reportTitle
+    reportTitle,
   );
 
   dataStream.write({
-    type: "data-researchUpdate",
+    type: 'data-researchUpdate',
     data: {
-      title: "Research complete",
-      type: "completed",
+      title: 'Research complete',
+      type: 'completed',
       timestamp: Date.now(),
     },
   });
@@ -935,7 +935,7 @@ export async function runDeepResearcher(
 
   // Check if we have a successful report
   return {
-    type: "report",
+    type: 'report',
     data: finalResult.reportResult,
   };
 }

@@ -1,26 +1,26 @@
-"use client";
-import type { ModelDefinition, ProviderId } from "@ai-models/vercel-gateway";
-import Link from "next/link";
-import { type ComponentType, memo, type SVGProps } from "react";
-import { getProviderIcon } from "@/components/get-provider-icon";
-import { LazyTooltip } from "@/components/lazy-tooltip";
+'use client';
+import type { ModelDefinition, ProviderId } from '@ai-registry/vercel-gateway';
+import Link from 'next/link';
+import { type ComponentType, memo, type SVGProps } from 'react';
+import { getProviderIcon } from '@/components/get-provider-icon';
+import { LazyTooltip } from '@/components/lazy-tooltip';
 import {
   ChatModelButton,
   CompareModelButton,
-} from "@/components/model-action-buttons";
+} from '@/components/model-action-buttons';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { MODEL_CAPABILITIES } from "@/lib/model-explorer/model-capabilities";
-import { formatNumberCompact } from "../../../lib/utils/format-number-compact";
+} from '@/components/ui/tooltip';
+import { MODEL_CAPABILITIES } from '@/lib/model-explorer/model-capabilities';
+import { formatNumberCompact } from '../../../lib/utils/format-number-compact';
 
 function ModalityIcon({
   label,
@@ -34,7 +34,7 @@ function ModalityIcon({
       <span
         aria-label={label}
         className={
-          "grid size-6 place-items-center rounded-md border bg-muted text-foreground/80"
+          'grid size-6 place-items-center rounded-md border bg-muted text-foreground/80'
         }
         role="img"
       >
@@ -57,7 +57,7 @@ function _ModalityIconLegacy({
         <span
           aria-label={label}
           className={
-            "grid size-6 place-items-center rounded-md border bg-muted text-foreground/80"
+            'grid size-6 place-items-center rounded-md border bg-muted text-foreground/80'
           }
           role="img"
         >
@@ -89,10 +89,10 @@ function PureModelCard({ model }: { model: ModelDefinition }) {
     model.input?.text ||
       model.input?.image ||
       model.input?.pdf ||
-      model.input?.audio
+      model.input?.audio,
   );
   const hasOutput = Boolean(
-    model.output?.text || model.output?.image || model.output?.audio
+    model.output?.text || model.output?.image || model.output?.audio,
   );
 
   return (
@@ -137,21 +137,21 @@ function PureModelCard({ model }: { model: ModelDefinition }) {
         {/* Secondary info row below the header line */}
         <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
           <span>
-            Context{" "}
+            Context{' '}
             <span className="font-medium text-foreground">
               {formatNumberCompact(model.context_window)}
             </span>
           </span>
           <span>•</span>
           <span>
-            Max out{" "}
+            Max out{' '}
             <span className="font-medium text-foreground">
               {formatNumberCompact(model.max_tokens)}
             </span>
           </span>
           <span>•</span>
           <span>
-            Input{" "}
+            Input{' '}
             <span className="font-medium text-foreground">
               ${(Number.parseFloat(model.pricing.input) * 1_000_000).toFixed(2)}
               /M
@@ -159,7 +159,7 @@ function PureModelCard({ model }: { model: ModelDefinition }) {
           </span>
           <span>•</span>
           <span>
-            Output{" "}
+            Output{' '}
             <span className="font-medium text-foreground">
               $
               {(Number.parseFloat(model.pricing.output) * 1_000_000).toFixed(2)}
@@ -168,12 +168,12 @@ function PureModelCard({ model }: { model: ModelDefinition }) {
           </span>
           <span>•</span>
           <span>
-            Released{" "}
+            Released{' '}
             <span className="font-medium text-foreground">
-              {model.releaseDate.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
+              {model.releaseDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
               })}
             </span>
           </span>
@@ -302,5 +302,5 @@ function PureModelCard({ model }: { model: ModelDefinition }) {
 
 export const ModelCard = memo(
   PureModelCard,
-  (prevProps, nextProps) => prevProps.model.id === nextProps.model.id
+  (prevProps, nextProps) => prevProps.model.id === nextProps.model.id,
 );

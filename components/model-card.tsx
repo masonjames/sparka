@@ -1,6 +1,6 @@
-import type { ModelDefinition, ProviderId } from "@ai-models/vercel-gateway";
-import { Building, Calendar, CheckCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import type { ModelDefinition, ProviderId } from '@ai-registry/vercel-gateway';
+import { Building, Calendar, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardAction,
@@ -9,16 +9,16 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { getFeatureConfig, isFeatureEnabled } from "@/lib/features-config";
-import { cn } from "@/lib/utils";
-import { getProviderIcon } from "./get-provider-icon";
+} from '@/components/ui/tooltip';
+import { getFeatureConfig, isFeatureEnabled } from '@/lib/features-config';
+import { cn } from '@/lib/utils';
+import { getProviderIcon } from './get-provider-icon';
 
 const PlaceholderIcon = () => <Building className="size-6" />;
 
@@ -26,8 +26,8 @@ const _getFeatureIconsForCard = (model: ModelDefinition) => {
   const icons: React.ReactNode[] = [];
 
   // Check for reasoning capability
-  if (model.reasoning && isFeatureEnabled("reasoning")) {
-    const config = getFeatureConfig("reasoning");
+  if (model.reasoning && isFeatureEnabled('reasoning')) {
+    const config = getFeatureConfig('reasoning');
     if (config?.icon) {
       const IconComponent = config.icon;
       icons.push(
@@ -40,7 +40,7 @@ const _getFeatureIconsForCard = (model: ModelDefinition) => {
           <TooltipContent>
             <p>{config.description}</p>
           </TooltipContent>
-        </Tooltip>
+        </Tooltip>,
       );
     }
   }
@@ -71,9 +71,9 @@ export function ModelCard({
     return (
       <Card
         className={cn(
-          "cursor-not-allowed opacity-50",
-          "bg-muted/50",
-          className
+          'cursor-not-allowed opacity-50',
+          'bg-muted/50',
+          className,
         )}
       >
         <CardHeader>
@@ -103,10 +103,10 @@ export function ModelCard({
   const cardContent = (
     <Card
       className={cn(
-        "group cursor-pointer transition-all hover:shadow-md",
-        isSelected ? "border-primary bg-primary/5" : "hover:border-primary/50",
-        isDisabled && "cursor-not-allowed opacity-50 hover:shadow-none",
-        className
+        'group cursor-pointer transition-all hover:shadow-md',
+        isSelected ? 'border-primary bg-primary/5' : 'hover:border-primary/50',
+        isDisabled && 'cursor-not-allowed opacity-50 hover:shadow-none',
+        className,
       )}
     >
       <CardHeader>

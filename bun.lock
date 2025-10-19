@@ -4,7 +4,7 @@
     "": {
       "name": "sparka-ai",
       "dependencies": {
-        "@ai-models/vercel-gateway": "workspace:*",
+        "@ai-registry/vercel-gateway": "workspace:*",
         "@ai-sdk-tools/devtools": "^0.8.4",
         "@ai-sdk/anthropic": "^2.0.3",
         "@ai-sdk/gateway": "1.0.23",
@@ -184,7 +184,7 @@
       },
     },
     "packages/models": {
-      "name": "@ai-models/vercel-gateway",
+      "name": "@ai-registry/vercel-gateway",
       "version": "0.1.0",
       "devDependencies": {
         "rimraf": "^6.0.1",
@@ -200,7 +200,7 @@
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.4.4", "", {}, "sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg=="],
 
-    "@ai-models/vercel-gateway": ["@ai-models/vercel-gateway@workspace:packages/models"],
+    "@ai-registry/vercel-gateway": ["@ai-registry/vercel-gateway@workspace:packages/models"],
 
     "@ai-sdk-tools/devtools": ["@ai-sdk-tools/devtools@0.8.4", "", { "dependencies": { "@emotion/react": "^11.14.0", "@emotion/styled": "^11.14.1", "@mui/icons-material": "^7.3.4", "@mui/material": "^7.3.4", "@types/dagre": "^0.7.53", "@xyflow/react": "^12.8.6", "ai": "^5.0.68", "dagre": "^0.8.5", "react-json-view-lite": "^2.5.0" }, "peerDependencies": { "@ai-sdk-tools/store": "*", "@ai-sdk/react": ">=0.0.1", "react": ">=16.8.0", "react-dom": ">=16.8.0" }, "optionalPeers": ["@ai-sdk-tools/store"] }, "sha512-Qu+7qMCLmsSlH2H0RwoIhFUxK8USujMpxfUinX+QkCQL6QOn0ai6ZcWwsmiTkG4nYq/D06dV/t8iGhEF1VUSpw=="],
 

@@ -1,5 +1,5 @@
 {
-  "name": "@ai-models/vercel-gateway",
+  "name": "@ai-registry/vercel-gateway",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -16,9 +16,7 @@
     }
   },
   "sideEffects": false,
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "bunx tsup",
     "prepare": "bunx tsup",
