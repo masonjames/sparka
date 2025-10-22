@@ -1,10 +1,10 @@
-import type { ModelId } from '@ai-registry/vercel-gateway';
-import { tool } from 'ai';
-import { z } from 'zod';
-import { documentHandlersByArtifactKind } from '@/lib/artifacts/server';
-import type { Session } from '@/lib/auth';
-import { getDocumentById } from '@/lib/db/queries';
-import type { StreamWriter } from '../types';
+import type { ModelId } from "@airegistry/vercel-gateway";
+import { tool } from "ai";
+import { z } from "zod";
+import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
+import type { Session } from "@/lib/auth";
+import { getDocumentById } from "@/lib/db/queries";
+import type { StreamWriter } from "../types";
 
 type UpdateDocumentProps = {
   session: Session;
@@ -34,10 +34,10 @@ Avoid:
 
 `,
     inputSchema: z.object({
-      id: z.string().describe('The ID of the document to update'),
+      id: z.string().describe("The ID of the document to update"),
       description: z
         .string()
-        .describe('The description of changes that need to be made'),
+        .describe("The description of changes that need to be made"),
     }),
     execute: async ({ id, description }) => {
       const document = await getDocumentById({ id });
@@ -45,31 +45,31 @@ Avoid:
       if (!document) {
         return {
           success: false as const,
-          error: 'Document not found',
+          error: "Document not found",
         };
       }
 
       dataStream.write({
-        type: 'data-id',
+        type: "data-id",
         data: document.id,
         transient: true,
       });
 
       dataStream.write({
-        type: 'data-messageId',
+        type: "data-messageId",
         data: messageId,
         transient: true,
       });
 
       dataStream.write({
-        type: 'data-clear',
+        type: "data-clear",
         data: null,
         transient: true,
       });
 
       const documentHandler = documentHandlersByArtifactKind.find(
         (documentHandlerByArtifactKind) =>
-          documentHandlerByArtifactKind.kind === document.kind,
+          documentHandlerByArtifactKind.kind === document.kind
       );
 
       if (!documentHandler) {
@@ -85,13 +85,13 @@ Avoid:
         selectedModel,
       });
 
-      dataStream.write({ type: 'data-finish', data: null, transient: true });
+      dataStream.write({ type: "data-finish", data: null, transient: true });
 
       return {
         id,
         title: document.title,
         kind: document.kind,
-        content: 'The document has been updated successfully.',
+        content: "The document has been updated successfully.",
         success: true as const,
       };
     },

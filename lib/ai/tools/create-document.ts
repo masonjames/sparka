@@ -1,17 +1,17 @@
-import type { ModelId } from '@ai-registry/vercel-gateway';
-import type { ModelMessage } from 'ai';
-import { tool } from 'ai';
-import { z } from 'zod';
-import type { ArtifactKind } from '@/lib/artifacts/artifact-kind';
-import { artifactKinds } from '@/lib/artifacts/artifact-kind';
+import type { ModelId } from "@airegistry/vercel-gateway";
+import type { ModelMessage } from "ai";
+import { tool } from "ai";
+import { z } from "zod";
+import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+import { artifactKinds } from "@/lib/artifacts/artifact-kind";
 import {
   type DocumentHandler,
   documentHandlersByArtifactKind,
-} from '@/lib/artifacts/server';
-import type { Session } from '@/lib/auth';
-import { generateUUID } from '@/lib/utils';
-import type { StreamWriter } from '../types';
-import type { ArtifactToolResult } from './artifact-tool-result';
+} from "@/lib/artifacts/server";
+import type { Session } from "@/lib/auth";
+import { generateUUID } from "@/lib/utils";
+import type { StreamWriter } from "../types";
+import type { ArtifactToolResult } from "./artifact-tool-result";
 
 type CreateDocumentProps = {
   session: Session;
@@ -52,11 +52,11 @@ Avoid:
       title: z
         .string()
         .describe(
-          'For code artifacts, must include file extension (e.g., "script.py", "App.tsx", "utils.js"). For other artifacts, just the filename',
+          'For code artifacts, must include file extension (e.g., "script.py", "App.tsx", "utils.js"). For other artifacts, just the filename'
         ),
       description: z
         .string()
-        .describe('A detailed description of what the document should contain'),
+        .describe("A detailed description of what the document should contain"),
       kind: z.enum(artifactKinds),
     }),
     execute: async ({ title, description, kind }) => {
@@ -69,9 +69,9 @@ Avoid:
         const conversationContext = contextForLLM
           .map(
             (msg) =>
-              `${msg.role}: ${typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}`,
+              `${msg.role}: ${typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)}`
           )
-          .join('\n');
+          .join("\n");
 
         prompt = `
       Title: ${title}
@@ -84,7 +84,7 @@ Avoid:
 
       const documentHandler = documentHandlersByArtifactKind.find(
         (documentHandlerByArtifactKind) =>
-          documentHandlerByArtifactKind.kind === kind,
+          documentHandlerByArtifactKind.kind === kind
       );
 
       if (!documentHandler) {
@@ -131,31 +131,31 @@ export async function createDocument({
   const id = generateUUID();
 
   dataStream.write({
-    type: 'data-kind',
+    type: "data-kind",
     data: kind,
     transient: true,
   });
 
   dataStream.write({
-    type: 'data-id',
+    type: "data-id",
     data: id,
     transient: true,
   });
 
   dataStream.write({
-    type: 'data-messageId',
+    type: "data-messageId",
     data: messageId,
     transient: true,
   });
 
   dataStream.write({
-    type: 'data-title',
+    type: "data-title",
     data: title,
     transient: true,
   });
 
   dataStream.write({
-    type: 'data-clear',
+    type: "data-clear",
     data: null,
     transient: true,
   });
@@ -171,13 +171,13 @@ export async function createDocument({
     selectedModel,
   });
 
-  dataStream.write({ type: 'data-finish', data: null, transient: true });
+  dataStream.write({ type: "data-finish", data: null, transient: true });
 
   const result: ArtifactToolResult = {
     id,
     title,
     kind,
-    content: 'A document was created and is now visible to the user.',
+    content: "A document was created and is now visible to the user.",
   };
 
   return result;

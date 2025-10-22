@@ -1,19 +1,19 @@
-import type { ModelId } from '@ai-registry/vercel-gateway';
-import type { FileUIPart, ModelMessage } from 'ai';
-import { codeInterpreter } from '@/lib/ai/tools/code-interpreter';
-import { createDocumentTool } from '@/lib/ai/tools/create-document';
-import { generateImage } from '@/lib/ai/tools/generate-image';
-import { getWeather } from '@/lib/ai/tools/get-weather';
-import { readDocument } from '@/lib/ai/tools/read-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { retrieve } from '@/lib/ai/tools/retrieve';
-import { stockChart } from '@/lib/ai/tools/stock-chart';
-import { updateDocument } from '@/lib/ai/tools/update-document';
-import { tavilyWebSearch } from '@/lib/ai/tools/web-search';
-import type { Session } from '@/lib/auth';
-import { env } from '@/lib/env';
-import type { StreamWriter } from '../types';
-import { deepResearch } from './deep-research/deep-research';
+import type { ModelId } from "@airegistry/vercel-gateway";
+import type { FileUIPart, ModelMessage } from "ai";
+import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
+import { createDocumentTool } from "@/lib/ai/tools/create-document";
+import { generateImage } from "@/lib/ai/tools/generate-image";
+import { getWeather } from "@/lib/ai/tools/get-weather";
+import { readDocument } from "@/lib/ai/tools/read-document";
+import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { retrieve } from "@/lib/ai/tools/retrieve";
+import { stockChart } from "@/lib/ai/tools/stock-chart";
+import { updateDocument } from "@/lib/ai/tools/update-document";
+import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
+import type { Session } from "@/lib/auth";
+import { env } from "@/lib/env";
+import type { StreamWriter } from "../types";
+import { deepResearch } from "./deep-research/deep-research";
 
 export function getTools({
   dataStream,

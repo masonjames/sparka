@@ -6,7 +6,7 @@
   "scripts": {
     "prebuild": "",
     "dev": "next dev --turbo",
-    "build": "(cd packages/models && bun run build) && tsx lib/db/migrate && next build",
+    "build": "tsx lib/db/migrate && next build",
     "lint": "bunx ultracite@latest check",
     "format": "bunx ultracite@latest fix",
     "storybook": "storybook dev -p 6006",
@@ -18,11 +18,6 @@
     "db:pull": "drizzle-kit pull",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
-    "models:base": "tsx scripts/models/fetch-base.ts",
-    "models:endpoints": "tsx scripts/models/fetch-endpoints.ts",
-    "models:extra": "bun scripts/models/fetch-extra.ts",
-    "models:sync": "SKIP_EXISTING=1 tsx scripts/models/sync.ts",
-    "models:sync:all": "OVERWRITE_MODELS=1 tsx scripts/models/sync.ts",
     "test": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
     "test:types": "next typegen . && tsc --noEmit"
@@ -179,7 +174,7 @@
     "vercel": "^42.1.1",
     "zod": "^4.1.4",
     "zustand": "^5.0.6",
-    "@ai-registry/vercel-gateway": "workspace:*"
+    "@airegistry/vercel-gateway": "0.0.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.6",
@@ -207,5 +202,7 @@
     "vitest": "^3.2.4"
   },
   "packageManager": "bun@1.1.34",
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ]
 }
