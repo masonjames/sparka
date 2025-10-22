@@ -5,7 +5,7 @@ import type { Chat } from '@/lib/db/schema';
 import { ChatSDKError } from '@/lib/ai/errors';
 import type { ChatMessage } from '@/lib/ai/types';
 import { createUIMessageStream, JsonToSseTransformStream } from 'ai';
-import { getRedisPublisher, getStreamContext } from '../../route';
+import { getRedisPublisher, getStreamContext } from '../../stream-context';
 import { differenceInSeconds } from 'date-fns';
 
 export async function GET(

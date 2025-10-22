@@ -1,3 +1,4 @@
+import type { ComponentType, ReactNode } from 'react';
 import { ChatProviders } from './chat-providers';
 import { auth } from '../../lib/auth';
 import { cookies, headers } from 'next/headers';
@@ -10,12 +11,11 @@ import { KeyboardShortcuts } from '@/components/keyboard-shortcuts';
 
 import { TRPCReactProvider } from '@/trpc/react';
 import { SessionProvider } from '@/providers/session-provider';
-import { AIDevtools } from '@ai-sdk-tools/devtools';
 
 export default async function ChatLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const cookieStore = await cookies();
   const raw = await auth.api.getSession({ headers: await headers() });
@@ -52,6 +52,12 @@ export default async function ChatLayout({
     }
   }
 
+  let Devtools: ComponentType | null = null;
+  if (process.env.NODE_ENV === 'development') {
+    const { AIDevtools } = await import('@ai-sdk-tools/devtools');
+    Devtools = AIDevtools;
+  }
+
   return (
     <TRPCReactProvider>
       <SessionProvider initialSession={session}>
@@ -74,7 +80,7 @@ export default async function ChatLayout({
           </SidebarProvider>
         </ChatProviders>
       </SessionProvider>
-      {process.env.NODE_ENV === 'development' && <AIDevtools />}
+      {Devtools ? <Devtools /> : null}
     </TRPCReactProvider>
   );
 }

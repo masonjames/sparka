@@ -38,11 +38,6 @@ import {
   type AppModelDefinition,
   type AppModelId,
 } from '@/lib/ai/app-models';
-import {
-  createResumableStreamContext,
-  type ResumableStreamContext,
-} from 'resumable-stream';
-
 import { after } from 'next/server';
 import {
   getAnonymousSession,
@@ -62,57 +57,10 @@ import { getCreditReservation } from './getCreditReservation';
 import { filterReasoningParts } from './filterReasoningParts';
 import { getThreadUpToMessageId } from './getThreadUpToMessageId';
 import { createModuleLogger } from '@/lib/logger';
-import { env } from '@/lib/env';
-
-// Create shared Redis clients for resumable stream and cleanup
-let redisPublisher: any = null;
-let redisSubscriber: any = null;
-
-if (env.REDIS_URL) {
-  (async () => {
-    const redis = await import('redis');
-    redisPublisher = redis.createClient({ url: env.REDIS_URL });
-    redisSubscriber = redis.createClient({ url: env.REDIS_URL });
-    await Promise.all([redisPublisher.connect(), redisSubscriber.connect()]);
-  })();
-}
-
-let globalStreamContext: ResumableStreamContext | null = null;
-
-export function getStreamContext() {
-  if (!globalStreamContext) {
-    try {
-      globalStreamContext = createResumableStreamContext({
-        waitUntil: after,
-        keyPrefix: 'sparka-ai:resumable-stream',
-        ...(redisPublisher && redisSubscriber
-          ? {
-              publisher: redisPublisher,
-              subscriber: redisSubscriber,
-            }
-          : {}),
-      });
-    } catch (error: any) {
-      if (error.message.includes('REDIS_URL')) {
-        console.log(
-          ' > Resumable streams are disabled due to missing REDIS_URL',
-        );
-      } else {
-        console.error(error);
-      }
-    }
-  }
-
-  return globalStreamContext;
-}
-
-export function getRedisSubscriber() {
-  return redisSubscriber;
-}
-
-export function getRedisPublisher() {
-  return redisPublisher;
-}
+import {
+  getStreamContext,
+  getRedisPublisher,
+} from './stream-context';
 
 function generateFollowupSuggestions(modelMessages: ModelMessage[]) {
   const maxQuestionCount = 5;
@@ -161,6 +109,7 @@ async function streamFollowupSuggestions({
 
 export async function POST(request: NextRequest) {
   const log = createModuleLogger('api:chat');
+  const redisPublisher = getRedisPublisher();
   try {
     const {
       id: chatId,

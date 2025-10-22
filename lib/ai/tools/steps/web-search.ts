@@ -26,11 +26,34 @@ export type WebSearchResponse = {
   error?: string;
 };
 
-// Initialize search providers
-const tvly = tavily({ apiKey: env.TAVILY_API_KEY as string });
-const firecrawl = new FirecrawlApp({
-  apiKey: env.FIRECRAWL_API_KEY ?? '',
-});
+let tavilyClient: ReturnType<typeof tavily> | null = null;
+let firecrawlClient: FirecrawlApp | null = null;
+
+function getTavilyClient() {
+  if (!env.TAVILY_API_KEY) {
+    return null;
+  }
+
+  if (!tavilyClient) {
+    tavilyClient = tavily({ apiKey: env.TAVILY_API_KEY });
+  }
+
+  return tavilyClient;
+}
+
+function getFirecrawlClient() {
+  if (!env.FIRECRAWL_API_KEY) {
+    return null;
+  }
+
+  if (!firecrawlClient) {
+    firecrawlClient = new FirecrawlApp({
+      apiKey: env.FIRECRAWL_API_KEY,
+    });
+  }
+
+  return firecrawlClient;
+}
 
 const log = createModuleLogger('tools/steps/web-search');
 
@@ -49,6 +72,15 @@ export async function webSearchStep({
     let results: WebSearchResult[] = [];
 
     if (providerOptions.provider === 'tavily') {
+      const tvly = getTavilyClient();
+      if (!tvly) {
+        return {
+          results: [],
+          error:
+            'Tavily search is not configured. Add TAVILY_API_KEY to enable this provider.',
+        };
+      }
+
       const response = await tvly.search(query, {
         searchDepth: providerOptions.searchDepth || 'basic',
         maxResults,
@@ -63,6 +95,15 @@ export async function webSearchStep({
         content: r.content,
       }));
     } else if (providerOptions.provider === 'firecrawl') {
+      const firecrawl = getFirecrawlClient();
+      if (!firecrawl) {
+        return {
+          results: [],
+          error:
+            'Firecrawl search is not configured. Add FIRECRAWL_API_KEY to enable this provider.',
+        };
+      }
+
       const response = await firecrawl.search(query, {
         timeout: providerOptions.timeout || 15000,
         limit: maxResults,

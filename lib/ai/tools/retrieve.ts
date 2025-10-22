@@ -3,9 +3,21 @@ import { z } from 'zod';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { env } from '@/lib/env';
 
-const app = new FirecrawlApp({
-  apiKey: env.FIRECRAWL_API_KEY,
-});
+let firecrawlClient: FirecrawlApp | null = null;
+
+function getFirecrawlClient() {
+  if (!env.FIRECRAWL_API_KEY) {
+    return null;
+  }
+
+  if (!firecrawlClient) {
+    firecrawlClient = new FirecrawlApp({
+      apiKey: env.FIRECRAWL_API_KEY,
+    });
+  }
+
+  return firecrawlClient;
+}
 
 export const retrieve = tool({
   description: `Fetch structured information from a single URL via Firecrawl.
@@ -20,6 +32,13 @@ Avoid:
   }),
   execute: async ({ url }: { url: string }) => {
     try {
+      const app = getFirecrawlClient();
+      if (!app) {
+        return {
+          error:
+            'Firecrawl is not configured. Please add FIRECRAWL_API_KEY to enable retrieval.',
+        };
+      }
       const content = await app.scrapeUrl(url);
       if (!content.success || !content.metadata) {
         return {
