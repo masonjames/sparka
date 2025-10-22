@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   transpilePackages: ["@ai-models/vercel-gateway"],
   experimental: {
-    ppr: "incremental",
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
@@ -12,6 +11,8 @@ const nextConfig: NextConfig = {
     ],
     // Enable external packages for server components to allow pino transports
   },
+  // PPR (Partial Prerendering) configuration moved to cacheComponents in Next.js 16
+  cacheComponents: true,
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
     remotePatterns: [
