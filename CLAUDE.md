@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Sparka is a production-ready AI chat application built with Next.js 15, supporting 120+ AI models through Vercel AI Gateway. Features include multi-model chat, authentication, document generation, code execution, web search, and advanced chat capabilities like branching and resumable streams.
+Chat by Mason James is a production-ready AI chat application built with Next.js 15, supporting 120+ AI models through Vercel AI Gateway. Features include multi-model chat, authentication, document generation, code execution, web search, and advanced chat capabilities like branching and resumable streams.
 
 ## Package Manager & Development
 
