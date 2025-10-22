@@ -19,7 +19,7 @@ export function HeaderUserNav({
 }: {
   user: NonNullable<Session["user"]>;
 }) {
-  const { setTheme, theme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const { credits } = useGetCredits();
 
   return (
@@ -54,9 +54,9 @@ export function HeaderUserNav({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer"
-          onSelect={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onSelect={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         >
-          {`Toggle ${theme === "light" ? "dark" : "light"} mode`}
+          {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>

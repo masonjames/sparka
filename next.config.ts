@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const MODEL_REGISTRY_URL = "ai-registry.app";
+const MODEL_REGISTRY_URL = "airegistry.app";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
