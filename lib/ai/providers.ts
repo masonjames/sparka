@@ -2,11 +2,12 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { type OpenAIResponsesProviderOptions, openai } from "@ai-sdk/openai";
+import type { ModelId } from "@airegistry/vercel-gateway";
+import { getModelAndProvider } from "@airegistry/vercel-gateway";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-import type { ImageModelId, ModelId } from "../../packages/models";
-import { getModelAndProvider } from "../../packages/models";
 import type { AppModelId } from "./app-models";
 import { getAppModelDefinition, getImageModelDefinition } from "./app-models";
+import type { ImageModelId } from "../models/image-model-id";
 
 const _telemetryConfig = {
   telemetry: {
@@ -33,7 +34,7 @@ export const getLanguageModel = (modelId: ModelId) => {
 
 export const getImageModel = (modelId: ImageModelId) => {
   const model = getImageModelDefinition(modelId);
-  const { model: modelIdShort } = getModelAndProvider(modelId);
+  const { model: modelIdShort } = getModelAndProvider(modelId as ModelId);
 
   if (model.owned_by === "openai") {
     return openai.image(modelIdShort);

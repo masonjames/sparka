@@ -1,4 +1,4 @@
-import type { ModelId } from "@ai-models/vercel-gateway";
+import type { ModelId } from "@airegistry/vercel-gateway";
 import type { ModelMessage } from "ai";
 import { tool } from "ai";
 import { z } from "zod";

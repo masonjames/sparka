@@ -1,4 +1,4 @@
-import type { ModelId } from "@ai-models/vercel-gateway";
+import type { ModelId } from "@airegistry/vercel-gateway";
 import { tool } from "ai";
 import { z } from "zod";
 import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";

@@ -1,8 +1,8 @@
+import type { ModelId } from "@airegistry/vercel-gateway";
 import { codeDocumentHandler } from "@/lib/artifacts/code/server";
 import { sheetDocumentHandler } from "@/lib/artifacts/sheet/server";
 import { textDocumentHandler } from "@/lib/artifacts/text/server";
 import type { Session } from "@/lib/auth";
-import type { ModelId } from "../../packages/models";
 import type { StreamWriter } from "../ai/types";
 import { saveDocument } from "../db/queries";
 import type { Document } from "../db/schema";

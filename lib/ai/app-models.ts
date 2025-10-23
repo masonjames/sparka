@@ -1,13 +1,13 @@
 import {
   allModels as allModelsData,
-  type ImageModelId,
   type ModelDefinition,
   type ModelId,
-} from "@ai-models/vercel-gateway";
+} from "@airegistry/vercel-gateway";
 import {
   type ImageModelData,
   imageModelsData,
 } from "@/lib/models/image-models";
+import type { ImageModelId } from "../models/image-model-id";
 
 export type ImageModelDefinition = ImageModelData & {
   features?: never; // deprecated: use ModelExtra in base defs if needed later
