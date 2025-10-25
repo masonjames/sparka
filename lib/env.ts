@@ -6,7 +6,7 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     // Required core
-    POSTGRES_URL: z.string().min(1),
+    DATABASE_URL: z.string().min(1),
     AI_GATEWAY_API_KEY: z.string().min(1),
     CRON_SECRET: z.string().min(1),
     AUTH_SECRET: z.string().min(1),
