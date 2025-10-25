@@ -26,11 +26,11 @@ export type WebSearchResponse = {
   error?: string;
 };
 
-// Initialize search providers
-const tvly = tavily({ apiKey: env.TAVILY_API_KEY as string });
-const firecrawl = new FirecrawlApp({
-  apiKey: env.FIRECRAWL_API_KEY ?? "",
-});
+// Initialize search providers lazily to avoid runtime errors when keys are missing
+const tvly = env.TAVILY_API_KEY ? tavily({ apiKey: env.TAVILY_API_KEY }) : null;
+const firecrawl = env.FIRECRAWL_API_KEY
+  ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
+  : null;
 
 const log = createModuleLogger("tools/steps/web-search");
 
@@ -49,6 +49,13 @@ export async function webSearchStep({
     let results: WebSearchResult[] = [];
 
     if (providerOptions.provider === "tavily") {
+      if (!tvly) {
+        return {
+          results: [],
+          error:
+            "Tavily is not configured. Set TAVILY_API_KEY or choose a different provider.",
+        };
+      }
       const response = await tvly.search(query, {
         searchDepth: providerOptions.searchDepth || "basic",
         maxResults,
@@ -63,6 +70,13 @@ export async function webSearchStep({
         content: r.content,
       }));
     } else if (providerOptions.provider === "firecrawl") {
+      if (!firecrawl) {
+        return {
+          results: [],
+          error:
+            "Firecrawl is not configured. Set FIRECRAWL_API_KEY or choose a different provider.",
+        };
+      }
       const response = await firecrawl.search(query, {
         timeout: providerOptions.timeout || 15_000,
         limit: maxResults,

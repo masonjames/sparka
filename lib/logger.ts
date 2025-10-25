@@ -4,9 +4,9 @@ import { env } from "@/lib/env";
 // Prefer JSON in production; pretty in development.
 // We also add base bindings so child loggers inherit app metadata.
 export const logger: Logger =
-  env.NEXT_PUBLIC_NODE_ENV === "production"
+  process.env.NODE_ENV === "production"
     ? pino({
-        level: env.LOG_LEVEL || "info",
+        level: "info",
         base: { app: "sparka" },
         timestamp: stdTimeFunctions.isoTime,
         redact: {
@@ -21,7 +21,7 @@ export const logger: Logger =
         },
       })
     : pino({
-        level: env.LOG_LEVEL || "debug",
+        level: "debug",
         base: { app: "sparka" },
         timestamp: stdTimeFunctions.isoTime,
         transport: {
