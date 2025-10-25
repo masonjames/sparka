@@ -73,6 +73,8 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    cp .env.example .env.local
    ```
 
+   Refer to `.env.example` for more instructions.
+
    **Required:**
 
    - `DATABASE_URL` - Database connection
@@ -80,8 +82,9 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    - `BLOB_READ_WRITE_TOKEN` - Vercel Blob read/write token
    - `CRON_SECRET` - Cron job authentication
    - `AUTH_SECRET` - Better Auth secret
-   - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` - Google OAuth
-   - `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` - GitHub OAuth
+   - One auth provider (choose one pair):
+     - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`
+     - `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`
 
    **Optional:**
 
@@ -91,6 +94,12 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    - `EXA_API_KEY` - Web search
    - `FIRECRAWL_API_KEY` - Web scraping
    - `SANDBOX_TEMPLATE_ID` - Code execution
+   - `E2B_API_KEY` - E2B Code Interpreter
+   - `LANGFUSE_PUBLIC_KEY` - Observability (Langfuse)
+   - `LANGFUSE_SECRET_KEY` - Observability (Langfuse)
+   - `LANGFUSE_BASE_URL` - Langfuse base URL (optional)
+   - `VERCEL_URL` - Deployment URL
+   - `VERCEL_PROJECT_PRODUCTION_URL` - Production URL override
 
 3. **Database Setup**
 
@@ -104,3 +113,7 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    ```
 
 Visit [http://localhost:3000](http://localhost:3000) to start building.
+
+## Deploy Your Own
+
+[![Deploy with Vercel](https://vercel.com/button)](<https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka&project-name=sparka-ai&repo-name=sparka&env=DATABASE_URL,AI_GATEWAY_API_KEY,AUTH_SECRET,BLOB_READ_WRITE_TOKEN,AUTH_GOOGLE_ID,AUTH_GOOGLE_SECRET,AUTH_GITHUB_ID,AUTH_GITHUB_SECRET,REDIS_URL,OPENAI_API_KEY,TAVILY_API_KEY,EXA_API_KEY,FIRECRAWL_API_KEY,SANDBOX_TEMPLATE_ID,E2B_API_KEY,LANGFUSE_PUBLIC_KEY,LANGFUSE_SECRET_KEY,LANGFUSE_BASE_URL&envDescription=Required%3A%20DATABASE_URL%2C%20AI_GATEWAY_API_KEY%2C%20AUTH_SECRET%2C%20BLOB_READ_WRITE_TOKEN.%20Auth%3A%20set%20at%20least%20one%20provider%20pair%20(Google%20or%20GitHub)%20%E2%80%94%20AUTH_GOOGLE_ID%2FAUTH_GOOGLE_SECRET%20or%20AUTH_GITHUB_ID%2FAUTH_GITHUB_SECRET&envLink=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka%2Fblob%2Fmain%2F.env.example>)
