@@ -43,7 +43,7 @@ export async function setAnonymousSession(
     path: "/",
     maxAge: ANONYMOUS_LIMITS.SESSION_DURATION,
     sameSite: "lax",
-    secure: env.NEXT_PUBLIC_NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
   });
 }
 

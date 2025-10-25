@@ -40,7 +40,7 @@ export function calculateMessagesTokens(messages: ModelMessage[]): number {
 // trim prompt to maximum context size
 export function trimPrompt(
   prompt: string,
-  contextSize = Number(env.CONTEXT_SIZE) || 128_000
+  contextSize: number
 ) {
   if (!prompt) {
     return "";

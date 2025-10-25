@@ -67,7 +67,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
 
-
   return (
     <html
       className={`${geist.variable} ${geistMono.variable}`}
@@ -84,7 +83,7 @@ export default async function RootLayout({
             __html: THEME_COLOR_SCRIPT,
           }}
         />
-        {env.NEXT_PUBLIC_NODE_ENV !== "production" ? (
+        {process.env.NODE_ENV !== "production" ? (
           <Script
             src="https://unpkg.com/react-scan/dist/auto.global.js"
             strategy="beforeInteractive"

@@ -29,6 +29,11 @@ export type SiteConfig = {
     aiProviders: string[];
     paymentProcessors: string[];
   };
+  integrations: {
+    sandbox: boolean;
+    webSearch: boolean;
+    openai: boolean;
+  };
   pricing?: PricingConfig;
   legal: {
     minimumAge: number;
@@ -84,6 +89,11 @@ export const siteConfig: SiteConfig = {
       "ZAI",
     ],
     paymentProcessors: [],
+  },
+  integrations: {
+    sandbox: Boolean(env.SANDBOX_TEMPLATE_ID),
+    webSearch: Boolean(env.TAVILY_API_KEY),
+    openai: Boolean(env.OPENAI_API_KEY),
   },
   legal: {
     minimumAge: 13,
