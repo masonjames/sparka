@@ -6,7 +6,6 @@ import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { env } from "@/lib/env";
 import { siteConfig } from "@/lib/config";
 import { ConfigProvider } from "@/components/config-provider";
 
