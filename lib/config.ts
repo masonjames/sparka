@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 export type PricingConfig = {
   currency?: string;
   free?: {
@@ -42,6 +44,10 @@ export type SiteConfig = {
       title: string;
       lastUpdated?: string;
     };
+  };
+  authentication: {
+    google: boolean;
+    github: boolean;
   };
 };
 
@@ -93,5 +99,9 @@ export const siteConfig: SiteConfig = {
       title: "Terms of Service",
       lastUpdated: "July 24, 2025",
     },
+  },
+  authentication: {
+    google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
+    github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
   },
 };

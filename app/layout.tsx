@@ -7,6 +7,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/lib/env";
+import { siteConfig } from "@/lib/config";
+import { ConfigProvider } from "@/components/config-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sparka.ai"),
@@ -64,6 +66,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+
   return (
     <html
       className={`${geist.variable} ${geistMono.variable}`}
@@ -92,15 +96,17 @@ export default async function RootLayout({
           src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
           strategy="beforeInteractive"
         />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          disableTransitionOnChange
-          enableSystem
-        >
-          <Toaster position="top-center" />
-          {children}
-        </ThemeProvider>
+        <ConfigProvider value={siteConfig}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            disableTransitionOnChange
+            enableSystem
+          >
+            <Toaster position="top-center" />
+            {children}
+          </ThemeProvider>
+        </ConfigProvider>
         <Analytics />
       </body>
     </html>
