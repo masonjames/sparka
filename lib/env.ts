@@ -7,7 +7,6 @@ export const env = createEnv({
   server: {
     // Required core
     DATABASE_URL: z.string().min(1),
-    AI_GATEWAY_API_KEY: z.string().min(1),
     CRON_SECRET: z.string().min(1),
     AUTH_SECRET: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
@@ -17,6 +16,10 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
+
+    // One of the AI Gateway API key or Vercel OIDC token must be configured
+    AI_GATEWAY_API_KEY: z.string().optional(),
+    VERCEL_OIDC_TOKEN: z.string().optional(),
 
     // Optional features
     REDIS_URL: z.string().optional(),
@@ -30,10 +33,8 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   },
-  client: {
-  },
-  experimental__runtimeEnv: {
-  },
+  client: {},
+  experimental__runtimeEnv: {},
 });
 
 if (
@@ -43,5 +44,14 @@ if (
 ) {
   throw new Error(
     "No social auth providers configured: enable Google by setting AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET, or enable GitHub by setting AUTH_GITHUB_ID and AUTH_GITHUB_SECRET."
+  );
+}
+
+if (
+  typeof window === "undefined" &&
+  !(env.VERCEL_OIDC_TOKEN || env.AI_GATEWAY_API_KEY)
+) {
+  throw new Error(
+    "No AI Gateway API key or Vercel OIDC token configured. Please set one of them in the environment variables."
   );
 }

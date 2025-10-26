@@ -73,18 +73,37 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    cp .env.example .env.local
    ```
 
-   Refer to `.env.example` for more instructions.
+   ### Vercel (recommended)
 
-   **Required:**
+   - Use the Deploy button below. In the flow, add the Vercel Postgres and Vercel Blob integrations (or select existing resources).
 
-   - `DATABASE_URL` - Database connection
-   - `AI_GATEWAY_API_KEY` - Vercel AI Gateway
-   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob read/write token
-   - `CRON_SECRET` - Cron job authentication
-   - `AUTH_SECRET` - Better Auth secret
-   - One auth provider (choose one pair):
-     - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`
-     - `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`
+   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-description=Production-ready%20AI%20chat&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2FFranciscoMoretti%2Fsparka%2Frefs%2Fheads%2Fmain%2Fapp%2Fopengraph-image.png&demo-title=Sparka%20AI%20Chatbot&demo-url=https%3A%2F%2Fwww.sparka.ai%2F&env=AUTH_SECRET%2CAUTH_GOOGLE_ID%2CAUTH_GOOGLE_SECRET%2CAUTH_GITHUB_ID%2CAUTH_GITHUB_SECRET&envDescription=Set%20AUTH_SECRET%20with%20Generate%20Secret%20%28https%3A%2F%2Fgenerate-secret.vercel.app%2F32%29.%20Set%20only%20one%20auth%20provider%20pair%20%28Google%20%28https%3A%2F%2Fwww.better-auth.com%2Fdocs%2Fauthentication%2Fgoogle%29%20or%20GitHub%20%28https%3A%2F%2Fwww.better-auth.com%2Fdocs%2Fauthentication%2Fgithub%29%29.%20You%20can%20set%20other%20optional%20variables%20to%20enable%20other%20features.&envLink=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka%2Fblob%2Fmain%2F.env.example&from=templates&products=%255B%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522neon%2522%252C%2522integrationSlug%2522%253A%2522neon%2522%257D%252C%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522upstash-kv%2522%252C%2522integrationSlug%2522%253A%2522upstash%2522%257D%252C%257B%2522type%2522%253A%2522blob%2522%257D%255D&project-name=Sparka%20AI&repository-name=sparka&repository-url=https%3A%2F%2Fgithub.com%2FFranciscoMoretti%2Fsparka&skippable-integrations=1)
+
+   - After deploy (or locally after linking), pull envs:
+     ```bash
+     vercel link
+     vercel env pull .env.local
+     ```
+   - Provided automatically on Vercel:
+     - `VERCEL_OIDC_TOKEN` — replaces the need for `AI_GATEWAY_API_KEY`
+     - `DATABASE_URL` — via Vercel Postgres integration
+     - `BLOB_READ_WRITE_TOKEN` — via Vercel Blob integration
+     - `CRON_SECRET` — available on Vercel projects
+   - You still must set:
+     - `AUTH_SECRET` — Better Auth secret
+     - One auth provider (choose one pair):
+       - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`
+       - `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`
+
+   ### Self-hosted / other platforms
+
+   - Set all required variables manually:
+     - `DATABASE_URL`
+     - `BLOB_READ_WRITE_TOKEN`
+     - `CRON_SECRET`
+     - `AUTH_SECRET`
+     - One auth provider pair (Google or GitHub)
+     - And either `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN`
 
    **Optional:**
 
@@ -116,4 +135,4 @@ Visit [http://localhost:3000](http://localhost:3000) to start building.
 
 ## Deploy Your Own
 
-[![Deploy with Vercel](https://vercel.com/button)](<https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka&project-name=sparka-ai&repo-name=sparka&env=DATABASE_URL,AI_GATEWAY_API_KEY,AUTH_SECRET,BLOB_READ_WRITE_TOKEN,AUTH_GOOGLE_ID,AUTH_GOOGLE_SECRET,AUTH_GITHUB_ID,AUTH_GITHUB_SECRET,REDIS_URL,OPENAI_API_KEY,TAVILY_API_KEY,EXA_API_KEY,FIRECRAWL_API_KEY,SANDBOX_TEMPLATE_ID,E2B_API_KEY,LANGFUSE_PUBLIC_KEY,LANGFUSE_SECRET_KEY,LANGFUSE_BASE_URL&envDescription=Required%3A%20DATABASE_URL%2C%20AI_GATEWAY_API_KEY%2C%20AUTH_SECRET%2C%20BLOB_READ_WRITE_TOKEN.%20Auth%3A%20set%20at%20least%20one%20provider%20pair%20(Google%20or%20GitHub)%20%E2%80%94%20AUTH_GOOGLE_ID%2FAUTH_GOOGLE_SECRET%20or%20AUTH_GITHUB_ID%2FAUTH_GITHUB_SECRET&envLink=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka%2Fblob%2Fmain%2F.env.example>)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-description=Production-ready%20AI%20chat&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2FFranciscoMoretti%2Fsparka%2Frefs%2Fheads%2Fmain%2Fapp%2Fopengraph-image.png&demo-title=Sparka%20AI%20Chatbot&demo-url=https%3A%2F%2Fwww.sparka.ai%2F&env=AUTH_SECRET%2CAUTH_GOOGLE_ID%2CAUTH_GOOGLE_SECRET%2CAUTH_GITHUB_ID%2CAUTH_GITHUB_SECRET&envDescription=Set%20AUTH_SECRET%20with%20Generate%20Secret%20%28https%3A%2F%2Fgenerate-secret.vercel.app%2F32%29.%20Set%20only%20one%20auth%20provider%20pair%20%28Google%20%28https%3A%2F%2Fwww.better-auth.com%2Fdocs%2Fauthentication%2Fgoogle%29%20or%20GitHub%20%28https%3A%2F%2Fwww.better-auth.com%2Fdocs%2Fauthentication%2Fgithub%29%29.%20You%20can%20set%20other%20optional%20variables%20to%20enable%20other%20features.&envLink=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka%2Fblob%2Fmain%2F.env.example&from=templates&products=%255B%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522neon%2522%252C%2522integrationSlug%2522%253A%2522neon%2522%257D%252C%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522upstash-kv%2522%252C%2522integrationSlug%2522%253A%2522upstash%2522%257D%252C%257B%2522type%2522%253A%2522blob%2522%257D%255D&project-name=Sparka%20AI&repository-name=sparka&repository-url=https%3A%2F%2Fgithub.com%2FFranciscoMoretti%2Fsparka&skippable-integrations=1)
