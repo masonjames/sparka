@@ -45,7 +45,7 @@ export function DocumentPreview({
   );
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
-  const hitboxRef = useRef<HTMLDivElement>(null);
+  const hitboxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const boundingBox = hitboxRef.current?.getBoundingClientRect();
@@ -161,7 +161,7 @@ const PureHitboxLayer = ({
   setArtifact,
   messageId,
 }: {
-  hitboxRef: React.RefObject<HTMLDivElement>;
+  hitboxRef: React.RefObject<HTMLDivElement | null>;
   result: any;
   setArtifact: (
     updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)

@@ -17,7 +17,7 @@ import type { Attachment, UiToolName } from "@/lib/ai/types";
 import { useDefaultModel, useModelChange } from "./default-model-provider";
 
 type ChatInputContextType = {
-  editorRef: React.RefObject<LexicalChatInputRef>;
+  editorRef: React.RefObject<LexicalChatInputRef | null>;
   selectedTool: UiToolName | null;
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
   attachments: Attachment[];
@@ -99,7 +99,7 @@ export function ChatInputProvider({
   });
 
   // Create ref for lexical editor
-  const editorRef = useRef<LexicalChatInputRef>(null);
+  const editorRef = useRef<LexicalChatInputRef | null>(null);
 
   // Get the initial input value from localStorage if enabled and no initial input provided
   const getInitialInput = useCallback(() => {

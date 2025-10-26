@@ -13,6 +13,7 @@ import {
   memo,
   type ReactNode,
   type SetStateAction,
+  type RefObject,
   useEffect,
   useRef,
   useState,
@@ -332,11 +333,12 @@ function PureToolbar({
   storeApi: ReturnType<typeof useChatStoreApi>;
 }) {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // @ts-expect-error - usehooks-ts types are not updated for React 19
   useOnClickOutside(toolbarRef, () => {
     setIsToolbarVisible(false);
     setSelectedTool(null);

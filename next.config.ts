@@ -6,14 +6,13 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
-    ppr: "incremental",
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
       "@lobehub/icons",
     ],
-    // Enable external packages for server components to allow pino transports
   },
+  cacheComponents: true,
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
     remotePatterns: [
