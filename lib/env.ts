@@ -7,7 +7,6 @@ export const env = createEnv({
   server: {
     // Required core
     DATABASE_URL: z.string().min(1),
-    CRON_SECRET: z.string().min(1),
     AUTH_SECRET: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
@@ -20,6 +19,9 @@ export const env = createEnv({
     // One of the AI Gateway API key or Vercel OIDC token must be configured
     AI_GATEWAY_API_KEY: z.string().optional(),
     VERCEL_OIDC_TOKEN: z.string().optional(),
+
+    // Optional cleanup cron job secret
+    CRON_SECRET: z.string().optional(),
 
     // Optional features
     REDIS_URL: z.string().optional(),
