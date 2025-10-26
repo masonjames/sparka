@@ -1,6 +1,7 @@
 import {
   type DetailedHTMLProps,
   type HTMLAttributes,
+  type JSX,
   isValidElement,
   memo,
 } from "react";
@@ -120,7 +121,7 @@ type HeadingProps<TTag extends keyof JSX.IntrinsicElements> = WithNode<
 >;
 
 const MemoH1 = memo<HeadingProps<"h1">>(
-  ({ children, className, ...props }) => (
+  ({ children, className, ...props }: HeadingProps<"h1">) => (
     <h1
       className={cn("mt-6 mb-2 font-semibold text-3xl", className)}
       {...props}
@@ -133,7 +134,7 @@ const MemoH1 = memo<HeadingProps<"h1">>(
 MemoH1.displayName = "MarkdownH1";
 
 const MemoH2 = memo<HeadingProps<"h2">>(
-  ({ children, className, ...props }) => (
+  ({ children, className, ...props }: HeadingProps<"h2">) => (
     <h2
       className={cn("mt-6 mb-2 font-semibold text-2xl", className)}
       {...props}
@@ -146,7 +147,7 @@ const MemoH2 = memo<HeadingProps<"h2">>(
 MemoH2.displayName = "MarkdownH2";
 
 const MemoH3 = memo<HeadingProps<"h3">>(
-  ({ children, className, ...props }) => (
+  ({ children, className, ...props }: HeadingProps<"h3">) => (
     <h3 className={cn("mt-6 mb-2 font-semibold text-xl", className)} {...props}>
       {children}
     </h3>
@@ -156,7 +157,7 @@ const MemoH3 = memo<HeadingProps<"h3">>(
 MemoH3.displayName = "MarkdownH3";
 
 const MemoH4 = memo<HeadingProps<"h4">>(
-  ({ children, className, ...props }) => (
+  ({ children, className, ...props }: HeadingProps<"h4">) => (
     <h4 className={cn("mt-6 mb-2 font-semibold text-lg", className)} {...props}>
       {children}
     </h4>
@@ -166,7 +167,7 @@ const MemoH4 = memo<HeadingProps<"h4">>(
 MemoH4.displayName = "MarkdownH4";
 
 const MemoH5 = memo<HeadingProps<"h5">>(
-  ({ children, className, ...props }) => (
+  ({ children, className, ...props }: HeadingProps<"h5">) => (
     <h5
       className={cn("mt-6 mb-2 font-semibold text-base", className)}
       {...props}
