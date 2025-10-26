@@ -12,7 +12,8 @@ const nextConfig: NextConfig = {
       "@lobehub/icons",
     ],
   },
-  cacheComponents: true,
+  // TODO: Uncomment this when we can exclude /api/cron/cleanup from caching selectively
+  // cacheComponents: true,
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
     remotePatterns: [
