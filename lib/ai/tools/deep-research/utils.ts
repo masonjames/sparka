@@ -1,4 +1,4 @@
-import type { ModelId } from "@ai-models/vercel-gateway";
+import type { ModelId } from "@airegistry/vercel-gateway";
 import type { ModelMessage, ToolModelMessage } from "ai";
 import { experimental_createMCPClient } from "ai";
 import type { StreamWriter } from "@/lib/ai/types";

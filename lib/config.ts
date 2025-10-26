@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 export type PricingConfig = {
   currency?: string;
   free?: {
@@ -27,6 +29,11 @@ export type SiteConfig = {
     aiProviders: string[];
     paymentProcessors: string[];
   };
+  integrations: {
+    sandbox: boolean;
+    webSearch: boolean;
+    openai: boolean;
+  };
   pricing?: PricingConfig;
   legal: {
     minimumAge: number;
@@ -42,6 +49,10 @@ export type SiteConfig = {
       title: string;
       lastUpdated?: string;
     };
+  };
+  authentication: {
+    google: boolean;
+    github: boolean;
   };
 };
 
@@ -79,6 +90,11 @@ export const siteConfig: SiteConfig = {
     ],
     paymentProcessors: [],
   },
+  integrations: {
+    sandbox: Boolean(env.SANDBOX_TEMPLATE_ID),
+    webSearch: Boolean(env.TAVILY_API_KEY),
+    openai: Boolean(env.OPENAI_API_KEY),
+  },
   legal: {
     minimumAge: 13,
     governingLaw: "United States",
@@ -93,5 +109,9 @@ export const siteConfig: SiteConfig = {
       title: "Terms of Service",
       lastUpdated: "July 24, 2025",
     },
+  },
+  authentication: {
+    google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
+    github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
   },
 };

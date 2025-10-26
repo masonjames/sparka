@@ -1,5 +1,5 @@
 export const isProductionEnvironment =
-  process.env.NEXT_PUBLIC_NODE_ENV === "production";
+  process.env.NODE_ENV === "production";
 
 export const isTestEnvironment = Boolean(
   process.env.PLAYWRIGHT_TEST_BASE_URL ||

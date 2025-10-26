@@ -1,4 +1,4 @@
-import type { ModelDefinition, ProviderId } from "@ai-models/vercel-gateway";
+import type { ModelDefinition, ProviderId } from "@airegistry/vercel-gateway";
 import { Building, Calendar, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {

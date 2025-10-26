@@ -1,4 +1,4 @@
-import type { ModelId } from "@ai-models/vercel-gateway";
+import type { ModelId } from "@airegistry/vercel-gateway";
 import type { FileUIPart, ModelMessage } from "ai";
 import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
@@ -11,7 +11,7 @@ import { stockChart } from "@/lib/ai/tools/stock-chart";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Session } from "@/lib/auth";
-import { env } from "@/lib/env";
+import { siteConfig } from "@/lib/config";
 import type { StreamWriter } from "../types";
 import { deepResearch } from "./deep-research/deep-research";
 
@@ -60,7 +60,7 @@ export function getTools({
     //   dataStream,
     // }),
     retrieve,
-    ...(env.NEXT_PUBLIC_TAVILY_AVAILABLE
+    ...(siteConfig.integrations.webSearch
       ? {
           webSearch: tavilyWebSearch({
             dataStream,
@@ -69,12 +69,12 @@ export function getTools({
         }
       : {}),
 
-    ...(env.NEXT_PUBLIC_SANDBOX_AVAILABLE ? { stockChart } : {}),
-    ...(env.NEXT_PUBLIC_SANDBOX_AVAILABLE ? { codeInterpreter } : {}),
-    ...(env.NEXT_PUBLIC_OPENAI_AVAILABLE
+    ...(siteConfig.integrations.sandbox ? { stockChart } : {}),
+    ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
+    ...(siteConfig.integrations.openai
       ? { generateImage: generateImage({ attachments, lastGeneratedImage }) }
       : {}),
-    ...(env.NEXT_PUBLIC_TAVILY_AVAILABLE
+    ...(siteConfig.integrations.webSearch
       ? {
           deepResearch: deepResearch({
             session,

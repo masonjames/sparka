@@ -1,5 +1,5 @@
 "use client";
-import type { ProviderId } from "@ai-models/vercel-gateway";
+import type { ProviderId } from "@airegistry/vercel-gateway";
 import {
   Alibaba,
   Anthropic,

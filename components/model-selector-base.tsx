@@ -4,7 +4,7 @@ import type {
   ModelDefinition,
   ModelId,
   ProviderId,
-} from "@ai-models/vercel-gateway";
+} from "@airegistry/vercel-gateway";
 import { ChevronUpIcon, FilterIcon } from "lucide-react";
 import {
   type ComponentProps,

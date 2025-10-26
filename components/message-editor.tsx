@@ -1,5 +1,5 @@
 "use client";
-import type { ModelId } from "@ai-models/vercel-gateway";
+import type { ModelId } from "@airegistry/vercel-gateway";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStatus } from "@/lib/stores/hooks";

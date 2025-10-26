@@ -2,10 +2,13 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { tool } from "ai";
 import { z } from "zod";
 import { env } from "@/lib/env";
+import { createModuleLogger } from "../../logger";
 
-const app = new FirecrawlApp({
-  apiKey: env.FIRECRAWL_API_KEY,
-});
+const log = createModuleLogger("tools/retrieve");
+
+const app = env.FIRECRAWL_API_KEY
+  ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
+  : null;
 
 export const retrieve = tool({
   description: `Fetch structured information from a single URL via Firecrawl.
@@ -20,6 +23,12 @@ Avoid:
   }),
   execute: async ({ url }: { url: string }) => {
     try {
+      if (!app) {
+        return {
+          error:
+            "Firecrawl is not configured. Set FIRECRAWL_API_KEY to enable retrieval.",
+        };
+      }
       const content = await app.scrapeUrl(url);
       if (!(content.success && content.metadata)) {
         return {
@@ -69,7 +78,7 @@ Avoid:
         ],
       };
     } catch (error) {
-      console.error("Firecrawl API error:", error);
+      log.error({ err: error, url }, "Firecrawl API error in retrieve tool");
       return { error: "Failed to retrieve content" };
     }
   },

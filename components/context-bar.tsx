@@ -1,6 +1,6 @@
 "use client";
 
-import type { ModelId } from "@ai-models/vercel-gateway";
+import type { ModelId } from "@airegistry/vercel-gateway";
 import type { LanguageModelUsage } from "ai";
 import { motion } from "motion/react";
 import { useMemo } from "react";
