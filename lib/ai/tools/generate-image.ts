@@ -12,9 +12,11 @@ type GenerateImageProps = {
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
 };
 
-const openaiClient = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
-});
+const openaiClient: OpenAI | null = env.OPENAI_API_KEY
+  ? new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+    })
+  : null;
 
 const log = createModuleLogger("ai.tools.generate-image");
 
@@ -98,6 +100,14 @@ Use for:
           );
 
           inputImages.push(...partImages);
+
+          if (!openaiClient) {
+            log.warn(
+              { missingKey: true },
+              "generateImage: edit requested but OPENAI_API_KEY is not set"
+            );
+            throw new Error("OPENAI_API_KEY is required for image edits");
+          }
 
           const rsp = await openaiClient.images.edit({
             model: "gpt-image-1",
