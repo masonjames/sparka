@@ -49,11 +49,12 @@ if (
   );
 }
 
-if (
-  typeof window === "undefined" &&
-  !(env.VERCEL_OIDC_TOKEN || env.AI_GATEWAY_API_KEY)
-) {
-  throw new Error(
-    "No AI Gateway API key or Vercel OIDC token configured. Please set one of them in the environment variables."
-  );
-}
+// VERCEL_OIDC_TOKEN is not set on Middleware so this can't be a runtime error
+// if (
+//   typeof window === "undefined" &&
+//   !(env.VERCEL_OIDC_TOKEN || env.AI_GATEWAY_API_KEY)
+// ) {
+//   throw new Error(
+//     "No AI Gateway API key or Vercel OIDC token configured. Please set one of them in the environment variables."
+//   );
+// }
