@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { memo } from "react";
 import { Action } from "@/components/ai-elements/actions";
-import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks";
+import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks-base";
 import { useMessageTree } from "@/providers/message-tree-provider";
 import { useSession } from "@/providers/session-provider";
 

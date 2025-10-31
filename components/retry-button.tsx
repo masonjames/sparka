@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Action } from "@/components/ai-elements/actions";
 // ChatMessage type not needed directly here
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSendMessage, useSetMessages } from "@/lib/stores/hooks";
+import { useSendMessage, useSetMessages } from "@/lib/stores/hooks-base";
 
 export function RetryButton({
   messageId,

@@ -10,7 +10,7 @@ import type { BundledTheme } from "shiki";
 import {
   useMarkdownBlockByIndex,
   useMarkdownBlockCountForPart,
-} from "@/lib/stores/hooks";
+} from "@/lib/stores/hooks-markdown";
 import { ShikiThemeContext } from "./index";
 import { components as defaultComponents } from "./lib/components";
 import { cn } from "./lib/utils";

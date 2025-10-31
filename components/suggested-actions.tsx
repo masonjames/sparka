@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { memo } from "react";
 import type { AppModelId } from "@/lib/ai/app-models";
-import { useSendMessage } from "@/lib/stores/hooks";
+import { useSendMessage } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 

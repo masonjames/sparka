@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useSetMessages } from "@/lib/stores/hooks";
+import { useSetMessages } from "@/lib/stores/hooks-base";
 import {
   buildThreadFromLeaf,
   findLeafDfsToRightFromMessageId,

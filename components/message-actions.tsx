@@ -8,7 +8,7 @@ import { Action, Actions } from "@/components/ai-elements/actions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Vote } from "@/lib/db/schema";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks";
+import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks-base";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";

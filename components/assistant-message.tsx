@@ -1,6 +1,6 @@
 "use client";
 import { memo } from "react";
-import { useChatId } from "@/lib/stores/hooks";
+import { useChatId } from "@/lib/stores/hooks-base";
 import {
   Message as AIMessage,
   MessageContent as AIMessageContent,

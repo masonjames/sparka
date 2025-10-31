@@ -7,7 +7,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useChatId, useChatStatus, useMessageIds } from "@/lib/stores/hooks";
+import { useChatId, useChatStatus, useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";

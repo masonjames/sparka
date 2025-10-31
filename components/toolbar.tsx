@@ -28,7 +28,7 @@ import {
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import type { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSendMessage } from "@/lib/stores/hooks";
+import { useSendMessage } from "@/lib/stores/hooks-base";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact";
 import type { ArtifactToolbarItem } from "./create-artifact";

@@ -7,7 +7,7 @@ import {
   useMessagePartByPartIdx,
   useMessagePartsByPartRange,
   useMessagePartTypesById,
-} from "@/lib/stores/hooks";
+} from "@/lib/stores/hooks-message-parts";
 import { CodeInterpreterMessage } from "./code-interpreter-message";
 import { DocumentToolCall, DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";

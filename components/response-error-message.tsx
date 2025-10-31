@@ -1,6 +1,6 @@
 import { RefreshCcwIcon } from "lucide-react";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSetMessages } from "@/lib/stores/hooks";
+import { useSetMessages } from "@/lib/stores/hooks-base";
 import { Button } from "./ui/button";
 
 export function ResponseErrorMessage() {

@@ -37,7 +37,7 @@ import {
   useChatHelperStop,
   useMessageIds,
   useSetMessages,
-} from "@/lib/stores/hooks";
+} from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";

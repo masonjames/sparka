@@ -2,7 +2,7 @@
 import type { ModelId } from "@airegistry/vercel-gateway";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useChatStatus } from "@/lib/stores/hooks";
+import { useChatStatus } from "@/lib/stores/hooks-base";
 import {
   getAttachmentsFromMessage,
   getTextContentFromMessage,
