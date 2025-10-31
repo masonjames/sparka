@@ -32,6 +32,9 @@ const nextConfig: NextConfig = {
       {
         hostname: "avatars.githubusercontent.com",
       },
+      {
+        hostname: "*.public.blob.vercel-storage.com",
+      }
     ],
   },
   redirects: async () => [
