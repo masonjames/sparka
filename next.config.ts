@@ -4,6 +4,11 @@ const MODEL_REGISTRY_URL = "airegistry.app";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
   transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
     turbopackFileSystemCacheForDev: true,
@@ -11,6 +16,7 @@ const nextConfig: NextConfig = {
       "react-tweet",
       "echarts-for-react",
       "@lobehub/icons",
+      "lucide-react"
     ],
   },
   // TODO: Uncomment this when we can exclude /api/cron/cleanup from caching selectively
