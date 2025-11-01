@@ -18,7 +18,8 @@
     "db:pull": "drizzle-kit pull",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
-    "test": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
+    "test": "bun test:playwright && bun test:unit",
+    "test:playwright": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
     "test:types": "next typegen . && tsc --noEmit"
   },
