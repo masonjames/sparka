@@ -53,7 +53,7 @@ export function CollapsibleSection({
   const [copied, setCopied] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<"code" | "output">("code");
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const IconComponent = icon ? IconMapping[icon] : null;
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -156,7 +156,7 @@ export function CollapsibleSection({
           <div
             className={cn(
               "text-sm",
-              theme === "dark" ? "bg-[rgb(40,44,52)]" : "bg-[rgb(250,250,250)]"
+              resolvedTheme === "dark" ? "bg-[rgb(40,44,52)]" : "bg-[rgb(250,250,250)]"
             )}
           >
             <SyntaxHighlighter
@@ -172,7 +172,7 @@ export function CollapsibleSection({
               customStyle={{
                 margin: 0,
                 padding: "0.75rem 0 0 0",
-                backgroundColor: theme === "dark" ? "#000000" : "transparent",
+                backgroundColor: resolvedTheme === "dark" ? "#000000" : "transparent",
                 borderRadius: 0,
                 borderBottomLeftRadius: "0.375rem",
                 borderBottomRightRadius: "0.375rem",
@@ -180,7 +180,7 @@ export function CollapsibleSection({
               }}
               language={activeTab === "code" ? language : "plaintext"}
               lineNumberContainerStyle={{
-                backgroundColor: theme === "dark" ? "#000000" : "#f5f5f5",
+                backgroundColor: resolvedTheme === "dark" ? "#000000" : "#f5f5f5",
                 float: "left",
               }}
               lineNumberStyle={{
@@ -194,7 +194,7 @@ export function CollapsibleSection({
                 minWidth: "2em",
               }}
               showLineNumbers={true}
-              style={theme === "dark" ? oneDark : oneLight}
+              style={resolvedTheme === "dark" ? oneDark : oneLight}
               wrapLongLines={false}
             >
               {activeTab === "code" ? code : output || ""}

@@ -91,11 +91,11 @@ export function InteractiveStockChart({
   interval,
   chart,
 }: StockChartProps) {
-  const { theme } = useTheme();
-  const textColor = theme === "dark" ? "#e5e5e5" : "#171717";
+  const { resolvedTheme } = useTheme();
+  const textColor = resolvedTheme === "dark" ? "#e5e5e5" : "#171717";
   const gridColor =
-    theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
-  const tooltipBg = theme === "dark" ? "#171717" : "#ffffff";
+    resolvedTheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+  const tooltipBg = resolvedTheme === "dark" ? "#171717" : "#ffffff";
 
   // Process the chart data
   const processedData = useMemo(() => {
@@ -160,11 +160,11 @@ export function InteractiveStockChart({
           <div style="
             padding: 6px 10px;
             border-radius: 5px;
-            border: 1px solid ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"};
+            border: 1px solid ${resolvedTheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"};
             font-family: system-ui, -apple-system, sans-serif;
             background: ${tooltipBg};
           ">
-            <div style="font-size: 13px; color: ${theme === "dark" ? "#9ca3af" : "#6b7280"};">
+            <div style="font-size: 13px; color: ${resolvedTheme === "dark" ? "#9ca3af" : "#6b7280"};">
               ${formattedDate}
             </div>
         `;
@@ -210,7 +210,7 @@ export function InteractiveStockChart({
               <span style="
                 font-size: 13px;
                 font-weight: 500;
-                color: ${theme === "dark" ? "#f3f4f6" : "#111827"};
+                color: ${resolvedTheme === "dark" ? "#f3f4f6" : "#111827"};
               ">${seriesName}: $${currentPrice.toFixed(2)}</span>
               ${
                 dataIndex > 0
@@ -306,7 +306,7 @@ export function InteractiveStockChart({
             {
               offset: 1,
               color:
-                theme === "dark"
+                resolvedTheme === "dark"
                   ? "rgba(23, 23, 23, 0)"
                   : "rgba(255, 255, 255, 0)",
             },
@@ -330,7 +330,7 @@ export function InteractiveStockChart({
               key={series.label}
               style={{
                 backgroundColor:
-                  theme === "dark"
+                  resolvedTheme === "dark"
                     ? `${series.color.line}15`
                     : `${series.color.line}40`,
               }}
@@ -371,7 +371,7 @@ export function InteractiveStockChart({
               height: window.innerWidth < 640 ? "250px" : "400px",
               width: "100%",
             }}
-            theme={theme === "dark" ? "dark" : undefined}
+            theme={resolvedTheme === "dark" ? "dark" : undefined}
           />
         </div>
       </div>
