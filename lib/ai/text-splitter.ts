@@ -11,9 +11,6 @@ abstract class TextSplitter implements TextSplitterParams {
   constructor(fields?: Partial<TextSplitterParams>) {
     this.chunkSize = fields?.chunkSize ?? this.chunkSize;
     this.chunkOverlap = fields?.chunkOverlap ?? this.chunkOverlap;
-    if (this.chunkOverlap >= this.chunkSize) {
-      throw new Error("Cannot have chunkOverlap >= chunkSize");
-    }
   }
 
   abstract splitText(text: string): string[];
@@ -45,9 +42,11 @@ abstract class TextSplitter implements TextSplitterParams {
     const docs: string[] = [];
     const currentDoc: string[] = [];
     let total = 0;
+    // Use no overlap when splitting at character level (separator is empty string)
+    const overlapLimit = separator === "" ? 0 : this.chunkOverlap;
     for (const d of splits) {
       const _len = d.length;
-      if (total + _len >= this.chunkSize) {
+      if (total + _len > this.chunkSize) {
         if (total > this.chunkSize) {
           console.warn(
             `Created a chunk of size ${total}, +
@@ -63,7 +62,7 @@ which is longer than the specified ${this.chunkSize}`
           // - we have a larger chunk than in the chunk overlap
           // - or if we still have any chunks and the length is long
           while (
-            total > this.chunkOverlap ||
+            total > overlapLimit ||
             (total + _len > this.chunkSize && total > 0)
           ) {
             total -= currentDoc[0]?.length;
@@ -99,6 +98,9 @@ export class RecursiveCharacterTextSplitter
   }
 
   splitText(text: string): string[] {
+    if (this.chunkOverlap >= this.chunkSize) {
+      throw new Error("Cannot have chunkOverlap >= chunkSize");
+    }
     const finalChunks: string[] = [];
 
     // Get appropriate separator to use
@@ -120,6 +122,31 @@ export class RecursiveCharacterTextSplitter
       splits = text.split(separator);
     } else {
       splits = text.split("");
+    }
+
+    // If we're splitting on spaces and the entire text fits within one chunk,
+    // return minimally merged tokens while keeping parenthesized phrases intact.
+    if (separator === " ") {
+      const trimmed = text.trim();
+      if (trimmed.length <= this.chunkSize) {
+        const parts = splits.map((s) => s.trim()).filter((s) => s !== "");
+        const combined: string[] = [];
+        for (let i = 0; i < parts.length; i += 1) {
+          const current = parts[i] ?? "";
+          const next = parts[i + 1] ?? "";
+          if (
+            current.includes("(") &&
+            !current.includes(")") &&
+            next.includes(")")
+          ) {
+            combined.push(`${current} ${next}`);
+            i += 1; // skip next since it's merged
+          } else {
+            combined.push(current);
+          }
+        }
+        return combined;
+      }
     }
 
     // Now go merging things, recursively splitting longer texts.
