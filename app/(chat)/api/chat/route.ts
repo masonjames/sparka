@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
 
     if (!userMessage) {
       log.warn("No user message found");
-      return new Response("No user message found", { status: 400 });
+      return new ChatSDKError("bad_request:api").toResponse();
     }
 
     // Extract selectedModel from user message metadata
@@ -181,9 +181,7 @@ export async function POST(request: NextRequest) {
 
     if (!selectedModelId) {
       log.warn("No selectedModel in user message metadata");
-      return new Response("No selectedModel in user message metadata", {
-        status: 400,
-      });
+      return new ChatSDKError("bad_request:api").toResponse();
     }
 
     const session = await auth.api.getSession({ headers: await headers() });
