@@ -13,8 +13,10 @@ export type AnonymousSession = {
 // Anonymous chat structure matching the DB chat structure
 export interface AnonymousChat extends UIChat {}
 
-// Anonymous message structure matching the DB message structure
-export interface AnonymousMessage extends DBMessage {}
+// Anonymous message structure - includes parts since they're stored in localStorage
+export interface AnonymousMessage extends DBMessage {
+  parts: unknown; // Parts are stored as JSON in localStorage
+}
 
 const AVAILABLE_MODELS: AppModelId[] = [
   "google/gemini-2.0-flash",

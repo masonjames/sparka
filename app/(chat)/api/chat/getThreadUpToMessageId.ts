@@ -10,9 +10,7 @@ export async function getThreadUpToMessageId(
     return [];
   }
 
-  const messages = (await getAllMessagesByChatId({ chatId })).map(
-    dbMessageToChatMessage
-  );
+  const messages = await getAllMessagesByChatId({ chatId });
 
   return buildThreadFromLeaf(messages, messageId);
 }

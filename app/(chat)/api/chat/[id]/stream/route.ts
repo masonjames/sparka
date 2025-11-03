@@ -101,7 +101,7 @@ export async function GET(
       return new Response(emptyDataStream, { status: 200 });
     }
 
-    const messageCreatedAt = new Date(mostRecentMessage.createdAt);
+    const messageCreatedAt = new Date(mostRecentMessage.metadata.createdAt);
 
     if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
       return new Response(emptyDataStream, { status: 200 });

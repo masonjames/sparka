@@ -17,9 +17,12 @@ export function dbChatToUIChat(chat: Chat): UIChat {
 }
 
 export function dbMessageToChatMessage(message: DBMessage): ChatMessage {
+  // Note: This function should not be used directly for messages with parts
+  // Use getAllMessagesByChatId which reconstructs parts from Part table
+  // Parts are now stored in Part table, not in Message.parts
   return {
     id: message.id,
-    parts: message.parts as ChatMessage["parts"],
+    parts: [], // Parts are stored in Part table - use getAllMessagesByChatId instead
     role: message.role as ChatMessage["role"],
     metadata: {
       createdAt: message.createdAt,
@@ -38,15 +41,25 @@ export function chatMessageToDbMessage(
   const parentMessageId = message.metadata.parentMessageId || null;
   const isPartial = message.metadata.isPartial ?? false;
   const selectedModel = message.metadata.selectedModel;
+  
+  // Ensure createdAt is a Date object
+  let createdAt: Date;
+  if (message.metadata?.createdAt) {
+    createdAt = message.metadata.createdAt instanceof Date 
+      ? message.metadata.createdAt 
+      : new Date(message.metadata.createdAt);
+  } else {
+    createdAt = new Date();
+  }
 
+  // Parts are stored in Part table, not in Message.parts
   return {
     id: message.id,
     chatId,
     role: message.role,
-    parts: message.parts,
     attachments: [],
     lastContext: message.metadata?.usage || null,
-    createdAt: message.metadata?.createdAt || new Date(),
+    createdAt,
     annotations: [],
     isPartial,
     parentMessageId,

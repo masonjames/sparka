@@ -53,7 +53,7 @@ export const message = pgTable("Message", {
     }),
   parentMessageId: uuid("parentMessageId"),
   role: varchar("role").notNull(),
-  parts: json("parts").notNull(),
+  // parts column removed - parts are now stored in Part table
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
   annotations: json("annotations"),

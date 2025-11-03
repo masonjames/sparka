@@ -311,20 +311,9 @@ export async function POST(request: NextRequest) {
       if (!exsistentMessage) {
         // If the message does not exist, save it
         await saveMessage({
-          _message: {
-            id: userMessage.id,
-            chatId,
-            role: userMessage.role,
-            lastContext: undefined,
-            parts: userMessage.parts,
-            attachments: [],
-            createdAt: new Date(),
-            annotations: [],
-            isPartial: false,
-            parentMessageId: userMessage.metadata?.parentMessageId || null,
-            selectedModel: selectedModelId,
-            selectedTool,
-          },
+          id: userMessage.id,
+          chatId,
+          message: userMessage,
         });
       }
     }
@@ -489,19 +478,19 @@ export async function POST(request: NextRequest) {
       if (!isAnonymous) {
         // Save placeholder assistant message immediately (needed for document creation)
         await saveMessage({
-          _message: {
+          id: messageId,
+          chatId,
+          message: {
             id: messageId,
-            chatId,
             role: "assistant",
-            lastContext: undefined,
-            parts: [], // Empty placeholder
-            attachments: [],
-            createdAt: new Date(),
-            annotations: [],
-            isPartial: true,
-            parentMessageId: userMessage.id,
-            selectedModel: selectedModelId,
-            selectedTool: null,
+            parts: [],
+            metadata: {
+              createdAt: new Date(),
+              isPartial: true,
+              parentMessageId: userMessage.id,
+              selectedModel: selectedModelId,
+              selectedTool: undefined,
+            },
           },
         });
       }
@@ -647,20 +636,9 @@ export async function POST(request: NextRequest) {
 
               if (!isAnonymous) {
                 await updateMessage({
-                  _message: {
-                    id: assistantMessage.id,
-                    chatId,
-                    role: assistantMessage.role ?? "",
-                    parts: assistantMessage.parts ?? [],
-                    lastContext: responseMessage.metadata.usage,
-                    attachments: [],
-                    createdAt: new Date(),
-                    annotations: [],
-                    isPartial: false,
-                    parentMessageId: userMessage.id,
-                    selectedModel: selectedModelId,
-                    selectedTool: null,
-                  },
+                  id: assistantMessage.id,
+                  chatId,
+                  message: assistantMessage,
                 });
               }
 

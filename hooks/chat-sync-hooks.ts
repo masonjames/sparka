@@ -457,9 +457,10 @@ export function useCloneChat() {
         );
       const newId = generateUUID();
       await cloneAnonymousChat(
-        originalMessages.map((message) =>
-          chatMessageToDbMessage(message, chatId)
-        ),
+        originalMessages.map((message) => ({
+          ...chatMessageToDbMessage(message, chatId),
+          parts: message.parts,
+        })),
         originalChat,
         originalDocuments as Document[],
         newId
@@ -501,7 +502,10 @@ export function useSaveMessageMutation() {
       message: ChatMessage;
       chatId: string;
     }) => {
-      await saveAnonymousMessage(chatMessageToDbMessage(message, chatId));
+      await saveAnonymousMessage({
+        ...chatMessageToDbMessage(message, chatId),
+        parts: message.parts,
+      });
       return { success: true } as const;
     },
     onMutate: async ({ message, chatId }) => {

@@ -4,6 +4,7 @@ import { and, asc, desc, eq, gt, gte, inArray } from "drizzle-orm";
 import type { Attachment } from "@/lib/ai/types";
 import type { ArtifactKind } from "../artifacts/artifact-kind";
 import type { ChatMessage } from "@/lib/ai/types";
+import { chatMessageToDbMessage } from "@/lib/message-conversion";
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
@@ -107,31 +108,34 @@ export async function getChatById({ id }: { id: string }) {
   }
 }
 
-export async function saveMessage({ _message }: { _message: DBMessage }) {
+export async function saveMessage({
+  id,
+  chatId,
+  message: chatMessage,
+}: {
+  id: string;
+  chatId: string;
+  message: ChatMessage;
+}) {
   try {
     return await db.transaction(async (tx) => {
-      // Insert message (keeping JSON parts for backward compatibility)
-      const result = await tx.insert(message).values(_message);
+      // Convert ChatMessage to DBMessage (without parts)
+      const dbMessage = chatMessageToDbMessage(chatMessage, chatId);
+      dbMessage.id = id;
 
-      // Dual-write: Also save parts to Part table
-      try {
-        const parts = _message.parts as ChatMessage["parts"];
-        if (Array.isArray(parts) && parts.length > 0) {
-          const dbParts = mapUIMessagePartsToDBParts(parts, _message.id);
-          if (dbParts.length > 0) {
-            await tx.insert(part).values(dbParts);
-          }
-        }
-      } catch (partError) {
-        // Log but don't fail the transaction if Part write fails
-        // This allows gradual rollout
-        console.error("Failed to save parts to Part table", partError);
+      // Insert message (without parts - parts are stored in Part table)
+      await tx.insert(message).values(dbMessage);
+
+      // Save parts to Part table
+      const mappedDBParts = mapUIMessagePartsToDBParts(chatMessage.parts, id);
+      if (mappedDBParts.length > 0) {
+        await tx.insert(part).values(mappedDBParts);
       }
 
       // Update chat's updatedAt timestamp
-      await updateChatUpdatedAt({ chatId: _message.chatId });
+      await updateChatUpdatedAt({ chatId });
 
-      return result;
+      return;
     });
   } catch (error) {
     console.error("Failed to save message in database", error);
@@ -140,41 +144,45 @@ export async function saveMessage({ _message }: { _message: DBMessage }) {
 }
 
 // TODO: This should indicate the it's only updating messages for a single chat
-export async function saveMessages({ _messages }: { _messages: DBMessage[] }) {
+export async function saveMessages({
+  messages,
+}: {
+  messages: Array<{
+    id: string;
+    chatId: string;
+    message: ChatMessage;
+  }>;
+}) {
   try {
-    if (_messages.length === 0) {
+    if (messages.length === 0) {
       return;
     }
     return await db.transaction(async (tx) => {
-      // Insert messages (keeping JSON parts for backward compatibility)
-      const result = await tx.insert(message).values(_messages);
+      // Insert messages (without parts - parts are stored in Part table)
+      const dbMessages = messages.map(({ id, chatId, message: msg }) => {
+        const dbMsg = chatMessageToDbMessage(msg, chatId);
+        dbMsg.id = id;
+        return dbMsg;
+      });
+      await tx.insert(message).values(dbMessages);
 
-      // Dual-write: Also save parts to Part table
-      try {
-        const allDbParts: Array<Omit<Part, "id" | "createdAt">> = [];
-        for (const msg of _messages) {
-          const parts = msg.parts as ChatMessage["parts"];
-          if (Array.isArray(parts) && parts.length > 0) {
-            const dbParts = mapUIMessagePartsToDBParts(parts, msg.id);
-            allDbParts.push(...dbParts);
-          }
-        }
-        if (allDbParts.length > 0) {
-          await tx.insert(part).values(allDbParts);
-        }
-      } catch (partError) {
-        // Log but don't fail the transaction if Part write fails
-        // This allows gradual rollout
-        console.error("Failed to save parts to Part table", partError);
+      // Save parts to Part table
+      const allDbParts: Array<Omit<Part, "id" | "createdAt">> = [];
+      for (const { id, message: msg } of messages) {
+        const dbParts = mapUIMessagePartsToDBParts(msg.parts, id);
+        allDbParts.push(...dbParts);
+      }
+      if (allDbParts.length > 0) {
+        await tx.insert(part).values(allDbParts);
       }
 
       // Update chat's updatedAt timestamp for all affected chats
-      const uniqueChatIds = [...new Set(_messages.map((msg) => msg.chatId))];
+      const uniqueChatIds = [...new Set(messages.map(({ chatId }) => chatId))];
       await Promise.all(
         uniqueChatIds.map((chatId) => updateChatUpdatedAt({ chatId }))
       );
 
-      return result;
+      return;
     });
   } catch (error) {
     console.error("Failed to save messages in database", error);
@@ -182,42 +190,44 @@ export async function saveMessages({ _messages }: { _messages: DBMessage[] }) {
   }
 }
 
-export async function updateMessage({ _message }: { _message: DBMessage }) {
+export async function updateMessage({
+  id,
+  chatId,
+  message: chatMessage,
+}: {
+  id: string;
+  chatId: string;
+  message: ChatMessage;
+}) {
   try {
     return await db.transaction(async (tx) => {
-      // Update message (keeping JSON parts for backward compatibility)
-      const result = await tx
+      // Convert ChatMessage to DBMessage (without parts)
+      const dbMessage = chatMessageToDbMessage(chatMessage, chatId);
+      dbMessage.id = id;
+
+      // Update message (without parts - parts are stored in Part table)
+      await tx
         .update(message)
         .set({
-          parts: _message.parts,
-          annotations: _message.annotations,
-          attachments: _message.attachments,
-          createdAt: _message.createdAt,
-          isPartial: _message.isPartial,
-          parentMessageId: _message.parentMessageId,
+          annotations: dbMessage.annotations,
+          attachments: dbMessage.attachments,
+          createdAt: dbMessage.createdAt,
+          isPartial: dbMessage.isPartial,
+          parentMessageId: dbMessage.parentMessageId,
         })
-        .where(eq(message.id, _message.id));
+        .where(eq(message.id, id));
 
-      // Dual-write: Update parts in Part table
-      try {
-        // Delete existing parts
-        await tx.delete(part).where(eq(part.messageId, _message.id));
+      // Update parts in Part table
+      // Delete existing parts
+      await tx.delete(part).where(eq(part.messageId, id));
 
-        // Insert new parts
-        const parts = _message.parts as ChatMessage["parts"];
-        if (Array.isArray(parts) && parts.length > 0) {
-          const dbParts = mapUIMessagePartsToDBParts(parts, _message.id);
-          if (dbParts.length > 0) {
-            await tx.insert(part).values(dbParts);
-          }
-        }
-      } catch (partError) {
-        // Log but don't fail the transaction if Part write fails
-        // This allows gradual rollout
-        console.error("Failed to update parts in Part table", partError);
+      // Insert new parts
+      const mappedDBParts = mapUIMessagePartsToDBParts(chatMessage.parts, id);
+      if (mappedDBParts.length > 0) {
+        await tx.insert(part).values(mappedDBParts);
       }
 
-      return result;
+      return;
     });
   } catch (error) {
     console.error("Failed to update message in database", error);
@@ -225,7 +235,11 @@ export async function updateMessage({ _message }: { _message: DBMessage }) {
   }
 }
 
-export async function getAllMessagesByChatId({ chatId }: { chatId: string }) {
+export async function getAllMessagesByChatId({
+  chatId,
+}: {
+  chatId: string;
+}): Promise<ChatMessage[]> {
   try {
     const messages = await db
       .select()
@@ -234,7 +248,7 @@ export async function getAllMessagesByChatId({ chatId }: { chatId: string }) {
       .orderBy(asc(message.createdAt));
 
     if (messages.length === 0) {
-      return messages;
+      return [];
     }
 
     // Load all parts for all messages in a single query
@@ -253,27 +267,25 @@ export async function getAllMessagesByChatId({ chatId }: { chatId: string }) {
       partsByMessageId.set(dbPart.messageId, existing);
     }
 
-    // Reconstruct messages with parts from Part table, fallback to JSON parts
+    // Reconstruct ChatMessage objects with parts from Part table
     return messages.map((msg) => {
       const dbParts = partsByMessageId.get(msg.id);
-      if (dbParts && dbParts.length > 0) {
-        try {
-          const reconstructedParts = mapDBPartsToUIParts(dbParts);
-          return {
-            ...msg,
-            parts: reconstructedParts as typeof msg.parts,
-          };
-        } catch (partError) {
-          // Log but fall back to JSON parts
-          console.error(
-            `Failed to reconstruct parts from Part table for message ${msg.id}`,
-            partError
-          );
-        }
-      }
+      const parts = dbParts && dbParts.length > 0
+        ? mapDBPartsToUIParts(dbParts)
+        : [];
 
-      // Fall back to JSON parts from Message.parts
-      return msg;
+      return {
+        id: msg.id,
+        role: msg.role as ChatMessage["role"],
+        parts,
+        metadata: {
+          createdAt: msg.createdAt,
+          isPartial: msg.isPartial,
+          parentMessageId: msg.parentMessageId,
+          selectedModel: (msg.selectedModel || "") as ChatMessage["metadata"]["selectedModel"],
+          selectedTool: (msg.selectedTool || undefined) as ChatMessage["metadata"]["selectedTool"],
+        },
+      };
     });
   } catch (error) {
     console.error("Failed to get all messages by chat ID", error);

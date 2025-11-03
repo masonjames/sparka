@@ -74,8 +74,11 @@ const runBackfill = async () => {
 
       for (const msg of batch) {
         try {
-          // Parse parts from JSON
-          const parts = msg.parts as ChatMessage["parts"];
+          // Parse parts from JSON (parts column may still exist in DB for old data)
+          const parts = (msg as { parts?: unknown }).parts as
+            | ChatMessage["parts"]
+            | null
+            | undefined;
 
           if (!Array.isArray(parts) || parts.length === 0) {
             // Skip messages with no parts

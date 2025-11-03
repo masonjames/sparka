@@ -90,7 +90,7 @@ export const chatRouter = createTRPCRouter({
       }
 
       const dbMessages = await getAllMessagesByChatId({ chatId: input.chatId });
-      return dbMessages.map(dbMessageToChatMessage);
+      return dbMessages;
     }),
 
   renameChat: protectedProcedure
@@ -275,7 +275,7 @@ export const chatRouter = createTRPCRouter({
       }
 
       const dbMessages = await getAllMessagesByChatId({ chatId: input.chatId });
-      return dbMessages.map(dbMessageToChatMessage);
+      return dbMessages;
     }),
 
   cloneSharedChat: protectedProcedure
@@ -325,7 +325,7 @@ export const chatRouter = createTRPCRouter({
 
       // Clone messages and documents with updated IDs
       const { clonedMessages, clonedDocuments } = cloneMessagesWithDocuments(
-        sourceMessages,
+        sourceMessages.map((msg) => ({ ...msg, chatId: input.chatId })) as Array<ChatMessage & { chatId: string }>,
         sourceDocuments,
         newChatId,
         ctx.user.id
@@ -333,11 +333,17 @@ export const chatRouter = createTRPCRouter({
 
       // Clone attachments in messages (this has side effects - network calls to blob storage)
       const messagesWithClonedAttachments = await cloneAttachmentsInMessages(
-        clonedMessages as (DBMessage & { parts: ChatMessage["parts"] })[]
+        clonedMessages
       );
 
       // Save cloned messages first, then documents due to foreign key dependency
-      await saveMessages({ _messages: messagesWithClonedAttachments });
+      await saveMessages({
+        messages: messagesWithClonedAttachments.map((msg) => ({
+          id: msg.id,
+          chatId: newChatId,
+          message: msg,
+        })),
+      });
       if (clonedDocuments.length > 0) {
         await saveDocuments({ documents: clonedDocuments });
       }
