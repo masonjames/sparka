@@ -2,9 +2,9 @@
 import { memo } from "react";
 import {
   Reasoning,
-  ReasoningContentContainer,
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
+import { ReasoningContentContainer } from "@/components/ai-elements/extra/reasoning-content-container";
 import { Response } from "@/components/ai-elements/response";
 
 type MessageReasoningProps = {

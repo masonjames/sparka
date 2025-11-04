@@ -84,8 +84,9 @@ export const PureUserMessage = ({
           {mode === "view" ? (
             isReadonly ? (
               <AIMessageContent
-                className="text-left"
+                className="text-left group-[.is-user]:bg-card"
                 data-testid="message-content"
+
               >
                 <AttachmentList
                   attachments={getAttachmentsFromMessage(message)}
@@ -98,13 +99,13 @@ export const PureUserMessage = ({
               </AIMessageContent>
             ) : (
               <button
-                className="cursor-pointer text-left transition-opacity hover:opacity-80"
+                className="cursor-pointer text-left transition-opacity hover:opacity-80 block"
                 data-testid="message-content"
                 onClick={() => setMode("edit")}
                 type="button"
               >
                 <AIMessageContent
-                  className="text-left"
+                  className="text-left group-[.is-user]:bg-card group-[.is-user]:max-w-none"
                   data-testid="message-content"
                 >
                   <AttachmentList
