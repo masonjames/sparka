@@ -196,7 +196,7 @@ export const document = pgTable(
     createdAt: timestamp("createdAt").notNull(),
     title: text("title").notNull(),
     content: text("content"),
-    kind: varchar("text", { enum: ["text", "code", "sheet"] })
+    kind: varchar("kind", { enum: ["text", "code", "sheet"] })
       .notNull()
       .default("text"),
     userId: text("userId")
@@ -210,6 +210,7 @@ export const document = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.id, table.createdAt] }),
+    document_message_id_idx: index("Document_message_id_idx").on(table.messageId),
   })
 );
 
