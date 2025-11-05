@@ -1,7 +1,9 @@
 "use client";
 
 import { memo } from "react";
-import { Response } from "./ai-elements/memo-response";
+import { useMessagePartByPartIdx } from "@/lib/stores/hooks-message-parts";
+
+import { Response } from "./ai-elements/response";
 
 export const TextMessagePart = memo(function TextMessagePart({
   messageId,
@@ -10,5 +12,9 @@ export const TextMessagePart = memo(function TextMessagePart({
   messageId: string;
   partIdx: number;
 }) {
-  return <Response messageId={messageId} partIdx={partIdx} />;
+  const part = useMessagePartByPartIdx(messageId, partIdx, "text");
+  if (!part) {
+    return null;
+  }
+  return <Response>{part.text}</Response>;
 });
