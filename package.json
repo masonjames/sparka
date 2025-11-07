@@ -203,10 +203,6 @@
     "ultracite": "6.0.1",
     "vitest": "^3.2.4"
   },
-  "packageManager": "bun@1.1.34",
-  "workspaces": [
-    "packages/*"
-  ],
   "overrides": {
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2"

@@ -1,7 +1,6 @@
 "use client";
 import { Coins } from "lucide-react";
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +18,6 @@ export function HeaderUserNav({
 }: {
   user: NonNullable<Session["user"]>;
 }) {
-  const { setTheme, resolvedTheme } = useTheme();
   const { credits } = useGetCredits();
 
   return (
@@ -51,14 +49,6 @@ export function HeaderUserNav({
             <span>Credits: {credits ?? "Loading..."}</span>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onSelect={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-        >
-          {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <button
             className="w-full cursor-pointer"
