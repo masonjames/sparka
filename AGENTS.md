@@ -1,24 +1,24 @@
 # Repository Guidelines
 
+## Onboarding & Required References
+Read `CLAUDE.md` before contributing; it documents upstream sync rules, database guidance, and bd task policies. Treat the bd CLI (`bd list`, `bd show <id>`) as the canonical task tracker. You have preinstalled GitHub CLI, Vercel CLI, Neon CLI, and the project id `prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r`; prefer these tools for auth, deploys, and status checks.
+
 ## Project Structure & Module Organization
-Next.js routes, layouts, and server actions live in `app/` (use `app/api/*` for route handlers). Reusable UI is in `components/`, feature hooks in `hooks/`, and shared state wiring in `providers/`. Utilities and env helpers stay in `lib/` (Drizzle schema + migrations under `lib/db/` with config in `drizzle.config.ts`), RPC routers in `trpc/`, docs/specs in `docs/`, and static assets in `public/`.
+Routes, layouts, and server actions sit in `app/` (use `app/api/*` for handlers). Shared UI resides in `components/`, hooks in `hooks/`, context/state providers in `providers/`, and reusable logic in `lib/`. Drizzle schemas plus migrations are under `lib/db/` with config in `drizzle.config.ts`. RPC routers live in `trpc/`, long-form docs in `docs/`, and static assets in `public/`.
 
 ## Build, Test, and Development Commands
-- `bun dev` — hot-reload app at http://localhost:3000.
-- `bun run build` — runs `tsx lib/db/migrate` then `next build`; must pass before deploys.
-- `bun run lint` / `bun run format` — Ultracite/Biome linting and autofix.
-- `bun run db:migrate` — apply schema updates after editing `lib/db/schema.ts`.
-- `bun run test`, `bun run test:unit`, `bun run test:playwright`, `bun run test:types` — aggregate, Vitest, Playwright (install browsers once with `bunx playwright install`), and TS/Next type checks.
-- `bun run storybook` — component sandbox on port 6006.
+- `bun dev` — Next.js dev server with streaming previews.
+- `bun run build` — runs `tsx lib/db/migrate` then `next build`.
+- `bun run lint` / `bun run format` — Ultracite/Biome lint + fix.
+- `bun run db:migrate` — apply schema changes post `lib/db/schema.ts` edits.
+- `bun run test`, `test:unit`, `test:playwright`, `test:types` — aggregate, Vitest, Playwright (install browsers once via `bunx playwright install`), and TS checks.
+- `bun run storybook` — component sandbox on :6006.
 
 ## Coding Style & Naming Conventions
-Ship everything in TypeScript. Prefer React Server Components inside `app/`; mark interactive modules with `"use client"`. Follow Biome defaults (2 spaces, double quotes, trailing commas) and rely on Tailwind utilities instead of bespoke CSS. Components use PascalCase, hooks camelCase with a `use` prefix, Drizzle schemas snake_case columns, and tRPC routers match each feature (`chatRouter`). Read secrets only via `lib/env.ts`.
+All code is TypeScript. Prefer React Server Components in `app/`; mark interactive files with `"use client"`. Follow Biome defaults (2 spaces, double quotes, trailing commas) and Tailwind utilities. Components use PascalCase, hooks camelCase with `use`, Drizzle columns snake_case, and tRPC routers mirror features (e.g., `chatRouter`). Access secrets solely through `lib/env.ts`.
 
 ## Testing Guidelines
-Create `<name>.test.ts(x)` files next to the code they cover and run them with `bun run test:unit`. Keep Playwright specs under `tests/e2e/` (create if missing) for onboarding, entitlement, and Ghost/Stripe flows; export `PLAYWRIGHT=True` before running `bun run test:playwright`. Finish every PR check with `bun run test:types` to guard server/client contracts.
+Co-locate `<name>.test.ts(x)` beside the code they cover and run via `bun run test:unit`. Place Playwright specs in `tests/e2e/` for onboarding, entitlement, and Ghost/Stripe coverage; export `PLAYWRIGHT=True` before `bun run test:playwright`. Always finish a PR check with `bun run test:types` to guard shared contracts.
 
-## Commit & Pull Request Guidelines
-Use Conventional Commits (`feat:`, `fix:`, `chore:`) as in `git log`; keep subjects imperative and under 72 characters. PRs summarize intent, link issues, list test commands with pass/fail emojis, and share screenshots or Looms for UI updates. Call out schema changes, env deltas, and rollout steps; request reviewers early for auth, billing, or gateway changes.
-
-## Security & Configuration Tips
-Mirror `.env.example` into `.env.local`, populate secrets, and sync with `vercel env pull` before running `bun dev`. `proxy.ts` and edge logic assume HTTPS headers, so set `NEXT_PUBLIC_BASE_URL` in preview environments. Run migrations against a disposable database (`bun run db:migrate && bunx drizzle-kit studio`) before production pushes, and never commit AI keys, Better Auth secrets, or Ghost/Stripe credentials.
+## Git, Upstream, & Deployment
+This fork tracks `upstream=https://github.com/FranciscoMoretti/sparka.git`; sync by fetching upstream, branching from `upstream/main`, reapplying branding, then running the full test suite (see `CLAUDE.md` for step-by-step). Use `gh` for status/PRs and `vercel link && vercel deploy --project prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r` for previews after `vercel env pull .env.local`. Never skip `CLAUDE.md` when onboarding new agents or planning deployments.
