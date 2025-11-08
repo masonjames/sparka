@@ -254,27 +254,6 @@ export async function POST(request: NextRequest) {
           }
         }
       }
-
-          log.info({ userId }, "User entitled after Ghost sync");
-        } else {
-          // No Ghost sync available - block immediately
-          log.warn({ userId }, "User not entitled and Ghost sync not configured");
-          return new Response(
-            JSON.stringify({
-              error: "You need an active subscription to use this chat.",
-              type: "ENTITLEMENT_REQUIRED",
-              reason: entitlementCheck.reason,
-              portalUrl: env.GHOST_PORTAL_URL || "https://masonjames.com/#/portal",
-            }),
-            {
-              status: 402,
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-        }
-      }
     } else {
       // Apply rate limiting for anonymous users
       const clientIP = getClientIP(request);
