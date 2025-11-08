@@ -10,11 +10,14 @@ export const env = createEnv({
     AUTH_SECRET: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
-    // One of the authentication providers must be configured
+    // Authentication providers (all optional - at least one social or email must work)
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
+    
+    // Email provider for magic links and password reset (optional)
+    RESEND_API_KEY: z.string().optional(),
 
     // One of the AI Gateway API key or Vercel OIDC token must be configured
     AI_GATEWAY_API_KEY: z.string().optional(),
@@ -39,13 +42,15 @@ export const env = createEnv({
   experimental__runtimeEnv: {},
 });
 
+// Email authentication is always available via Better Auth
+// Social providers are optional but recommended
 if (
   typeof window === "undefined" &&
   !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET) &&
   !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
 ) {
-  throw new Error(
-    "No social auth providers configured: enable Google by setting AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET, or enable GitHub by setting AUTH_GITHUB_ID and AUTH_GITHUB_SECRET."
+  console.warn(
+    "No social auth providers configured. Users can still register/login via email."
   );
 }
 

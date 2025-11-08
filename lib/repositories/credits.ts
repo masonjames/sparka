@@ -142,3 +142,45 @@ export async function releaseReservedCredits({
       )
     );
 }
+
+/**
+ * Grant credits to a user (e.g., for subscription renewal)
+ * Free users: 100 credits (default)
+ * Subscribers: 10,000 credits/month
+ */
+export async function grantCredits({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<void> {
+  await ensureUserCreditRow(userId);
+  
+  await db
+    .update(userCredit)
+    .set({
+      credits: amount, // Set to exact amount (will be called monthly for subscribers)
+    })
+    .where(eq(userCredit.userId, userId));
+}
+
+/**
+ * Add credits to existing balance (additive, not replacement)
+ */
+export async function addCredits({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<void> {
+  await ensureUserCreditRow(userId);
+  
+  await db
+    .update(userCredit)
+    .set({
+      credits: sql`${userCredit.credits} + ${amount}`,
+    })
+    .where(eq(userCredit.userId, userId));
+}

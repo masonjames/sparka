@@ -1,6 +1,6 @@
 "use client";
 
-import { Coins, LogIn } from "lucide-react";
+import { Coins, LogIn, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useGetCredits } from "@/hooks/chat-sync-hooks";
@@ -34,7 +34,7 @@ export function SidebarCredits() {
         </div>
       </div>
 
-      {!isAuthenticated && (
+      {!isAuthenticated ? (
         <Button
           className="w-full justify-start gap-2"
           onClick={() => {
@@ -46,7 +46,18 @@ export function SidebarCredits() {
           <LogIn className="h-4 w-4" />
           Sign in to reset your limits
         </Button>
-      )}
+      ) : remaining <= 100 ? (
+        <Button
+          className="w-full justify-start gap-2"
+          onClick={() => {
+            window.open("https://masonjames.com/#/portal", "_blank");
+          }}
+          variant="default"
+        >
+          <Zap className="h-4 w-4" />
+          Upgrade to Pro (10,000/mo)
+        </Button>
+      ) : null}
     </div>
   );
 }

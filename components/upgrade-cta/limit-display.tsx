@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { Button } from "../ui/button";
 
+const GHOST_PORTAL_URL = "https://masonjames.com/#/portal";
+
 const VARIANT_CONFIG: Record<
   "credits" | "model" | "image",
   {
@@ -16,24 +18,65 @@ const VARIANT_CONFIG: Record<
     getMessage: ({
       remaining,
       isAtLimit,
+      isAuthenticated,
     }: {
       remaining: number;
       isAtLimit: boolean;
+      isAuthenticated: boolean;
     }) => React.ReactNode;
     getClasses: ({ isAtLimit }: { isAtLimit: boolean }) => string;
   }
 > = {
   credits: {
     dismissible: true,
-    getMessage: ({ remaining, isAtLimit }) =>
-      isAtLimit ? (
+    getMessage: ({ remaining, isAtLimit, isAuthenticated }) => {
+      // For authenticated users, show upgrade to subscriber plan
+      if (isAuthenticated) {
+        if (isAtLimit) {
+          return (
+            <span>
+              You&apos;ve used all your credits.{" "}
+              <a
+                className="font-medium text-red-700 underline hover:no-underline dark:text-red-300"
+                href={GHOST_PORTAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Subscribe for 10,000 credits/month
+              </a>
+            </span>
+          );
+        }
+        if (remaining <= 10) {
+          return (
+            <span>
+              You only have{" "}
+              <strong>
+                {remaining} credit{remaining !== 1 ? "s" : ""}
+              </strong>{" "}
+              left.{" "}
+              <a
+                className="font-medium text-amber-700 underline hover:no-underline dark:text-amber-300"
+                href={GHOST_PORTAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Upgrade to Pro for 10,000/month
+              </a>
+            </span>
+          );
+        }
+      }
+      
+      // For anonymous users, show login prompt
+      return isAtLimit ? (
         <span>
           You&apos;ve reached your credit limit.{" "}
           <Link
             className="font-medium text-red-700 underline hover:no-underline dark:text-red-300"
             href="/login"
           >
-            Sign in to reset your limits
+            Sign in to continue
           </Link>
         </span>
       ) : (
@@ -47,10 +90,11 @@ const VARIANT_CONFIG: Record<
             className="font-medium text-amber-700 underline hover:no-underline dark:text-amber-300"
             href="/login"
           >
-            Sign in to reset your limits
+            Sign in for more
           </Link>
         </span>
-      ),
+      );
+    },
     getClasses: ({ isAtLimit }) =>
       isAtLimit
         ? "bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200"
@@ -92,11 +136,6 @@ export function LimitDisplay({
   const isAuthenticated = !!session?.user;
   const [dismissed, setDismissed] = useState(false);
 
-  // Don't show for authenticated users
-  if (isAuthenticated) {
-    return null;
-  }
-
   const variant = forceVariant ?? "credits";
   const config = VARIANT_CONFIG[variant];
 
@@ -114,6 +153,11 @@ export function LimitDisplay({
 
   // Only show when approaching or at limit (credits variant)
   const isAtLimit = remaining <= 0;
+  
+  // For anonymous users, hide when not approaching limit
+  if (!isAuthenticated && variant === "credits" && remaining > 10 && !isAtLimit) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -131,7 +175,7 @@ export function LimitDisplay({
           )}
         >
           <div className="flex-1">
-            {config.getMessage({ remaining, isAtLimit })}
+            {config.getMessage({ remaining, isAtLimit, isAuthenticated })}
           </div>
           {config.dismissible ? (
             <Button

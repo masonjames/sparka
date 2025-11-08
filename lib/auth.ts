@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { magicLink } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { env } from "@/lib/env";
 import { db } from "./db/client";
@@ -47,5 +48,17 @@ export const auth = betterAuth({
 
     return { google, github } as const;
   })(),
-  plugins: [nextCookies()],
+  
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false, // Can enable later when email provider is configured
+  },
+  
+  plugins: [
+    nextCookies(),
+    magicLink({
+      // Email sending will be configured when email provider is set up
+      // For now, magic link tokens will be generated but not sent
+    }),
+  ],
 });
