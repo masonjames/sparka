@@ -29,6 +29,9 @@ const fromEmailAddress =
       ? `Chat by Mason James <${rawFromEmail}>`
       : null;
 
+const sessionCookieDomain = authCookieDomain ?? undefined;
+const isSecureCookie = appBaseUrl.startsWith("https://");
+
 const buildMagicLinkEmailHtml = (magicLinkUrl: string) => `
   <!DOCTYPE html>
   <html>
@@ -103,6 +106,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Can enable later when email provider is configured
+  },
+
+  session: {
+    cookie: {
+      name: "__Secure-better-auth.session_token",
+      domain: sessionCookieDomain,
+      path: "/",
+      sameSite: "lax",
+      secure: isSecureCookie,
+    },
   },
   
   advanced: authCookieDomain
