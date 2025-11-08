@@ -152,6 +152,49 @@ if (wildcardCookieOrigin) {
 
 export const authTrustedOrigins = Array.from(trustedOriginsSet);
 
+export function isTrustedAppOrigin(value: string): boolean {
+  const normalized = normalizeOrigin(value);
+  if (!normalized) {
+    return false;
+  }
+  if (trustedOriginsSet.has(normalized)) {
+    return true;
+  }
+  let candidateHost: string;
+  try {
+    candidateHost = new URL(normalized).hostname;
+  } catch {
+    return false;
+  }
+  if (candidateHost === appOriginHost) {
+    return true;
+  }
+  if (apexDomain) {
+    if (candidateHost === apexDomain || candidateHost.endsWith(`.${apexDomain}`)) {
+      return true;
+    }
+  }
+  if (cookieDomainHost) {
+    if (
+      candidateHost === cookieDomainHost ||
+      candidateHost.endsWith(`.${cookieDomainHost}`)
+    ) {
+      return true;
+    }
+  }
+  for (const origin of trustedOriginsSet) {
+    const wildcardMatch = origin.match(/^https?:\/\/\*\.(.+)$/i);
+    if (!wildcardMatch) {
+      continue;
+    }
+    const suffix = wildcardMatch[1];
+    if (suffix && candidateHost.endsWith(`.${suffix}`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export const sharedCookieOptions: SharedCookieOptions = {
   domain: sharedCookieDomain,
   secure: typeof sharedCookieDomain === "string"
@@ -179,3 +222,59 @@ export function getSharedCookieOptions(
 
 export const buildAppUrl = (path: string) =>
   new URL(path, appBaseUrl).toString();
+
+export type ResolveRequestAwareAppUrlOptions = {
+  requestOrigin?: string | URL | null;
+};
+
+export type ResolveRequestAwareAppUrlResult = {
+  url: string;
+  origin: string;
+  originSource: "runtime" | "env";
+  runtimeOrigin: string | null;
+};
+
+function normalizeRequestOriginCandidate(
+  value?: string | URL | null
+): string | null {
+  if (!value) {
+    return null;
+  }
+  if (typeof value === "string") {
+    return normalizeOrigin(value);
+  }
+  try {
+    return normalizeOrigin(value.origin);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Prefers the runtime request origin when it is trusted, falling back to the env-derived base URL.
+ * Precedence: trusted runtime origin > env-derived app origin.
+ */
+export function resolveRequestAwareAppUrl(
+  path: string,
+  options?: ResolveRequestAwareAppUrlOptions
+): ResolveRequestAwareAppUrlResult {
+  const runtimeOrigin = normalizeRequestOriginCandidate(
+    options?.requestOrigin ?? null
+  );
+  if (runtimeOrigin && isTrustedAppOrigin(runtimeOrigin)) {
+    return {
+      url: new URL(path, runtimeOrigin).toString(),
+      origin: runtimeOrigin,
+      originSource: "runtime",
+      runtimeOrigin,
+    };
+  }
+  const fallbackUrl = buildAppUrl(path);
+  const fallbackOrigin = new URL(fallbackUrl).origin;
+  return {
+    url: fallbackUrl,
+    origin: fallbackOrigin,
+    originSource: "env",
+    runtimeOrigin,
+  };
+}
