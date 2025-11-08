@@ -25,8 +25,8 @@ const PureAssistantMessage = ({
   }
 
   return (
-    <Message className="w-full items-start py-1" from="assistant">
-      <MessageContent className="w-full max-w-full px-0 py-0 text-left">
+    <Message className="w-full max-w-full items-start py-1" from="assistant">
+      <MessageContent className="w-full px-0 py-0 text-left">
         <PartialMessageLoading messageId={messageId} />
         <MessageParts
           isLoading={isLoading}
