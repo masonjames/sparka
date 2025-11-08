@@ -3,6 +3,39 @@ import { z } from "zod";
 
 // Centralized environment parsing and feature flags using t3-oss/t3-env
 
+const hostnameRegex = /^[a-z0-9.-]+$/i;
+const subdomainLabelRegex = /^[a-z0-9-]+$/i;
+
+const optionalHostname = z
+  .string()
+  .trim()
+  .min(1, "Hostname cannot be empty")
+  .regex(
+    hostnameRegex,
+    "Value must be a hostname without protocol, path, or wildcards"
+  )
+  .optional();
+
+const optionalCookieDomain = z
+  .string()
+  .trim()
+  .min(1)
+  .regex(
+    /^\.?[a-z0-9.-]+$/i,
+    "Cookie domain must be a hostname with an optional leading dot"
+  )
+  .optional();
+
+const optionalSubdomain = z
+  .string()
+  .trim()
+  .min(1)
+  .regex(
+    subdomainLabelRegex,
+    "APP_SUBDOMAIN must be a single subdomain label without dots"
+  )
+  .optional();
+
 export const env = createEnv({
   server: {
     // Required core
@@ -15,7 +48,7 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
-    
+
     // Email provider for magic links and password reset (optional)
     RESEND_API_KEY: z.string().optional(),
     RESEND_FROM_EMAIL: z.string().optional(),
@@ -47,13 +80,89 @@ export const env = createEnv({
     // Misc / platform
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
-    APP_BASE_URL: z.string().optional(),
-    AUTH_COOKIE_DOMAIN: z.string().optional(),
-    AUTH_TRUSTED_ORIGINS: z.string().optional(),
+
+    /**
+     * URL & origin overrides.
+     * Precedence: APP_BASE_URL_OVERRIDE > APP_BASE_URL (legacy) > Vercel envs > localhost.
+     */
+    APP_BASE_URL_OVERRIDE: z.string().trim().min(1).optional(),
+    APP_BASE_URL: z.string().trim().optional(), // legacy alias (deprecated)
+
+    /**
+     * Apex + subdomain metadata used for shared cookies & derived origins.
+     * Provide APEX_DOMAIN (e.g., "masonjames.com") and optional APP_SUBDOMAIN (e.g., "chat").
+     */
+    APEX_DOMAIN: optionalHostname,
+    APP_SUBDOMAIN: optionalSubdomain,
+
+    /**
+     * Cookie domain management (modern override + legacy fallback).
+     * AUTH_COOKIE_DOMAIN_OVERRIDE should include the leading dot when targeting subdomains.
+     */
+    AUTH_COOKIE_DOMAIN_OVERRIDE: optionalCookieDomain,
+    AUTH_COOKIE_DOMAIN: z.string().trim().optional(), // legacy alias (deprecated)
+
+    /**
+     * Trusted origins. Retained for compatibility but derived origins are preferred going forward.
+     */
+    AUTH_TRUSTED_ORIGINS: z.string().trim().optional(),
+
+    /**
+     * Ghost member session bridging (captured for later implementation).
+     */
+    GHOST_MEMBER_COOKIE_NAME: z.string().trim().min(1).optional(),
+    GHOST_MEMBER_SSO_SECRET: z.string().trim().min(1).optional(),
   },
   client: {},
   experimental__runtimeEnv: {},
 });
+
+const warnOnceMessages = new Set<string>();
+const warnOnce = (message: string) => {
+  if (warnOnceMessages.has(message)) {
+    return;
+  }
+  warnOnceMessages.add(message);
+  console.warn(message);
+};
+
+const legacyPairs = [
+  {
+    legacyValue: env.APP_BASE_URL,
+    modernValue: env.APP_BASE_URL_OVERRIDE,
+    legacyName: "APP_BASE_URL",
+    modernName: "APP_BASE_URL_OVERRIDE",
+  },
+  {
+    legacyValue: env.AUTH_COOKIE_DOMAIN,
+    modernValue: env.AUTH_COOKIE_DOMAIN_OVERRIDE,
+    legacyName: "AUTH_COOKIE_DOMAIN",
+    modernName: "AUTH_COOKIE_DOMAIN_OVERRIDE",
+  },
+] as const;
+
+for (const {
+  legacyValue,
+  modernValue,
+  legacyName,
+  modernName,
+} of legacyPairs) {
+  if (legacyValue && modernValue) {
+    warnOnce(
+      `[env] Both ${legacyName} (deprecated) and ${modernName} are set. ${modernName} takes precedence.`
+    );
+  } else if (legacyValue && !modernValue) {
+    warnOnce(
+      `[env] ${legacyName} is deprecated and will be removed in a future release. Please migrate to ${modernName}.`
+    );
+  }
+}
+
+if (env.AUTH_TRUSTED_ORIGINS) {
+  warnOnce(
+    "[env] AUTH_TRUSTED_ORIGINS is deprecated. Derived trusted origins now cover most scenarios; remove this variable when possible."
+  );
+}
 
 // Email authentication is always available via Better Auth
 // Social providers are optional but recommended

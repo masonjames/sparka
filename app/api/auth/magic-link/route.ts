@@ -48,7 +48,35 @@ export async function POST(request: NextRequest) {
     logger.info({ callbackURL }, "Using callback URL");
     
     // Better Auth handles the token generation
-    const result = await auth.api.signInMagicLink({
+    const magicLinkEndpoint = (auth.api as Record<string, unknown>)
+      .signInMagicLink as
+      | ((
+          args: {
+            body: {
+              email: string;
+              callbackURL?: string;
+              name?: string;
+              newUserCallbackURL?: string;
+              errorCallbackURL?: string;
+            };
+            headers: HeadersInit;
+            method?: "POST";
+          }
+        ) => Promise<unknown>)
+      | undefined;
+
+    if (!magicLinkEndpoint) {
+      logger.error(
+        { email },
+        "Better Auth magic-link endpoint missing from auth.api"
+      );
+      return NextResponse.json(
+        { success: false, error: "Magic link is temporarily unavailable" },
+        { status: 500 }
+      );
+    }
+
+    const result = await magicLinkEndpoint({
       body: {
         email,
         callbackURL,
@@ -58,10 +86,21 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    const status =
-      typeof result === "object" && result && "status" in result
-        ? Boolean(result.status)
-        : false;
+    let status = false;
+    if (result instanceof Response) {
+      status = result.ok;
+    } else if (
+      result &&
+      typeof result === "object" &&
+      "response" in result &&
+      result.response &&
+      typeof result.response === "object" &&
+      "status" in result.response
+    ) {
+      status = Boolean((result.response as { status?: boolean }).status);
+    } else if (result && typeof result === "object" && "status" in result) {
+      status = Boolean((result as { status?: boolean }).status);
+    }
     
     logger.info({ status }, "Magic link request processed");
 
