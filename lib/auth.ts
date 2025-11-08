@@ -20,6 +20,13 @@ export type Session = {
 
 const magicLinkLogger = createModuleLogger("magic-link");
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+const rawFromEmail = env.RESEND_FROM_EMAIL?.trim();
+const fromEmailAddress =
+  rawFromEmail && rawFromEmail.includes("<")
+    ? rawFromEmail
+    : rawFromEmail
+      ? `Chat by Mason James <${rawFromEmail}>`
+      : null;
 
 const buildMagicLinkEmailHtml = (magicLinkUrl: string) => `
   <!DOCTYPE html>
@@ -104,7 +111,7 @@ export const auth = betterAuth({
     nextCookies(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) {
+        if (!env.RESEND_API_KEY || !fromEmailAddress) {
           magicLinkLogger.warn({ email }, "Resend not configured - magic link not sent");
           return;
         }
@@ -116,7 +123,7 @@ export const auth = betterAuth({
 
         try {
           await resendClient.emails.send({
-            from: env.RESEND_FROM_EMAIL,
+            from: fromEmailAddress,
             to: email,
             subject: "Sign in to Chat by Mason James",
             html: buildMagicLinkEmailHtml(url),

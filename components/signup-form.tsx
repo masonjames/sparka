@@ -36,6 +36,19 @@ export function SignupForm({
               </div>
             </div>
             <SocialAuthProviders />
+            <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+              Email, Google, and GitHub signup paths create a <span className="font-medium text-foreground">Free</span> tier account.
+              Upgrade to the paid experience anytime through the{" "}
+              <a
+                className="font-medium text-foreground underline underline-offset-4"
+                href="https://masonjames.com/#/portal/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Mason James Portal
+              </a>{" "}
+              after logging in.
+            </div>
             <div className="text-center text-sm">
               Already have an account?{" "}
               <a className="underline underline-offset-4" href="/login">
