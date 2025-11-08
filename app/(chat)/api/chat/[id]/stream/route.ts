@@ -49,25 +49,45 @@ export async function GET(
       return new ChatSDKError("forbidden:chat").toResponse();
     }
 
-    // Check entitlements for authenticated users
-    const entitlementCheck = await isChatEntitled(userId);
+    // Check entitlements for authenticated users (only if Ghost/Stripe is configured)
+    const isEntitlementSystemEnabled = !!(env.GHOST_ADMIN_URL || env.STRIPE_SECRET_KEY);
+    
+    if (isEntitlementSystemEnabled) {
+      const entitlementCheck = await isChatEntitled(userId);
 
-    if (!entitlementCheck.entitled) {
-      // Try JIT sync from Ghost if configured
-      const user = await getUserById({ userId });
+      if (!entitlementCheck.entitled) {
+        // Try JIT sync from Ghost if configured
+        const user = await getUserById({ userId });
 
-      if (user?.email && env.GHOST_ADMIN_URL && env.GHOST_ADMIN_API_KEY) {
-        await syncFromGhostByEmail(user.email, userId);
+        if (user?.email && env.GHOST_ADMIN_URL && env.GHOST_ADMIN_API_KEY) {
+          await syncFromGhostByEmail(user.email, userId);
 
-        // Re-check entitlement after sync
-        const recheckEntitlement = await isChatEntitled(userId);
+          // Re-check entitlement after sync
+          const recheckEntitlement = await isChatEntitled(userId);
 
-        if (!recheckEntitlement.entitled) {
+          if (!recheckEntitlement.entitled) {
+            return new Response(
+              JSON.stringify({
+                error: "You need an active subscription to use this chat.",
+                type: "ENTITLEMENT_REQUIRED",
+                reason: recheckEntitlement.reason,
+                portalUrl: env.GHOST_PORTAL_URL || "https://masonjames.com/#/portal",
+              }),
+              {
+                status: 402,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+          }
+        } else {
+          // No Ghost sync available - block immediately
           return new Response(
             JSON.stringify({
               error: "You need an active subscription to use this chat.",
               type: "ENTITLEMENT_REQUIRED",
-              reason: recheckEntitlement.reason,
+              reason: entitlementCheck.reason,
               portalUrl: env.GHOST_PORTAL_URL || "https://masonjames.com/#/portal",
             }),
             {
@@ -78,22 +98,6 @@ export async function GET(
             }
           );
         }
-      } else {
-        // No Ghost sync available - block immediately
-        return new Response(
-          JSON.stringify({
-            error: "You need an active subscription to use this chat.",
-            type: "ENTITLEMENT_REQUIRED",
-            reason: entitlementCheck.reason,
-            portalUrl: env.GHOST_PORTAL_URL || "https://masonjames.com/#/portal",
-          }),
-          {
-            status: 402,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
       }
     }
   }

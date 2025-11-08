@@ -42,11 +42,12 @@ export async function POST(request: NextRequest) {
     logger.info({ email }, "Generating magic link");
 
     // Generate magic link using Better Auth
-    // The magicLink plugin sends the email directly via the configured sendMagicLink callback
-    const callbackURL = `${env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL || "http://localhost:3000"}/api/auth/callback/magic-link`;
+    const baseUrl = env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL || "http://localhost:3000";
+    const callbackURL = `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/api/auth/callback/magic-link`;
     
-    // Better Auth handles the token generation and will call the sendMagicLink callback
-    // We pass headers to satisfy the API requirements
+    logger.info({ callbackURL }, "Using callback URL");
+    
+    // Better Auth handles the token generation
     const result = await auth.api.signInMagicLink({
       body: {
         email,
@@ -57,11 +58,20 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    // For development, log the magic link if available
-    // In production, the email is sent via Resend in the sendMagicLink callback
-    const magicLinkUrl = result && typeof result === "object" && "url" in result
-      ? String(result.url)
-      : null;
+    // Extract the magic link URL from Better Auth response
+    // The sendMagicLink callback logs it, but we need to extract it for Resend
+    let magicLinkUrl: string | null = null;
+    
+    if (result && typeof result === "object") {
+      // Better Auth may return different response structures
+      if ("url" in result && result.url) {
+        magicLinkUrl = String(result.url);
+      } else if ("data" in result && result.data && typeof result.data === "object" && "url" in result.data) {
+        magicLinkUrl = String(result.data.url);
+      }
+    }
+    
+    logger.info({ magicLinkUrl, resultKeys: result ? Object.keys(result) : [] }, "Magic link result");
 
     // Send email via Resend if configured and we have a magic link URL
     if (env.RESEND_API_KEY && env.RESEND_FROM_EMAIL && magicLinkUrl) {
@@ -139,9 +149,17 @@ export async function POST(request: NextRequest) {
       message: "Magic link sent! Check your email to sign in.",
     });
   } catch (error) {
-    logger.error({ error }, "Failed to generate magic link");
+    logger.error({
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }, "Failed to generate magic link");
     return NextResponse.json(
-      { success: false, error: "Failed to generate magic link" },
+      {
+        success: false,
+        error: "Failed to generate magic link",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

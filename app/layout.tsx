@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/config";
 import { ConfigProvider } from "@/components/config-provider";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sparka.ai"),
@@ -42,6 +43,8 @@ const geistMono = Geist_Mono({
 
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
 const DARK_THEME_COLOR = "hsl(240deg 10% 3.92%)";
+const isEntitlementSystemEnabled = !!(env.GHOST_ADMIN_URL || env.STRIPE_SECRET_KEY);
+
 const THEME_COLOR_SCRIPT = `\
 (function() {
   var html = document.documentElement;
@@ -80,6 +83,11 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: THEME_COLOR_SCRIPT,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENTITLEMENT_SYSTEM_ENABLED__ = ${isEntitlementSystemEnabled};`,
           }}
         />
         {process.env.NODE_ENV !== "production" ? (

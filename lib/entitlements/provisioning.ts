@@ -436,11 +436,16 @@ export async function syncFromGhostByEmail(email: string, userId: string): Promi
     const member = members[0];
     const status = member.status;
     const tiers = member.tiers || [];
-    const isPaid = status === "paid" && tiers.length > 0;
-    const tier = isPaid ? tiers[0].slug : null;
+    
+    // Ghost member status can be: 'free', 'paid', or 'comped' (complimentary)
+    // Both 'paid' and 'comped' should have access
+    const hasAccess = (status === "paid" || status === "comped") && tiers.length > 0;
+    const tier = hasAccess ? tiers[0].slug : null;
     const credits = getCreditsForTier(tier);
+    
+    logger.info({ email, userId, status, tiers, hasAccess }, "Ghost member found");
 
-    if (isPaid) {
+    if (hasAccess) {
       // Upsert entitlement
       await db
         .insert(entitlement)

@@ -21,6 +21,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  baseURL: env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL || "http://localhost:3000",
   trustedOrigins: env.VERCEL_URL ? [env.VERCEL_URL] : undefined,
   secret: env.AUTH_SECRET,
 

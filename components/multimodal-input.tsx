@@ -99,6 +99,10 @@ function PureMultimodalInput({
 
   const isAnonymous = !session?.user;
   const { entitled, isLoading: isLoadingEntitlement } = useEntitlementStatus();
+  
+  // Check if entitlement system is enabled (Ghost or Stripe configured)
+  const isEntitlementSystemEnabled = typeof window !== "undefined" &&
+    (window as any).__ENTITLEMENT_SYSTEM_ENABLED__;
   const isModelDisallowedForAnonymous =
     isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
 
@@ -149,8 +153,8 @@ function PureMultimodalInput({
           message: "Image models are not supported yet",
         };
       }
-      // Check entitlement for authenticated users
-      if (!isAnonymous && !entitled && !isLoadingEntitlement) {
+      // Check entitlement for authenticated users (only if entitlement system is enabled)
+      if (!isAnonymous && isEntitlementSystemEnabled && !entitled && !isLoadingEntitlement) {
         return {
           enabled: false,
           message: "You need an active subscription to use this chat",
