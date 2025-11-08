@@ -3,30 +3,36 @@
 import { toast } from "sonner";
 import { CopyIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import type { ChatMessage } from "@/lib/ai/types";
 
-type GeneratedImageProps = {
-  result?: {
-    imageUrl: string;
-    prompt: string;
-  };
-  args?: {
-    prompt: string;
-  };
-  isLoading?: boolean;
-};
+export type GenerateImageTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-generateImage" }
+>;
 
-export function GeneratedImage({
-  result,
-  args,
-  isLoading,
-}: GeneratedImageProps) {
+export function GeneratedImage({ tool }: { tool: GenerateImageTool }) {
+  if (tool.state === "input-available") {
+    return (
+      <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
+        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="text-muted-foreground">
+          Generating image: &quot;{tool.input.prompt}&quot;
+        </div>
+      </div>
+    );
+  }
+  const output = tool.output;
+  if (!output) {
+    return null;
+  }
+
   const handleCopyImage = async () => {
-    if (!result?.imageUrl) {
+    if (!output.imageUrl) {
       return;
     }
 
     try {
-      const response = await fetch(result.imageUrl);
+      const response = await fetch(output.imageUrl);
       const blob = await response.blob();
       await navigator.clipboard.write([
         new ClipboardItem({ [blob.type]: blob }),
@@ -37,25 +43,14 @@ export function GeneratedImage({
     }
   };
 
-  if (isLoading || !result) {
-    return (
-      <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
-        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
-        <div className="text-muted-foreground">
-          Generating image: &quot;{args?.prompt}&quot;
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">
       <div className="group relative">
         {/* biome-ignore lint/performance/noImgElement: Next/Image isn't desired for dynamic external URLs here */}
         <img
-          alt={result.prompt}
+          alt={output.prompt}
           className="h-auto w-full max-w-full"
-          src={result.imageUrl}
+          src={output.imageUrl}
         />
         <button
           className={cn(
@@ -71,9 +66,11 @@ export function GeneratedImage({
       </div>
       <div className="p-4 pt-0">
         <p className="text-muted-foreground text-sm">
-          Generated from: &quot;{result.prompt}&quot;
+          Generated from: &quot;{output.prompt}&quot;
         </p>
       </div>
     </div>
   );
 }
+
+

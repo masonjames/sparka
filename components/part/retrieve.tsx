@@ -3,21 +3,15 @@
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
+import type { ChatMessage } from "@/lib/ai/types";
 
-type RetrieveResult = {
-  error?: string;
-  results: {
-    title: string;
-    content: string;
-    url: string;
-    description: string;
-    language: string;
-    error?: string;
-  }[];
-};
+export type RetrieveTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-retrieve" }
+>;
 
-export function Retrieve({ result }: { result?: RetrieveResult }) {
-  if (!result) {
+export function Retrieve({ tool }: { tool: RetrieveTool }) {
+  if (tool.state === "input-available") {
     return (
       <div className="my-4 rounded-xl border border-neutral-200 bg-linear-to-b from-white to-neutral-50 p-4 dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-900/90">
         <div className="flex items-center gap-4">
@@ -36,9 +30,18 @@ export function Retrieve({ result }: { result?: RetrieveResult }) {
       </div>
     );
   }
+  const { output: result } = tool;
   // Update the error message UI with better dark mode border visibility
-  if (result.error || result.results?.[0]?.error) {
-    const errorMessage = result.error || result.results?.[0]?.error;
+  const topLevelError = result && "error" in result ? result.error : undefined;
+  const firstItem =
+    result && "results" in result && Array.isArray(result.results)
+      ? result.results[0]
+      : undefined;
+  const firstItemError =
+    firstItem && "error" in firstItem ? firstItem.error : undefined;
+
+  if (topLevelError || firstItemError) {
+    const errorMessage = topLevelError ?? firstItemError;
     return (
       <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
         <div className="flex items-center gap-3">
@@ -58,22 +61,6 @@ export function Retrieve({ result }: { result?: RetrieveResult }) {
     );
   }
 
-  // Update the "no content" message UI with better dark mode border visibility
-  if (!result.results || result.results.length === 0) {
-    return (
-      <div className="my-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500 dark:bg-amber-950/50">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
-            <Globe className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-          </div>
-          <div className="font-medium text-amber-700 text-sm dark:text-amber-300">
-            No content available
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Existing rendering for successful retrieval:
   return (
     <div className="my-4 overflow-hidden rounded-xl border border-neutral-200 bg-linear-to-b from-white to-neutral-50 dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-900/90">
@@ -85,24 +72,36 @@ export function Retrieve({ result }: { result?: RetrieveResult }) {
               alt=""
               className="absolute inset-0 m-auto"
               height={20}
-              src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(result.results[0].url)}`}
+              src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
+                (firstItem && "url" in firstItem && firstItem.url) || ""
+              )}`}
               width={20}
             />
           </div>
           <div className="min-w-0 flex-1 space-y-2">
             <h2 className="truncate font-semibold text-lg text-neutral-900 tracking-tight dark:text-neutral-100">
-              {result.results[0].title || "Retrieved Content"}
+              {(firstItem && "title" in firstItem && firstItem.title) ||
+                "Retrieved Content"}
             </h2>
             <p className="line-clamp-2 text-neutral-600 text-sm dark:text-neutral-400">
-              {result.results[0].description || "No description available"}
+              {(firstItem &&
+                "description" in firstItem &&
+                firstItem.description) ||
+                "No description available"}
             </p>
             <div className="flex items-center gap-3">
               <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-medium text-primary text-xs">
-                {result.results[0].language || "Unknown"}
+                {(firstItem &&
+                  "language" in firstItem &&
+                  (firstItem.language ?? "Unknown")) ||
+                  "Unknown"}
               </span>
               <a
                 className="inline-flex items-center gap-1.5 text-neutral-500 text-xs transition-colors hover:text-primary"
-                href={result.results[0].url}
+                href={
+                  (firstItem && "url" in firstItem && (firstItem.url || "#")) ||
+                  "#"
+                }
                 rel="noopener noreferrer"
                 target="_blank"
               >
@@ -126,7 +125,10 @@ export function Retrieve({ result }: { result?: RetrieveResult }) {
           <div className="max-h-[50vh] overflow-y-auto bg-neutral-50/50 p-4 dark:bg-neutral-800/30">
             <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
               <ReactMarkdown>
-                {result.results[0].content || "No content available"}
+                {(firstItem &&
+                  "content" in firstItem &&
+                  (firstItem.content || "No content available")) ||
+                  "No content available"}
               </ReactMarkdown>
             </div>
           </div>
@@ -135,3 +137,5 @@ export function Retrieve({ result }: { result?: RetrieveResult }) {
     </div>
   );
 }
+
+

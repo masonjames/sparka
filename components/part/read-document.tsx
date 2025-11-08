@@ -1,18 +1,19 @@
 "use client";
 
 import { memo } from "react";
-import { FileIcon } from "./icons";
+import type { ChatMessage } from "@/lib/ai/types";
+import { FileIcon } from "../icons";
 
-type ReadDocumentProps = {
-  result?: {
-    id: string;
-    title: string;
-    kind: string;
-    content: string;
-  };
-};
+export type ReadDocumentTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-readDocument" }
+>;
 
-function PureReadDocument({ result }: ReadDocumentProps) {
+function PureReadDocument({ tool }: { tool: ReadDocumentTool }) {
+  if (tool.state === "input-available") {
+    return null;
+  }
+  const result = tool.output;
   if (!result) {
     return null;
   }
@@ -29,3 +30,5 @@ function PureReadDocument({ result }: ReadDocumentProps) {
 }
 
 export const ReadDocument = memo(PureReadDocument, () => true);
+
+

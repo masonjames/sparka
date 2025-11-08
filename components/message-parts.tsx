@@ -8,17 +8,20 @@ import {
   useMessagePartsByPartRange,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
-import { CodeInterpreterMessage } from "./code-interpreter-message";
-import { DocumentToolCall, DocumentToolResult } from "./document";
-import { DocumentPreview } from "./document-preview";
-import { GeneratedImage } from "./generated-image";
-import { ResearchUpdates } from "./message-annotations";
-import { MessageReasoning } from "./message-reasoning";
-import { ReadDocument } from "./read-document";
-import { Retrieve } from "./retrieve";
-import { StockChartMessage } from "./stock-chart-message";
-import { TextMessagePart } from "./text-message-part";
-import { Weather } from "./weather";
+import { CodeInterpreterMessage } from "./part/code-interpreter-message";
+import { CreateDocumentMessage } from "./part/create-document-message";
+import { UpdateDocumentMessage } from "./part/update-document-message";
+import { RequestSuggestionsMessage } from "./part/request-suggestions-message";
+import { DocumentToolResult } from "./part/document-common";
+import { DocumentPreview } from "./part/document-preview";
+import { GeneratedImage } from "./part/generated-image";
+import { ResearchUpdates } from "./part/message-annotations";
+import { MessageReasoning } from "./part/message-reasoning";
+import { ReadDocument } from "./part/read-document";
+import { Retrieve } from "./part/retrieve";
+import { StockChartMessage } from "./part/stock-chart-message";
+import { TextMessagePart } from "./part/text-message-part";
+import { Weather } from "./part/weather";
 
 type MessagePartsProps = {
   messageId: string;
@@ -98,31 +101,6 @@ function useResearchUpdates(
     );
 }
 
-const _collectResearchUpdates = (
-  parts: ChatMessage["parts"],
-  toolCallId: string,
-  toolType: "tool-deepResearch" | "tool-webSearch"
-) => {
-  const startIdx = parts.findIndex(
-    (p) => p.type === toolType && p.toolCallId === toolCallId
-  );
-  if (startIdx === -1) {
-    return [];
-  }
-
-  const endIdx = parts.findIndex(
-    (p, i) =>
-      i > startIdx &&
-      (p.type === "tool-deepResearch" || p.type === "tool-webSearch")
-  );
-
-  const sliceEnd = endIdx === -1 ? parts.length : endIdx;
-  return parts
-    .slice(startIdx + 1, sliceEnd)
-    .filter((p) => p.type === "data-researchUpdate")
-    .map((u) => u.data);
-};
-
 // Render a single part by index with minimal subscriptions
 function PureMessagePart({
   messageId,
@@ -138,269 +116,61 @@ function PureMessagePart({
   const researchUpdates = useResearchUpdates(messageId, partIdx, type);
   const chatStore = useChatStoreApi();
 
-  if (type === "tool-getWeather") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      return (
-        <div className="skeleton" key={toolCallId}>
-          <Weather />
-        </div>
-      );
-    }
-    if (state === "output-available") {
-      const { output } = part;
-      return (
-        <div key={toolCallId}>
-          <Weather weatherAtLocation={output} />
-        </div>
-      );
-    }
+  if (part.type === "tool-getWeather") {
+    return <Weather key={part.toolCallId} tool={part} />;
   }
 
-  if (type === "tool-createDocument") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          <DocumentPreview
-            args={input}
-            isReadonly={isReadonly}
-            messageId={messageId}
-          />
-        </div>
-      );
-    }
-
-    if (state === "output-available") {
-      const { output, input } = part;
-      const shouldShowFullPreview = isLastArtifact(
-        chatStore.getState().messages,
-        toolCallId
-      );
-
-      if ("error" in output) {
-        return (
-          <div className="rounded border p-2 text-red-500" key={toolCallId}>
-            Error: {String(output.error)}
-          </div>
-        );
-      }
-
-      return (
-        <div key={toolCallId}>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          )}
-        </div>
-      );
-    }
+  if (part.type === "tool-createDocument") {
+    return (
+      <CreateDocumentMessage
+        isReadonly={isReadonly}
+        key={part.toolCallId}
+        messageId={messageId}
+        tool={part}
+      />
+    );
   }
 
-  if (type === "tool-updateDocument") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          <DocumentToolCall
-            // @ts-expect-error - TODO: fix this
-            args={input}
-            isReadonly={isReadonly}
-            type="update"
-          />
-        </div>
-      );
-    }
-
-    if (state === "output-available") {
-      const { output, input } = part;
-      const shouldShowFullPreview = isLastArtifact(
-        chatStore.getState().messages,
-        toolCallId
-      );
-
-      if ("error" in output) {
-        return (
-          <div className="rounded border p-2 text-red-500" key={toolCallId}>
-            Error: {String(output.error)}
-          </div>
-        );
-      }
-
-      return (
-        <div key={toolCallId}>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="update"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="update"
-            />
-          )}
-        </div>
-      );
-    }
+  if (part.type === "tool-updateDocument") {
+    return (
+      <UpdateDocumentMessage
+        isReadonly={isReadonly}
+        key={part.toolCallId}
+        messageId={messageId}
+        tool={part}
+      />
+    );
   }
 
-  if (type === "tool-requestSuggestions") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          <DocumentToolCall
-            // @ts-expect-error - TODO: fix this
-            args={input}
-            isReadonly={isReadonly}
-            type="request-suggestions"
-          />
-        </div>
-      );
-    }
-
-    if (state === "output-available") {
-      const { output } = part;
-      if ("error" in output) {
-        return (
-          <div className="rounded border p-2 text-red-500" key={toolCallId}>
-            Error: {String(output.error)}
-          </div>
-        );
-      }
-
-      return (
-        <div key={toolCallId}>
-          <DocumentToolResult
-            isReadonly={isReadonly}
-            messageId={messageId}
-            result={output}
-            type="request-suggestions"
-          />
-        </div>
-      );
-    }
+  if (part.type === "tool-requestSuggestions") {
+    return (
+      <RequestSuggestionsMessage
+        isReadonly={isReadonly}
+        key={part.toolCallId}
+        messageId={messageId}
+        tool={part}
+      />
+    );
   }
 
-  if (type === "tool-retrieve") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      return (
-        <div key={toolCallId}>
-          <Retrieve />
-        </div>
-      );
-    }
-
-    if (state === "output-available") {
-      const { output } = part;
-      return (
-        <div key={toolCallId}>
-          {/* @ts-expect-error - TODO: fix this */}
-          <Retrieve result={output} />
-        </div>
-      );
-    }
+  if (part.type === "tool-retrieve") {
+    return <Retrieve key={part.toolCallId} tool={part} />;
   }
 
-  if (type === "tool-readDocument") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      return null;
-    }
-    if (state === "output-available") {
-      const { output } = part;
-      return (
-        <div key={toolCallId}>
-          {/* @ts-expect-error - TODO: fix this */}
-          <ReadDocument result={output} />
-        </div>
-      );
-    }
+  if (part.type === "tool-readDocument") {
+    return <ReadDocument key={part.toolCallId} tool={part} />;
   }
 
-  if (type === "tool-stockChart") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          {/* @ts-expect-error - TODO: fix this */}
-          <StockChartMessage args={input} result={null} />
-        </div>
-      );
-    }
-    if (state === "output-available") {
-      const { output, input } = part;
-      return (
-        <div key={toolCallId}>
-          {/* @ts-expect-error - TODO: fix this */}
-          <StockChartMessage args={input} result={output} />
-        </div>
-      );
-    }
+  if (part.type === "tool-stockChart") {
+    return <StockChartMessage key={part.toolCallId} tool={part} />;
   }
 
-  if (type === "tool-codeInterpreter") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          <CodeInterpreterMessage args={input} result={null} />
-        </div>
-      );
-    }
-    if (state === "output-available") {
-      const { output, input } = part;
-      return (
-        <div key={toolCallId}>
-          {/* @ts-expect-error - TODO: fix this */}
-          <CodeInterpreterMessage args={input} result={output} />
-        </div>
-      );
-    }
+  if (part.type === "tool-codeInterpreter") {
+    return <CodeInterpreterMessage key={part.toolCallId} tool={part} />;
   }
 
-  if (type === "tool-generateImage") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          <GeneratedImage args={input} isLoading={true} />
-        </div>
-      );
-    }
-    if (state === "output-available") {
-      const { output, input } = part;
-      return (
-        <div key={toolCallId}>
-          <GeneratedImage args={input} result={output} />
-        </div>
-      );
-    }
+  if (part.type === "tool-generateImage") {
+    return <GeneratedImage key={part.toolCallId} tool={part} />;
   }
 
   if (type === "tool-deepResearch") {

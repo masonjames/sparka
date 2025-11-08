@@ -4,6 +4,7 @@ import cx from "classnames";
 import { format, isWithinInterval } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { WeatherAtLocation } from "@/lib/ai/tools/get-weather";
+import type { ChatMessage } from "@/lib/ai/types";
 
 const SAMPLE = {
   latitude: 37.763_283,
@@ -164,11 +165,15 @@ function n(num: number): number {
   return Math.ceil(num);
 }
 
-export function Weather({
-  weatherAtLocation = SAMPLE,
-}: {
-  weatherAtLocation?: WeatherAtLocation;
-}) {
+
+export type WeatherTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-getWeather" }
+>;
+
+
+
+function WeatherCard({ weatherAtLocation }: { weatherAtLocation: WeatherAtLocation }) {
   const currentHigh = Math.max(
     ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
@@ -261,3 +266,21 @@ export function Weather({
     </div>
   );
 }
+
+export function Weather({ tool }: { tool: WeatherTool }) {
+  const isLoading = tool.state === "input-available";
+  const weatherAtLocation: WeatherAtLocation =
+    tool.state === "output-available" ? tool.output : SAMPLE;
+
+  if (isLoading) {
+    return (
+      <div className="skeleton" key={tool.toolCallId}>
+        <WeatherCard weatherAtLocation={weatherAtLocation} />
+      </div>
+    );
+  }
+
+  return <WeatherCard weatherAtLocation={weatherAtLocation} />;
+}
+
+

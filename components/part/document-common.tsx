@@ -1,7 +1,72 @@
 import { memo } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "./icons";
+import type { ChatMessage } from "@/lib/ai/types";
+import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "../icons";
+
+export type CreateDocumentTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-createDocument" }
+>;
+export type UpdateDocumentTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-updateDocument" }
+>;
+export type RequestSuggestionsTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-requestSuggestions" }
+>;
+
+export const hasProp = <T extends string>(
+  obj: unknown,
+  prop: T
+): obj is Record<T, unknown> =>
+  typeof obj === "object" && obj !== null && prop in obj;
+
+export const isArtifactToolResult = (
+  o: unknown
+): o is { id: string; title: string; kind: ArtifactKind } => {
+  return (
+    hasProp(o, "id") &&
+    typeof o.id === "string" &&
+    hasProp(o, "title") &&
+    typeof o.title === "string" &&
+    hasProp(o, "kind") &&
+    typeof o.kind === "string"
+  );
+};
+
+export const isLastArtifact = (
+  messages: ChatMessage[],
+  currentToolCallId: string
+): boolean => {
+  let lastArtifact: { messageIndex: number; toolCallId: string } | null = null;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role === "assistant") {
+      for (const part of message.parts) {
+        if (
+          (part.type === "tool-createDocument" ||
+            part.type === "tool-updateDocument" ||
+            part.type === "tool-deepResearch") &&
+          part.state === "output-available"
+        ) {
+          lastArtifact = {
+            messageIndex: i,
+            toolCallId: part.toolCallId,
+          };
+          break;
+        }
+      }
+      if (lastArtifact) {
+        break;
+      }
+    }
+  }
+
+  return lastArtifact?.toolCallId === currentToolCallId;
+};
 
 const getActionText = (
   type: "create" | "update" | "request-suggestions",
@@ -140,3 +205,5 @@ function PureDocumentToolCall({
 }
 
 export const DocumentToolCall = memo(PureDocumentToolCall, () => true);
+
+
