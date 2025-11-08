@@ -24,7 +24,7 @@ export function EmailAuthForm({ mode = "login" }: { mode?: "login" | "register" 
         const result = await authClient.signUp.email({
           email,
           password,
-          name: name || undefined,
+          name: name || email.split('@')[0], // Default to email username if no name provided
         });
         
         if (result.error) {
