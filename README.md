@@ -9,12 +9,16 @@ Build your own multi-model AI chat app with 120+ models, authentication, streami
 **Next.js • Vercel AI SDK • Shadcn/UI • Better Auth • Drizzle ORM**
 
 [**Live Demo**](https://sparka.ai)
-
-</div>
+https://www.sparka.ai/
 
 ![sparka_gif_demo](https://github.com/user-attachments/assets/34a03eed-58fa-4b1e-b453-384351b1c08c)
 
-Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 120+ models through Vercel AI Gateway.
+<br />
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+<br />
+</div>
 
 ## Stack
 
@@ -78,7 +82,6 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    - Use the Deploy button below. In the flow, add the Vercel Postgres and Vercel Blob integrations (or select existing resources). Here's a video walkthrough of how to deploy with Vercel [Deploy Walkthrough](https://www.youtube.com/watch?v=Gsvk1d7CqOk)
 
    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-description=Production-ready%20AI%20chat&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2FFranciscoMoretti%2Fsparka%2Frefs%2Fheads%2Fmain%2Fapp%2Fopengraph-image.png&demo-title=Sparka%20AI%20Chatbot&demo-url=https%3A%2F%2Fwww.sparka.ai%2F&env=AUTH_SECRET%2CAUTH_GITHUB_ID%2CAUTH_GITHUB_SECRET&envDescription=Set%20AUTH_SECRET%20with%20Generate%20Secret%20%28https%3A%2F%2Fgenerate-secret.vercel.app%2F32%29.%20Then%20set%20the%20GitHub%20auth%20provider%20pair%20%28https%3A%2F%2Fwww.better-auth.com%2Fdocs%2Fauthentication%2Fgithub%29.%20Optional%20variables%20can%20be%20set%20later%20to%20enable%20extra%20features.&envLink=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka%2Fblob%2Fmain%2F.env.example&from=templates&products=%255B%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522neon%2522%252C%2522integrationSlug%2522%253A%2522neon%2522%257D%252C%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522upstash-kv%2522%252C%2522integrationSlug%2522%253A%2522upstash%2522%257D%252C%257B%2522type%2522%253A%2522blob%2522%257D%255D&project-name=Sparka%20AI&repository-name=sparka&repository-url=https%3A%2F%2Fgithub.com%2FFranciscoMoretti%2Fsparka&skippable-integrations=1)
-   
 
    - After deploy (or locally after linking), pull envs:
      ```bash
@@ -126,13 +129,13 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
    - `VERCEL_URL` - Deployment URL
    - `VERCEL_PROJECT_PRODUCTION_URL` - Production URL override
 
-4. **Database Setup**
+3. **Database Setup**
 
    ```bash
    bun run db:migrate
    ```
 
-5. **Development Server**
+4. **Development Server**
    ```bash
    bun dev
    ```
@@ -144,4 +147,3 @@ Visit [http://localhost:3000](http://localhost:3000) to start building.
 Here's a video walkthrough of how to deploy with Vercel [Deploy Walkthrough](https://www.youtube.com/watch?v=Gsvk1d7CqOk)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-description=Production-ready%20AI%20chat&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2FFranciscoMoretti%2Fsparka%2Frefs%2Fheads%2Fmain%2Fapp%2Fopengraph-image.png&demo-title=Sparka%20AI%20Chatbot&demo-url=https%3A%2F%2Fwww.sparka.ai%2F&env=AUTH_SECRET%2CAUTH_GITHUB_ID%2CAUTH_GITHUB_SECRET&envDescription=Set%20AUTH_SECRET%20with%20Generate%20Secret%20%28https%3A%2F%2Fgenerate-secret.vercel.app%2F32%29.%20Then%20set%20the%20GitHub%20auth%20provider%20pair%20%28https%3A%2F%2Fwww.better-auth.com%2Fdocs%2Fauthentication%2Fgithub%29.%20Optional%20variables%20can%20be%20set%20later%20to%20enable%20extra%20features.&envLink=https%3A%2F%2Fgithub.com%2Ffranciscomoretti%2Fsparka%2Fblob%2Fmain%2F.env.example&from=templates&products=%255B%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522neon%2522%252C%2522integrationSlug%2522%253A%2522neon%2522%257D%252C%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522upstash-kv%2522%252C%2522integrationSlug%2522%253A%2522upstash%2522%257D%252C%257B%2522type%2522%253A%2522blob%2522%257D%255D&project-name=Sparka%20AI&repository-name=sparka&repository-url=https%3A%2F%2Fgithub.com%2FFranciscoMoretti%2Fsparka&skippable-integrations=1)
-
