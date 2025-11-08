@@ -18,6 +18,7 @@ export const env = createEnv({
     
     // Email provider for magic links and password reset (optional)
     RESEND_API_KEY: z.string().optional(),
+    RESEND_FROM_EMAIL: z.string().optional(),
 
     // One of the AI Gateway API key or Vercel OIDC token must be configured
     AI_GATEWAY_API_KEY: z.string().optional(),
@@ -33,6 +34,15 @@ export const env = createEnv({
     EXA_API_KEY: z.string().optional(),
     FIRECRAWL_API_KEY: z.string().optional(),
     SANDBOX_TEMPLATE_ID: z.string().optional(),
+
+    // Entitlements & Subscriptions (optional)
+    GHOST_ADMIN_URL: z.string().optional(),
+    GHOST_ADMIN_API_KEY: z.string().optional(),
+    GHOST_WEBHOOK_SECRET: z.string().optional(),
+    GHOST_PORTAL_URL: z.string().optional(),
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
     // Misc / platform
     VERCEL_URL: z.string().optional(),

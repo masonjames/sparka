@@ -142,3 +142,31 @@ export const document = pgTable(
     }),
   })
 );
+
+export const entitlement = pgTable("Entitlement", {
+  id: text().primaryKey().notNull(),
+  userId: text().notNull(),
+  source: varchar({ length: 50 }).notNull(),
+  externalId: varchar({ length: 255 }).notNull(),
+  tier: varchar({ length: 100 }),
+  status: varchar({ length: 50 }).default("active").notNull(),
+  creditsGranted: integer().default(0).notNull(),
+  metadata: json(),
+  startDate: timestamp({ mode: "string" }),
+  endDate: timestamp({ mode: "string" }),
+  createdAt: timestamp({ mode: "string" }).notNull(),
+  updatedAt: timestamp({ mode: "string" }).notNull(),
+});
+
+export const webhookEvent = pgTable("WebhookEvent", {
+  id: text().primaryKey().notNull(),
+  source: varchar({ length: 50 }).notNull(),
+  eventId: varchar({ length: 255 }).notNull(),
+  eventType: varchar({ length: 100 }).notNull(),
+  payload: json().notNull(),
+  processed: boolean().default(false).notNull(),
+  processedAt: timestamp({ mode: "string" }),
+  error: text(),
+  retryCount: integer().default(0).notNull(),
+  createdAt: timestamp({ mode: "string" }).notNull(),
+});

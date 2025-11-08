@@ -21,7 +21,7 @@ import {
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { ContextBar } from "@/components/context-bar";
-import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
+import { useSaveMessageMutation, useEntitlementStatus } from "@/hooks/chat-sync-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
@@ -98,6 +98,7 @@ function PureMultimodalInput({
   } = useChatInput();
 
   const isAnonymous = !session?.user;
+  const { entitled, isLoading: isLoadingEntitlement } = useEntitlementStatus();
   const isModelDisallowedForAnonymous =
     isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
 
@@ -146,6 +147,13 @@ function PureMultimodalInput({
         return {
           enabled: false,
           message: "Image models are not supported yet",
+        };
+      }
+      // Check entitlement for authenticated users
+      if (!isAnonymous && !entitled && !isLoadingEntitlement) {
+        return {
+          enabled: false,
+          message: "You need an active subscription to use this chat",
         };
       }
       if (isModelDisallowedForAnonymous) {

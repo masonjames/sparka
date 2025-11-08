@@ -56,6 +56,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
 import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
+import { isChatEntitled, syncFromGhostByEmail } from "@/lib/entitlements/provisioning";
 import { generateTitleFromUserMessage } from "../../actions";
 import { addExplicitToolRequestToMessages } from "./addExplicitToolRequestToMessages";
 import { filterReasoningParts } from "./filterReasoningParts";
@@ -198,6 +199,58 @@ export async function POST(request: NextRequest) {
       if (!user) {
         log.warn("User not found");
         return new Response("User not found", { status: 404 });
+      }
+
+      // Check entitlements for authenticated users
+      const entitlementCheck = await isChatEntitled(userId);
+
+      if (!entitlementCheck.entitled) {
+        log.info({ userId, reason: entitlementCheck.reason }, "User not entitled - attempting Ghost sync");
+
+        // Try JIT sync from Ghost if configured
+        if (user.email && env.GHOST_ADMIN_URL && env.GHOST_ADMIN_API_KEY) {
+          await syncFromGhostByEmail(user.email, userId);
+
+          // Re-check entitlement after sync
+          const recheckEntitlement = await isChatEntitled(userId);
+
+          if (!recheckEntitlement.entitled) {
+            log.warn({ userId, email: user.email }, "User still not entitled after Ghost sync");
+            return new Response(
+              JSON.stringify({
+                error: "You need an active subscription to use this chat.",
+                type: "ENTITLEMENT_REQUIRED",
+                reason: recheckEntitlement.reason,
+                portalUrl: env.GHOST_PORTAL_URL || "https://masonjames.com/#/portal",
+              }),
+              {
+                status: 402,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+          }
+
+          log.info({ userId }, "User entitled after Ghost sync");
+        } else {
+          // No Ghost sync available - block immediately
+          log.warn({ userId }, "User not entitled and Ghost sync not configured");
+          return new Response(
+            JSON.stringify({
+              error: "You need an active subscription to use this chat.",
+              type: "ENTITLEMENT_REQUIRED",
+              reason: entitlementCheck.reason,
+              portalUrl: env.GHOST_PORTAL_URL || "https://masonjames.com/#/portal",
+            }),
+            {
+              status: 402,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
       }
     } else {
       // Apply rate limiting for anonymous users

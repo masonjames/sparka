@@ -57,14 +57,17 @@ export const auth = betterAuth({
   plugins: [
     nextCookies(),
     magicLink({
-      // Email sending will be configured when email provider (Resend) is set up
-      sendMagicLink: async ({ email, url }) => {
-        // TODO: Implement when RESEND_API_KEY is configured
-        // For now, just log the magic link URL (dev only)
+      sendMagicLink: async ({ email, url, token }) => {
+        // Magic links are sent via our custom API endpoint
+        // This callback is called by Better Auth, but we handle email sending separately
+        // through the POST /api/auth/magic-link endpoint which calls Resend directly
+        
         if (process.env.NODE_ENV === "development") {
           console.log(`Magic link for ${email}: ${url}`);
         }
-        // Return success to avoid errors, but link won't be sent until email provider is configured
+        
+        // The actual email sending happens in /api/auth/magic-link
+        // This callback is here to satisfy the plugin interface
       },
     }),
   ],

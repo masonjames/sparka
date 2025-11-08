@@ -812,3 +812,30 @@ export function useGetCredits() {
     isLoadingCredits,
   };
 }
+
+export function useEntitlementStatus() {
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+  const trpc = useTRPC();
+
+  const { data, isLoading } = useQuery({
+    ...trpc.entitlements.checkEntitlement.queryOptions(),
+    enabled: isAuthenticated,
+  });
+
+  // Anonymous users are not entitled
+  if (!isAuthenticated) {
+    return {
+      entitled: false,
+      reason: "anonymous_user" as const,
+      isLoading: false,
+    };
+  }
+
+  return {
+    entitled: data?.entitled ?? false,
+    entitlement: data?.entitlement,
+    reason: data?.reason,
+    isLoading,
+  };
+}

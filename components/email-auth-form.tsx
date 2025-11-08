@@ -59,17 +59,22 @@ export function EmailAuthForm({ mode = "login" }: { mode?: "login" | "register" 
     setLoading(true);
 
     try {
-      // Note: Magic link requires email provider to be configured
-      // For now, we'll show a message that it's not available yet
-      toast.info("Magic link authentication will be available once email provider is configured.");
-      setMagicLinkSent(true);
+      const response = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       
-      // Uncomment when email provider is set up:
-      // await authClient.signIn.magicLink({ email });
-      // setMagicLinkSent(true);
-      // toast.success("Check your email for the magic link!");
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setMagicLinkSent(true);
+        toast.success(data.message || "Check your email for the magic link!");
+      } else {
+        toast.error(data.error || "Failed to send magic link");
+      }
     } catch (error) {
-      toast.error("Failed to send magic link");
+      toast.error("Failed to send magic link. Please try again.");
       console.error(error);
     } finally {
       setLoading(false);
