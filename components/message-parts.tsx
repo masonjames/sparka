@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import {
@@ -61,6 +61,7 @@ const isLastArtifact = (
   return lastArtifact?.toolCallId === currentToolCallId;
 };
 
+// TODO: Transform this
 function useResearchUpdates(
   messageId: string,
   partIdx: number,
@@ -242,32 +243,28 @@ function PureMessagePart({
 
 const MessagePart = memo(PureMessagePart);
 
-// Render contiguous reasoning parts; subscribes only to the specified range
-export function PureMessageReasoningParts({
+// Render a single reasoning part by index
+function PureReasoningPart({
   messageId,
-  startIdx,
-  endIdx,
   isLoading,
+  partIdx,
 }: {
   messageId: string;
-  startIdx: number;
-  endIdx: number;
   isLoading: boolean;
+  partIdx: number;
 }) {
-  const reasoningParts = useMessagePartsByPartRange(
-    messageId,
-    startIdx,
-    endIdx,
-    "reasoning"
-  );
+  const part = useMessagePartByPartIdx(messageId, partIdx);
+  if (part.type !== "reasoning") return null;
 
   return (
     <MessageReasoning
       isLoading={isLoading}
-      reasoning={reasoningParts.map((p) => p.text)}
+      content={part.text}
     />
   );
 }
+
+const ReasoningPart = memo(PureReasoningPart);
 
 export function PureMessageParts({
   messageId,
@@ -276,67 +273,38 @@ export function PureMessageParts({
 }: MessagePartsProps) {
   const types = useMessagePartTypesById(messageId);
 
-  type NonReasoningPartType = Exclude<
-    ChatMessage["parts"][number]["type"],
-    "reasoning"
-  >;
-
-  const groups = useMemo(() => {
-    const result: Array<
-      | { kind: "reasoning"; startIndex: number; endIndex: number }
-      | { kind: NonReasoningPartType; index: number }
-    > = [];
-
-    for (let i = 0; i < types.length; i++) {
-      const t = types[i];
-      if (t === "reasoning") {
-        const start = i;
-        while (i < types.length && types[i] === "reasoning") {
-          i++;
-        }
-        const end = i - 1;
-        result.push({ kind: "reasoning", startIndex: start, endIndex: end });
-        i = end;
-      } else {
-        result.push({ kind: t as NonReasoningPartType, index: i });
-      }
-    }
-    return result;
-  }, [types]);
-
-  return groups.map((group, groupIdx) => {
-    if (group.kind === "reasoning") {
-      const key = `message-${messageId}-reasoning-${groupIdx}`;
-      const isLast = group.endIndex === types.length - 1;
+  return types.map((t, i) => {
+    if (t === "reasoning") {
+      const key = `message-${messageId}-reasoning-${i}`;
+      const isLast = i === types.length - 1;
       return (
-        <PureMessageReasoningParts
-          endIdx={group.endIndex}
+        <ReasoningPart
           isLoading={isLoading && isLast}
           key={key}
           messageId={messageId}
-          startIdx={group.startIndex}
+          partIdx={i}
         />
       );
     }
 
-    if (group.kind === "text") {
-      const key = `message-${messageId}-text-${group.index}`;
+    if (t === "text") {
+      const key = `message-${messageId}-text-${i}`;
       return (
         <TextMessagePart
           key={key}
           messageId={messageId}
-          partIdx={group.index}
+          partIdx={i}
         />
       );
     }
 
-    const key = `message-${messageId}-part-${group.index}-${group.kind}`;
+    const key = `message-${messageId}-part-${i}-${t}`;
     return (
       <MessagePart
         isReadonly={isReadonly}
         key={key}
         messageId={messageId}
-        partIdx={group.index}
+        partIdx={i}
       />
     );
   });
