@@ -14,17 +14,22 @@ import { env } from "@/lib/env";
 import type { AppRouter } from "@/trpc/routers/_app";
 import { makeQueryClient } from "./query-client";
 
-// Dynamically import devtools to fix Turbopack HMR issues
-const ReactQueryDevtools =
-  process.env.NODE_ENV === "development"
-    ? dynamic(
-        () =>
-          import("@tanstack/react-query-devtools").then(
-            (mod) => mod.ReactQueryDevtools
-          ),
-        { ssr: false }
-      )
-    : () => null;
+// Conditionally load devtools - disabled by default due to Turbopack HMR issues
+// Set NEXT_PUBLIC_ENABLE_QUERY_DEVTOOLS=true in .env.local to enable
+// See: https://github.com/TanStack/query/issues/8159
+const shouldEnableDevtools =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_ENABLE_QUERY_DEVTOOLS === "true";
+
+const ReactQueryDevtools = shouldEnableDevtools
+  ? dynamic(
+      () =>
+        import("@tanstack/react-query-devtools").then(
+          (mod) => mod.ReactQueryDevtools
+        ),
+      { ssr: false }
+    )
+  : () => null;
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();
