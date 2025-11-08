@@ -47,6 +47,9 @@ export const env = createEnv({
     // Misc / platform
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
+    APP_BASE_URL: z.string().optional(),
+    AUTH_COOKIE_DOMAIN: z.string().optional(),
+    AUTH_TRUSTED_ORIGINS: z.string().optional(),
   },
   client: {},
   experimental__runtimeEnv: {},

@@ -22,3 +22,6 @@ Co-locate `<name>.test.ts(x)` beside the code they cover and run via `bun run te
 
 ## Git, Upstream, & Deployment
 This fork tracks `upstream=https://github.com/FranciscoMoretti/sparka.git`; sync by fetching upstream, branching from `upstream/main`, reapplying branding, then running the full test suite (see `CLAUDE.md` for step-by-step). Use `gh` for status/PRs and `vercel link && vercel deploy --project prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r` for previews after `vercel env pull .env.local`. Never skip `CLAUDE.md` when onboarding new agents or planning deployments.
+
+## Security & Configuration Tips
+Mirror `.env.example` into `.env.local`, populate secrets, and sync with `vercel env pull` before running `bun dev`. Set `APP_BASE_URL` to the canonical domain (e.g., `https://chat.masonjames.com`), `AUTH_COOKIE_DOMAIN` to `.masonjames.com` to share Better Auth cookies across subdomains, and keep `AUTH_TRUSTED_ORIGINS` updated for every future app host. `proxy.ts` assumes HTTPS headers, so configure preview deployments accordingly. Run migrations against a disposable database (`bun run db:migrate && bunx drizzle-kit studio`) before production pushes, and never commit AI keys, Better Auth secrets, or Ghost/Stripe credentials.

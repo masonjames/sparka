@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { Resend } from "resend";
+import { appBaseUrl, authTrustedOrigins, authCookieDomain } from "@/lib/app-url";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import { db } from "./db/client";
@@ -70,11 +71,8 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  baseURL: (() => {
-    const url = env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL || "http://localhost:3000";
-    return url.startsWith('http') ? url : `https://${url}`;
-  })(),
-  trustedOrigins: env.VERCEL_URL ? [env.VERCEL_URL] : undefined,
+  baseURL: appBaseUrl,
+  trustedOrigins: authTrustedOrigins,
   secret: env.AUTH_SECRET,
 
   socialProviders: (() => {
@@ -107,6 +105,14 @@ export const auth = betterAuth({
     requireEmailVerification: false, // Can enable later when email provider is configured
   },
   
+  advanced: authCookieDomain
+    ? {
+        crossSubDomainCookies: {
+          enabled: true,
+          domain: authCookieDomain,
+        },
+      }
+    : undefined,
   plugins: [
     nextCookies(),
     magicLink({
