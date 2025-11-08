@@ -10,7 +10,6 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import SuperJSON from "superjson";
-import { env } from "@/lib/env";
 import type { AppRouter } from "@/trpc/routers/_app";
 import { makeQueryClient } from "./query-client";
 
@@ -51,17 +50,19 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
+const publicBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL?.replace(/\/$/, "");
+
 function getUrl() {
-  const base = (() => {
-    if (typeof window !== "undefined") {
-      return "";
-    }
-    if (env.VERCEL_URL) {
-      return `https://${env.VERCEL_URL}`;
-    }
-    return "http://localhost:3000";
-  })();
-  return `${base}/api/trpc`;
+  if (typeof window !== "undefined") {
+    return "/api/trpc";
+  }
+  if (publicBaseUrl) {
+    return `${publicBaseUrl}/api/trpc`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api/trpc`;
+  }
+  return "http://localhost:3000/api/trpc";
 }
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
