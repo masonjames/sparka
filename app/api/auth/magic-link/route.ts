@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { appBaseUrl } from "@/lib/app-url";
+import { buildAppUrl } from "@/lib/app-url";
 import { createModuleLogger } from "@/lib/logger";
 import { env } from "@/lib/env";
 import { syncFromGhostByEmail } from "@/lib/entitlements/provisioning";
@@ -43,9 +43,10 @@ export async function POST(request: NextRequest) {
     logger.info({ email }, "Generating magic link");
 
     // Generate magic link using Better Auth (email delivery handled in plugin)
-    const callbackURL = new URL("/api/auth/callback/magic-link", `${appBaseUrl}/`).toString();
+    const callbackURL = buildAppUrl("/");
+    const errorCallbackURL = buildAppUrl("/error");
     
-    logger.info({ callbackURL }, "Using callback URL");
+    logger.info({ callbackURL, errorCallbackURL }, "Using callback URLs");
     
     // Better Auth handles the token generation
     const magicLinkEndpoint = (auth.api as Record<string, unknown>)
@@ -80,6 +81,8 @@ export async function POST(request: NextRequest) {
       body: {
         email,
         callbackURL,
+        errorCallbackURL,
+        newUserCallbackURL: callbackURL,
       },
       headers: new Headers({
         "content-type": "application/json",
