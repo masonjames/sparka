@@ -5,14 +5,26 @@ import {
   type QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import SuperJSON from "superjson";
 import { env } from "@/lib/env";
 import type { AppRouter } from "@/trpc/routers/_app";
 import { makeQueryClient } from "./query-client";
+
+// Dynamically import devtools to fix Turbopack HMR issues
+const ReactQueryDevtools =
+  process.env.NODE_ENV === "development"
+    ? dynamic(
+        () =>
+          import("@tanstack/react-query-devtools").then(
+            (mod) => mod.ReactQueryDevtools
+          ),
+        { ssr: false }
+      )
+    : () => null;
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();

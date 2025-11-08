@@ -205,6 +205,9 @@
   },
   "overrides": {
     "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2"
+    "@types/react-dom": "19.2.2",
+    "shiki": "3.14.0",
+    "@shikijs/langs": "3.14.0",
+    "@shikijs/themes": "3.14.0"
   }
 }
