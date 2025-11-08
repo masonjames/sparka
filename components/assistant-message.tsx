@@ -2,8 +2,8 @@
 import { memo } from "react";
 import { useChatId } from "@/lib/stores/hooks-base";
 import {
-  Message as AIMessage,
-  MessageContent as AIMessageContent,
+  Message,
+  MessageContent,
 } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
 import { MessageActions } from "./message-actions";
@@ -25,8 +25,8 @@ const PureAssistantMessage = ({
   }
 
   return (
-    <AIMessage className="w-full items-start py-1" from="assistant" >
-      <AIMessageContent className="w-full px-0 py-0 text-left" variant="flat">
+    <Message className="w-full items-start py-1" from="assistant">
+      <MessageContent className="w-full max-w-full px-0 py-0 text-left">
         <PartialMessageLoading messageId={messageId} />
         <MessageParts
           isLoading={isLoading}
@@ -48,8 +48,8 @@ const PureAssistantMessage = ({
           vote={vote}
         />
         {isReadonly ? null : <FollowUpSuggestionsParts messageId={messageId} />}
-      </AIMessageContent>
-    </AIMessage>
+      </MessageContent>
+    </Message>
   );
 };
 export const AssistantMessage = memo(

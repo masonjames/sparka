@@ -2,8 +2,8 @@
 import equal from "fast-deep-equal";
 import { memo, useState } from "react";
 import {
-  Message as AIMessage,
-  MessageContent as AIMessageContent,
+  Message,
+  MessageContent,
 } from "@/components/ai-elements/message";
 import type { Vote } from "@/lib/db/schema";
 import { useChatId, useMessageById } from "@/lib/stores/hooks-base";
@@ -67,7 +67,7 @@ export const PureUserMessage = ({
 
   return (
     <>
-      <AIMessage
+      <Message
         className={cn(
           // TODO: Consider not using this max-w class override when editing is cohesive with displaying the message
           mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
@@ -83,7 +83,7 @@ export const PureUserMessage = ({
         >
           {mode === "view" ? (
             isReadonly ? (
-              <AIMessageContent
+              <MessageContent
                 className="text-left group-[.is-user]:bg-card"
                 data-testid="message-content"
 
@@ -96,7 +96,7 @@ export const PureUserMessage = ({
                 <pre className="whitespace-pre-wrap font-sans">
                   {textPart.text}
                 </pre>
-              </AIMessageContent>
+              </MessageContent>
             ) : (
               <button
                 className="cursor-pointer text-left transition-opacity hover:opacity-80 block"
@@ -104,7 +104,7 @@ export const PureUserMessage = ({
                 onClick={() => setMode("edit")}
                 type="button"
               >
-                <AIMessageContent
+                <MessageContent
                   className="text-left group-[.is-user]:bg-card group-[.is-user]:max-w-none"
                   data-testid="message-content"
                 >
@@ -116,7 +116,7 @@ export const PureUserMessage = ({
                   <pre className="whitespace-pre-wrap font-sans">
                     {textPart.text}
                   </pre>
-                </AIMessageContent>
+                </MessageContent>
               </button>
             )
           ) : (
@@ -145,7 +145,7 @@ export const PureUserMessage = ({
             />
           </div>
         </div>
-      </AIMessage>
+      </Message>
       <ImageModal
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}
