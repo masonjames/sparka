@@ -41,11 +41,6 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Search the web",
     cost: 3,
   },
-  stockChart: {
-    name: "stockChart",
-    description: "Get the stock chart for a specific stock",
-    cost: 1,
-  },
   codeInterpreter: {
     name: "codeInterpreter",
     description: "Interpret code in a virtual environment",

@@ -8,20 +8,19 @@ import {
   useMessagePartsByPartRange,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
-import { CodeInterpreterMessage } from "./part/code-interpreter-message";
 import { CreateDocumentMessage } from "./part/create-document-message";
 import { UpdateDocumentMessage } from "./part/update-document-message";
 import { RequestSuggestionsMessage } from "./part/request-suggestions-message";
-import { DocumentToolResult } from "./part/document-common";
-import { DocumentPreview } from "./part/document-preview";
 import { GeneratedImage } from "./part/generated-image";
 import { ResearchUpdates } from "./part/message-annotations";
 import { MessageReasoning } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
 import { Retrieve } from "./part/retrieve";
-import { StockChartMessage } from "./part/stock-chart-message";
 import { TextMessagePart } from "./part/text-message-part";
 import { Weather } from "./part/weather";
+import { CodeInterpreterMessage } from "./part/code-interpreter-message";
+import { DocumentToolResult } from "./part/document-common";
+import { DocumentPreview } from "./part/document-preview";
 
 type MessagePartsProps = {
   messageId: string;
@@ -162,9 +161,6 @@ function PureMessagePart({
     return <ReadDocument key={part.toolCallId} tool={part} />;
   }
 
-  if (part.type === "tool-stockChart") {
-    return <StockChartMessage key={part.toolCallId} tool={part} />;
-  }
 
   if (part.type === "tool-codeInterpreter") {
     return <CodeInterpreterMessage key={part.toolCallId} tool={part} />;

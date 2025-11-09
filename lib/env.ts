@@ -29,7 +29,6 @@ export const env = createEnv({
     TAVILY_API_KEY: z.string().optional(),
     EXA_API_KEY: z.string().optional(),
     FIRECRAWL_API_KEY: z.string().optional(),
-    SANDBOX_TEMPLATE_ID: z.string().optional(),
 
     // Misc / platform
     VERCEL_URL: z.string().optional(),
