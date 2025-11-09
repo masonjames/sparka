@@ -41,6 +41,25 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Handle group routes
+    const groupMatch = pathname?.match(/^\/group\/([^/]+)(?:\/chat\/(.+))?$/);
+    if (groupMatch) {
+      const [, groupId, chatId] = groupMatch;
+      if (chatId) {
+        // /group/:groupId/chat/:chatId
+        return {
+          id: chatId,
+          type: "chat",
+        };
+      } else {
+        // /group/:groupId - provisional chat
+        return {
+          id: provisionalChatIdRef.current,
+          type: "provisional",
+        };
+      }
+    }
+
     if (pathname === "/") {
       return {
         id: provisionalChatIdRef.current,

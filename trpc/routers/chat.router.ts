@@ -37,22 +37,58 @@ import {
 } from "@/trpc/init";
 
 export const chatRouter = createTRPCRouter({
-  getAllChats: protectedProcedure.query(async ({ ctx }) => {
-    const chats = await getChatsByUserId({ id: ctx.user.id });
+  getAllChats: protectedProcedure
+    .input(
+      z
+        .object({
+          projectId: z.uuid().optional().nullable(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      console.log("[getAllChats] Starting", {
+        userId: ctx.user.id,
+        projectId: input?.projectId,
+        inputType: typeof input?.projectId,
+      });
 
-    // Sort chats by pinned status, then by last updated date
-    chats.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) {
-        return -1;
-      }
-      if (!a.isPinned && b.isPinned) {
-        return 1;
-      }
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
+      try {
+        const chats = await getChatsByUserId({
+          id: ctx.user.id,
+          projectId: input?.projectId,
+        });
 
-    return chats.map(dbChatToUIChat);
-  }),
+        console.log("[getAllChats] Retrieved chats from DB", {
+          count: chats.length,
+          sampleChat: chats[0] ? {
+            id: chats[0].id,
+            isPinned: chats[0].isPinned,
+            updatedAt: chats[0].updatedAt,
+            updatedAtType: typeof chats[0].updatedAt,
+          } : null,
+        });
+
+        // Sort chats by pinned status, then by last updated date
+        chats.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) {
+            return -1;
+          }
+          if (!a.isPinned && b.isPinned) {
+            return 1;
+          }
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+
+        console.log("[getAllChats] After sorting", { count: chats.length });
+
+        const result = chats.map(dbChatToUIChat);
+        console.log("[getAllChats] After mapping to UI", { count: result.length });
+        return result;
+      } catch (error) {
+        console.error("[getAllChats] Error:", error);
+        throw error;
+      }
+    }),
 
   getChatById: protectedProcedure
     .input(

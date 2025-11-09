@@ -28,9 +28,11 @@ function useRecreateChat(id: string, initialMessages: ChatMessage[]) {
 export function ChatSync({
   id,
   initialMessages,
+  projectId,
 }: {
   id: string;
   initialMessages: ChatMessage[];
+  projectId?: string;
 }) {
   const chatStore = useChatStoreApi();
   const { data: session } = useSession();
@@ -59,6 +61,7 @@ export function ChatSync({
               id,
               message: messages.at(-1),
               prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+              projectId,
               ...body,
             },
           };
@@ -80,7 +83,7 @@ export function ChatSync({
       },
     });
     return instance;
-  }, [id, saveChatMessage, setDataStream, isAuthenticated, chatState]);
+  }, [id, saveChatMessage, setDataStream, isAuthenticated, chatState, projectId]);
 
   const helpers = useChat<ChatMessage>({
     // @ts-expect-error private field

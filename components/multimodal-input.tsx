@@ -214,8 +214,16 @@ function PureMultimodalInput({
     }
 
     // For new chats, we need to update the url to include the chatId
-    if (window.location.pathname === "/") {
+    const currentPath = window.location.pathname;
+    if (currentPath === "/") {
       window.history.pushState({}, "", `/chat/${chatId}`);
+    } else {
+      // Handle group routes: /group/:groupId -> /group/:groupId/chat/:chatId
+      const groupMatch = currentPath.match(/^\/group\/([^/]+)$/);
+      if (groupMatch) {
+        const [, groupId] = groupMatch;
+        window.history.pushState({}, "", `/group/${groupId}/chat/${chatId}`);
+      }
     }
 
     // Get the appropriate parent message ID

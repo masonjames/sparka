@@ -740,6 +740,7 @@ export function useGetAllChats(limit?: number) {
             visibility: chat.visibility,
             userId: "",
             isPinned: chat.isPinned,
+            projectId: null,
           }) satisfies UIChat
       );
     },

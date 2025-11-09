@@ -30,10 +30,15 @@ export function GroupedChatsList({
 }: GroupedChatsListProps) {
   const pathname = usePathname();
 
-  // Extract chatId from URL for /chat routes
+  // Extract chatId from URL for /chat routes and /group routes
   const chatId = useMemo(() => {
     if (pathname?.startsWith("/chat/")) {
       return pathname.replace("/chat/", "") || null;
+    }
+    // Handle group routes: /group/:groupId/chat/:chatId
+    const groupMatch = pathname?.match(/^\/group\/[^/]+\/chat\/(.+)$/);
+    if (groupMatch) {
+      return groupMatch[1] || null;
     }
     return null;
   }, [pathname]);

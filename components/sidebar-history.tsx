@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -14,14 +15,24 @@ import {
 } from "@/hooks/chat-sync-hooks";
 import { DeleteDialog } from "./delete-dialog";
 import { GroupedChatsList } from "./grouped-chats-list";
+import { SidebarProjects } from "./sidebar-projects";
+import { useSession } from "@/providers/session-provider";
 
 export function SidebarHistory() {
   const { setOpenMobile } = useSidebar();
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
 
   const { mutate: renameChatMutation } = useRenameChat();
   const { mutate: pinChatMutation } = usePinChat();
 
-  const { data: chats, isLoading } = useGetAllChats(50);
+  const { data: allChats, isLoading } = useGetAllChats(50);
+
+  // Filter chats: non-project chats only (projectId == null)
+  const chats = useMemo(
+    () => allChats?.filter((chat) => chat.projectId === null) ?? [],
+    [allChats]
+  );
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -40,7 +51,7 @@ export function SidebarHistory() {
     [pinChatMutation]
   );
 
-  if (!isLoading && chats?.length === 0) {
+  if (!isLoading && (!isAuthenticated || chats.length === 0) && (!isAuthenticated || !allChats || allChats.length === 0)) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
@@ -83,10 +94,21 @@ export function SidebarHistory() {
 
   return (
     <>
+      {isAuthenticated && (
+        <SidebarGroup>
+          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarProjects />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
       <SidebarGroup>
+        <SidebarGroupLabel>Chats</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {chats && (
+            {chats && chats.length > 0 && (
               <GroupedChatsList
                 chats={chats}
                 onDelete={(chatId) => {
@@ -97,6 +119,11 @@ export function SidebarHistory() {
                 onRename={renameChat}
                 setOpenMobile={setOpenMobile}
               />
+            )}
+            {chats && chats.length === 0 && isAuthenticated && (
+              <div className="flex w-full flex-row items-center justify-center gap-2 px-2 py-4 text-sm text-zinc-500">
+                No chats outside of projects
+              </div>
             )}
           </SidebarMenu>
         </SidebarGroupContent>
