@@ -5,9 +5,9 @@ import {
   UpdateDocumentTool,
   hasProp,
   isArtifactToolResult,
-  isLastArtifact,
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
+import { isLastArtifact } from "../isLastArtifact";
 
 export function UpdateDocumentMessage({
   tool,

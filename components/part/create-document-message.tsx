@@ -3,9 +3,9 @@ import {
   DocumentToolResult,
   CreateDocumentTool,
   isArtifactToolResult,
-  isLastArtifact,
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
+import { isLastArtifact } from "../isLastArtifact";
 
 export function CreateDocumentMessage({
   tool,
