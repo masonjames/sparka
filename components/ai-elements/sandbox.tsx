@@ -1,13 +1,9 @@
 "use client";
 
-import { CheckCircle } from "@phosphor-icons/react/CheckCircle";
 import {
   ChevronDownIcon,
   Code,
-  Loader2,
 } from "lucide-react";
-import React from "react";
-import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
