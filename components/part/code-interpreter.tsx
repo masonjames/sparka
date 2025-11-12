@@ -1,4 +1,4 @@
-import { CollapsibleSection } from "../collapsible-section";
+import { Sandbox } from "../sandbox";
 import InteractiveChart, { type BaseChart } from "../interactive-charts";
 import type { ChatMessage } from "@/lib/ai/types";
 
@@ -23,16 +23,14 @@ export function CodeInterpreterMessage({ tool }: { tool: CodeInterpreterTool }) 
   const result = tool.state === "output-available" ? tool.output : null;
   const chart: BaseChart | null = result && isBaseChart(result.chart) ? result.chart : null;
   const code = typeof args.code === "string" ? args.code : "";
-  const icon = typeof args.icon === "string" ? args.icon : "default";
   const title = typeof args.title === "string" ? args.title : "";
   return (
     <div className="space-y-6">
-      <CollapsibleSection
+      <Sandbox
         code={code}
-        icon={icon}
         language="python"
         output={result?.message}
-        status={result ? "completed" : "running"}
+        state={tool.state}
         title={title}
       />
 

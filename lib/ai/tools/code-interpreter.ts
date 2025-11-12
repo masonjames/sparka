@@ -29,18 +29,13 @@ Output rules:
       .describe(
         "The Python code to execute. Print anything you want to return. Optionally assign to 'result' or 'results' to auto-print."
       ),
-    icon: z
-      .enum(["stock", "date", "calculation", "default"])
-      .describe("The icon to display for the code snippet."),
   }),
   execute: async ({
     code,
     title,
-    icon,
   }: {
     code: string;
     title: string;
-    icon: string;
   }) => {
     const log = createModuleLogger("code-interpreter");
     const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -53,7 +48,7 @@ Output rules:
     let chart: { base64: string; format: string } | "";
 
     try {
-      log.info({ requestId, title, icon, runtime }, "creating sandbox");
+      log.info({ requestId, title, runtime }, "creating sandbox");
       // TODO: Reduce vcups to 1 when Vercel allows it
       sandbox = await Sandbox.create({ runtime, timeout: 5 * 60 * 1000, resources: { vcpus: 2}});
       log.debug({ requestId }, "sandbox created");

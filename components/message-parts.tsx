@@ -18,7 +18,7 @@ import { ReadDocument } from "./part/read-document";
 import { Retrieve } from "./part/retrieve";
 import { TextMessagePart } from "./part/text-message-part";
 import { Weather } from "./part/weather";
-import { CodeInterpreterMessage } from "./part/code-interpreter-message";
+import { CodeInterpreterMessage } from "./part/code-interpreter";
 import { DocumentToolResult } from "./part/document-common";
 import { DocumentPreview } from "./part/document-preview";
 import { isLastArtifact } from "./isLastArtifact";
