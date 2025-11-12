@@ -3,8 +3,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import {
   MoreHorizontalIcon,
@@ -24,8 +22,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { Project } from "@/lib/db/schema";
-import { useTRPC } from "@/trpc/react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
+import { useRenameProject } from "@/hooks/chat-sync-hooks";
 
 export function SidebarProjectItem({
   project,
@@ -34,52 +32,11 @@ export function SidebarProjectItem({
   project: Project;
   isActive: boolean;
 }) {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(project.name);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const renameMutation = useMutation(
-    trpc.project.update.mutationOptions({
-      // optimistic update similar to chat rename
-      onMutate: async (variables) => {
-        const listKey = trpc.project.list.queryKey();
-        await queryClient.cancelQueries({ queryKey: listKey });
-        const previous = queryClient.getQueryData<Project[]>(listKey);
-        const nextName =
-          typeof variables.updates.name === "string"
-            ? variables.updates.name
-            : undefined;
-        if (nextName) {
-          queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
-            old
-              ? old.map((p) =>
-                  p.id === variables.id ? { ...p, name: nextName } : p
-                )
-              : old
-          );
-        }
-        return { previous };
-      },
-      onError: (_error, _variables, context) => {
-        const listKey = trpc.project.list.queryKey();
-        if (context?.previous) {
-          queryClient.setQueryData(listKey, context.previous);
-        }
-        toast.error("Failed to rename project");
-      },
-      onSuccess: () => {
-        toast.success("Project renamed");
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.project.list.queryKey(),
-        });
-      },
-    })
-  );
+  const { mutateAsync: renameProject } = useRenameProject();
 
   const projectHref = `/group/${project.id}` as const;
 
@@ -91,7 +48,7 @@ export function SidebarProjectItem({
       return;
     }
     try {
-      await renameMutation.mutateAsync({
+      await renameProject({
         id: project.id,
         updates: { name: trimmed },
       });
