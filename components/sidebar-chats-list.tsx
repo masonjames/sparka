@@ -2,7 +2,9 @@ import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import type { UIChat } from "@/lib/types/uiChat";
+import { useGetAllChats } from "@/hooks/chat-sync-hooks";
 import { SidebarChatItem } from "./sidebar-chat-item";
+import { Skeleton } from "./ui/skeleton";
 
 type GroupedChats = {
   pinned: UIChat[];
@@ -14,21 +16,26 @@ type GroupedChats = {
 };
 
 type GroupedChatsListProps = {
-  chats: UIChat[];
   onDelete: (chatId: string) => void;
   onRename: (chatId: string, title: string) => void;
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
 };
 
-export function GroupedChatsList({
-  chats,
+export function SidebarChatsList({
   onDelete,
   onRename,
   onPin,
   setOpenMobile,
 }: GroupedChatsListProps) {
   const pathname = usePathname();
+  const { data: allChats, isLoading } = useGetAllChats(50);
+
+  // Filter chats: non-project chats only (projectId == null)
+  const chats = useMemo(
+    () => allChats?.filter((chat) => chat.projectId === null) ?? [],
+    [allChats]
+  );
 
   // Extract chatId from URL for /chat routes and /group routes
   const chatId = useMemo(() => {
@@ -88,6 +95,32 @@ export function GroupedChatsList({
 
     return groups;
   }, [chats]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col">
+        {[44, 32, 28, 64, 52].map((item) => (
+          <div
+            className="flex h-8 items-center gap-2 rounded-md px-2"
+            key={item}
+          >
+            <Skeleton
+              className="h-4 flex-1"
+              style={{ width: `${item}%` }}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (chats.length === 0) {
+    return (
+      <div className="flex w-full flex-row items-center justify-center gap-2 px-2 py-4 text-sm text-zinc-500">
+        Start chatting to see your conversation history!
+      </div>
+    );
+  }
 
   return (
     <>
