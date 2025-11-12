@@ -1,7 +1,6 @@
 "use client";
 
 import { FolderPlus } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { SidebarProjectItem } from "@/components/sidebar-project-item";
 import {
   Dialog,
   DialogContent,
@@ -65,19 +65,7 @@ export function SidebarProjects() {
       {!isLoading &&
         projects?.map((project) => {
           const isActive = currentGroupId === project.id;
-          const projectHref = `/group/${project.id}`;
-          return (
-            <SidebarMenuItem key={project.id}>
-              <SidebarMenuButton asChild isActive={isActive} className="cursor-pointer">
-                <Link
-                  // @ts-expect-error - Next.js Link strict typing for dynamic routes
-                  href={projectHref}
-                >
-                  <span>{project.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          );
+          return <SidebarProjectItem key={project.id} project={project} isActive={isActive} />;
         })}
 
       <Dialog open={newProjectDialogOpen} onOpenChange={setNewProjectDialogOpen}>
