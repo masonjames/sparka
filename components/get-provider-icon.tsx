@@ -14,10 +14,12 @@ import {
   Perplexity,
   Vercel,
   XAI,
+  Minimax,
   ZAI,
 } from "@lobehub/icons";
+import { HatGlasses } from "lucide-react";
 
-export function getProviderIcon(provider: ProviderId, size = 16) {
+export function getProviderIcon(provider: ProviderId, size = 16): React.ReactNode {
   const iconProps = { size };
   switch (provider) {
     case "openai":
@@ -48,9 +50,14 @@ export function getProviderIcon(provider: ProviderId, size = 16) {
       return <OpenAI {...iconProps} />; // Using OpenAI as fallback
     case "moonshotai":
       return <Moonshot {...iconProps} />;
-    case "morph":
-      return <OpenAI {...iconProps} />; // Using OpenAI as fallback
     case "zai":
       return <ZAI {...iconProps} />;
+    case "stealth":
+      return <HatGlasses {...iconProps} />;
+    case "minimax":
+      return <Minimax {...iconProps} />;
+    case "morph":
+    case "meituan":
+      return null;
   }
 }

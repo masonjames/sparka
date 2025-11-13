@@ -22,8 +22,6 @@ export type AppModelDefinition = Omit<ModelDefinition, "id"> & {
 const DISABLED_MODELS: Partial<Record<ModelId, true>> = {
   // 'anthropic/claude-opus-4': true,
   // 'anthropic/claude-opus-4.1': true,
-  "cohere/command-r": true,
-  "cohere/command-r-plus": true,
   "morph/morph-v3-large": true,
   "morph/morph-v3-fast": true,
 };
