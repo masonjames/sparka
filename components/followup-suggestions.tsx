@@ -11,6 +11,7 @@ import {
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { useMessageIds } from "@/lib/stores/hooks-base";
 
 export function FollowUpSuggestions({
   suggestions,
@@ -82,6 +83,12 @@ export function FollowUpSuggestions({
 
 export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
   const types = useMessagePartTypesById(messageId);
+  const ids =  useMessageIds()
+  const isLastMessage = ids[ids.length - 1] === messageId;
+
+  if (!isLastMessage) {
+    return null;
+  }
 
   const partIdx = types.indexOf("data-followupSuggestions");
   if (partIdx === -1) {
