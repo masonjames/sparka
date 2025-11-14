@@ -139,15 +139,8 @@ function PureMultimodalInput({
   } catch {
     selectedModelDef = getAppModelDefinition(DEFAULT_CHAT_MODEL);
   }
-  const isImageOutputModel = Boolean(selectedModelDef?.output?.image);
   const submission: { enabled: false; message: string } | { enabled: true } =
     (() => {
-      if (isImageOutputModel) {
-        return {
-          enabled: false,
-          message: "Image models are not supported yet",
-        };
-      }
       if (isModelDisallowedForAnonymous) {
         return { enabled: false, message: "Log in to use this model" };
       }
@@ -547,11 +540,7 @@ function PureMultimodalInput({
             <LimitDisplay
               className="p-2"
               forceVariant={
-                isImageOutputModel
-                  ? "image"
-                  : isModelDisallowedForAnonymous
-                    ? "model"
-                    : "credits"
+                isModelDisallowedForAnonymous ? "model" : "credits"
               }
             />
           )}
