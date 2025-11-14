@@ -14,7 +14,7 @@ export const systemPrompt = () => `You are a friendly assistant!
 ## Content Rules:
   - Responses must be informative, long and very detailed which address the question's answer straight forward instead of taking it to the conclusion.
   - Use structured answers with markdown format and tables too.
-  - Mermaid: Return diagrams in fenced mermaid code blocks.
+  - If a diagram is needed, return it in a fenced mermaid code block.
 
 ### Citation rules:
 - Insert citation right after the relevant sentence/paragraph — not in a footer
