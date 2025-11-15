@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-// Centralized environment parsing and feature flags using t3-oss/t3-env
+
 
 export const env = createEnv({
   server: {

@@ -2,10 +2,6 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   JsonToSseTransformStream,
-  type ModelMessage,
-  stepCountIs,
-  streamObject,
-  streamText,
 } from "ai";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
@@ -14,20 +10,19 @@ import {
   createResumableStreamContext,
   type ResumableStreamContext,
 } from "resumable-stream";
-import { z } from "zod";
 import {
   type AppModelDefinition,
   type AppModelId,
-  DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL,
   getAppModelDefinition,
 } from "@/lib/ai/app-models";
 import { ChatSDKError } from "@/lib/ai/errors";
-import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
-import { systemPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
-import { getTools } from "@/lib/ai/tools/tools";
 import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
+import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
+import {
+  generateFollowupSuggestions,
+  streamFollowupSuggestions,
+} from "@/lib/ai/followup-suggestions";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import {
   createAnonymousSession,
@@ -55,14 +50,11 @@ import { createModuleLogger } from "@/lib/logger";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
-import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
 import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
-import { addExplicitToolRequestToMessages } from "./addExplicitToolRequestToMessages";
-import { filterReasoningParts } from "./filterReasoningParts";
 import { getCreditReservation } from "./getCreditReservation";
-import { getRecentGeneratedImage } from "./getRecentGeneratedImage";
 import { getThreadUpToMessageId } from "./getThreadUpToMessageId";
+import { systemPrompt } from "@/lib/ai/prompts";
 
 // Create shared Redis clients for resumable stream and cleanup
 let redisPublisher: any = null;
@@ -114,50 +106,6 @@ export function getRedisPublisher() {
   return redisPublisher;
 }
 
-function generateFollowupSuggestions(modelMessages: ModelMessage[]) {
-  const maxQuestionCount = 5;
-  const minQuestionCount = 3;
-  const maxCharactersPerQuestion = 80;
-  return streamObject({
-    model: getLanguageModel(DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL),
-    messages: [
-      ...modelMessages,
-      {
-        role: "user",
-        content: `What question should I ask next? Return an array of suggested questions (minimum ${minQuestionCount}, maximum ${maxQuestionCount}). Each question should be no more than ${maxCharactersPerQuestion} characters.`,
-      },
-    ],
-    schema: z.object({
-      suggestions: z
-        .array(z.string())
-        .min(minQuestionCount)
-        .max(maxQuestionCount),
-    }),
-  });
-}
-
-async function streamFollowupSuggestions({
-  followupSuggestionsResult,
-  writer,
-}: {
-  followupSuggestionsResult: ReturnType<typeof generateFollowupSuggestions>;
-  writer: StreamWriter;
-}) {
-  const dataPartId = generateUUID();
-
-  for await (const chunk of followupSuggestionsResult.partialObjectStream) {
-    writer.write({
-      id: dataPartId,
-      type: "data-followupSuggestions",
-      data: {
-        suggestions:
-          chunk.suggestions?.filter(
-            (suggestion): suggestion is string => suggestion !== undefined
-          ) ?? [],
-      },
-    });
-  }
-}
 
 export async function POST(request: NextRequest) {
   const log = createModuleLogger("api:chat");
@@ -430,25 +378,7 @@ export async function POST(request: NextRequest) {
           userMessage.metadata.parentMessageId
         );
 
-    const messages = [...messageThreadToParent, userMessage].slice(-5);
-
-    // Process conversation history
-    const lastGeneratedImage = getRecentGeneratedImage(messages);
-    addExplicitToolRequestToMessages(
-      messages,
-      activeTools,
-      explicitlyRequestedTools
-    );
-
-    // Filter out reasoning parts to ensure compatibility between different models
-    const messagesWithoutReasoning = filterReasoningParts(messages.slice(-5));
-
-    // TODO: Do something smarter by truncating the context to a numer of tokens (maybe even based on setting)
-    const modelMessages = convertToModelMessages(messagesWithoutReasoning);
-
-    // TODO: remove this when the gateway provider supports URLs
-    const contextForLLM =
-      await replaceFilePartUrlByBinaryDataInMessages(modelMessages);
+    const previousMessages = messageThreadToParent.slice(-5);
     log.debug({ activeTools }, "active tools");
 
     // Create AbortController with 55s timeout for credit cleanup
@@ -498,74 +428,34 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      let system = systemPrompt();
+      if (!isAnonymous) {
+        const currentChat = await getChatById({ id: chatId });
+        if (currentChat?.projectId) {
+          const project = await getProjectById({ id: currentChat.projectId });
+          if (project?.instructions) {
+            system = `${system}\n\nProject instructions:\n${project.instructions}`;
+          }
+        }
+      }
+
       // Build the data stream that will emit tokens
       const stream = createUIMessageStream<ChatMessage>({
         execute: async ({ writer: dataStream }) => {
-          // Load project instructions if chat belongs to a project
-          let system = systemPrompt();
-          if (!isAnonymous) {
-            const currentChat = await getChatById({ id: chatId });
-            if (currentChat?.projectId) {
-              const project = await getProjectById({ id: currentChat.projectId });
-              if (project?.instructions) {
-                system = `${system}\n\nProject instructions:\n${project.instructions}`;
-              }
-            }
-          }
-
-          const result = streamText({
-            model: getLanguageModel(modelDefinition.apiModelId),
+          const { result, contextForLLM } = await createCoreChatAgent({
             system,
-            messages: contextForLLM,
-            stopWhen: [
-              stepCountIs(5),
-              ({ steps }) => {
-                return steps.some((step) => {
-                  const toolResults = step.content;
-                  // Don't stop if the tool result is a clarifying question
-                  return toolResults.some(
-                    (toolResult) =>
-                      toolResult.type === "tool-result" &&
-                      toolResult.toolName === "deepResearch" &&
-                      (toolResult.output as any).format === "report"
-                  );
-                });
-              },
-            ],
-
+            userMessage,
+            previousMessages,
+            selectedModelId,
+            selectedTool,
+            userId,
             activeTools,
-            experimental_transform: markdownJoinerTransform(),
-            experimental_telemetry: {
-              isEnabled: true,
-              functionId: "chat-response",
-            },
-            tools: getTools({
-              dataStream,
-              session: {
-                user: {
-                  id: userId || undefined,
-                },
-                expires: "noop",
-              },
-              contextForLLM,
-              messageId,
-              selectedModel: modelDefinition.apiModelId,
-              attachments: userMessage.parts.filter(
-                (part) => part.type === "file"
-              ),
-              lastGeneratedImage,
-            }),
+            abortSignal: abortController.signal,
+            messageId,
+            dataStream,
             onError: (error) => {
               log.error({ error }, "streamText error");
             },
-            abortSignal: abortController.signal, // Pass abort signal to streamText
-            ...(modelDefinition.fixedTemperature
-              ? {
-                  temperature: modelDefinition.fixedTemperature,
-                }
-              : {}),
-
-            providerOptions: getModelProviderOptions(selectedModelId),
           });
 
           const initialMetadata = {
