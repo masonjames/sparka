@@ -2,7 +2,6 @@ import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { evalite } from "evalite";
 import { wrapAISDKModel } from "evalite/ai-sdk";
-import { config } from "dotenv";
 
 evalite("Test Capitals", {
   data: async () => [
