@@ -4,6 +4,7 @@ const MODEL_REGISTRY_URL = "airegistry.app";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
+  cacheComponents: true,
 
   transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
