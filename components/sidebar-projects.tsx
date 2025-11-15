@@ -1,7 +1,7 @@
 "use client";
 
 import { FolderPlus } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -23,6 +23,7 @@ import { useTRPC } from "@/trpc/react";
 
 export function SidebarProjects() {
   const pathname = usePathname();
+  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: projects, isLoading } = useQuery(trpc.project.list.queryOptions());
@@ -37,10 +38,11 @@ export function SidebarProjects() {
 
   const createProjectMutation = useMutation(
     trpc.project.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: trpc.project.list.queryKey() });
         setNewProjectDialogOpen(false);
         setNewProjectName("");
+        router.push(`/group/${data.id}`);
       },
     })
   );

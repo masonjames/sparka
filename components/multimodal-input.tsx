@@ -67,6 +67,8 @@ function PureMultimodalInput({
   isEditMode = false,
   parentMessageId,
   onSendMessage,
+  disableSuggestedActions = false,
+  emptyStateOverride,
 }: {
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -74,6 +76,8 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
+  disableSuggestedActions?: boolean;
+  emptyStateOverride?: React.ReactNode;
 }) {
   const storeApi = useChatStoreApi();
   const { data: session } = useSession();
@@ -507,11 +511,17 @@ function PureMultimodalInput({
         attachments.length === 0 &&
         uploadQueue.length === 0 &&
         !isEditMode && (
-          <SuggestedActions
-            chatId={chatId}
-            className="mb-4"
-            selectedModelId={selectedModelId}
-          />
+          <>
+            {emptyStateOverride ? (
+              emptyStateOverride
+            ) : disableSuggestedActions ? null : (
+              <SuggestedActions
+                chatId={chatId}
+                className="mb-4"
+                selectedModelId={selectedModelId}
+              />
+            )}
+          </>
         )}
 
       <input

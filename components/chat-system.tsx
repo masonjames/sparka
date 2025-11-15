@@ -19,6 +19,7 @@ export const ChatSystem = memo(function ChatSystem({
   initialTool = null,
   overrideModelId,
   projectId,
+  isProjectPage = false,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -26,6 +27,7 @@ export const ChatSystem = memo(function ChatSystem({
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
   projectId?: string;
+  isProjectPage?: boolean;
 }) {
   return (
     <ArtifactProvider>
@@ -40,6 +42,9 @@ export const ChatSystem = memo(function ChatSystem({
                   initialMessages={initialMessages}
                   isReadonly={isReadonly}
                   key={id}
+                  disableSuggestedActions={isProjectPage}
+                  isProjectPage={isProjectPage}
+                  projectId={projectId}
                 />
               </>
             ) : (
@@ -54,6 +59,9 @@ export const ChatSystem = memo(function ChatSystem({
                   initialMessages={initialMessages}
                   isReadonly={isReadonly}
                   key={id}
+                  disableSuggestedActions={isProjectPage}
+                  isProjectPage={isProjectPage}
+                  projectId={projectId}
                 />
                 <DataStreamHandler id={id} />
               </ChatInputProvider>
