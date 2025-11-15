@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProjectChatCard } from "@/components/project-chat-card";
+import { ProjectChatItem } from "@/components/project-chat-item";
 import { PencilEditIcon } from "@/components/icons";
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import { useRenameProject } from "@/hooks/chat-sync-hooks";
@@ -180,16 +180,20 @@ export function ProjectHome({
           )}
         </div>
 
-        {isLoadingChats ? (
-          <div className="mt-4 space-y-2">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-20 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : projectChats.length > 0 ? (
-          <div className="mt-4 space-y-2">
-            {projectChats.map((chat) => (
-              <ProjectChatCard
+        <div className="mt-4 space-y-2">
+          {isLoadingChats ? (
+            [1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-border/60 bg-muted/10 px-4 py-3"
+              >
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="mt-2 h-3 w-24" />
+              </div>
+            ))
+          ) : projectChats.length > 0 ? (
+            projectChats.map((chat) => (
+              <ProjectChatItem
                 key={chat.id}
                 chat={chat}
                 onDelete={deleteChat}
@@ -198,21 +202,16 @@ export function ProjectHome({
                   toast.success("Chat renamed successfully");
                 }}
               />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>No chats in this project</CardTitle>
-                <CardDescription>
-                  Start a chat to keep conversations organized and re-use project
-                  knowledge.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="rounded-xl border border-border/60 px-4 py-6">
+              <p className="text-sm font-medium text-foreground">No chats in this project</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Start a chat to keep conversations organized and re-use project knowledge.
+              </p>
+            </div>
+          )}
+        </div>
 
         <Dialog open={instructionsDialogOpen} onOpenChange={handleCloseInstructionsDialog}>
           <DialogContent className="sm:max-w-2xl">

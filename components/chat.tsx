@@ -72,6 +72,7 @@ export function Chat({
           chatId={id}
           hasMessages={messageIds.length > 0}
           isReadonly={isReadonly}
+        projectId={projectId}
           user={session?.user}
         />
 

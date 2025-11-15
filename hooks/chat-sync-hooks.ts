@@ -65,9 +65,11 @@ export function useSaveChat() {
         createdAt: new Date(),
         updatedAt: new Date(),
         visibility: "private" as const,
+        isPinned: false,
+        projectId: null,
       };
 
-      await saveAnonymousChatToStorage({ ...tempChat, isPinned: false });
+      await saveAnonymousChatToStorage(tempChat);
       return { tempChat, message };
     },
     onSuccess: async ({ tempChat, message }) => {
@@ -78,7 +80,6 @@ export function useSaveChat() {
         await saveAnonymousChatToStorage({
           ...tempChat,
           title: data.title,
-          isPinned: false,
         });
 
         // Invalidate chats to refresh the UI
