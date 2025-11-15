@@ -16,8 +16,13 @@ import {
 import { ShareDialog } from "@/components/share-button";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
+import {
+  ActionCard,
+  ActionCardLink,
+  ActionCardTop,
+} from "@/components/ui/extra/action-card";
 import type { UIChat } from "@/lib/types/uiChat";
-
+import { CardContent } from "@/components/ui/card";
 export function ProjectChatCard({
   chat,
   onDelete,
@@ -29,17 +34,16 @@ export function ProjectChatCard({
 }) {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const chatHref = `/group/${chat.projectId}/chat/${chat.id}`;
+  const chatHref: `/group/${string}/chat/${string}` = `/group/${chat.projectId}/chat/${chat.id}`;
 
   const handleRename = async (title: string) => {
     await onRename(chat.id, title);
   };
 
   return (
-    <div className="group relative rounded-lg border bg-card p-3 hover:bg-accent">
-      <a
+    <ActionCard className="group p-3">
+      <ActionCardLink
         href={chatHref}
-        className="block"
         onClick={(e) => {
           if (e.button === 1 || e.ctrlKey || e.metaKey) {
             return;
@@ -47,48 +51,50 @@ export function ProjectChatCard({
           e.preventDefault();
           window.history.pushState(null, "", chatHref);
         }}
-      >
-        <div className="pr-8">
-          <div className="font-medium">{chat.title}</div>
-          <div className="text-sm text-muted-foreground">
-            {new Date(chat.updatedAt).toLocaleDateString()}
-          </div>
+      />
+
+      <div className="pr-8">
+        <div className="font-medium">{chat.title}</div>
+        <div className="text-sm text-muted-foreground">
+          {new Date(chat.updatedAt).toLocaleDateString()}
         </div>
-      </a>
+      </div>
 
-      <DropdownMenu modal={true}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 opacity-0 group-hover:opacity-100"
-          >
-            <MoreHorizontalIcon />
-            <span className="sr-only">More</span>
-          </Button>
-        </DropdownMenuTrigger>
+      <ActionCardTop>
+        <DropdownMenu modal={true}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 opacity-0 group-hover:opacity-100"
+            >
+              <MoreHorizontalIcon />
+              <span className="sr-only">More</span>
+            </Button>
+          </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" side="bottom">
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => setRenameDialogOpen(true)}
-          >
-            <PencilEditIcon />
-            <span>Rename</span>
-          </DropdownMenuItem>
+          <DropdownMenuContent align="end" side="bottom">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => setRenameDialogOpen(true)}
+            >
+              <PencilEditIcon />
+              <span>Rename</span>
+            </DropdownMenuItem>
 
-          <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
+            <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
 
-          <DropdownMenuItem
-            className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
-            onSelect={() => onDelete(chat.id)}
-          >
-            <TrashIcon />
-            <span>Delete</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
+              onSelect={() => onDelete(chat.id)}
+            >
+              <TrashIcon />
+              <span>Delete</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </ActionCardTop>
 
       {shareDialogOpen && (
         <ShareDialog
@@ -105,7 +111,7 @@ export function ProjectChatCard({
         onSubmit={handleRename}
         isLoading={false}
       />
-    </div>
+    </ActionCard>
   );
 }
 

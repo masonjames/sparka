@@ -112,7 +112,7 @@ export function ProjectHome({
               onClick={() => setRenameProjectDialogOpen(true)}
               className="h-8 w-8"
             >
-              <PencilEditIcon className="size-4" />
+              <PencilEditIcon size={16} />
               <span className="sr-only">Rename project</span>
             </Button>
           </div>
@@ -137,26 +137,28 @@ export function ProjectHome({
               </CardContent>
             </Card>
           ) : project?.instructions && project.instructions.trim() ? (
-            <div className="rounded-lg border bg-muted/50 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="mb-1 text-sm font-medium">Instructions</div>
-                  <div className="line-clamp-3 whitespace-pre-wrap text-sm text-muted-foreground">
-                    {project.instructions}
-                  </div>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Instructions</CardTitle>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleOpenInstructionsDialog}
+                    className="h-8 w-8"
+                  >
+                    <PencilEditIcon size={16} />
+                    <span className="sr-only">Edit instructions</span>
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleOpenInstructionsDialog}
-                  className="shrink-0"
-                >
-                  <PencilEditIcon />
-                  <span className="sr-only">Edit instructions</span>
-                </Button>
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent>
+                <div className="line-clamp-3 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {project.instructions}
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <Card>
               <CardHeader>
