@@ -7,21 +7,21 @@ import { ChatSystem } from "@/components/chat-system";
 import { useTRPC } from "@/trpc/react";
 import { useChatId } from "@/providers/chat-id-provider";
 
-export function GroupPageRouter() {
+export function ProjectPageRouter() {
   const pathname = usePathname();
   const { id } = useChatId();
   const trpc = useTRPC();
 
-  // Extract groupId from pathname
-  const groupMatch = pathname?.match(/^\/group\/([^/]+)/);
-  if (!groupMatch) {
+  // Extract projectId from pathname
+  const projectMatch = pathname?.match(/^\/project\/([^/]+)/);
+  if (!projectMatch) {
     return notFound();
   }
-  const groupId = groupMatch[1];
+  const projectId = projectMatch[1];
 
   // Load project
   const { data: project } = useSuspenseQuery(
-    trpc.project.getById.queryOptions({ id: groupId })
+    trpc.project.getById.queryOptions({ id: projectId })
   );
 
   if (!project) {
@@ -33,7 +33,7 @@ export function GroupPageRouter() {
       id={id}
       initialMessages={[]}
       isReadonly={false}
-      projectId={groupId}
+      projectId={projectId}
       isProjectPage
     />
   );

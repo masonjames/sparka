@@ -1,21 +1,21 @@
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
-import { GroupChatPageRouter } from "./project-chat-page-router";
+import { ProjectChatPageRouter } from "./project-chat-page-router";
 
-export default async function GroupChatPageRoute({
+export default async function ProjectChatPageRoute({
   params,
 }: {
-  params: Promise<{ groupId: string; chatId: string }>;
+  params: Promise<{ projectId: string; chatId: string }>;
 }) {
-  const { groupId, chatId } = await params;
+  const { projectId, chatId } = await params;
 
-  // Prefetch the queries used in group-chat-page.tsx
-  prefetch(trpc.project.getById.queryOptions({ id: groupId }));
+  // Prefetch the queries used in project-chat-page.tsx
+  prefetch(trpc.project.getById.queryOptions({ id: projectId }));
   prefetch(trpc.chat.getChatById.queryOptions({ chatId }));
   prefetch(trpc.chat.getChatMessages.queryOptions({ chatId }));
 
   return (
     <HydrateClient>
-      <GroupChatPageRouter />
+      <ProjectChatPageRouter />
     </HydrateClient>
   );
 }

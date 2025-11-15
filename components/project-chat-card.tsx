@@ -34,7 +34,7 @@ export function ProjectChatCard({
 }) {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const chatHref: `/group/${string}/chat/${string}` = `/group/${chat.projectId}/chat/${chat.id}`;
+  const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
 
   const handleRename = async (title: string) => {
     await onRename(chat.id, title);

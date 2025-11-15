@@ -33,15 +33,15 @@ export function SidebarChatsList() {
     [allChats]
   );
 
-  // Extract chatId from URL for /chat routes and /group routes
+  // Extract chatId from URL for /chat routes and /project routes
   const chatId = useMemo(() => {
     if (pathname?.startsWith("/chat/")) {
       return pathname.replace("/chat/", "") || null;
     }
-    // Handle group routes: /group/:groupId/chat/:chatId
-    const groupMatch = pathname?.match(/^\/group\/[^/]+\/chat\/(.+)$/);
-    if (groupMatch) {
-      return groupMatch[1] || null;
+    // Handle project routes: /project/:projectId/chat/:chatId
+    const projectMatch = pathname?.match(/^\/project\/[^/]+\/chat\/(.+)$/);
+    if (projectMatch) {
+      return projectMatch[1] || null;
     }
     return null;
   }, [pathname]);

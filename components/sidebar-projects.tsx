@@ -20,9 +20,9 @@ export function SidebarProjects() {
   const { data: projects, isLoading } = useQuery(trpc.project.list.queryOptions());
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
-  // Auto-expand project if we're on a group route
-  const currentGroupId = useMemo(() => {
-    const match = pathname?.match(/^\/group\/([^/]+)/);
+  // Auto-expand project if we're on a project route
+  const currentProjectId = useMemo(() => {
+    const match = pathname?.match(/^\/project\/([^/]+)/);
     return match ? match[1] : null;
   }, [pathname]);
 
@@ -31,7 +31,7 @@ export function SidebarProjects() {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: trpc.project.list.queryKey() });
         setNewProjectDialogOpen(false);
-        router.push(`/group/${data.id}`);
+        router.push(`/project/${data.id}`);
       },
     })
   );
@@ -53,7 +53,7 @@ export function SidebarProjects() {
       </SidebarMenuItem>
       {!isLoading &&
         projects?.map((project) => {
-          const isActive = currentGroupId === project.id;
+          const isActive = currentProjectId === project.id;
           return <SidebarProjectItem key={project.id} project={project} isActive={isActive} />;
         })}
 

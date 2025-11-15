@@ -62,8 +62,8 @@ export function DeleteProjectDialog({
     // If we are inside this project's route, navigate home
     const inProjectRoute =
       typeof pathname === "string" &&
-      (pathname === `/group/${deleteId}` ||
-        pathname.startsWith(`/group/${deleteId}/`));
+      (pathname === `/project/${deleteId}` ||
+        pathname.startsWith(`/project/${deleteId}/`));
     if (inProjectRoute) {
       router.push("/");
     }

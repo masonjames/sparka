@@ -222,11 +222,11 @@ function PureMultimodalInput({
     if (currentPath === "/") {
       window.history.pushState({}, "", `/chat/${chatId}`);
     } else {
-      // Handle group routes: /group/:groupId -> /group/:groupId/chat/:chatId
-      const groupMatch = currentPath.match(/^\/group\/([^/]+)$/);
-      if (groupMatch) {
-        const [, groupId] = groupMatch;
-        window.history.pushState({}, "", `/group/${groupId}/chat/${chatId}`);
+      // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
+      const projectMatch = currentPath.match(/^\/project\/([^/]+)$/);
+      if (projectMatch) {
+        const [, projectId] = projectMatch;
+        window.history.pushState({}, "", `/project/${projectId}/chat/${chatId}`);
       }
     }
 

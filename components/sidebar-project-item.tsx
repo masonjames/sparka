@@ -38,7 +38,7 @@ export function SidebarProjectItem({
 
   const { mutateAsync: renameProject } = useRenameProject();
 
-  const projectHref = `/group/${project.id}` as const;
+  const projectHref = `/project/${project.id}` as const;
 
   const handleRename = async () => {
     const trimmed = editName.trim();

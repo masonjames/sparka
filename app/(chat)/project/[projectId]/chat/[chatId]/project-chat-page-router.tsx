@@ -12,13 +12,13 @@ import type { UiToolName } from "@/lib/ai/types";
 import { getDefaultThread } from "@/lib/thread-utils";
 import { useChatId } from "@/providers/chat-id-provider";
 
-export function GroupChatPageRouter() {
+export function ProjectChatPageRouter() {
   const { id } = useChatId();
   const pathname = usePathname();
   
-  // Extract groupId from pathname
-  const groupMatch = pathname?.match(/^\/group\/([^/]+)/);
-  const groupId = groupMatch ? groupMatch[1] : undefined;
+  // Extract projectId from pathname
+  const projectMatch = pathname?.match(/^\/project\/([^/]+)/);
+  const projectId = projectMatch ? projectMatch[1] : undefined;
   const getChatByIdQueryOptions = useGetChatByIdQueryOptions(id);
   const { data: chat } = useSuspenseQuery(getChatByIdQueryOptions);
   const getMessagesByChatIdQueryOptions = useGetChatMessagesQueryOptions();
@@ -66,7 +66,7 @@ export function GroupChatPageRouter() {
       initialMessages={initialThreadMessages}
       initialTool={initialTool}
       isReadonly={false}
-      projectId={groupId}
+      projectId={projectId}
     />
   );
 }
