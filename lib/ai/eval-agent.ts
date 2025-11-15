@@ -4,6 +4,7 @@ import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
 import { generateFollowupSuggestions } from "@/lib/ai/followup-suggestions";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
+import { systemPrompt } from "@/lib/ai/prompts";
 
 // No-op StreamWriter for evals - tools can write but nothing happens
 function createNoOpStreamWriter(): StreamWriter {
@@ -47,6 +48,7 @@ export async function runCoreChatAgentEval({
 
   // Create the core agent
   const { result, contextForLLM } = await createCoreChatAgent({
+    system: systemPrompt(),
     userMessage,
     previousMessages,
     selectedModelId,
