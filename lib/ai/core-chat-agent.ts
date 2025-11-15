@@ -19,6 +19,7 @@ import { filterReasoningParts } from "@/app/(chat)/api/chat/filterReasoningParts
 import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/getRecentGeneratedImage";
 
 export async function createCoreChatAgent({
+  system,
   userMessage,
   previousMessages,
   selectedModelId,
@@ -30,6 +31,7 @@ export async function createCoreChatAgent({
   dataStream,
   onError,
 }: {
+  system: string;
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
@@ -80,7 +82,7 @@ export async function createCoreChatAgent({
   // Create the streamText result
   const result = streamText({
     model: getLanguageModel(modelDefinition.apiModelId),
-    system: systemPrompt(),
+    system,
     messages: contextForLLM,
     stopWhen: [
       stepCountIs(5),

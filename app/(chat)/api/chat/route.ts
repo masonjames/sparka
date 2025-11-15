@@ -38,6 +38,7 @@ import {
 import {
   getChatById,
   getMessageById,
+  getProjectById,
   getUserById,
   saveChat,
   saveMessage,
@@ -53,6 +54,7 @@ import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
 import { getCreditReservation } from "./getCreditReservation";
 import { getThreadUpToMessageId } from "./getThreadUpToMessageId";
+import { systemPrompt } from "@/lib/ai/prompts";
 
 // Create shared Redis clients for resumable stream and cleanup
 let redisPublisher: any = null;
@@ -112,10 +114,12 @@ export async function POST(request: NextRequest) {
       id: chatId,
       message: userMessage,
       prevMessages: anonymousPreviousMessages,
+      projectId,
     }: {
       id: string;
       message: ChatMessage;
       prevMessages: ChatMessage[];
+      projectId?: string;
     } = await request.json();
 
     if (!userMessage) {
@@ -245,7 +249,7 @@ export async function POST(request: NextRequest) {
           message: userMessage,
         });
 
-        await saveChat({ id: chatId, userId, title });
+        await saveChat({ id: chatId, userId, title, projectId });
       }
 
       const [exsistentMessage] = await getMessageById({ id: userMessage.id });
@@ -424,10 +428,22 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      let system = systemPrompt();
+      if (!isAnonymous) {
+        const currentChat = await getChatById({ id: chatId });
+        if (currentChat?.projectId) {
+          const project = await getProjectById({ id: currentChat.projectId });
+          if (project?.instructions) {
+            system = `${system}\n\nProject instructions:\n${project.instructions}`;
+          }
+        }
+      }
+
       // Build the data stream that will emit tokens
       const stream = createUIMessageStream<ChatMessage>({
         execute: async ({ writer: dataStream }) => {
           const { result, contextForLLM } = await createCoreChatAgent({
+            system,
             userMessage,
             previousMessages,
             selectedModelId,

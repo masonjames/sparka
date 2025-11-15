@@ -153,6 +153,7 @@ export async function saveAnonymousChatToStorage(
       updatedAt: chat.updatedAt.toISOString(),
       visibility: chat.visibility,
       isPinned: chat.isPinned,
+      projectId: chat.projectId ?? null,
       userId: session.id,
     };
 
@@ -336,6 +337,7 @@ export async function cloneAnonymousChat(
       updatedAt: new Date(),
       visibility: "private" as const,
       isPinned: false, // New cloned chats are not pinned by default
+      projectId: null,
     };
 
     await saveAnonymousChatToStorage(newChat);
