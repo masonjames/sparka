@@ -4,10 +4,6 @@ import { evalite } from "evalite";
 import { wrapAISDKModel } from "evalite/ai-sdk";
 import { config } from "dotenv";
 
-config({
-  path: ".env.local",
-});
-
 evalite("Test Capitals", {
   data: async () => [
     {
