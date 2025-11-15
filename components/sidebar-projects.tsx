@@ -9,16 +9,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import { useTRPC } from "@/trpc/react";
 
 export function SidebarProjects() {
@@ -28,7 +19,6 @@ export function SidebarProjects() {
   const queryClient = useQueryClient();
   const { data: projects, isLoading } = useQuery(trpc.project.list.queryOptions());
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
 
   // Auto-expand project if we're on a group route
   const currentGroupId = useMemo(() => {
@@ -41,16 +31,13 @@ export function SidebarProjects() {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: trpc.project.list.queryKey() });
         setNewProjectDialogOpen(false);
-        setNewProjectName("");
         router.push(`/group/${data.id}`);
       },
     })
   );
 
-  const handleCreateProject = () => {
-    if (newProjectName.trim()) {
-      createProjectMutation.mutate({ name: newProjectName.trim() });
-    }
+  const handleCreateProject = (name: string) => {
+    createProjectMutation.mutate({ name });
   };
 
   return (
@@ -70,43 +57,13 @@ export function SidebarProjects() {
           return <SidebarProjectItem key={project.id} project={project} isActive={isActive} />;
         })}
 
-      <Dialog open={newProjectDialogOpen} onOpenChange={setNewProjectDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Project</DialogTitle>
-            <DialogDescription>
-              Create a new project to organize your chats.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Project name"
-              value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCreateProject();
-                }
-              }}
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setNewProjectDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateProject}
-              disabled={!newProjectName.trim() || createProjectMutation.isPending}
-            >
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ProjectDetailsDialog
+        open={newProjectDialogOpen}
+        onOpenChange={setNewProjectDialogOpen}
+        mode="create"
+        onSubmit={handleCreateProject}
+        isLoading={createProjectMutation.isPending}
+      />
     </>
   );
 }

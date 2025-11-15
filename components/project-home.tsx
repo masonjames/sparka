@@ -26,22 +26,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  MoreHorizontalIcon,
-  PencilEditIcon,
-  TrashIcon,
-} from "@/components/icons";
-import { ShareDialog } from "@/components/share-button";
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-import type { UIChat } from "@/lib/types/uiChat";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectChatCard } from "@/components/project-chat-card";
+import { PencilEditIcon } from "@/components/icons";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import { useRenameProject } from "@/hooks/chat-sync-hooks";
 
 export function ProjectHome({
   chatId,
@@ -59,6 +48,7 @@ export function ProjectHome({
   const { data: chats, isLoading: isLoadingChats } = useGetAllChats();
   const [instructionsDialogOpen, setInstructionsDialogOpen] = useState(false);
   const [instructionsValue, setInstructionsValue] = useState("");
+  const [renameProjectDialogOpen, setRenameProjectDialogOpen] = useState(false);
 
   const projectChats = useMemo(
     () => (chats ?? []).filter((c) => c.projectId === projectId),
@@ -67,6 +57,7 @@ export function ProjectHome({
 
   const { deleteChat } = useDeleteChat();
   const renameChatMutation = useRenameChat();
+  const renameProjectMutation = useRenameProject();
 
   const setInstructionsMutation = useMutation(
     trpc.project.setInstructions.mutationOptions({
@@ -96,13 +87,35 @@ export function ProjectHome({
     });
   };
 
+  const handleRenameProject = async (name: string) => {
+    await renameProjectMutation.mutateAsync({
+      id: projectId,
+      updates: { name },
+    });
+    queryClient.invalidateQueries({
+      queryKey: trpc.project.getById.queryKey({ id: projectId }),
+    });
+  };
+
   return (
     <div className="flex flex-1 items-center justify-center">
       <div className="mx-auto w-full p-2 @[400px]:px-4 @[400px]:pb-4 md:max-w-3xl @[400px]:md:pb-6">
         {isLoadingProject ? (
           <Skeleton className="mb-3 h-8 w-48" />
         ) : project?.name ? (
-          <h1 className="mb-3 text-2xl font-bold">{project.name}</h1>
+          <div className="mb-3 flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setRenameProjectDialogOpen(true)}
+              className="h-8 w-8"
+            >
+              <PencilEditIcon className="size-4" />
+              <span className="sr-only">Rename project</span>
+            </Button>
+          </div>
         ) : null}
 
         <MultimodalInput
@@ -236,127 +249,16 @@ export function ProjectHome({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ProjectDetailsDialog
+          open={renameProjectDialogOpen}
+          onOpenChange={setRenameProjectDialogOpen}
+          mode="edit"
+          initialValue={project?.name}
+          onSubmit={handleRenameProject}
+          isLoading={renameProjectMutation.isPending}
+        />
       </div>
-    </div>
-  );
-}
-
-function ProjectChatCard({
-  chat,
-  onDelete,
-  onRename,
-}: {
-  chat: UIChat;
-  onDelete: (chatId: string) => void;
-  onRename: (chatId: string, title: string) => Promise<void>;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(chat.title);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const chatHref = `/group/${chat.projectId}/chat/${chat.id}`;
-
-  const handleRename = async () => {
-    if (editTitle.trim() === "" || editTitle === chat.title) {
-      setIsEditing(false);
-      setEditTitle(chat.title);
-      return;
-    }
-
-    try {
-      await onRename(chat.id, editTitle.trim());
-      setIsEditing(false);
-    } catch (_error) {
-      setEditTitle(chat.title);
-      setIsEditing(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleRename();
-    } else if (e.key === "Escape") {
-      setIsEditing(false);
-      setEditTitle(chat.title);
-    }
-  };
-
-  return (
-    <div className="group relative rounded-lg border bg-card p-3 hover:bg-accent">
-      {isEditing ? (
-        <Input
-          autoFocus
-          className="h-auto border-0 bg-transparent p-0 text-sm font-medium focus-visible:ring-0 focus-visible:ring-offset-0"
-          maxLength={255}
-          onBlur={handleRename}
-          onChange={(e) => setEditTitle(e.target.value)}
-          onKeyDown={handleKeyDown}
-          value={editTitle}
-        />
-      ) : (
-        <a
-          href={chatHref}
-          className="block"
-          onClick={(e) => {
-            if (e.button === 1 || e.ctrlKey || e.metaKey) {
-              return;
-            }
-            e.preventDefault();
-            window.history.pushState(null, "", chatHref);
-          }}
-        >
-          <div className="pr-8">
-            <div className="font-medium">{chat.title}</div>
-            <div className="text-sm text-muted-foreground">
-              {new Date(chat.updatedAt).toLocaleDateString()}
-            </div>
-          </div>
-        </a>
-      )}
-
-      <DropdownMenu modal={true}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 opacity-0 group-hover:opacity-100"
-          >
-            <MoreHorizontalIcon />
-            <span className="sr-only">More</span>
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="end" side="bottom">
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => {
-              setIsEditing(true);
-              setEditTitle(chat.title);
-            }}
-          >
-            <PencilEditIcon />
-            <span>Rename</span>
-          </DropdownMenuItem>
-
-          <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
-
-          <DropdownMenuItem
-            className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
-            onSelect={() => onDelete(chat.id)}
-          >
-            <TrashIcon />
-            <span>Delete</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {shareDialogOpen && (
-        <ShareDialog
-          chatId={chat.id}
-          onOpenChange={setShareDialogOpen}
-          open={shareDialogOpen}
-        />
-      )}
     </div>
   );
 }
