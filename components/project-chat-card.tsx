@@ -22,7 +22,7 @@ import {
   ActionCardTop,
 } from "@/components/ui/extra/action-card";
 import type { UIChat } from "@/lib/types/uiChat";
-import { CardContent } from "@/components/ui/card";
+import { CardHeader } from "@/components/ui/card";
 export function ProjectChatCard({
   chat,
   onDelete,
@@ -41,26 +41,20 @@ export function ProjectChatCard({
   };
 
   return (
-    <ActionCard className="group p-3">
+    <>
+    <ActionCard className="group py-4 gap-0">
       <ActionCardLink
         // @ts-expect-error - TODO: fix this next route type
         href={chatHref}
-        onClick={(e) => {
-          if (e.button === 1 || e.ctrlKey || e.metaKey) {
-            return;
-          }
-          e.preventDefault();
-          window.history.pushState(null, "", chatHref);
-        }}
+        
       />
 
-      <div className="pr-8">
+    <CardHeader>   
         <div className="font-medium">{chat.title}</div>
         <div className="text-sm text-muted-foreground">
-          {new Date(chat.updatedAt).toLocaleDateString()}
+            {new Date(chat.updatedAt).toLocaleDateString()}
         </div>
-      </div>
-
+    </CardHeader>
       <ActionCardTop>
         <DropdownMenu modal={true}>
           <DropdownMenuTrigger asChild>
@@ -68,7 +62,7 @@ export function ProjectChatCard({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 opacity-0 group-hover:opacity-100"
+              className="absolute right-4 top-4 h-7 w-7 opacity-0 group-hover:opacity-100"
             >
               <MoreHorizontalIcon />
               <span className="sr-only">More</span>
@@ -97,6 +91,7 @@ export function ProjectChatCard({
         </DropdownMenu>
       </ActionCardTop>
 
+    </ActionCard>
       {shareDialogOpen && (
         <ShareDialog
           chatId={chat.id}
@@ -105,14 +100,15 @@ export function ProjectChatCard({
         />
       )}
 
-      <ChatRenameDialog
+      {renameDialogOpen && <ChatRenameDialog
         open={renameDialogOpen}
         onOpenChange={setRenameDialogOpen}
         currentTitle={chat.title}
         onSubmit={handleRename}
         isLoading={false}
       />
-    </ActionCard>
+      }
+      </>
   );
 }
 
