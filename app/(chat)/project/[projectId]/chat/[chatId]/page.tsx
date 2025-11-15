@@ -1,5 +1,5 @@
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
-import { GroupChatPageRouter } from "./group-chat-page-router";
+import { GroupChatPageRouter } from "./project-chat-page-router";
 
 export default async function GroupChatPageRoute({
   params,

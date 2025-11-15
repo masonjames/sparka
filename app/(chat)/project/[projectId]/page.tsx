@@ -1,5 +1,5 @@
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
-import { GroupPageRouter } from "./group-page-router";
+import { GroupPageRouter } from "./project-page-router";
 
 export default async function GroupPageRoute({
   params,
