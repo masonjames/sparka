@@ -97,6 +97,7 @@ function PureChatHeader({
           chatLabel={chatLabel}
           projectHref={projectHref}
           projectLabel={projectLabel}
+          className="ml-2"
         />
 
         {!isReadonly && hasMessages && <ShareButton chatId={chatId} />}
@@ -129,17 +130,19 @@ function ChatBreadcrumbs({
   chatLabel,
   projectHref,
   projectLabel,
+  className,
 }: {
   chatLabel: string;
   projectHref?: string;
   projectLabel?: string;
+  className?: string;
 }) {
   if (!chatLabel) {
     return null;
   }
 
   return (
-    <Breadcrumb>
+    <Breadcrumb className={className}>
       <BreadcrumbList>
         {projectHref && projectLabel ? (
           <>
