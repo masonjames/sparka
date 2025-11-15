@@ -6,4 +6,5 @@ export type UIChat = {
   visibility: "private" | "public";
   userId: string;
   isPinned: boolean;
+  projectId: string | null;
 };

@@ -16,17 +16,17 @@ import {
 import { useDeleteChat } from "@/hooks/chat-sync-hooks";
 import { useChatId } from "@/providers/chat-id-provider";
 
-type DeleteDialogProps = {
+type DeleteChatDialogProps = {
   deleteId: string | null;
   showDeleteDialog: boolean;
   setShowDeleteDialog: (show: boolean) => void;
 };
 
-export function DeleteDialog({
+export function DeleteChatDialog({
   deleteId,
   showDeleteDialog,
   setShowDeleteDialog,
-}: DeleteDialogProps) {
+}: DeleteChatDialogProps) {
   const { id: chatId, type, refreshChatID } = useChatId();
   const router = useRouter();
   const { deleteChat } = useDeleteChat();
@@ -79,3 +79,7 @@ export function DeleteDialog({
     </AlertDialog>
   );
 }
+
+
+
+

@@ -2,32 +2,43 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { SidebarToggle } from "@/components/sidebar-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useChatId } from "@/providers/chat-id-provider";
 
 export function SidebarTopRow() {
   const { setOpenMobile, open, openMobile } = useSidebar();
   const { refreshChatID } = useChatId();
+  const isExpanded = open || openMobile;
 
   return (
-    <Link
-      className="flex flex-row items-center gap-2"
-      href="/"
-      onClick={() => {
-        setOpenMobile(false);
-        refreshChatID();
-      }}
+    <div
+      className={`flex w-full items-center ${
+        isExpanded ? "justify-between gap-2" : "justify-start"
+      }`}
     >
-      <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 font-semibold text-lg hover:bg-muted">
-        <Image
-          alt="Sparka AI"
-          className="h-6 w-6"
-          height={24}
-          src="/icon.svg"
-          width={24}
-        />
-        {(open || openMobile) && "Sparka"}
-      </span>
-    </Link>
+      {isExpanded ? (
+        <Link
+          className="flex flex-row items-center gap-2"
+          href="/"
+          onClick={() => {
+            setOpenMobile(false);
+            refreshChatID();
+          }}
+        >
+          <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-lg font-semibold hover:bg-muted">
+            <Image
+              alt="Sparka AI"
+              className="h-6 w-6"
+              height={24}
+              src="/icon.svg"
+              width={24}
+            />
+            Sparka
+          </span>
+        </Link>
+      ) : null}
+      <SidebarToggle className="md:h-fit md:px-2" />
+    </div>
   );
 }

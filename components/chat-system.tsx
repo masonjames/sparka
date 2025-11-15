@@ -18,12 +18,16 @@ export const ChatSystem = memo(function ChatSystem({
   isReadonly,
   initialTool = null,
   overrideModelId,
+  projectId,
+  isProjectPage = false,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   isReadonly: boolean;
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
+  projectId?: string;
+  isProjectPage?: boolean;
 }) {
   return (
     <ArtifactProvider>
@@ -32,12 +36,15 @@ export const ChatSystem = memo(function ChatSystem({
           <MessageTreeProvider>
             {isReadonly ? (
               <>
-                <ChatSync id={id} initialMessages={initialMessages} />
+                <ChatSync id={id} initialMessages={initialMessages} projectId={projectId} />
                 <Chat
                   id={id}
                   initialMessages={initialMessages}
                   isReadonly={isReadonly}
                   key={id}
+                  disableSuggestedActions={isProjectPage}
+                  isProjectPage={isProjectPage}
+                  projectId={projectId}
                 />
               </>
             ) : (
@@ -46,12 +53,15 @@ export const ChatSystem = memo(function ChatSystem({
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >
-                <ChatSync id={id} initialMessages={initialMessages} />
+                <ChatSync id={id} initialMessages={initialMessages} projectId={projectId} />
                 <Chat
                   id={id}
                   initialMessages={initialMessages}
                   isReadonly={isReadonly}
                   key={id}
+                  disableSuggestedActions={isProjectPage}
+                  isProjectPage={isProjectPage}
+                  projectId={projectId}
                 />
                 <DataStreamHandler id={id} />
               </ChatInputProvider>

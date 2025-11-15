@@ -1,27 +1,36 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useArtifactSelector } from "@/hooks/use-artifact";
+import { useGetAllChats } from "@/hooks/chat-sync-hooks";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useChatId, useChatStatus, useMessageIds } from "@/lib/stores/hooks-base";
+import { useChatId, useChatStatus, useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { Artifact } from "./artifact";
 import { MessagesPane } from "./messages-pane";
+import { MultimodalInput } from "./multimodal-input";
+import { ProjectHome } from "./project-home";
 
 export function Chat({
   id,
   initialMessages: _initialMessages,
   isReadonly,
+  disableSuggestedActions,
+  isProjectPage,
+  projectId,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   isReadonly: boolean;
+  disableSuggestedActions?: boolean;
+  isProjectPage?: boolean;
+  projectId?: string;
 }) {
   const chatStore = useChatStoreApi();
   const trpc = useTRPC();
@@ -48,6 +57,8 @@ export function Chat({
 
   const { state } = useSidebar();
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
+  const { data: chats } = useGetAllChats();
+
 
   return (
     <>
@@ -61,17 +72,23 @@ export function Chat({
           chatId={id}
           hasMessages={messageIds.length > 0}
           isReadonly={isReadonly}
+        projectId={projectId}
           user={session?.user}
         />
 
-        <MessagesPane
-          chatId={id}
-          className="bg-background"
-          isReadonly={isReadonly}
-          isVisible={!isArtifactVisible}
-          status={status}
-          votes={votes}
-        />
+        {isProjectPage && messageIds.length === 0 && projectId ? (
+          <ProjectHome chatId={id} projectId={projectId} status={status} />
+        ) : (
+          <MessagesPane
+            chatId={id}
+            className="bg-background"
+            isReadonly={isReadonly}
+            isVisible={!isArtifactVisible}
+            status={status}
+            votes={votes}
+            disableSuggestedActions={disableSuggestedActions}
+          />
+        )}
       </div>
 
       <Artifact

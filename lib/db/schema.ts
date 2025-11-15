@@ -28,6 +28,25 @@ export const userCredit = pgTable("UserCredit", {
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
 
+export const project = pgTable(
+  "Project",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    instructions: text("instructions").notNull().default(""),
+  },
+  (t) => ({
+    Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
+  })
+);
+
+export type Project = InferSelectModel<typeof project>;
+
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
@@ -40,6 +59,9 @@ export const chat = pgTable("Chat", {
     .notNull()
     .default("private"),
   isPinned: boolean("isPinned").notNull().default(false),
+  projectId: uuid("projectId").references(() => project.id, {
+    onDelete: "set null",
+  }),
 });
 
 export type Chat = InferSelectModel<typeof chat>;

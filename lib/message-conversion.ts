@@ -13,6 +13,7 @@ export function dbChatToUIChat(chat: Chat): UIChat {
     visibility: chat.visibility,
     userId: chat.userId,
     isPinned: chat.isPinned,
+    projectId: chat.projectId ?? null,
   };
 }
 

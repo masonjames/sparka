@@ -1,8 +1,13 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import type { UIChat } from "@/lib/types/uiChat";
+import { useGetAllChats, usePinChat, useRenameChat } from "@/hooks/chat-sync-hooks";
 import { SidebarChatItem } from "./sidebar-chat-item";
+import { Skeleton } from "./ui/skeleton";
+import { useSidebar } from "@/components/ui/sidebar";
+import { DeleteChatDialog } from "./delete-chat-dialog";
 
 type GroupedChats = {
   pinned: UIChat[];
@@ -13,27 +18,30 @@ type GroupedChats = {
   older: UIChat[];
 };
 
-type GroupedChatsListProps = {
-  chats: UIChat[];
-  onDelete: (chatId: string) => void;
-  onRename: (chatId: string, title: string) => void;
-  onPin: (chatId: string, isPinned: boolean) => void;
-  setOpenMobile: (open: boolean) => void;
-};
-
-export function GroupedChatsList({
-  chats,
-  onDelete,
-  onRename,
-  onPin,
-  setOpenMobile,
-}: GroupedChatsListProps) {
+export function SidebarChatsList() {
   const pathname = usePathname();
+  const { data: allChats, isLoading } = useGetAllChats(50);
+  const { setOpenMobile } = useSidebar();
+  const { mutate: renameChatMutation } = useRenameChat();
+  const { mutate: pinChatMutation } = usePinChat();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Extract chatId from URL for /chat routes
+  // Filter chats: non-project chats only (projectId == null)
+  const chats = useMemo(
+    () => allChats?.filter((chat) => chat.projectId === null) ?? [],
+    [allChats]
+  );
+
+  // Extract chatId from URL for /chat routes and /project routes
   const chatId = useMemo(() => {
     if (pathname?.startsWith("/chat/")) {
       return pathname.replace("/chat/", "") || null;
+    }
+    // Handle project routes: /project/:projectId/chat/:chatId
+    const projectMatch = pathname?.match(/^\/project\/[^/]+\/chat\/(.+)$/);
+    if (projectMatch) {
+      return projectMatch[1] || null;
     }
     return null;
   }, [pathname]);
@@ -84,6 +92,32 @@ export function GroupedChatsList({
     return groups;
   }, [chats]);
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col">
+        {[44, 32, 28, 64, 52].map((item) => (
+          <div
+            className="flex h-8 items-center gap-2 rounded-md px-2"
+            key={item}
+          >
+            <Skeleton
+              className="h-4 flex-1"
+              style={{ width: `${item}%` }}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (chats.length === 0) {
+    return (
+      <div className="flex w-full flex-row items-center justify-center gap-2 px-2 py-4 text-sm text-zinc-500">
+        Start chatting to see your conversation history!
+      </div>
+    );
+  }
+
   return (
     <>
       {groupedChats.pinned.length > 0 && (
@@ -96,9 +130,16 @@ export function GroupedChatsList({
               chat={chat}
               isActive={chat.id === chatId}
               key={chat.id}
-              onDelete={onDelete}
-              onPin={onPin}
-              onRename={onRename}
+              onDelete={(id) => {
+                setDeleteId(id);
+                setShowDeleteDialog(true);
+              }}
+              onPin={(id, isPinned) => {
+                pinChatMutation({ chatId: id, isPinned });
+              }}
+              onRename={async (id, title) => {
+                renameChatMutation({ chatId: id, title });
+              }}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -117,9 +158,16 @@ export function GroupedChatsList({
               chat={chat}
               isActive={chat.id === chatId}
               key={chat.id}
-              onDelete={onDelete}
-              onPin={onPin}
-              onRename={onRename}
+              onDelete={(id) => {
+                setDeleteId(id);
+                setShowDeleteDialog(true);
+              }}
+              onPin={(id, isPinned) => {
+                pinChatMutation({ chatId: id, isPinned });
+              }}
+              onRename={async (id, title) => {
+                renameChatMutation({ chatId: id, title });
+              }}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -136,9 +184,16 @@ export function GroupedChatsList({
               chat={chat}
               isActive={chat.id === chatId}
               key={chat.id}
-              onDelete={onDelete}
-              onPin={onPin}
-              onRename={onRename}
+              onDelete={(id) => {
+                setDeleteId(id);
+                setShowDeleteDialog(true);
+              }}
+              onPin={(id, isPinned) => {
+                pinChatMutation({ chatId: id, isPinned });
+              }}
+              onRename={async (id, title) => {
+                renameChatMutation({ chatId: id, title });
+              }}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -155,9 +210,16 @@ export function GroupedChatsList({
               chat={chat}
               isActive={chat.id === chatId}
               key={chat.id}
-              onDelete={onDelete}
-              onPin={onPin}
-              onRename={onRename}
+              onDelete={(id) => {
+                setDeleteId(id);
+                setShowDeleteDialog(true);
+              }}
+              onPin={(id, isPinned) => {
+                pinChatMutation({ chatId: id, isPinned });
+              }}
+              onRename={async (id, title) => {
+                renameChatMutation({ chatId: id, title });
+              }}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -174,9 +236,16 @@ export function GroupedChatsList({
               chat={chat}
               isActive={chat.id === chatId}
               key={chat.id}
-              onDelete={onDelete}
-              onPin={onPin}
-              onRename={onRename}
+              onDelete={(id) => {
+                setDeleteId(id);
+                setShowDeleteDialog(true);
+              }}
+              onPin={(id, isPinned) => {
+                pinChatMutation({ chatId: id, isPinned });
+              }}
+              onRename={async (id, title) => {
+                renameChatMutation({ chatId: id, title });
+              }}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -193,14 +262,26 @@ export function GroupedChatsList({
               chat={chat}
               isActive={chat.id === chatId}
               key={chat.id}
-              onDelete={onDelete}
-              onPin={onPin}
-              onRename={onRename}
+              onDelete={(id) => {
+                setDeleteId(id);
+                setShowDeleteDialog(true);
+              }}
+              onPin={(id, isPinned) => {
+                pinChatMutation({ chatId: id, isPinned });
+              }}
+              onRename={async (id, title) => {
+                renameChatMutation({ chatId: id, title });
+              }}
               setOpenMobile={setOpenMobile}
             />
           ))}
         </>
       )}
+      <DeleteChatDialog
+        deleteId={deleteId}
+        setShowDeleteDialog={setShowDeleteDialog}
+        showDeleteDialog={showDeleteDialog}
+      />
     </>
   );
 }

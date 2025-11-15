@@ -43,6 +43,7 @@ import {
 import {
   getChatById,
   getMessageById,
+  getProjectById,
   getUserById,
   saveChat,
   saveMessage,
@@ -165,10 +166,12 @@ export async function POST(request: NextRequest) {
       id: chatId,
       message: userMessage,
       prevMessages: anonymousPreviousMessages,
+      projectId,
     }: {
       id: string;
       message: ChatMessage;
       prevMessages: ChatMessage[];
+      projectId?: string;
     } = await request.json();
 
     if (!userMessage) {
@@ -298,7 +301,7 @@ export async function POST(request: NextRequest) {
           message: userMessage,
         });
 
-        await saveChat({ id: chatId, userId, title });
+        await saveChat({ id: chatId, userId, title, projectId });
       }
 
       const [exsistentMessage] = await getMessageById({ id: userMessage.id });
@@ -498,9 +501,21 @@ export async function POST(request: NextRequest) {
       // Build the data stream that will emit tokens
       const stream = createUIMessageStream<ChatMessage>({
         execute: async ({ writer: dataStream }) => {
+          // Load project instructions if chat belongs to a project
+          let system = systemPrompt();
+          if (!isAnonymous) {
+            const currentChat = await getChatById({ id: chatId });
+            if (currentChat?.projectId) {
+              const project = await getProjectById({ id: currentChat.projectId });
+              if (project?.instructions) {
+                system = `${system}\n\nProject instructions:\n${project.instructions}`;
+              }
+            }
+          }
+
           const result = streamText({
             model: getLanguageModel(modelDefinition.apiModelId),
-            system: systemPrompt(),
+            system,
             messages: contextForLLM,
             stopWhen: [
               stepCountIs(5),
