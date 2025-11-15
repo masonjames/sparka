@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { vi } from "vitest";
 
 config({
   path: ".env.local",
