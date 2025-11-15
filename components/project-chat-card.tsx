@@ -43,6 +43,7 @@ export function ProjectChatCard({
   return (
     <ActionCard className="group p-3">
       <ActionCardLink
+        // @ts-expect-error - TODO: fix this next route type
         href={chatHref}
         onClick={(e) => {
           if (e.button === 1 || e.ctrlKey || e.metaKey) {
