@@ -84,6 +84,34 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  setInstructions: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        instructions: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const project = await getProjectById({ id: input.id });
+      if (!project) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
+      }
+      if (project.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Project not found",
+        });
+      }
+      await updateProject({
+        id: input.id,
+        updates: { instructions: input.instructions },
+      });
+      return { success: true };
+    }),
+
   remove: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
