@@ -244,6 +244,7 @@ export async function POST(request: NextRequest) {
           return new Response("Unauthorized", { status: 401 });
         }
       } else {
+        // First time chat is created, generate a title
         const title = await generateTitleFromUserMessage({
           message: userMessage,
         });
