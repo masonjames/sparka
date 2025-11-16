@@ -1,14 +1,7 @@
 "use client";
 
 import equal from "fast-deep-equal";
-import {
-  type MouseEvent,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";

@@ -35,7 +35,7 @@ function PureMessagesPane({
 
   return (
     <div
-      className={cn("flex h-full min-h-0 w-full flex-1 flex-col ", className)}
+      className={cn("flex h-full min-h-0 w-full flex-1 flex-col", className)}
     >
       <Messages isReadonly={isReadonly} isVisible={isVisible} votes={votes} />
 
