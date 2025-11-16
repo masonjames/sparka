@@ -167,7 +167,7 @@ except Exception as e:
       try {
         const outLines = (stdout ?? "").trim().split("\n");
         const lastLine = outLines.at(-1);
-        execInfo = JSON.parse(lastLine);
+        execInfo = JSON.parse(lastLine ?? "{}");
         outLines.pop(); // remove JSON marker
         outputText = outLines.join("\n");
       } catch {
