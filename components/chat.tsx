@@ -1,17 +1,15 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useGetAllChats } from "@/hooks/chat-sync-hooks";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import {
   useChatId,
   useChatStatus,
-  useLastMessageId,
   useMessageIds,
 } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
@@ -19,7 +17,6 @@ import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { Artifact } from "./artifact";
 import { MessagesPane } from "./messages-pane";
-import { MultimodalInput } from "./multimodal-input";
 import { ProjectHome } from "./project-home";
 
 export function Chat({
@@ -44,14 +41,13 @@ export function Chat({
 
   const messageIds = useMessageIds() as string[];
   const status = useChatStatus();
-  const stopAsync: UseChatHelpers<ChatMessage>["stop"] =
-    useCallback(async () => {
-      const helpers = chatStore.getState().currentChatHelpers;
-      if (!helpers?.stop) {
-        return;
-      }
-      return helpers.stop();
-    }, [chatStore]);
+  const stopAsync: UseChatHelpers<ChatMessage>["stop"] = useCallback(() => {
+    const helpers = chatStore.getState().currentChatHelpers;
+    if (!helpers?.stop) {
+      return;
+    }
+    return helpers.stop();
+  }, [chatStore]);
   // regenerate no longer needs to be drilled; components call the store directly
 
   const { data: votes } = useQuery({
@@ -60,16 +56,15 @@ export function Chat({
       messageIds.length >= 2 && !isReadonly && !!session?.user && !isLoading,
   });
 
-  const { state } = useSidebar();
+  const { state: sidebarState } = useSidebar();
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
-  const { data: chats } = useGetAllChats();
 
   return (
     <>
       <div
         className={cn(
           "@container flex h-dvh min-w-0 max-w-screen flex-col bg-background md:max-w-[calc(100vw-var(--sidebar-width))]",
-          state === "collapsed" && "md:max-w-screen"
+          sidebarState === "collapsed" && "md:max-w-screen"
         )}
       >
         <ChatHeader

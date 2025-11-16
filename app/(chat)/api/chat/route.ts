@@ -24,13 +24,13 @@ import {
 import { systemPrompt } from "@/lib/ai/prompts";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
 import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
-import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
+import type { ChatMessage, ToolName } from "@/lib/ai/types";
 import {
-  createAnonymousSession,
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
+import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import type { CreditReservation } from "@/lib/credits/credit-reservation";
 import {
   filterAffordableTools,
@@ -53,8 +53,8 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
+import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";
 import { getCreditReservation } from "./getCreditReservation";
-import { getThreadUpToMessageId } from "./getThreadUpToMessageId";
 
 // Create shared Redis clients for resumable stream and cleanup
 let redisPublisher: any = null;

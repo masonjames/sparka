@@ -28,14 +28,18 @@ function setCookie(name: string, value: string, maxAge: number): void {
   const encodedValue = encodeURIComponent(value);
   if ("cookieStore" in window) {
     // @ts-expect-error cookieStore is not yet in TS lib.dom
-    void window.cookieStore.set({
-      name,
-      value: encodedValue,
-      path: "/",
-      expires: Date.now() + maxAge * 1000,
-      sameSite: "lax",
-      secure: window.location.protocol === "https:",
-    });
+    window.cookieStore
+      .set({
+        name,
+        value: encodedValue,
+        path: "/",
+        expires: Date.now() + maxAge * 1000,
+        sameSite: "lax",
+        secure: window.location.protocol === "https:",
+      })
+      .catch(() => {
+        // Fail silently if Cookie Store API fails
+      });
   } else {
     // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=${encodedValue}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
@@ -48,7 +52,9 @@ function deleteCookie(name: string): void {
   }
   if ("cookieStore" in window) {
     // @ts-expect-error cookieStore is not yet in TS lib.dom
-    void window.cookieStore.delete(name);
+    window.cookieStore.delete(name).catch(() => {
+      // Fail silently if Cookie Store API fails
+    });
   } else {
     // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=; Path=/; Max-Age=0`;

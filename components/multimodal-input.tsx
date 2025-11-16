@@ -59,6 +59,7 @@ const IMAGE_UPLOAD_LIMITS = {
 const IMAGE_UPLOAD_MAX_MB = Math.round(
   IMAGE_UPLOAD_LIMITS.maxBytes / (1024 * 1024)
 );
+const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
 function PureMultimodalInput({
   chatId,
@@ -137,11 +138,11 @@ function PureMultimodalInput({
 
   // Centralized submission gating
 
-  let selectedModelDef: AppModelDefinition | null = null;
+  let _selectedModelDef: AppModelDefinition | null = null;
   try {
-    selectedModelDef = getAppModelDefinition(selectedModelId);
+    _selectedModelDef = getAppModelDefinition(selectedModelId);
   } catch {
-    selectedModelDef = getAppModelDefinition(DEFAULT_CHAT_MODEL);
+    _selectedModelDef = getAppModelDefinition(DEFAULT_CHAT_MODEL);
   }
   const submission: { enabled: false; message: string } | { enabled: true } =
     (() => {
@@ -216,7 +217,7 @@ function PureMultimodalInput({
       window.history.pushState({}, "", `/chat/${chatId}`);
     } else {
       // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
-      const projectMatch = currentPath.match(/^\/project\/([^/]+)$/);
+      const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
       if (projectMatch) {
         const [, projectId] = projectMatch;
         window.history.pushState(
@@ -507,19 +508,16 @@ function PureMultimodalInput({
       {messageIds.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 &&
-        !isEditMode && (
-          <>
-            {emptyStateOverride ? (
-              emptyStateOverride
-            ) : disableSuggestedActions ? null : (
-              <SuggestedActions
-                chatId={chatId}
-                className="mb-4"
-                selectedModelId={selectedModelId}
-              />
-            )}
-          </>
-        )}
+        !isEditMode &&
+        (emptyStateOverride ? (
+          emptyStateOverride
+        ) : disableSuggestedActions ? null : (
+          <SuggestedActions
+            chatId={chatId}
+            className="mb-4"
+            selectedModelId={selectedModelId}
+          />
+        ))}
 
       <input
         accept="image/*,.pdf"

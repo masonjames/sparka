@@ -104,7 +104,7 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
     if (!allMessages) {
       return map;
     }
-    allMessages.forEach((message) => {
+    for (const message of allMessages) {
       const parentId = message.metadata?.parentMessageId || null;
 
       if (!map.has(parentId)) {
@@ -114,16 +114,16 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
       if (siblings) {
         siblings.push(message);
       }
-    });
+    }
 
     // Sort siblings by createdAt
-    map.forEach((siblings) => {
+    for (const siblings of map.values()) {
       siblings.sort(
         (a, b) =>
           new Date(a.metadata?.createdAt || new Date()).getTime() -
           new Date(b.metadata?.createdAt || new Date()).getTime()
       );
-    });
+    }
 
     return map;
   }, [allMessages]);

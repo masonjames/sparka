@@ -3,6 +3,8 @@ import { tool } from "ai";
 import z from "zod";
 import { createModuleLogger } from "@/lib/logger";
 
+const WHITESPACE_REGEX = /\s+/;
+
 export const codeInterpreter = tool({
   description: `Python-only sandbox for calculations, data analysis & simple visualisations.
 
@@ -81,7 +83,11 @@ Output rules:
         l.trim().startsWith("!pip install ")
       );
       const extraPackages = pipLines.flatMap((l) =>
-        l.trim().slice("!pip install ".length).split(/\s+/).filter(Boolean)
+        l
+          .trim()
+          .slice("!pip install ".length)
+          .split(WHITESPACE_REGEX)
+          .filter(Boolean)
       );
 
       let codeToRun = code;
@@ -160,7 +166,7 @@ except Exception as e:
       let outputText = "";
       try {
         const outLines = (stdout ?? "").trim().split("\n");
-        const lastLine = outLines[outLines.length - 1];
+        const lastLine = outLines.at(-1);
         execInfo = JSON.parse(lastLine);
         outLines.pop(); // remove JSON marker
         outputText = outLines.join("\n");
@@ -186,8 +192,12 @@ except Exception as e:
       }
 
       // Build response similar to previous shape
-      if (outputText) message += `${outputText}\n`;
-      if (stderr && stderr.trim().length > 0) message += `${stderr}\n`;
+      if (outputText) {
+        message += `${outputText}\n`;
+      }
+      if (stderr && stderr.trim().length > 0) {
+        message += `${stderr}\n`;
+      }
       if (execInfo.error) {
         message += `Error: ${execInfo.error.name}: ${execInfo.error.value}\n`;
         log.error(

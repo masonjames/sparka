@@ -8,6 +8,8 @@ const inlineCodePattern = /(`)([^`]*?)$/;
 const strikethroughPattern = /(~~)([^~]*?)$/;
 const inlineKatexPattern = /(\$)([^$]*?)$/;
 const blockKatexPattern = /(\$\$)([^$]*?)$/;
+const inlineTripleBacktickPattern = /^```[^\n`]*```?$/;
+const quadrupleOrMoreAsterisksPattern = /^\*{4,}$/;
 
 // Handles incomplete links and images by removing them if not closed
 const handleIncompleteLinksAndImages = (text: string): string => {
@@ -127,7 +129,7 @@ const countSingleBackticks = (text: string): number => {
   let count = 0;
   for (let i = 0; i < text.length; i++) {
     if (text[i] === "`" && !isPartOfTripleBacktick(text, i)) {
-      count++;
+      count += 1;
     }
   }
   return count;
@@ -139,7 +141,7 @@ const handleIncompleteInlineCode = (text: string): string => {
   // Check if we have inline triple backticks (starts with ``` and should end with ```)
   // This pattern should ONLY match truly inline code (no newlines)
   // Examples: ```code``` or ```python code```
-  const inlineTripleBacktickMatch = text.match(/^```[^`\n]*```?$/);
+  const inlineTripleBacktickMatch = text.match(inlineTripleBacktickPattern);
   if (inlineTripleBacktickMatch && !text.includes("\n")) {
     // Check if it ends with exactly 2 backticks (incomplete)
     if (text.endsWith("``") && !text.endsWith("```")) {
@@ -155,11 +157,12 @@ const handleIncompleteInlineCode = (text: string): string => {
 
   // Special case: if text ends with ```\n (triple backticks followed by newline)
   // This is actually a complete code block, not incomplete
-  if (text.endsWith("```\n") || text.endsWith("```")) {
+  if (
+    (text.endsWith("```\n") || text.endsWith("```")) &&
+    allTripleBackticks % 2 === 0
+  ) {
     // Count all triple backticks - if even, it's complete
-    if (allTripleBackticks % 2 === 0) {
-      return text;
-    }
+    return text;
   }
 
   // Don't modify text if we have complete multi-line code blocks (even pairs of ```)
@@ -265,7 +268,7 @@ const countTripleAsterisks = (text: string): number => {
 const handleIncompleteBoldItalic = (text: string): string => {
   // Don't process if text is only asterisks and has 4 or more consecutive asterisks
   // This prevents cases like **** from being treated as incomplete ***
-  if (/^\*{4,}$/.test(text)) {
+  if (quadrupleOrMoreAsterisksPattern.test(text)) {
     return text;
   }
 

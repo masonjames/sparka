@@ -42,13 +42,11 @@ export function ProjectDetailsDialog({
         onSubmit(trimmedValue);
         setValue("");
       }
+    } else if (trimmedValue && trimmedValue !== initialValue) {
+      await onSubmit(trimmedValue);
+      onOpenChange(false);
     } else {
-      if (trimmedValue && trimmedValue !== initialValue) {
-        await onSubmit(trimmedValue);
-        onOpenChange(false);
-      } else {
-        onOpenChange(false);
-      }
+      onOpenChange(false);
     }
   };
 

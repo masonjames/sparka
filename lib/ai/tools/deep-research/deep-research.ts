@@ -69,6 +69,11 @@ Use for:
               answer: researchResult.data,
               format: "clarifying_questions" as const,
             };
+
+          default:
+            throw new Error(
+              `Unknown research result type: ${researchResult.type}`
+            );
         }
       } catch (error) {
         console.error("Deep research error:", error);

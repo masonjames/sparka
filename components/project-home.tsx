@@ -142,7 +142,7 @@ export function ProjectHome({
                 <Skeleton className="h-10 w-40" />
               </CardContent>
             </Card>
-          ) : project?.instructions && project.instructions.trim() ? (
+          ) : project?.instructions?.trim() ? (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -203,8 +203,11 @@ export function ProjectHome({
                 chat={chat}
                 key={chat.id}
                 onDelete={deleteChat}
-                onRename={async (chatId, title) => {
-                  await renameChatMutation.mutateAsync({ chatId, title });
+                onRename={async (idToRename, title) => {
+                  await renameChatMutation.mutateAsync({
+                    chatId: idToRename,
+                    title,
+                  });
                   toast.success("Chat renamed successfully");
                 }}
               />

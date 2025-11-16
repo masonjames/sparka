@@ -1,6 +1,6 @@
 import "server-only";
 import { del } from "@vercel/blob";
-import { and, asc, desc, eq, gt, gte, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNull } from "drizzle-orm";
 import type { Attachment, ChatMessage } from "@/lib/ai/types";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
 import {
@@ -15,7 +15,6 @@ import {
   document,
   message,
   type Part,
-  type Project,
   part,
   project,
   type Suggestion,
@@ -96,7 +95,7 @@ export async function getChatsByUserId({
   });
 
   try {
-    let conditions;
+    let conditions = eq(chat.userId, id);
     if (projectId === null) {
       // Filter for chats without a project
       conditions = and(eq(chat.userId, id), isNull(chat.projectId));
@@ -339,7 +338,7 @@ export async function saveMessages({
       await tx.insert(message).values(dbMessages);
 
       // Save parts to Part table
-      const allDbParts: Array<Omit<Part, "id" | "createdAt">> = [];
+      const allDbParts: Omit<Part, "id" | "createdAt">[] = [];
       for (const { id, message: msg } of messages) {
         const dbParts = mapUIMessagePartsToDBParts(msg.parts, id);
         allDbParts.push(...dbParts);
@@ -770,7 +769,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
         and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
       );
 
-    const messageIds = messagesToDelete.map((message) => message.id);
+    const messageIds = messagesToDelete.map((msg) => msg.id);
 
     if (messageIds.length > 0) {
       // Clean up attachments before deleting messages

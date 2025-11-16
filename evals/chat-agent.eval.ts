@@ -1,5 +1,4 @@
 import { evalite } from "evalite";
-import { vi } from "vitest";
 import { runCoreChatAgentEval } from "@/lib/ai/eval-agent";
 import type { ChatMessage } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";

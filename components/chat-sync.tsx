@@ -11,8 +11,8 @@ import type { ChatMessage } from "@/lib/ai/types";
 import {
   useChatStateInstance,
   useChatStoreApi,
-  ZustandChat,
 } from "@/lib/stores/chat-store-context";
+import { ZustandChat } from "@/lib/stores/zustand-chat-adapter";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
@@ -55,10 +55,10 @@ export function ChatSync({
       transport: new DefaultChatTransport({
         api: "/api/chat",
         fetch: fetchWithErrorHandlers,
-        prepareSendMessagesRequest({ messages, id, body }) {
+        prepareSendMessagesRequest({ messages, id: requestId, body }) {
           return {
             body: {
-              id,
+              id: requestId,
               message: messages.at(-1),
               prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
               projectId,

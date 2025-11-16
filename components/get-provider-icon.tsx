@@ -62,5 +62,7 @@ export function getProviderIcon(
     case "morph":
     case "meituan":
       return null;
+    default:
+      return null;
   }
 }

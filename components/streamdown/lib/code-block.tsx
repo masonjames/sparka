@@ -52,15 +52,19 @@ export const CodeBlock = ({
   children,
   ...props
 }: CodeBlockProps) => {
-  const [html, setHtml] = useState<string>("");
-  const [darkHtml, setDarkHtml] = useState<string>("");
+  const lightRef = useRef<HTMLDivElement>(null);
+  const darkRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
 
   useEffect(() => {
     highlightCode(code, language).then(([light, dark]) => {
       if (!mounted.current) {
-        setHtml(light);
-        setDarkHtml(dark);
+        if (lightRef.current) {
+          lightRef.current.innerHTML = light;
+        }
+        if (darkRef.current) {
+          darkRef.current.innerHTML = dark;
+        }
         mounted.current = true;
       }
     });
@@ -78,7 +82,7 @@ export const CodeBlock = ({
             "overflow-x-auto dark:hidden [&>pre]:bg-transparent!",
             className
           )}
-          dangerouslySetInnerHTML={{ __html: html }}
+          ref={lightRef}
           {...props}
         />
         <div
@@ -86,7 +90,7 @@ export const CodeBlock = ({
             "hidden overflow-x-auto dark:block [&>pre]:bg-transparent!",
             className
           )}
-          dangerouslySetInnerHTML={{ __html: darkHtml }}
+          ref={darkRef}
           {...props}
         />
         {children}

@@ -14,7 +14,7 @@ export function useBaseChatStore<T = BaseChatStoreState<ChatMessage>>(
     throw new Error("useBaseChatStore must be used within ChatStoreProvider");
   }
   const selectorOrIdentity =
-    (selector as (store: BaseChatStoreState<ChatMessage>) => T) ??
+    (selector as (s: BaseChatStoreState<ChatMessage>) => T) ??
     ((s: BaseChatStoreState<ChatMessage>) => s);
   return useStoreWithEqualityFn(store, selectorOrIdentity, equalityFn);
 }

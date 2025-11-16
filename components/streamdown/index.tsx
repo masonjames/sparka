@@ -89,7 +89,7 @@ export const Streamdown = memo(
     return (
       <ShikiThemeContext.Provider value={shikiTheme}>
         <div className={cn("space-y-4", className)} {...props}>
-          {blocks.map((block, index) => (
+          {blocks.map((block) => (
             <Block
               allowedImagePrefixes={allowedImagePrefixes ?? ["*"]}
               allowedLinkPrefixes={allowedLinkPrefixes ?? ["*"]}
@@ -99,7 +99,7 @@ export const Streamdown = memo(
               }}
               content={block}
               defaultOrigin={defaultOrigin}
-              key={`${generatedId}-block_${index}`}
+              key={`${generatedId}-${block}`}
               rehypePlugins={[rehypeKatex, ...(rehypePlugins ?? [])]}
               remarkPlugins={[remarkGfm, remarkMath, ...(remarkPlugins ?? [])]}
               shouldParseIncompleteMarkdown={shouldParseIncompleteMarkdown}

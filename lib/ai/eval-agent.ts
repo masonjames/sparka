@@ -9,8 +9,12 @@ import { generateUUID } from "@/lib/utils";
 // No-op StreamWriter for evals - tools can write but nothing happens
 function createNoOpStreamWriter(): StreamWriter {
   return {
-    write: () => {},
-    merge: () => {},
+    write: () => {
+      // Intentional no-op for evaluation context
+    },
+    merge: () => {
+      // Intentional no-op for evaluation context
+    },
   } as unknown as StreamWriter;
 }
 
@@ -118,7 +122,6 @@ export async function runCoreChatAgentEval({
         if (partIndex >= 0) {
           const part = parts[partIndex];
           if (part.type.startsWith("tool-") && "state" in part) {
-            const toolPartType = part.type as `tool-${string}`;
             parts[partIndex] = {
               ...part,
               state: "output-available",

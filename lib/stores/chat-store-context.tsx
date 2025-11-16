@@ -5,8 +5,6 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { createChatStore } from "./chat-store";
 import { ZustandChatState } from "./zustand-chat-adapter";
 
-export { ZustandChat } from "./zustand-chat-adapter";
-
 type ChatStoreApi = ReturnType<typeof createChatStore<ChatMessage>>;
 
 const ChatStoreContext = createContext<ChatStoreApi | undefined>(undefined);

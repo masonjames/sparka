@@ -24,13 +24,13 @@ export function ResponseErrorMessage() {
       </p>
       <Button
         className=" "
-        onClick={async () => {
+        onClick={() => {
           // Remove last message from assistant if exists
           const messagesWithoutLastAssistant = chatStore
             .getState()
             .messages.slice(0, -1);
           setMessages(messagesWithoutLastAssistant);
-          void chatStore.getState().currentChatHelpers?.regenerate?.();
+          chatStore.getState().currentChatHelpers?.regenerate?.();
         }}
         variant="outline"
       >

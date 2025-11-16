@@ -9,7 +9,7 @@ import { validateToolPart } from "./message-part-validators";
 export function mapUIMessagePartsToDBParts(
   parts: ChatMessage["parts"],
   messageId: string
-): Array<Omit<Part, "id" | "createdAt">> {
+): Omit<Part, "id" | "createdAt">[] {
   return parts
     .map((part, index) => {
       // Base object with all nullable fields set to null
@@ -147,13 +147,13 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
         case "text":
           return {
             type: "text" as const,
-            text: part.text_text!,
+            text: part.text_text ?? "",
           };
 
         case "reasoning":
           return {
             type: "reasoning" as const,
-            text: part.reasoning_text!,
+            text: part.reasoning_text ?? "",
             ...(part.providerMetadata
               ? { providerMetadata: part.providerMetadata }
               : {}),
@@ -162,16 +162,16 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
         case "file":
           return {
             type: "file" as const,
-            mediaType: part.file_mediaType!,
+            mediaType: part.file_mediaType ?? "",
             ...(part.file_filename ? { filename: part.file_filename } : {}),
-            url: part.file_url!,
+            url: part.file_url ?? "",
           };
 
         case "source-url":
           return {
             type: "source-url" as const,
-            sourceId: part.source_url_sourceId!,
-            url: part.source_url_url!,
+            sourceId: part.source_url_sourceId ?? "",
+            url: part.source_url_url ?? "",
             ...(part.source_url_title ? { title: part.source_url_title } : {}),
             ...(part.providerMetadata
               ? { providerMetadata: part.providerMetadata }
@@ -181,9 +181,9 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
         case "source-document":
           return {
             type: "source-document" as const,
-            sourceId: part.source_document_sourceId!,
-            mediaType: part.source_document_mediaType!,
-            title: part.source_document_title!,
+            sourceId: part.source_document_sourceId ?? "",
+            mediaType: part.source_document_mediaType ?? "",
+            title: part.source_document_title ?? "",
             ...(part.source_document_filename
               ? { filename: part.source_document_filename }
               : {}),
@@ -222,7 +222,7 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
                   type: part.type as `tool-${string}`,
                   toolCallId: part.tool_toolCallId,
                   state: "input-available" as const,
-                  input: part.tool_input!,
+                  input: part.tool_input ?? null,
                   ...(part.providerMetadata
                     ? { callProviderMetadata: part.providerMetadata }
                     : {}),
@@ -233,8 +233,8 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
                   type: part.type as `tool-${string}`,
                   toolCallId: part.tool_toolCallId,
                   state: "output-available" as const,
-                  input: part.tool_input!,
-                  output: part.tool_output!,
+                  input: part.tool_input ?? null,
+                  output: part.tool_output ?? null,
                   ...(part.providerMetadata
                     ? { callProviderMetadata: part.providerMetadata }
                     : {}),
@@ -245,8 +245,8 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
                   type: part.type as `tool-${string}`,
                   toolCallId: part.tool_toolCallId,
                   state: "output-error" as const,
-                  input: part.tool_input!,
-                  errorText: part.tool_errorText!,
+                  input: part.tool_input ?? null,
+                  errorText: part.tool_errorText ?? "",
                   ...(part.providerMetadata
                     ? { callProviderMetadata: part.providerMetadata }
                     : {}),

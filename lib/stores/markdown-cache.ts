@@ -120,8 +120,7 @@ export function precomputeMarkdownForAllMessages(
     : new Map<string, MarkdownCacheEntry>();
 
   // Stable caches for all assistant messages
-  for (let i = 0; i < messages.length; i++) {
-    const msg = messages[i];
+  for (const msg of messages) {
     if (!msg || msg.role !== "assistant") {
       continue;
     }

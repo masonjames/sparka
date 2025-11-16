@@ -69,20 +69,13 @@ export const ResearchProgress = ({
 
   return (
     <div className="w-full rounded-lg border p-1">
-      <div
+      <button
         className={cn(
           "flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2",
           "transition-colors hover:bg-accent hover:text-accent-foreground"
         )}
         onClick={() => setIsExpanded(!isExpanded)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            setIsExpanded(!isExpanded);
-            e.preventDefault();
-          }
-        }}
-        role="button"
-        tabIndex={0}
+        type="button"
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -106,7 +99,7 @@ export const ResearchProgress = ({
             />
           )}
         </div>
-      </div>
+      </button>
 
       {isExpanded ? (
         <div className="px-1 pt-2 pb-1">

@@ -11,12 +11,14 @@ import type { UiToolName } from "@/lib/ai/types";
 import { getDefaultThread } from "@/lib/thread-utils";
 import { useChatId } from "@/providers/chat-id-provider";
 
+const PROJECT_ID_PATTERN = /^\/project\/([^/]+)/;
+
 export function ProjectChatPageRouter() {
   const { id } = useChatId();
   const pathname = usePathname();
 
   // Extract projectId from pathname
-  const projectMatch = pathname?.match(/^\/project\/([^/]+)/);
+  const projectMatch = pathname?.match(PROJECT_ID_PATTERN);
   const projectId = projectMatch ? projectMatch[1] : undefined;
   const getChatByIdQueryOptions = useGetChatByIdQueryOptions(id);
   const { data: chat } = useSuspenseQuery(getChatByIdQueryOptions);

@@ -17,8 +17,7 @@ abstract class TextSplitter implements TextSplitterParams {
 
   createDocuments(texts: string[]): string[] {
     const documents: string[] = [];
-    for (let i = 0; i < texts.length; i += 1) {
-      const text = texts[i];
+    for (const text of texts) {
       if (text == null) {
         continue;
       }

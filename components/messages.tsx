@@ -21,48 +21,49 @@ type PureMessagesInternalProps = {
   isReadonly: boolean;
 };
 
-const PureMessagesInternal = memo(function PureMessagesInternal({
-  votes,
-  isReadonly,
-}: PureMessagesInternalProps) {
-  const chatId = useChatId();
-  const status = useChatStatus();
-  const messageIds = useMessageIds() as string[];
+const PureMessagesInternal = memo(
+  ({ votes, isReadonly }: PureMessagesInternalProps) => {
+    const chatId = useChatId();
+    const status = useChatStatus();
+    const messageIds = useMessageIds() as string[];
 
-  if (!chatId) {
-    return null;
+    if (!chatId) {
+      return null;
+    }
+
+    if (messageIds.length === 0) {
+      return <Greeting />;
+    }
+
+    return (
+      <>
+        {messageIds.map((messageId, index) => (
+          <PreviewMessage
+            isLoading={
+              status === "streaming" && messageIds.length - 1 === index
+            }
+            isReadonly={isReadonly}
+            key={messageId}
+            messageId={messageId}
+            parentMessageId={index > 0 ? messageIds[index - 1] : null}
+            vote={
+              votes
+                ? votes.find((vote) => vote.messageId === messageId)
+                : undefined
+            }
+          />
+        ))}
+
+        {status === "submitted" && messageIds.length > 0 && (
+          // messages[messages.length - 1].role === 'user' &&
+          <ThinkingMessage />
+        )}
+
+        {status === "error" && <ResponseErrorMessage />}
+      </>
+    );
   }
-
-  if (messageIds.length === 0) {
-    return <Greeting />;
-  }
-
-  return (
-    <>
-      {messageIds.map((messageId, index) => (
-        <PreviewMessage
-          isLoading={status === "streaming" && messageIds.length - 1 === index}
-          isReadonly={isReadonly}
-          key={messageId}
-          messageId={messageId}
-          parentMessageId={index > 0 ? messageIds[index - 1] : null}
-          vote={
-            votes
-              ? votes.find((vote) => vote.messageId === messageId)
-              : undefined
-          }
-        />
-      ))}
-
-      {status === "submitted" && messageIds.length > 0 && (
-        // messages[messages.length - 1].role === 'user' &&
-        <ThinkingMessage />
-      )}
-
-      {status === "error" && <ResponseErrorMessage />}
-    </>
-  );
-});
+);
 
 export type MessagesProps = {
   votes: Vote[] | undefined;

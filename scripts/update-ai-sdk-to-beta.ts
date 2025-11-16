@@ -29,7 +29,9 @@ if (packagesToUpdate.length === 0) {
 console.log("Found packages to update:");
 if (aiSdkPackages.length > 0) {
   console.log(`  @ai-sdk packages (${aiSdkPackages.length}):`);
-  aiSdkPackages.forEach((pkg) => console.log(`    - ${pkg}`));
+  for (const pkg of aiSdkPackages) {
+    console.log(`    - ${pkg}`);
+  }
 }
 if (aiPackage) {
   console.log(`  - ${aiPackage}`);

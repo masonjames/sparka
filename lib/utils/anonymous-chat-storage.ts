@@ -7,7 +7,7 @@ const ANONYMOUS_CHATS_KEY = "anonymous-chats";
 const ANONYMOUS_MESSAGES_KEY = "anonymous-messages";
 const ANONYMOUS_DOCUMENTS_KEY = "anonymous-documents";
 
-export async function loadAnonymousMessagesFromStorage(): Promise<
+export function loadAnonymousMessagesFromStorage(): Promise<
   AnonymousMessage[]
 > {
   try {
@@ -35,7 +35,7 @@ export async function loadAnonymousMessagesFromStorage(): Promise<
   }
 }
 
-export async function deleteAnonymousChat(chatId: string): Promise<boolean> {
+export function deleteAnonymousChat(chatId: string): Promise<boolean> {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -87,7 +87,7 @@ export async function deleteAnonymousChat(chatId: string): Promise<boolean> {
   }
 }
 
-export async function renameAnonymousChat(
+export function renameAnonymousChat(
   chatId: string,
   title: string
 ): Promise<void> {
@@ -110,7 +110,7 @@ export async function renameAnonymousChat(
   }
 }
 
-export async function pinAnonymousChat(
+export function pinAnonymousChat(
   chatId: string,
   isPinned: boolean
 ): Promise<void> {
@@ -134,7 +134,7 @@ export async function pinAnonymousChat(
 }
 
 // Module-level functions for chat operations
-export async function saveAnonymousChatToStorage(
+export function saveAnonymousChatToStorage(
   chat: Omit<AnonymousChat, "userId">
 ): Promise<void> {
   try {
@@ -347,7 +347,7 @@ export async function cloneAnonymousChat(
   }
 }
 
-export async function loadAnonymousDocumentsFromStorage(): Promise<any[]> {
+export function loadAnonymousDocumentsFromStorage(): Promise<any[]> {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -395,9 +395,7 @@ export async function loadAnonymousDocumentsByDocumentId(
   return documents.filter((document) => document.id === documentId);
 }
 
-export async function loadAnonymousChatsFromStorage(): Promise<
-  AnonymousChat[]
-> {
+export function loadAnonymousChatsFromStorage(): Promise<AnonymousChat[]> {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -425,7 +423,7 @@ export async function loadAnonymousChatsFromStorage(): Promise<
   }
 }
 
-export async function loadAnonymousChatById(
+export function loadAnonymousChatById(
   chatId: string
 ): Promise<AnonymousChat | null> {
   try {
@@ -441,7 +439,7 @@ export async function loadAnonymousChatById(
 
     const parsedChats = JSON.parse(savedChats) as AnonymousChat[];
     const chat = parsedChats.find(
-      (chat: AnonymousChat) => chat.id === chatId && chat.userId === session.id
+      (c: AnonymousChat) => c.id === chatId && c.userId === session.id
     );
 
     if (!chat) {

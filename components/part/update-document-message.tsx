@@ -1,5 +1,5 @@
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { isLastArtifact } from "../isLastArtifact";
+import { isLastArtifact } from "../is-last-artifact";
 import {
   DocumentToolCall,
   DocumentToolResult,
@@ -20,10 +20,10 @@ export function UpdateDocumentMessage({
 }) {
   const chatStore = useChatStoreApi();
   if (tool.state === "input-available") {
-    const input = tool.input;
+    const toolInput = tool.input;
     const title =
-      hasProp(input, "title") && typeof input.title === "string"
-        ? input.title
+      hasProp(toolInput, "title") && typeof toolInput.title === "string"
+        ? toolInput.title
         : undefined;
     return (
       <DocumentToolCall

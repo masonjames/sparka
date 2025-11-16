@@ -3,7 +3,7 @@ import { generateObject, generateText, type ModelMessage } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
-import { ReportDocumentWriter } from "@/lib/artifacts/text/reportServer";
+import { ReportDocumentWriter } from "@/lib/artifacts/text/report-server";
 import type { Session } from "@/lib/auth";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
@@ -63,14 +63,19 @@ function messagesToString(messages: ModelMessage[]): string {
     .join("\n");
 }
 
+type GenerateStatusUpdateInput = {
+  actionType: string;
+  messages: ModelMessage[];
+  config: DeepResearchConfig;
+  requestId: string;
+  messageId: string;
+  context?: string;
+};
+
 async function generateStatusUpdate(
-  actionType: string,
-  messages: ModelMessage[],
-  config: DeepResearchConfig,
-  requestId: string,
-  messageId: string,
-  context?: string
+  input: GenerateStatusUpdateInput
 ): Promise<{ title: string; message: string }> {
+  const { actionType, messages, config, requestId, messageId, context } = input;
   const model = getLanguageModel(config.research_model as ModelId);
 
   const messagesContent = messagesToString(messages);
@@ -252,14 +257,18 @@ async function writeResearchBrief(
 abstract class Agent {
   protected agentId: string;
   protected messageId: string;
+  protected config: DeepResearchConfig;
+  protected dataStream: StreamWriter;
 
   constructor(
-    protected config: DeepResearchConfig,
-    protected dataStream: StreamWriter,
+    config: DeepResearchConfig,
+    dataStream: StreamWriter,
     messageId: string
   ) {
     this.agentId = generateUUID();
     this.messageId = messageId;
+    this.config = config;
+    this.dataStream = dataStream;
   }
 }
 
@@ -323,14 +332,14 @@ class ResearcherAgent extends Agent {
       },
     });
 
-    const completedUpdate = await generateStatusUpdate(
-      "research_completion",
-      [...researcherMessages, ...result.response.messages],
-      this.config,
-      state.requestId,
-      this.messageId,
-      `Research phase completed with ${result.response.messages.length} new messages`
-    );
+    const completedUpdate = await generateStatusUpdate({
+      actionType: "research_completion",
+      messages: [...researcherMessages, ...result.response.messages],
+      config: this.config,
+      requestId: state.requestId,
+      messageId: this.messageId,
+      context: `Research phase completed with ${result.response.messages.length} new messages`,
+    });
 
     this.dataStream.write({
       type: "data-researchUpdate",
@@ -393,14 +402,14 @@ class ResearcherAgent extends Agent {
       maxRetries: 3,
     });
 
-    const completedUpdate = await generateStatusUpdate(
-      "research_compression",
-      truncatedMessages,
-      this.config,
-      state.requestId,
-      this.messageId,
-      `Compressed ${researcherMessages.length} messages into summary`
-    );
+    const completedUpdate = await generateStatusUpdate({
+      actionType: "research_compression",
+      messages: truncatedMessages,
+      config: this.config,
+      requestId: state.requestId,
+      messageId: this.messageId,
+      context: `Compressed ${researcherMessages.length} messages into summary`,
+    });
 
     this.dataStream.write({
       type: "data-researchUpdate",
@@ -501,14 +510,14 @@ class SupervisorAgent extends Agent {
       lastAssistantMessage &&
       getTextContentFromModelMessage(lastAssistantMessage);
 
-    const completedUpdate = await generateStatusUpdate(
-      "supervisor_evaluation",
-      truncatedSupervisorMessages,
-      this.config,
-      state.requestId,
-      this.messageId,
-      supervisorMessageText || "Coordinated investigation efforts"
-    );
+    const completedUpdate = await generateStatusUpdate({
+      actionType: "supervisor_evaluation",
+      messages: truncatedSupervisorMessages,
+      config: this.config,
+      requestId: state.requestId,
+      messageId: this.messageId,
+      context: supervisorMessageText || "Coordinated investigation efforts",
+    });
 
     this.dataStream.write({
       type: "data-researchUpdate",
@@ -642,14 +651,14 @@ class SupervisorAgent extends Agent {
       max_search_queries: this.config.search_api_max_queries,
     });
 
-    const completedUpdate = await generateStatusUpdate(
-      "continuing_research_tasks",
-      supervisorMessages,
-      this.config,
-      state.requestId,
-      this.messageId,
-      `Need research the research about the topics [${conductResearchCalls.map((c) => c.input.research_topic).join("], [")}]`
-    );
+    const completedUpdate = await generateStatusUpdate({
+      actionType: "continuing_research_tasks",
+      messages: supervisorMessages,
+      config: this.config,
+      requestId: state.requestId,
+      messageId: this.messageId,
+      context: `Need research the research about the topics [${conductResearchCalls.map((c) => c.input.research_topic).join("], [")}]`,
+    });
 
     this.dataStream.write({
       type: "data-researchUpdate",
@@ -660,7 +669,7 @@ class SupervisorAgent extends Agent {
         status: "completed",
       },
     });
-    const toolResults = [];
+    const toolResults: ResearcherOutputState[] = [];
 
     // Non parallel execution to avoid streaming race condition and rate limits
     for (const toolCall of conductResearchCalls) {
@@ -730,14 +739,19 @@ class SupervisorAgent extends Agent {
   }
 }
 
+type FinalReportGenerationInput = {
+  state: AgentState;
+  config: DeepResearchConfig;
+  dataStream: StreamWriter;
+  session: Session;
+  messageId: string;
+  reportTitle: string;
+};
+
 async function finalReportGeneration(
-  state: AgentState,
-  config: DeepResearchConfig,
-  dataStream: StreamWriter,
-  session: Session,
-  messageId: string,
-  reportTitle: string
+  input: FinalReportGenerationInput
 ): Promise<Pick<AgentState, "final_report" | "reportResult">> {
+  const { state, config, dataStream, session, messageId, reportTitle } = input;
   const notes = state.notes || [];
 
   const model = getLanguageModel(config.final_report_model as ModelId);
@@ -912,14 +926,14 @@ export async function runDeepResearcher(
   };
 
   // Step 4: Final report generation
-  const finalResult = await finalReportGeneration(
-    currentState,
+  const finalResult = await finalReportGeneration({
+    state: currentState,
     config,
     dataStream,
     session,
-    input.messageId,
-    reportTitle
-  );
+    messageId: input.messageId,
+    reportTitle,
+  });
 
   dataStream.write({
     type: "data-researchUpdate",

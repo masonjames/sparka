@@ -50,7 +50,9 @@ export function GeneratedImage({ tool }: { tool: GenerateImageTool }) {
         <img
           alt={output.prompt}
           className="h-auto w-full max-w-full"
+          height={512}
           src={output.imageUrl}
+          width={512}
         />
         <button
           className={cn(

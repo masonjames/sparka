@@ -51,8 +51,8 @@ export function DocumentPreview({
     const boundingBox = hitboxRef.current?.getBoundingClientRect();
 
     if (artifact.documentId && boundingBox) {
-      setArtifact((artifact) => ({
-        ...artifact,
+      setArtifact((currentArtifact) => ({
+        ...currentArtifact,
         boundingBox: {
           left: boundingBox.x,
           top: boundingBox.y,
@@ -293,18 +293,30 @@ const DocumentContent = ({ document }: { document: Document }) => {
     isCurrentVersion: true,
     currentVersionIndex: 0,
     status: artifact.status,
-    saveContent: () => {},
+    saveContent: () => {
+      // No-op for preview mode
+    },
     suggestions: [],
   };
 
   return (
     <div className={containerClassName}>
       {document.kind === "text" ? (
-        <Editor {...commonProps} onSaveContent={() => {}} />
+        <Editor
+          {...commonProps}
+          onSaveContent={() => {
+            // No-op for preview mode
+          }}
+        />
       ) : document.kind === "code" ? (
         <div className="relative flex w-full flex-1">
           <div className="absolute inset-0">
-            <CodeEditor {...commonProps} onSaveContent={() => {}} />
+            <CodeEditor
+              {...commonProps}
+              onSaveContent={() => {
+                // No-op for preview mode
+              }}
+            />
           </div>
         </div>
       ) : document.kind === "sheet" ? (

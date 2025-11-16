@@ -146,11 +146,11 @@ function DiffContentPlugin({
         // Create a single paragraph with all diff nodes
         const paragraphNode = $createParagraphNode();
 
-        diffResult.forEach(({ text, type }) => {
+        for (const { text, type } of diffResult) {
           const textNode = new DiffTextNode(text);
           textNode.setDiffType(type);
           paragraphNode.append(textNode);
-        });
+        }
 
         root.append(paragraphNode);
       });

@@ -84,7 +84,7 @@ export function FollowUpSuggestions({
 export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
   const types = useMessagePartTypesById(messageId);
   const ids = useMessageIds();
-  const isLastMessage = ids[ids.length - 1] === messageId;
+  const isLastMessage = ids.at(-1) === messageId;
 
   if (!isLastMessage) {
     return null;

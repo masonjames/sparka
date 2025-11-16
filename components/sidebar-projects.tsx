@@ -9,6 +9,8 @@ import { SidebarProjectItem } from "@/components/sidebar-project-item";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { useTRPC } from "@/trpc/react";
 
+const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)/;
+
 export function SidebarProjects() {
   const pathname = usePathname();
   const router = useRouter();
@@ -21,7 +23,7 @@ export function SidebarProjects() {
 
   // Auto-expand project if we're on a project route
   const currentProjectId = useMemo(() => {
-    const match = pathname?.match(/^\/project\/([^/]+)/);
+    const match = pathname?.match(PROJECT_ROUTE_REGEX);
     return match ? match[1] : null;
   }, [pathname]);
 

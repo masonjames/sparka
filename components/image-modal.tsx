@@ -19,13 +19,24 @@ export function ImageModal({
   return (
     <Dialog onOpenChange={onClose} open={isOpen}>
       <DialogContent>
-        {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for modal preview */}
-        <img
-          alt={imageName ?? "Expanded image"}
-          className="max-h-[90vh] max-w-full rounded-lg object-contain"
+        <button
+          className="max-h-[90vh] max-w-full cursor-default rounded-lg border-none bg-transparent object-contain p-0"
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          src={imageUrl || undefined}
-        />
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+            }
+          }}
+          type="button"
+        >
+          {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for modal preview */}
+          <img
+            alt={imageName ?? "Expanded image"}
+            height={1000}
+            src={imageUrl || undefined}
+            width={1000}
+          />
+        </button>
       </DialogContent>
     </Dialog>
   );

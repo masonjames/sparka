@@ -80,7 +80,7 @@ function PureArtifact({
     if (documents && documents.length > 0) {
       // At first we set the most recent document realted to the messageId selected
       const mostRecentDocumentIndex = documents.findLastIndex(
-        (document) => document.messageId === artifact.messageId
+        (doc) => doc.messageId === artifact.messageId
       );
 
       if (mostRecentDocumentIndex !== -1) {
@@ -93,13 +93,13 @@ function PureArtifact({
         }));
       } else {
         // Fallback to the most recent document
-        const document = documents.at(-1);
-        if (document) {
-          setDocument(document);
+        const latestDocument = documents.at(-1);
+        if (latestDocument) {
+          setDocument(latestDocument);
           setCurrentVersionIndex(documents.length - 1);
           setArtifact((currentArtifact) => ({
             ...currentArtifact,
-            content: document.content ?? "",
+            content: latestDocument.content ?? "",
           }));
         }
       }
@@ -192,7 +192,7 @@ function PureArtifact({
     }
 
     if (type === "toggle") {
-      setMode((mode) => (mode === "edit" ? "diff" : "edit"));
+      setMode((currentMode) => (currentMode === "edit" ? "diff" : "edit"));
     }
 
     if (type === "prev") {
