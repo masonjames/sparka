@@ -49,7 +49,6 @@ function Button({
   const Comp = asChild ? Slot : "button"
 
   return (
-    // @ts-expect-error - React 19.2.0 compatibility
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}

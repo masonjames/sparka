@@ -6,7 +6,7 @@ import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { Suggestion } from "@/lib/db/schema";
 import type { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import type { useTRPC } from "@/trpc/react";
-import type { UIArtifact } from "./artifact";
+import type { UIArtifact } from "./artifact-panel";
 
 export type ArtifactActionContext<M = any> = {
   content: string;

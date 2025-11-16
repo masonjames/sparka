@@ -1,20 +1,13 @@
 "use client";
 
 import equal from "fast-deep-equal";
-import {
-  type MouseEvent,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
-import type { UIArtifact } from "../artifact";
+import type { UIArtifact } from "../artifact-panel";
 import { CodeEditor } from "../code-editor";
 import { InlineDocumentSkeleton } from "../document-skeleton";
 import { FileIcon, FullscreenIcon, LoaderIcon, PencilEditIcon } from "../icons";
@@ -46,22 +39,6 @@ export function DocumentPreview({
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const boundingBox = hitboxRef.current?.getBoundingClientRect();
-
-    if (artifact.documentId && boundingBox) {
-      setArtifact((currentArtifact) => ({
-        ...currentArtifact,
-        boundingBox: {
-          left: boundingBox.x,
-          top: boundingBox.y,
-          width: boundingBox.width,
-          height: boundingBox.height,
-        },
-      }));
-    }
-  }, [artifact.documentId, setArtifact]);
 
   if (artifact.isVisible) {
     if (result) {
@@ -174,8 +151,6 @@ const PureHitboxLayer = ({
 }) => {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
-      const boundingBox = event.currentTarget.getBoundingClientRect();
-
       setArtifact((artifact) =>
         artifact.status === "streaming"
           ? { ...artifact, isVisible: true }
@@ -186,12 +161,6 @@ const PureHitboxLayer = ({
               messageId,
               kind: result.kind,
               isVisible: true,
-              boundingBox: {
-                left: boundingBox.x,
-                top: boundingBox.y,
-                width: boundingBox.width,
-                height: boundingBox.height,
-              },
             }
       );
     },
