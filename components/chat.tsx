@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
-import { ArtifactPanel } from "./artifact";
+import { ArtifactPanel } from "./artifact-panel";
 import { MessagesPane } from "./messages-pane";
 import { ProjectHome } from "./project-home";
 

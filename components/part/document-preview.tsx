@@ -7,7 +7,7 @@ import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
-import type { UIArtifact } from "../artifact";
+import type { UIArtifact } from "../artifact-panel";
 import { CodeEditor } from "../code-editor";
 import { InlineDocumentSkeleton } from "../document-skeleton";
 import { FileIcon, FullscreenIcon, LoaderIcon, PencilEditIcon } from "../icons";

@@ -1,7 +1,7 @@
 import { type Dispatch, memo, type SetStateAction, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { artifactDefinitions, type UIArtifact } from "./artifact";
+import { artifactDefinitions, type UIArtifact } from "./artifact-panel";
 import type { ArtifactActionContext } from "./create-artifact";
 import { Button } from "./ui/button";
 import { Toggle } from "./ui/toggle";

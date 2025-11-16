@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { UIArtifact } from "@/components/artifact";
+import type { UIArtifact } from "@/components/artifact-panel";
 
 const initialArtifactData: UIArtifact = {
   documentId: "init",
