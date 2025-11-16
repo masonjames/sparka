@@ -124,3 +124,86 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 ---
 
 Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix` before committing to ensure compliance.
+
+# Typing Guidelines
+
+- Avoid `any` at all cost. The types should work or they indicate a problem.
+- Never use `as "any"` or `as unknown as` to solve/avoid type errors. The types should work or they indicate a problem.
+- Avoid using `as` to cast to a specific type. The types should work or they indicate a problem.
+
+## Exports / Imports
+
+- Never create index barrel files (index.ts, index.js)
+- Always use direct imports with named exports
+- Always use inline interfaces with function parameters
+
+## Examples
+
+### Good - Inline interface with function:
+
+```typescript
+export function processData({
+  id,
+  name,
+  options,
+}: {
+  id: string;
+  name: string;
+  options: ProcessingOptions;
+}): ProcessedResult {
+  // implementation
+}
+```
+
+### Bad - Separated interface:
+
+```typescript
+interface ProcessDataParams {
+  id: string;
+  name: string;
+  options: ProcessingOptions;
+}
+```
+
+# Repo Context
+
+- The package manager is bun
+- Vercel AI SDK for AI framework and frontend-backend interactions
+- Next.js with app directory
+- ORM is Drizzle with the schema at `lib/db/schema.ts`
+- DB queries and mutations are at `lib/db/queries.ts`
+- To test your changes through compilation. Don't run a build. But do `bun test:types`
+- This repo uses Tailwind 4.
+- Shadcn UI is used for the UI components and the components are in `components/ui` folder. The config is in `components.json`.
+
+## App structure
+
+- People interact with the AI through the `app/(chat)/api/chat/route.ts` by sending a message. It responds by creating a new message.
+
+## Database Migrations
+
+- To perform database migrations follow drizzle conventions. First make the desired changes to the schema in `lib/db/schema.ts`. Then run `bun db:generate` to generate the migration file. Then run `bun db:migrate` to apply the migration to the database.
+
+## Behavior
+
+DO NOT GIVE ME HIGH LEVEL SHIT, IF I ASK FOR FIX OR EXPLANATION, I WANT ACTUAL CODE OR EXPLANATION!!! I DON'T WANT "Here's how you can blablabla"
+
+- Be casual unless otherwise specified
+- Be terse
+- Suggest solutions that I didn't think about—anticipate my needs
+- Treat me as an expert
+- Be accurate and thorough
+- Give the answer immediately. Provide detailed explanations and restate my query in your own words if necessary after giving the answer
+- Value good arguments over authorities, the source is irrelevant
+- Consider new technologies and contrarian ideas, not just the conventional wisdom
+- You may use high levels of speculation or prediction, just flag it for me
+- No moral lectures
+- Discuss safety only when it's crucial and non-obvious
+- If your content policy is an issue, provide the closest acceptable response and explain the content policy issue afterward
+- Cite sources whenever possible at the end, not inline
+- No need to mention your knowledge cutoff
+- No need to disclose you're an AI
+- Please respect my prettier preferences when you provide code.
+- Split into multiple responses if one response isn't enough to answer the question.
+
+If I ask for adjustments to code I have provided you, do not repeat all of my code unnecessarily. Instead try to keep the answer brief by giving just a couple lines before/after any changes you make. Multiple code blocks are ok.
