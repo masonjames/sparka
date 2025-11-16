@@ -2,8 +2,9 @@ import { memo } from "react";
 import {
   Conversation,
   ConversationScrollButton,
+  ConversationContent,
 } from "@/components/ai-elements/conversation";
-import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
+// import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
 import type { Vote } from "@/lib/db/schema";
 import { useChatId, useChatStatus, useMessageIds } from "@/lib/stores/hooks-base";
 import { Greeting } from "./greeting";
@@ -72,9 +73,11 @@ function PureMessages({
   isVisible: _isVisible,
 }: MessagesProps) {
   return (
-    <Conversation className="flex w-full flex-1 flex-col">
-      <ConversationContent className="container mx-auto flex h-full min-w-0 flex-col pb-10 sm:max-w-2xl md:max-w-3xl">
-        <PureMessagesInternal isReadonly={isReadonly} votes={votes} />
+      //   <Conversation className="">
+      // <ConversationContent className="">
+     <Conversation className="flex-1 h-full overflow-y-hidden">
+      <ConversationContent className="w-full h-full mx-auto container pb-10 sm:max-w-2xl md:max-w-3xl">
+          <PureMessagesInternal isReadonly={isReadonly} votes={votes} />
       </ConversationContent>
       <ConversationScrollButton />
     </Conversation>
