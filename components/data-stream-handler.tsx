@@ -5,7 +5,7 @@ import { useArtifact } from "@/hooks/use-artifact";
 import type { Suggestion } from "@/lib/db/schema";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useSession } from "@/providers/session-provider";
-import { artifactDefinitions } from "./artifact";
+import { artifactDefinitions } from "./artifact-panel";
 import { useDataStream } from "./data-stream-provider";
 
 export type DataStreamDelta = {
