@@ -1,9 +1,12 @@
-import { cn } from "@/lib/utils";
+"use client"
+
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+
+import { cn } from "@/lib/utils"
 import { ComponentProps } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { StickToBottom } from "use-stick-to-bottom";
-
+import { ScrollBar } from "@/components/ui/scroll-area";
 
 export type ConversationContentProps = ComponentProps<
   typeof StickToBottom.Content
@@ -11,15 +14,28 @@ export type ConversationContentProps = ComponentProps<
 
 export const ConversationContent = ({
   className,
+  dir = "ltr",
+  children,
   ...props
 }: ConversationContentProps) => {
-  const { scrollRef } = useStickToBottomContext();
+  const  context= useStickToBottomContext();
+  const { scrollRef, contentRef } = context;
   return (
-    <ScrollArea
-      className={cn("relative flex-1 overflow-y-auto")}
-      ref={scrollRef}
-    >
-      <StickToBottom.Content className={cn("p-4", className)} {...props} />
-    </ScrollArea>
+    <ScrollAreaPrimitive.Root
+    ref={scrollRef}
+    className={cn("relative overflow-hidden h-full")}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport
+    ref={contentRef}
+    className="h-full w-full rounded-[inherit]">
+      <div className={className}>
+        {typeof children === "function" ? children(context) : children}
+      </div>
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar />
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
   );
 };
+
