@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "./utils";
 
 // Global mermaid initialization
@@ -35,6 +35,7 @@ export const Mermaid = ({ chart, className }: MermaidProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [svgContent, setSvgContent] = useState<string>("");
   const [lastValidSvg, setLastValidSvg] = useState<string>("");
+  const svgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const renderChart = async () => {
@@ -79,6 +80,13 @@ export const Mermaid = ({ chart, className }: MermaidProps) => {
     renderChart();
   }, [chart, lastValidSvg, svgContent]);
 
+  // Update the SVG content in the DOM
+  useEffect(() => {
+    if (svgRef.current) {
+      svgRef.current.innerHTML = svgContent || lastValidSvg;
+    }
+  }, [svgContent, lastValidSvg]);
+
   // Show loading only on initial load when we have no content
   if (isLoading && !svgContent && !lastValidSvg) {
     return (
@@ -113,14 +121,11 @@ export const Mermaid = ({ chart, className }: MermaidProps) => {
     );
   }
 
-  // Always render the SVG if we have content (either current or last valid)
-  const displaySvg = svgContent || lastValidSvg;
-
   return (
     <div
       aria-label="Mermaid chart"
       className={cn("my-4 flex justify-center", className)}
-      dangerouslySetInnerHTML={{ __html: displaySvg }}
+      ref={svgRef}
       role="img"
     />
   );

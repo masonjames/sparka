@@ -11,9 +11,12 @@ export function Favicon({
 } & React.ImgHTMLAttributes<HTMLImageElement>) {
   return (
     // biome-ignore lint/performance/noImgElement: Next/Image isn't ideal for tiny favicons here
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: onError is necessary for fallback handling
     <img
       className={cn("h-4 w-4", className)}
+      height={16}
       src={url}
+      width={16}
       {...props}
       alt={`Favicon for ${url}`}
       onError={(e) => {

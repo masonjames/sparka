@@ -1,14 +1,9 @@
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/addExplicitToolRequestToMessages";
-import { filterReasoningParts } from "@/app/(chat)/api/chat/filterReasoningParts";
-import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/getRecentGeneratedImage";
-import {
-  type AppModelDefinition,
-  type AppModelId,
-  getAppModelDefinition,
-} from "@/lib/ai/app-models";
+import { filterReasoningParts } from "@/app/(chat)/api/chat/filter-reasoning-parts";
+import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-generated-image";
+import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
-import { systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
 import { getTools } from "@/lib/ai/tools/tools";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";

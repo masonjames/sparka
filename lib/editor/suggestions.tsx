@@ -190,12 +190,12 @@ export function registerSuggestions(
     }
 
     // Add new suggestion nodes
-    suggestions.forEach((suggestion) => {
+    for (const suggestion of suggestions) {
       if (suggestion.selectionStart && suggestion.selectionEnd) {
         const suggestionNode = createSuggestionDecorator(suggestion, editor);
         // Insert at the end for now - proper positioning would need more work
         root.append(suggestionNode);
       }
-    });
+    }
   });
 }

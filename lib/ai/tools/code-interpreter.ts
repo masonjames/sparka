@@ -3,6 +3,8 @@ import { tool } from "ai";
 import z from "zod";
 import { createModuleLogger } from "@/lib/logger";
 
+const WHITESPACE_REGEX = /\s+/;
+
 export const codeInterpreter = tool({
   description: `Python-only sandbox for calculations, data analysis & simple visualisations.
 
@@ -81,7 +83,11 @@ Output rules:
         l.trim().startsWith("!pip install ")
       );
       const extraPackages = pipLines.flatMap((l) =>
-        l.trim().slice("!pip install ".length).split(/\s+/).filter(Boolean)
+        l
+          .trim()
+          .slice("!pip install ".length)
+          .split(WHITESPACE_REGEX)
+          .filter(Boolean)
       );
 
       let codeToRun = code;

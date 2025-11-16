@@ -129,9 +129,9 @@ export function useArtifact() {
   );
 
   const setMetadata = useCallback(
-    (metadata: any | ((current: any) => any)) => {
+    (metadataArg: any | ((current: any) => any)) => {
       if (artifact.documentId) {
-        setMetadataStore(artifact.documentId, metadata);
+        setMetadataStore(artifact.documentId, metadataArg);
       }
     },
     [artifact.documentId, setMetadataStore]

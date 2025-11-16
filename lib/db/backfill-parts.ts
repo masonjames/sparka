@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ChatMessage } from "@/lib/ai/types";

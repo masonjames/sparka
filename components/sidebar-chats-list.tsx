@@ -7,7 +7,7 @@ import {
   usePinChat,
   useRenameChat,
 } from "@/hooks/chat-sync-hooks";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 import { DeleteChatDialog } from "./delete-chat-dialog";
 import { SidebarChatItem } from "./sidebar-chat-item";
 import { Skeleton } from "./ui/skeleton";
@@ -20,6 +20,8 @@ type GroupedChats = {
   lastMonth: UIChat[];
   older: UIChat[];
 };
+
+const PROJECT_CHAT_REGEX = /^\/project\/[^/]+\/chat\/(.+)$/;
 
 export function SidebarChatsList() {
   const pathname = usePathname();
@@ -42,7 +44,7 @@ export function SidebarChatsList() {
       return pathname.replace("/chat/", "") || null;
     }
     // Handle project routes: /project/:projectId/chat/:chatId
-    const projectMatch = pathname?.match(/^\/project\/[^/]+\/chat\/(.+)$/);
+    const projectMatch = pathname?.match(PROJECT_CHAT_REGEX);
     if (projectMatch) {
       return projectMatch[1] || null;
     }
@@ -59,22 +61,22 @@ export function SidebarChatsList() {
     const nonPinnedChats = chats.filter((chat) => !chat.isPinned);
 
     const groups = nonPinnedChats.reduce(
-      (groups, chat) => {
+      (acc, chat) => {
         const chatDate = new Date(chat.updatedAt);
 
         if (isToday(chatDate)) {
-          groups.today.push(chat);
+          acc.today.push(chat);
         } else if (isYesterday(chatDate)) {
-          groups.yesterday.push(chat);
+          acc.yesterday.push(chat);
         } else if (chatDate > oneWeekAgo) {
-          groups.lastWeek.push(chat);
+          acc.lastWeek.push(chat);
         } else if (chatDate > oneMonthAgo) {
-          groups.lastMonth.push(chat);
+          acc.lastMonth.push(chat);
         } else {
-          groups.older.push(chat);
+          acc.older.push(chat);
         }
 
-        return groups;
+        return acc;
       },
       {
         pinned: [],
@@ -137,7 +139,7 @@ export function SidebarChatsList() {
               onPin={(id, isPinned) => {
                 pinChatMutation({ chatId: id, isPinned });
               }}
-              onRename={async (id, title) => {
+              onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
               setOpenMobile={setOpenMobile}
@@ -165,7 +167,7 @@ export function SidebarChatsList() {
               onPin={(id, isPinned) => {
                 pinChatMutation({ chatId: id, isPinned });
               }}
-              onRename={async (id, title) => {
+              onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
               setOpenMobile={setOpenMobile}
@@ -191,7 +193,7 @@ export function SidebarChatsList() {
               onPin={(id, isPinned) => {
                 pinChatMutation({ chatId: id, isPinned });
               }}
-              onRename={async (id, title) => {
+              onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
               setOpenMobile={setOpenMobile}
@@ -217,7 +219,7 @@ export function SidebarChatsList() {
               onPin={(id, isPinned) => {
                 pinChatMutation({ chatId: id, isPinned });
               }}
-              onRename={async (id, title) => {
+              onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
               setOpenMobile={setOpenMobile}
@@ -243,7 +245,7 @@ export function SidebarChatsList() {
               onPin={(id, isPinned) => {
                 pinChatMutation({ chatId: id, isPinned });
               }}
-              onRename={async (id, title) => {
+              onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
               setOpenMobile={setOpenMobile}
@@ -269,7 +271,7 @@ export function SidebarChatsList() {
               onPin={(id, isPinned) => {
                 pinChatMutation({ chatId: id, isPinned });
               }}
-              onRename={async (id, title) => {
+              onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
               setOpenMobile={setOpenMobile}

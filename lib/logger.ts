@@ -1,5 +1,4 @@
 import pino, { type Logger, stdTimeFunctions } from "pino";
-import { env } from "@/lib/env";
 
 // Prefer JSON in production; pretty in development.
 // We also add base bindings so child loggers inherit app metadata.

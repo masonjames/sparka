@@ -88,9 +88,9 @@ const _modelsByIdCache = new Map<string, AppModelDefinition>();
 
 function getModelsByIdDict(): Map<string, AppModelDefinition> {
   if (_modelsByIdCache.size === 0) {
-    allAppModels.forEach((model) => {
+    for (const model of allAppModels) {
       _modelsByIdCache.set(model.id, model);
-    });
+    }
   }
   return _modelsByIdCache;
 }
@@ -109,9 +109,9 @@ const _imageModelsByIdCache = new Map<string, ImageModelDefinition>();
 
 function getImageModelsByIdDict(): Map<string, ImageModelDefinition> {
   if (_imageModelsByIdCache.size === 0) {
-    allImageModels.forEach((model) => {
+    for (const model of allImageModels) {
       _imageModelsByIdCache.set(model.id, model);
-    });
+    }
   }
   return _imageModelsByIdCache;
 }

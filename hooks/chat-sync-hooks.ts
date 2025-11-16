@@ -17,7 +17,7 @@ import {
   dbMessageToChatMessage,
 } from "@/lib/message-conversion";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 import { generateUUID, getTextContentFromMessage } from "@/lib/utils";
 import {
   cloneAnonymousChat,
@@ -530,7 +530,7 @@ export function useSaveMessageMutation() {
 
   return useDualMutation({
     shouldUseLocal: () => !isAuthenticated,
-    mutationFn: async ({
+    mutationFn: ({
       message: _message,
       chatId: _chatId,
     }: {
@@ -836,7 +836,7 @@ export function useGetCredits() {
 
   const queryOptions = useDualQueryOptions({
     ...trpc.credits.getAvailableCredits.queryOptions(),
-    localQueryFn: async () => {
+    localQueryFn: () => {
       const anonymousSession = getAnonymousSession();
       return {
         totalCredits:

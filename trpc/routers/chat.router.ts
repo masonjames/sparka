@@ -23,12 +23,8 @@ import {
   updateChatTitleById,
   updateChatVisiblityById,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
-import {
-  dbChatToUIChat,
-  dbMessageToChatMessage,
-} from "@/lib/message-conversion";
+import { dbChatToUIChat } from "@/lib/message-conversion";
 import { generateUUID } from "@/lib/utils";
 import {
   createTRPCRouter,

@@ -87,8 +87,12 @@ export function useDualQueryOptions<
         throw new Error("localQueryFn is required when shouldUseLocal is true");
       }
 
-      const { localQueryFn, shouldUseLocal: _unused, ...rest } = options;
-      return { ...rest, queryFn: localQueryFn };
+      const {
+        localQueryFn,
+        shouldUseLocal: _shouldUseLocal,
+        ...localOptions
+      } = options;
+      return { ...localOptions, queryFn: localQueryFn };
     }
 
     const { localQueryFn: _l, shouldUseLocal: _s, ...rest } = options;

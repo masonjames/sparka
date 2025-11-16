@@ -44,7 +44,7 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
     const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
     lastProcessedIndex.current = dataStream.length - 1;
 
-    newDeltas.forEach((delta) => {
+    for (const delta of newDeltas) {
       // Clear deepResearch tool when a research process completes
       if (delta.type === "data-researchUpdate") {
         const update: any = (delta as any).data;
@@ -56,7 +56,7 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
       }
 
       const artifactDefinition = artifactDefinitions.find(
-        (artifactDefinition) => artifactDefinition.kind === artifact.kind
+        (definition) => definition.kind === artifact.kind
       );
 
       if (artifactDefinition?.onStreamPart) {
@@ -124,7 +124,7 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
           kind: artifact.kind,
         });
       }
-    });
+    }
   }, [
     dataStream,
     setArtifact,

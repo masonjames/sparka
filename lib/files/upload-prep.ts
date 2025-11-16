@@ -2,6 +2,8 @@
 
 import imageCompression from "browser-image-compression";
 
+const FILE_EXTENSION_REGEX = /\.[^.]+$/;
+
 export async function compressImageIfNeeded(
   file: File,
   {
@@ -49,7 +51,7 @@ export async function compressImageIfNeeded(
       return file;
     }
 
-    const base = file.name.replace(/\.[^.]+$/, "");
+    const base = file.name.replace(FILE_EXTENSION_REGEX, "");
     const ext =
       outputMime === "image/jpeg"
         ? "jpg"

@@ -60,7 +60,7 @@ export function SidebarProjectItem({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      void handleRename();
+      handleRename();
     } else if (e.key === "Escape") {
       setIsEditing(false);
       setEditName(project.name);

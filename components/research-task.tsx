@@ -43,10 +43,10 @@ export const ResearchTask = ({
         <div className="space-y-2 py-2 pr-2">
           {update.type === "web" && update.queries && (
             <div className="flex flex-wrap gap-2">
-              {update.queries.map((query, idx) => (
+              {update.queries.map((query) => (
                 <Badge
                   className="flex items-center gap-1 bg-muted"
-                  key={`search-query-${idx}`}
+                  key={query}
                   variant="outline"
                 >
                   <SearchIcon className="size-3.5" />
@@ -62,8 +62,8 @@ export const ResearchTask = ({
             update.results && (
               <div className="flex flex-wrap gap-2">
                 {update.type === "web" &&
-                  update.results.map((result, idx) => (
-                    <WebSourceBadge key={`web-result-${idx}`} result={result} />
+                  update.results.map((result) => (
+                    <WebSourceBadge key={result.url} result={result} />
                   ))}
               </div>
             )}

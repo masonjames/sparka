@@ -19,7 +19,15 @@ import {
   KEY_ENTER_COMMAND,
   type LexicalEditor,
 } from "lexical";
-import * as React from "react";
+import {
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { cn } from "@/lib/utils";
 
 // Plugin to handle Enter key submissions
@@ -30,7 +38,7 @@ function EnterKeySubmitPlugin({
 }) {
   const [editor] = useLexicalComposerContext();
 
-  React.useEffect(() => {
+  useEffect(() => {
     return editor.registerCommand(
       KEY_ENTER_COMMAND,
       (event: KeyboardEvent) => {
@@ -62,7 +70,7 @@ function EditorRefPlugin({
 }) {
   const [editor] = useLexicalComposerContext();
 
-  React.useEffect(() => {
+  useEffect(() => {
     setEditor(editor);
   }, [editor, setEditor]);
 
@@ -78,8 +86,8 @@ type LexicalChatInputRef = {
 type LexicalChatInputProps = {
   initialValue?: string;
   onInputChange?: (value: string) => void;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
-  onPaste?: (event: React.ClipboardEvent<HTMLDivElement>) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
+  onPaste?: (event: ClipboardEvent<HTMLDivElement>) => void;
   onEnterSubmit?: (event: KeyboardEvent) => boolean;
   placeholder?: string;
   autoFocus?: boolean;
@@ -113,9 +121,9 @@ export const LexicalChatInput = ({
   ref,
   ..._props
 }: LexicalChatInputProps & {
-  ref?: React.RefObject<LexicalChatInputRef | null>;
+  ref?: RefObject<LexicalChatInputRef | null>;
 }) => {
-  const [editor, setEditor] = React.useState<LexicalEditor | null>(null);
+  const [editor, setEditor] = useState<LexicalEditor | null>(null);
 
   const initialConfig: InitialConfigType = {
     namespace: "LexicalChatInput",
@@ -124,7 +132,7 @@ export const LexicalChatInput = ({
     nodes: [],
   };
 
-  const handleChange = React.useCallback(
+  const handleChange = useCallback(
     (editorState: EditorState) => {
       if (onInputChange) {
         editorState.read(() => {
@@ -137,7 +145,7 @@ export const LexicalChatInput = ({
     [onInputChange]
   );
 
-  React.useImperativeHandle(
+  useImperativeHandle(
     ref,
     () => ({
       focus: () => {
@@ -167,7 +175,7 @@ export const LexicalChatInput = ({
   );
 
   // Handle value changes from parent
-  React.useEffect(() => {
+  useEffect(() => {
     if (editor && initialValue !== undefined) {
       editor.update(() => {
         const root = $getRoot();
@@ -186,7 +194,7 @@ export const LexicalChatInput = ({
     }
   }, [editor, initialValue]);
 
-  const PlaceholderComponent = React.useCallback(
+  const PlaceholderComponent = useCallback(
     () => (
       <div className="lexical-placeholder pointer-events-none absolute pt-2 pl-3 text-muted-foreground">
         {placeholder}

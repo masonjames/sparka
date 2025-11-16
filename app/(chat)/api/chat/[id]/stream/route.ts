@@ -78,7 +78,9 @@ export async function GET(
   }
 
   const emptyDataStream = createUIMessageStream<ChatMessage>({
-    execute: () => {},
+    execute: () => {
+      // Intentionally empty - used as a fallback stream when stream context is unavailable
+    },
   });
 
   const stream = await streamContext.resumableStream(recentStreamId, () =>

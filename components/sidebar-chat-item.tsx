@@ -23,7 +23,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 
 const PureSidebarChatItem = ({
   chat,

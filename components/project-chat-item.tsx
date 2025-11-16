@@ -21,7 +21,7 @@ import {
   ActionContainerTop,
 } from "@/components/ui/extra/action-container";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 export function ProjectChatItem({
   chat,
   onDelete,

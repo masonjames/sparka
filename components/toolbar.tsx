@@ -12,7 +12,6 @@ import {
   type Dispatch,
   memo,
   type ReactNode,
-  type RefObject,
   type SetStateAction,
   useEffect,
   useRef,

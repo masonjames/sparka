@@ -1,5 +1,10 @@
 import type { TextStreamPart, ToolSet } from "ai";
 
+// Regex patterns for markdown matching
+const LINK_PATTERN = /^\[.*?\]\(.*?\)$/;
+const BOLD_PATTERN = /^\*\*.*?\*\*$/;
+const WHITESPACE_PATTERN = /\s/;
+
 class MarkdownJoiner {
   private buffer = "";
   private isBuffering = false;
@@ -21,15 +26,12 @@ class MarkdownJoiner {
           output += this.buffer;
           this.clearBuffer();
         }
+      } else if (char === "[" || char === "*") {
+        this.buffer = char;
+        this.isBuffering = true;
       } else {
-        // Check if we should start buffering
-        if (char === "[" || char === "*") {
-          this.buffer = char;
-          this.isBuffering = true;
-        } else {
-          // Pass through character directly
-          output += char;
-        }
+        // Pass through character directly
+        output += char;
       }
     }
 
@@ -38,14 +40,12 @@ class MarkdownJoiner {
 
   private isCompleteLink(): boolean {
     // Match [text](url) pattern
-    const linkPattern = /^\[.*?\]\(.*?\)$/;
-    return linkPattern.test(this.buffer);
+    return LINK_PATTERN.test(this.buffer);
   }
 
   private isCompleteBold(): boolean {
     // Match **text** pattern
-    const boldPattern = /^\*\*.*?\*\*$/;
-    return boldPattern.test(this.buffer);
+    return BOLD_PATTERN.test(this.buffer);
   }
 
   private isFalsePositive(char: string): boolean {
@@ -58,7 +58,7 @@ class MarkdownJoiner {
     // For bold: if we see * or ** followed by whitespace or newline
     if (this.buffer.startsWith("*")) {
       // Single * followed by whitespace is likely a list item
-      if (this.buffer.length === 1 && /\s/.test(char)) {
+      if (this.buffer.length === 1 && WHITESPACE_PATTERN.test(char)) {
         return true;
       }
       // If we hit newline without completing bold, it's false positive

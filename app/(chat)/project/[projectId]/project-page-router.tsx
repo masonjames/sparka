@@ -6,24 +6,23 @@ import { ChatSystem } from "@/components/chat-system";
 import { useChatId } from "@/providers/chat-id-provider";
 import { useTRPC } from "@/trpc/react";
 
+const PROJECT_ID_REGEX = /^\/project\/([^/]+)/;
+
 export function ProjectPageRouter() {
   const pathname = usePathname();
   const { id } = useChatId();
   const trpc = useTRPC();
 
   // Extract projectId from pathname
-  const projectMatch = pathname?.match(/^\/project\/([^/]+)/);
-  if (!projectMatch) {
-    return notFound();
-  }
-  const projectId = projectMatch[1];
+  const projectMatch = pathname?.match(PROJECT_ID_REGEX);
+  const projectId = projectMatch?.[1];
 
   // Load project
   const { data: project } = useSuspenseQuery(
-    trpc.project.getById.queryOptions({ id: projectId })
+    trpc.project.getById.queryOptions({ id: projectId || "" })
   );
 
-  if (!project) {
+  if (!projectMatch || !project) {
     return notFound();
   }
 

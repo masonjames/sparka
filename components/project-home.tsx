@@ -203,8 +203,11 @@ export function ProjectHome({
                 chat={chat}
                 key={chat.id}
                 onDelete={deleteChat}
-                onRename={async (chatId, title) => {
-                  await renameChatMutation.mutateAsync({ chatId, title });
+                onRename={async (idToRename, title) => {
+                  await renameChatMutation.mutateAsync({
+                    chatId: idToRename,
+                    title,
+                  });
                   toast.success("Chat renamed successfully");
                 }}
               />

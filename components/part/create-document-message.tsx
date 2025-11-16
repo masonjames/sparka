@@ -1,5 +1,5 @@
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { isLastArtifact } from "../isLastArtifact";
+import { isLastArtifact } from "../is-last-artifact";
 import {
   type CreateDocumentTool,
   DocumentToolResult,

@@ -8,7 +8,7 @@ import {
   useMessagePartsByPartRange,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
-import { isLastArtifact } from "./isLastArtifact";
+import { isLastArtifact } from "./is-last-artifact";
 import { CodeInterpreterMessage } from "./part/code-interpreter";
 import { CreateDocumentMessage } from "./part/create-document-message";
 import { DocumentToolResult } from "./part/document-common";

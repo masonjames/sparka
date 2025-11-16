@@ -21,7 +21,7 @@ const meta: Meta<typeof ResearchProgress> = {
 
 export default meta;
 
-type Story = StoryObj<typeof ResearchProgress>;
+type ResearchProgressStory = StoryObj<typeof ResearchProgress>;
 
 const now = Date.now();
 const startedAt = now - 45_000;
@@ -146,7 +146,7 @@ const manyWebUpdates: ResearchUpdate[] = [
   },
 ];
 
-export const Running: Story = {
+export const Running: ResearchProgressStory = {
   args: {
     updates: runningUpdates,
     totalExpectedSteps: 6,
@@ -154,7 +154,7 @@ export const Running: Story = {
   },
 };
 
-export const Completed: Story = {
+export const Completed: ResearchProgressStory = {
   args: {
     updates: completedUpdates,
     totalExpectedSteps: 6,
@@ -162,7 +162,7 @@ export const Completed: Story = {
   },
 };
 
-export const ManyWebSearches: Story = {
+export const ManyWebSearches: ResearchProgressStory = {
   args: {
     updates: manyWebUpdates,
     totalExpectedSteps: 12,
@@ -170,7 +170,7 @@ export const ManyWebSearches: Story = {
   },
 };
 
-export const Empty: Story = {
+export const Empty: ResearchProgressStory = {
   args: {
     updates: [],
     totalExpectedSteps: 0,

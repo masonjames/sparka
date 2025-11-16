@@ -76,11 +76,9 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: THEME_COLOR_SCRIPT,
-          }}
-        />
+        <Script id="theme-color-script" strategy="beforeInteractive">
+          {THEME_COLOR_SCRIPT}
+        </Script>
         {process.env.NODE_ENV !== "production" ? (
           <Script
             src="https://unpkg.com/react-scan/dist/auto.global.js"

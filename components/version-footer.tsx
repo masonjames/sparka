@@ -50,7 +50,7 @@ export const VersionFooter = ({
       <div className="flex flex-row gap-4">
         <Button
           disabled={saveDocumentMutation.isPending}
-          onClick={async () => {
+          onClick={() => {
             const versionToRestore = documents[currentVersionIndex];
 
             saveDocumentMutation.mutate({
