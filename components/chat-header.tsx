@@ -11,6 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useGetChatByIdQueryOptions } from "@/hooks/chat-sync-hooks";
 import type { Session } from "@/lib/auth";
 import { useChatId } from "@/providers/chat-id-provider";
@@ -87,6 +88,8 @@ function PureChatHeader({
   return (
     <header className="sticky top-0 flex h-(--header-height) items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2">
       <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
+        <SidebarTrigger className="sm:hidden" />
+
         <ChatBreadcrumbs
           chatLabel={chatLabel}
           className="ml-2"
