@@ -20,6 +20,34 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const DISABLED_PROJECT_ID = "00000000-0000-0000-0000-000000000000";
 
+function getChatLabel({
+  privateTitle,
+  publicTitle,
+  isPrivateChatLoading,
+  isPublicChatLoading,
+  hasMessages,
+}: {
+  privateTitle?: string;
+  publicTitle?: string;
+  isPrivateChatLoading: boolean;
+  isPublicChatLoading: boolean;
+  hasMessages: boolean;
+}): string {
+  if (privateTitle) {
+    return privateTitle;
+  }
+  if (publicTitle) {
+    return publicTitle;
+  }
+  if (isPrivateChatLoading || isPublicChatLoading) {
+    return "Loading chat…";
+  }
+  if (hasMessages) {
+    return "Untitled chat";
+  }
+  return "New chat";
+}
+
 function PureChatHeader({
   chatId,
   isReadonly,
@@ -67,14 +95,13 @@ function PureChatHeader({
     enabled: isAuthenticated && !!resolvedProjectId,
   });
 
-  const chatLabel =
-    privateChat?.title ??
-    publicChat?.title ??
-    (isPrivateChatLoading || isPublicChatLoading
-      ? "Loading chat…"
-      : hasMessages
-        ? "Untitled chat"
-        : "New chat");
+  const chatLabel = getChatLabel({
+    privateTitle: privateChat?.title,
+    publicTitle: publicChat?.title,
+    isPrivateChatLoading,
+    isPublicChatLoading,
+    hasMessages,
+  });
 
   const projectLabel = resolvedProjectId
     ? (project?.name ?? (isProjectLoading ? "Loading project…" : undefined))

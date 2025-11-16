@@ -85,6 +85,42 @@ export async function downloadAssetsFromModelMessages(
   );
 }
 
+function mapFilePart(
+  part: FilePart,
+  downloaded: Record<string, DownloadResult>
+): FilePart {
+  const url = toHttpUrl(part.data);
+  if (url) {
+    const found = downloaded[url.toString()];
+    if (found) {
+      return {
+        ...part,
+        data: found.data,
+        mediaType: part.mediaType ?? found.mediaType ?? part.mediaType,
+      };
+    }
+  }
+  return part;
+}
+
+function mapImagePart(
+  part: ImagePart,
+  downloaded: Record<string, DownloadResult>
+): ImagePart {
+  const url = toHttpUrl(part.image);
+  if (url) {
+    const found = downloaded[url.toString()];
+    if (found) {
+      return {
+        ...part,
+        image: found.data,
+        mediaType: part.mediaType ?? found.mediaType ?? part.mediaType,
+      };
+    }
+  }
+  return part;
+}
+
 /**
  * Inlines any URL-based file/image parts within ModelMessage[] by replacing the URLs
  * with downloaded binary data. This ensures providers receive actual bytes.
@@ -102,35 +138,10 @@ export async function replaceFilePartUrlByBinaryDataInMessages(
     part: TextPart | ImagePart | FilePart | any
   ): TextPart | ImagePart | FilePart | any => {
     if (part.type === "file") {
-      const url = toHttpUrl((part as FilePart).data);
-      if (url) {
-        const found = downloaded[url.toString()];
-        if (found) {
-          const newPart: FilePart = {
-            ...part,
-            data: found.data,
-            // keep existing mediaType; if missing, prefer detected content-type
-            mediaType: part.mediaType ?? found.mediaType ?? part.mediaType,
-          };
-          return newPart;
-        }
-      }
-      return part;
+      return mapFilePart(part as FilePart, downloaded);
     }
     if (part.type === "image") {
-      const url = toHttpUrl((part as ImagePart).image);
-      if (url) {
-        const found = downloaded[url.toString()];
-        if (found) {
-          const newPart: ImagePart = {
-            ...part,
-            image: found.data,
-            mediaType: part.mediaType ?? found.mediaType ?? part.mediaType,
-          };
-          return newPart;
-        }
-      }
-      return part;
+      return mapImagePart(part as ImagePart, downloaded);
     }
     // pass-through for text/tool/reasoning/etc
     return part;

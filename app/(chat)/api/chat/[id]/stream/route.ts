@@ -5,8 +5,103 @@ import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import { auth } from "@/lib/auth";
 import { getAllMessagesByChatId, getChatById } from "@/lib/db/queries";
-import type { Chat } from "@/lib/db/schema";
 import { getRedisPublisher, getStreamContext } from "../../route";
+
+async function validateChatAccess({
+  chatId,
+  userId,
+  isAuthenticated,
+}: {
+  chatId: string;
+  userId: string | null;
+  isAuthenticated: boolean;
+}): Promise<Response | null> {
+  // For authenticated users, check DB permissions first
+  if (isAuthenticated) {
+    const chat = await getChatById({ id: chatId });
+
+    if (!chat) {
+      return new ChatSDKError("not_found:chat").toResponse();
+    }
+
+    // If chat is not public, require authentication and ownership
+    if (chat.visibility !== "public" && chat.userId !== userId) {
+      console.log(
+        "RESPONSE > GET /api/chat: Unauthorized - chat ownership mismatch"
+      );
+      return new ChatSDKError("forbidden:chat").toResponse();
+    }
+  }
+  return null;
+}
+
+async function getStreamIds({
+  chatId,
+  isAuthenticated,
+  redisPublisher,
+}: {
+  chatId: string;
+  isAuthenticated: boolean;
+  redisPublisher: any;
+}): Promise<string[]> {
+  if (!redisPublisher) {
+    return [];
+  }
+
+  const keyPattern = isAuthenticated
+    ? `sparka-ai:stream:${chatId}:*`
+    : `sparka-ai:anonymous-stream:${chatId}:*`;
+
+  const keys = await redisPublisher.keys(keyPattern);
+  return keys
+    .map((key: string) => {
+      const parts = key.split(":");
+      return parts.at(-1) || "";
+    })
+    .filter(Boolean);
+}
+
+async function createRestoredStream({
+  chatId,
+  resumeRequestedAt,
+  emptyDataStream,
+}: {
+  chatId: string;
+  resumeRequestedAt: Date;
+  emptyDataStream: ReadableStream;
+}): Promise<Response> {
+  const messages = await getAllMessagesByChatId({ chatId });
+  const mostRecentMessage = messages.at(-1);
+
+  if (!mostRecentMessage) {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  if (mostRecentMessage.role !== "assistant") {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  const messageCreatedAt = new Date(mostRecentMessage.metadata.createdAt);
+
+  if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  const restoredStream = createUIMessageStream<ChatMessage>({
+    execute: ({ writer }) => {
+      writer.write({
+        type: "data-appendMessage",
+        data: JSON.stringify(mostRecentMessage),
+        transient: true,
+      });
+    },
+  });
+
+  return new Response(
+    restoredStream.pipeThrough(new JsonToSseTransformStream()),
+    { status: 200 }
+  );
+}
 
 export async function GET(
   _: Request,
@@ -29,43 +124,24 @@ export async function GET(
   const userId = session?.user?.id || null;
   const isAuthenticated = userId !== null;
 
-  let _chat: Chat;
+  const validationError = await validateChatAccess({
+    chatId,
+    userId,
+    isAuthenticated,
+  });
 
-  // For authenticated users, check DB permissions first
-  if (isAuthenticated) {
-    const chat = await getChatById({ id: chatId });
-
-    if (!chat) {
-      return new ChatSDKError("not_found:chat").toResponse();
-    }
-
-    // If chat is not public, require authentication and ownership
-    if (chat.visibility !== "public" && chat.userId !== userId) {
-      console.log(
-        "RESPONSE > GET /api/chat: Unauthorized - chat ownership mismatch"
-      );
-      return new ChatSDKError("forbidden:chat").toResponse();
-    }
+  if (validationError) {
+    return validationError;
   }
 
   const redisPublisher = getRedisPublisher();
 
   // Get streams from Redis for all users
-  let streamIds: string[] = [];
-
-  if (redisPublisher) {
-    const keyPattern = isAuthenticated
-      ? `sparka-ai:stream:${chatId}:*`
-      : `sparka-ai:anonymous-stream:${chatId}:*`;
-
-    const keys = await redisPublisher.keys(keyPattern);
-    streamIds = keys
-      .map((key: string) => {
-        const parts = key.split(":");
-        return parts.at(-1) || "";
-      })
-      .filter(Boolean);
-  }
+  const streamIds = await getStreamIds({
+    chatId,
+    isAuthenticated,
+    redisPublisher,
+  });
 
   if (!streamIds.length) {
     return new ChatSDKError("not_found:stream").toResponse();
@@ -92,37 +168,11 @@ export async function GET(
    * but the resumable stream has concluded at this point.
    */
   if (!stream) {
-    const messages = await getAllMessagesByChatId({ chatId });
-    const mostRecentMessage = messages.at(-1);
-
-    if (!mostRecentMessage) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    if (mostRecentMessage.role !== "assistant") {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const messageCreatedAt = new Date(mostRecentMessage.metadata.createdAt);
-
-    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const restoredStream = createUIMessageStream<ChatMessage>({
-      execute: ({ writer }) => {
-        writer.write({
-          type: "data-appendMessage",
-          data: JSON.stringify(mostRecentMessage),
-          transient: true,
-        });
-      },
+    return await createRestoredStream({
+      chatId,
+      resumeRequestedAt,
+      emptyDataStream,
     });
-
-    return new Response(
-      restoredStream.pipeThrough(new JsonToSseTransformStream()),
-      { status: 200 }
-    );
   }
 
   return new Response(stream, { status: 200 });

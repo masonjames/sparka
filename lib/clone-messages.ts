@@ -50,6 +50,103 @@ function createDocumentIdMap<T extends { id: string }>(
   }
   return documentIdMap;
 }
+
+function updateDocumentIdInPart(
+  oldDocId: string,
+  documentIdMap: Map<string, string>
+): string {
+  const newDocId = documentIdMap.get(oldDocId);
+  if (!newDocId) {
+    throw new Error(`Document ID ${oldDocId} not found in mapping`);
+  }
+  return newDocId;
+}
+
+function transformDeepResearchPart(
+  part: ChatMessage["parts"][number],
+  documentIdMap: Map<string, string>
+): ChatMessage["parts"][number] {
+  if (part.type !== "tool-deepResearch") {
+    return part;
+  }
+  if (part.state !== "output-available") {
+    return part;
+  }
+  if (part.output?.format !== "report") {
+    return part;
+  }
+  const oldDocId = part.output.id;
+  const newDocId = updateDocumentIdInPart(oldDocId, documentIdMap);
+  return {
+    ...part,
+    output: {
+      ...part.output,
+      id: newDocId,
+    },
+  };
+}
+
+function transformUpdateDocumentPart(
+  part: ChatMessage["parts"][number],
+  documentIdMap: Map<string, string>
+): ChatMessage["parts"][number] {
+  if (part.type !== "tool-updateDocument") {
+    return part;
+  }
+  if (part.state !== "output-available") {
+    return part;
+  }
+  if (!part.output.success) {
+    return part;
+  }
+  const oldDocId = part.output.id;
+  const newDocId = updateDocumentIdInPart(oldDocId, documentIdMap);
+  return {
+    ...part,
+    output: {
+      ...part.output,
+      id: newDocId,
+    },
+  };
+}
+
+function transformCreateDocumentPart(
+  part: ChatMessage["parts"][number],
+  documentIdMap: Map<string, string>
+): ChatMessage["parts"][number] {
+  if (part.type !== "tool-createDocument") {
+    return part;
+  }
+  if (part.state !== "output-available") {
+    return part;
+  }
+  const oldDocId = part.output.id;
+  const newDocId = updateDocumentIdInPart(oldDocId, documentIdMap);
+  return {
+    ...part,
+    output: {
+      ...part.output,
+      id: newDocId,
+    },
+  };
+}
+
+function transformPartWithDocumentId(
+  part: ChatMessage["parts"][number],
+  documentIdMap: Map<string, string>
+): ChatMessage["parts"][number] {
+  if (part.type === "tool-deepResearch") {
+    return transformDeepResearchPart(part, documentIdMap);
+  }
+  if (part.type === "tool-updateDocument") {
+    return transformUpdateDocumentPart(part, documentIdMap);
+  }
+  if (part.type === "tool-createDocument") {
+    return transformCreateDocumentPart(part, documentIdMap);
+  }
+  return part;
+}
+
 function updateDocumentReferencesInMessageParts<
   T extends { parts: ChatMessage["parts"] },
 >(messages: T[], documentIdMap: Map<string, string>): T[] {
@@ -58,70 +155,9 @@ function updateDocumentReferencesInMessageParts<
     let updatedParts: ChatMessage["parts"] = [];
 
     if (Array.isArray(parts)) {
-      // TODO: refactor these part copying into a helper function to avoid triplication
-      updatedParts = parts.map((part) => {
-        if (part.type === "tool-deepResearch") {
-          if (part.state !== "output-available") {
-            return part;
-          }
-          if (part.output?.format === "report") {
-            const oldDocId = part.output?.id;
-            const newDocId = documentIdMap.get(oldDocId);
-            if (newDocId) {
-              return {
-                ...part,
-                output: {
-                  ...part.output,
-                  id: newDocId,
-                },
-              };
-            }
-            throw new Error(`Document ID ${oldDocId} not found in mapping`);
-          }
-          return part;
-        }
-        if (part.type === "tool-updateDocument") {
-          if (part.state !== "output-available") {
-            return part;
-          }
-
-          if (!part.output.success) {
-            return part;
-          }
-
-          const oldDocId = part.output?.id;
-          const newDocId = documentIdMap.get(oldDocId);
-          if (newDocId) {
-            return {
-              ...part,
-              output: {
-                ...part.output,
-                id: newDocId,
-              },
-            };
-          }
-          throw new Error(`Document ID ${oldDocId} not found in mapping`);
-        }
-        if (part.type === "tool-createDocument") {
-          if (part.state !== "output-available") {
-            return part;
-          }
-
-          const oldDocId = part.output?.id;
-          const newDocId = documentIdMap.get(oldDocId);
-          if (newDocId) {
-            return {
-              ...part,
-              output: {
-                ...part.output,
-                id: newDocId,
-              },
-            };
-          }
-          throw new Error(`Document ID ${oldDocId} not found in mapping`);
-        }
-        return part;
-      });
+      updatedParts = parts.map((part) =>
+        transformPartWithDocumentId(part, documentIdMap)
+      );
     }
 
     return {

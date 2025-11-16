@@ -70,6 +70,91 @@ function useResearchUpdates(
     );
 }
 
+// Handle deep research rendering
+function renderDeepResearchPart({
+  part,
+  researchUpdates,
+  chatStore,
+  messageId,
+  isReadonly,
+}: {
+  part: Extract<ChatMessage["parts"][number], { type: "tool-deepResearch" }>;
+  researchUpdates: Extract<
+    ChatMessage["parts"][number],
+    { type: "data-researchUpdate" }
+  >["data"][];
+  chatStore: ReturnType<typeof useChatStoreApi>;
+  messageId: string;
+  isReadonly: boolean;
+}) {
+  const { toolCallId, state } = part;
+
+  if (state === "input-available") {
+    return (
+      <div className="flex w-full flex-col gap-3" key={toolCallId}>
+        <ResearchUpdates updates={researchUpdates} />
+      </div>
+    );
+  }
+  if (state === "output-available") {
+    const { output, input } = part;
+    const shouldShowFullPreview = isLastArtifact(
+      chatStore.getState().messages,
+      toolCallId
+    );
+
+    if (output.format === "report") {
+      return (
+        <div key={toolCallId}>
+          <div className="mb-2">
+            <ResearchUpdates updates={researchUpdates} />
+          </div>
+          {shouldShowFullPreview ? (
+            <DocumentPreview
+              args={input}
+              isReadonly={isReadonly}
+              messageId={messageId}
+              result={output}
+              type="create"
+            />
+          ) : (
+            <DocumentToolResult
+              isReadonly={isReadonly}
+              messageId={messageId}
+              result={output}
+              type="create"
+            />
+          )}
+        </div>
+      );
+    }
+  }
+  return null;
+}
+
+// Handle web search rendering
+function renderWebSearchPart({
+  part,
+  researchUpdates,
+}: {
+  part: Extract<ChatMessage["parts"][number], { type: "tool-webSearch" }>;
+  researchUpdates: Extract<
+    ChatMessage["parts"][number],
+    { type: "data-researchUpdate" }
+  >["data"][];
+}) {
+  const { toolCallId, state } = part;
+
+  if (state === "input-available" || state === "output-available") {
+    return (
+      <div className="flex flex-col gap-3" key={toolCallId}>
+        <ResearchUpdates updates={researchUpdates} />
+      </div>
+    );
+  }
+  return null;
+}
+
 // Render a single part by index with minimal subscriptions
 function PureMessagePart({
   messageId,
@@ -139,67 +224,17 @@ function PureMessagePart({
   }
 
   if (type === "tool-deepResearch") {
-    const { toolCallId, state } = part;
-
-    if (state === "input-available") {
-      return (
-        <div className="flex w-full flex-col gap-3" key={toolCallId}>
-          <ResearchUpdates updates={researchUpdates} />
-        </div>
-      );
-    }
-    if (state === "output-available") {
-      const { output, input } = part;
-      const shouldShowFullPreview = isLastArtifact(
-        chatStore.getState().messages,
-        toolCallId
-      );
-
-      if (output.format === "report") {
-        return (
-          <div key={toolCallId}>
-            <div className="mb-2">
-              <ResearchUpdates updates={researchUpdates} />
-            </div>
-            {shouldShowFullPreview ? (
-              <DocumentPreview
-                args={input}
-                isReadonly={isReadonly}
-                messageId={messageId}
-                result={output}
-                type="create"
-              />
-            ) : (
-              <DocumentToolResult
-                isReadonly={isReadonly}
-                messageId={messageId}
-                result={output}
-                type="create"
-              />
-            )}
-          </div>
-        );
-      }
-    }
+    return renderDeepResearchPart({
+      part,
+      researchUpdates,
+      chatStore,
+      messageId,
+      isReadonly,
+    });
   }
 
   if (type === "tool-webSearch") {
-    const { toolCallId, state } = part;
-
-    if (state === "input-available") {
-      return (
-        <div className="flex flex-col gap-3" key={toolCallId}>
-          <ResearchUpdates updates={researchUpdates} />
-        </div>
-      );
-    }
-    if (state === "output-available") {
-      return (
-        <div className="flex flex-col gap-3" key={toolCallId}>
-          <ResearchUpdates updates={researchUpdates} />
-        </div>
-      );
-    }
+    return renderWebSearchPart({ part, researchUpdates });
   }
 
   return null;

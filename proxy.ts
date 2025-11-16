@@ -2,60 +2,55 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
+function isPublicApiRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/trpc") ||
+    pathname === "/api/chat"
+  );
+}
+
+function isMetadataRoute(pathname: string): boolean {
+  return (
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/manifest.webmanifest"
+  );
+}
+
+function isPublicPage(pathname: string): boolean {
+  return (
+    pathname.startsWith("/models") ||
+    pathname.startsWith("/compare") ||
+    pathname.startsWith("/share/") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/terms")
+  );
+}
+
+function isAuthPage(pathname: string): boolean {
+  return pathname.startsWith("/login") || pathname.startsWith("/register");
+}
+
 export async function proxy(req: NextRequest) {
-  // Mirror previous authorized() logic using Better Auth session
   const url = req.nextUrl;
-  const isApiAuthRoute = url.pathname.startsWith("/api/auth");
-  if (isApiAuthRoute) {
-    return;
-  }
 
-  const isMetadataRoute =
-    url.pathname === "/sitemap.xml" ||
-    url.pathname === "/robots.txt" ||
-    url.pathname === "/manifest.webmanifest";
-  if (isMetadataRoute) {
-    return;
-  }
-
-  const isTrpcApi = url.pathname.startsWith("/api/trpc");
-  if (isTrpcApi) {
-    return;
-  }
-
-  const isChatApiRoute = url.pathname === "/api/chat";
-  if (isChatApiRoute) {
+  if (isPublicApiRoute(url.pathname) || isMetadataRoute(url.pathname)) {
     return;
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
   const isLoggedIn = !!session?.user;
 
-  const isOnChat = url.pathname.startsWith("/");
-  const isOnModels = url.pathname.startsWith("/models");
-  const isOnCompare = url.pathname.startsWith("/compare");
-  const isOnLoginPage = url.pathname.startsWith("/login");
-  const isOnRegisterPage = url.pathname.startsWith("/register");
-  const isOnSharePage = url.pathname.startsWith("/share/");
-  const isOnPrivacyPage = url.pathname.startsWith("/privacy");
-  const isOnTermsPage = url.pathname.startsWith("/terms");
-
-  if (isLoggedIn && (isOnLoginPage || isOnRegisterPage)) {
+  if (isLoggedIn && isAuthPage(url.pathname)) {
     return NextResponse.redirect(new URL("/", url));
   }
-  if (isOnRegisterPage || isOnLoginPage) {
-    return;
-  }
-  if (isOnSharePage) {
-    return;
-  }
-  if (isOnModels || isOnCompare) {
-    return;
-  }
-  if (isOnPrivacyPage || isOnTermsPage) {
+
+  if (isAuthPage(url.pathname) || isPublicPage(url.pathname)) {
     return;
   }
 
+  const isOnChat = url.pathname.startsWith("/");
   if (isOnChat) {
     if (url.pathname === "/") {
       return;

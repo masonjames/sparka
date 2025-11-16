@@ -34,6 +34,42 @@ const firecrawl = env.FIRECRAWL_API_KEY
 
 const log = createModuleLogger("tools/steps/web-search");
 
+function extractErrorInfo(error: unknown): {
+  message: string | undefined;
+  stack: string | undefined;
+  status: number | undefined;
+  data: unknown;
+} {
+  let message: string | undefined;
+  let stack: string | undefined;
+  let status: number | undefined;
+  let data: unknown;
+
+  if (typeof error === "object" && error !== null) {
+    if (
+      "message" in error &&
+      typeof (error as { message: unknown }).message === "string"
+    ) {
+      message = (error as { message: string }).message;
+    }
+    if (
+      "stack" in error &&
+      typeof (error as { stack: unknown }).stack === "string"
+    ) {
+      stack = (error as { stack: string }).stack;
+    }
+    const maybeResp = (
+      error as { response?: { status?: number; data?: unknown } }
+    ).response;
+    if (maybeResp) {
+      status = maybeResp.status;
+      data = maybeResp.data;
+    }
+  }
+
+  return { message, stack, status, data };
+}
+
 export async function webSearchStep({
   query,
   maxResults,
@@ -98,33 +134,7 @@ export async function webSearchStep({
     );
     return { results };
   } catch (error: unknown) {
-    // Best-effort extraction without using `any`
-    let message: string | undefined;
-    let stack: string | undefined;
-    let status: number | undefined;
-    let data: unknown;
-
-    if (typeof error === "object" && error !== null) {
-      if (
-        "message" in error &&
-        typeof (error as { message: unknown }).message === "string"
-      ) {
-        message = (error as { message: string }).message;
-      }
-      if (
-        "stack" in error &&
-        typeof (error as { stack: unknown }).stack === "string"
-      ) {
-        stack = (error as { stack: string }).stack;
-      }
-      const maybeResp = (
-        error as { response?: { status?: number; data?: unknown } }
-      ).response;
-      if (maybeResp) {
-        status = maybeResp.status;
-        data = maybeResp.data;
-      }
-    }
+    const { message, stack, status, data } = extractErrorInfo(error);
 
     log.error(
       {

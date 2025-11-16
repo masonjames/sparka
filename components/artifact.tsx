@@ -44,41 +44,20 @@ export type UIArtifact = {
   };
 };
 
-function PureArtifact({
-  chatId,
-  status,
-  stop,
-  votes,
-  isReadonly,
-  isAuthenticated,
+function useDocumentVersioning({
+  documents,
+  artifact,
+  setArtifact,
 }: {
-  chatId: string;
-  votes: Vote[] | undefined;
-  status: UseChatHelpers<ChatMessage>["status"];
-  stop: UseChatHelpers<ChatMessage>["stop"];
-  isReadonly: boolean;
-  isAuthenticated: boolean;
+  documents: Document[] | undefined;
+  artifact: UIArtifact;
+  setArtifact: ReturnType<typeof useArtifact>["setArtifact"];
 }) {
-  const storeApi = useChatStoreApi();
-  const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
-  const queryClient = useQueryClient();
-  const trpc = useTRPC();
-
-  const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
-    artifact.documentId || "",
-    artifact.documentId === "init" || artifact.status === "streaming"
-  );
-
-  const [mode, setMode] = useState<"edit" | "diff">("edit");
   const [document, setDocument] = useState<Document | null>(null);
   const [currentVersionIndex, setCurrentVersionIndex] = useState(-1);
-  const lastSavedContentRef = useRef<string>("");
-
-  const { open: isSidebarOpen } = useSidebar();
 
   useEffect(() => {
     if (documents && documents.length > 0) {
-      // At first we set the most recent document realted to the messageId selected
       const mostRecentDocumentIndex = documents.findLastIndex(
         (doc) => doc.messageId === artifact.messageId
       );
@@ -92,7 +71,6 @@ function PureArtifact({
           content: mostRecentDocument.content ?? "",
         }));
       } else {
-        // Fallback to the most recent document
         const latestDocument = documents.at(-1);
         if (latestDocument) {
           setDocument(latestDocument);
@@ -106,7 +84,20 @@ function PureArtifact({
     }
   }, [documents, setArtifact, artifact.messageId]);
 
+  return { document, currentVersionIndex, setCurrentVersionIndex };
+}
+
+function useDocumentSaving({
+  artifact,
+  isReadonly,
+  documents,
+}: {
+  artifact: UIArtifact;
+  isReadonly: boolean;
+  documents: Document[] | undefined;
+}) {
   const [isContentDirty, setIsContentDirty] = useState(false);
+  const lastSavedContentRef = useRef<string>("");
 
   const saveDocumentMutation = useSaveDocument(
     artifact.documentId,
@@ -155,10 +146,10 @@ function PureArtifact({
       if (isReadonly) {
         return;
       }
-      // Update the last saved content reference
       lastSavedContentRef.current = updatedContent;
 
-      if (document && updatedContent !== document.content) {
+      const lastDocument = documents?.at(-1);
+      if (lastDocument && updatedContent !== lastDocument.content) {
         setIsContentDirty(true);
 
         if (debounce) {
@@ -168,8 +159,331 @@ function PureArtifact({
         }
       }
     },
-    [document, debouncedHandleContentChange, handleContentChange, isReadonly]
+    [documents, debouncedHandleContentChange, handleContentChange, isReadonly]
   );
+
+  return { isContentDirty, saveContent };
+}
+
+function getArtifactPanelAnimation({
+  isMobile,
+  windowWidth,
+  windowHeight,
+  artifact,
+}: {
+  isMobile: boolean;
+  windowWidth: number;
+  windowHeight: number;
+  artifact: UIArtifact;
+}) {
+  const mobileAnimation = {
+    animate: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      height: windowHeight,
+      width: windowWidth || "calc(100dvw)",
+      borderRadius: 0,
+      transition: {
+        delay: 0,
+        type: "spring" as const,
+        stiffness: 200,
+        damping: 30,
+        duration: 5000,
+      },
+    },
+    initial: {
+      opacity: 1,
+      x: artifact.boundingBox.left,
+      y: artifact.boundingBox.top,
+      height: artifact.boundingBox.height,
+      width: artifact.boundingBox.width,
+      borderRadius: 50,
+    },
+  };
+
+  const desktopAnimation = {
+    animate: {
+      opacity: 1,
+      x: 400,
+      y: 0,
+      height: windowHeight,
+      width: windowWidth ? windowWidth - 400 : "calc(100dvw-400px)",
+      borderRadius: 0,
+      transition: {
+        delay: 0,
+        type: "spring" as const,
+        stiffness: 200,
+        damping: 30,
+        duration: 5000,
+      },
+    },
+    initial: {
+      opacity: 1,
+      x: artifact.boundingBox.left,
+      y: artifact.boundingBox.top,
+      height: artifact.boundingBox.height,
+      width: artifact.boundingBox.width,
+      borderRadius: 50,
+    },
+  };
+
+  return isMobile ? mobileAnimation : desktopAnimation;
+}
+
+function createVersionChangeHandler({
+  documents,
+  setCurrentVersionIndex,
+  setMode,
+  currentVersionIndex,
+}: {
+  documents: Document[] | undefined;
+  setCurrentVersionIndex: (index: number | ((prev: number) => number)) => void;
+  setMode: (
+    mode: "edit" | "diff" | ((prev: "edit" | "diff") => "edit" | "diff")
+  ) => void;
+  currentVersionIndex: number;
+}) {
+  return (type: "next" | "prev" | "toggle" | "latest") => {
+    if (!documents) {
+      return;
+    }
+
+    if (type === "latest") {
+      setCurrentVersionIndex(documents.length - 1);
+      setMode("edit");
+      return;
+    }
+
+    if (type === "toggle") {
+      setMode((currentMode) => (currentMode === "edit" ? "diff" : "edit"));
+      return;
+    }
+
+    if (type === "prev" && currentVersionIndex > 0) {
+      setCurrentVersionIndex((index) => index - 1);
+      return;
+    }
+
+    if (type === "next" && currentVersionIndex < documents.length - 1) {
+      setCurrentVersionIndex((index) => index + 1);
+    }
+  };
+}
+
+function useArtifactInitialization({
+  artifact,
+  artifactDefinition,
+  setMetadata,
+  trpc,
+  queryClient,
+  isAuthenticated,
+}: {
+  artifact: UIArtifact;
+  artifactDefinition: (typeof artifactDefinitions)[number];
+  setMetadata: ReturnType<typeof useArtifact>["setMetadata"];
+  trpc: ReturnType<typeof useTRPC>;
+  queryClient: ReturnType<typeof useQueryClient>;
+  isAuthenticated: boolean;
+}) {
+  useEffect(() => {
+    if (
+      artifact.documentId !== "init" &&
+      artifact.status !== "streaming" &&
+      artifactDefinition.initialize
+    ) {
+      artifactDefinition.initialize({
+        documentId: artifact.documentId,
+        setMetadata,
+        trpc,
+        queryClient,
+        isAuthenticated,
+      });
+    }
+  }, [
+    artifact.documentId,
+    artifactDefinition,
+    setMetadata,
+    trpc,
+    queryClient,
+    isAuthenticated,
+    artifact.status,
+  ]);
+}
+
+function MessagesSidebar({
+  isMobile,
+  isCurrentVersion,
+  chatId,
+  isReadonly,
+  status,
+  votes,
+}: {
+  isMobile: boolean;
+  isCurrentVersion: boolean;
+  chatId: string;
+  isReadonly: boolean;
+  status: UseChatHelpers<ChatMessage>["status"];
+  votes: Vote[] | undefined;
+}) {
+  if (isMobile) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      animate={{
+        opacity: 1,
+        x: 0,
+        scale: 1,
+        transition: {
+          delay: 0.2,
+          type: "spring",
+          stiffness: 200,
+          damping: 30,
+        },
+      }}
+      className="relative h-dvh w-[400px] shrink-0 bg-muted dark:bg-background"
+      exit={{
+        opacity: 0,
+        x: 0,
+        scale: 1,
+        transition: { duration: 0 },
+      }}
+      initial={{ opacity: 0, x: 10, scale: 1 }}
+    >
+      <AnimatePresence>
+        {!isCurrentVersion && (
+          <motion.div
+            animate={{ opacity: 1 }}
+            className="absolute top-0 left-0 z-50 h-dvh w-[400px] bg-zinc-900/50"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="@container flex h-full flex-col">
+        <MessagesPane
+          chatId={chatId}
+          className="size-full"
+          isReadonly={isReadonly}
+          isVisible={true}
+          status={status}
+          votes={votes}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+function ArtifactHeader({
+  artifact,
+  isContentDirty,
+  document,
+  currentVersionIndex,
+  handleVersionChange,
+  isCurrentVersion,
+  isReadonly,
+  metadata,
+  mode,
+  setMetadata,
+}: {
+  artifact: UIArtifact;
+  isContentDirty: boolean;
+  document: Document | null;
+  currentVersionIndex: number;
+  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
+  isCurrentVersion: boolean;
+  isReadonly: boolean;
+  metadata: any;
+  mode: "edit" | "diff";
+  setMetadata: ReturnType<typeof useArtifact>["setMetadata"];
+}) {
+  return (
+    <div className="flex flex-row items-start justify-between bg-background/80 p-2">
+      <div className="flex flex-row items-start gap-4">
+        <ArtifactCloseButton />
+
+        <div className="flex flex-col">
+          <div className="font-medium">{artifact.title}</div>
+
+          {isContentDirty && (
+            <div className="text-muted-foreground text-sm">
+              Saving changes...
+            </div>
+          )}
+          {!isContentDirty && document && (
+            <div className="text-muted-foreground text-sm">
+              {`Updated ${formatDistance(
+                new Date(document.createdAt),
+                new Date(),
+                {
+                  addSuffix: true,
+                }
+              )}`}
+            </div>
+          )}
+          {!(isContentDirty || document) && (
+            <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
+          )}
+        </div>
+      </div>
+
+      <ArtifactActions
+        artifact={artifact}
+        currentVersionIndex={currentVersionIndex}
+        handleVersionChange={handleVersionChange}
+        isCurrentVersion={isCurrentVersion}
+        isReadonly={isReadonly}
+        metadata={metadata}
+        mode={mode}
+        setMetadata={setMetadata}
+      />
+    </div>
+  );
+}
+
+function PureArtifact({
+  chatId,
+  status,
+  stop,
+  votes,
+  isReadonly,
+  isAuthenticated,
+}: {
+  chatId: string;
+  votes: Vote[] | undefined;
+  status: UseChatHelpers<ChatMessage>["status"];
+  stop: UseChatHelpers<ChatMessage>["stop"];
+  isReadonly: boolean;
+  isAuthenticated: boolean;
+}) {
+  const storeApi = useChatStoreApi();
+  const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+
+  const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
+    artifact.documentId || "",
+    artifact.documentId === "init" || artifact.status === "streaming"
+  );
+
+  const [mode, setMode] = useState<"edit" | "diff">("edit");
+  const { document, currentVersionIndex, setCurrentVersionIndex } =
+    useDocumentVersioning({
+      documents,
+      artifact,
+      setArtifact,
+    });
+
+  const { isContentDirty, saveContent } = useDocumentSaving({
+    artifact,
+    isReadonly,
+    documents,
+  });
+
+  const { open: isSidebarOpen } = useSidebar();
 
   function getDocumentContentById(index: number) {
     if (!documents) {
@@ -181,28 +495,12 @@ function PureArtifact({
     return documents[index].content ?? "";
   }
 
-  const handleVersionChange = (type: "next" | "prev" | "toggle" | "latest") => {
-    if (!documents) {
-      return;
-    }
-
-    if (type === "latest") {
-      setCurrentVersionIndex(documents.length - 1);
-      setMode("edit");
-    }
-
-    if (type === "toggle") {
-      setMode((currentMode) => (currentMode === "edit" ? "diff" : "edit"));
-    }
-
-    if (type === "prev") {
-      if (currentVersionIndex > 0) {
-        setCurrentVersionIndex((index) => index - 1);
-      }
-    } else if (type === "next" && currentVersionIndex < documents.length - 1) {
-      setCurrentVersionIndex((index) => index + 1);
-    }
-  };
+  const handleVersionChange = createVersionChangeHandler({
+    documents,
+    setCurrentVersionIndex,
+    setMode,
+    currentVersionIndex,
+  });
 
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
@@ -228,29 +526,21 @@ function PureArtifact({
     throw new Error("Artifact definition not found!");
   }
 
-  useEffect(() => {
-    if (
-      artifact.documentId !== "init" &&
-      artifact.status !== "streaming" &&
-      artifactDefinition.initialize
-    ) {
-      artifactDefinition.initialize({
-        documentId: artifact.documentId,
-        setMetadata,
-        trpc,
-        queryClient,
-        isAuthenticated,
-      });
-    }
-  }, [
-    artifact.documentId,
+  const panelAnimation = getArtifactPanelAnimation({
+    isMobile,
+    windowWidth,
+    windowHeight,
+    artifact,
+  });
+
+  useArtifactInitialization({
+    artifact,
     artifactDefinition,
     setMetadata,
     trpc,
     queryClient,
     isAuthenticated,
-    artifact.status,
-  ]);
+  });
 
   return (
     <AnimatePresence>
@@ -277,88 +567,17 @@ function PureArtifact({
             />
           )}
 
-          {!isMobile && (
-            <motion.div
-              animate={{
-                opacity: 1,
-                x: 0,
-                scale: 1,
-                transition: {
-                  delay: 0.2,
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 30,
-                },
-              }}
-              className="relative h-dvh w-[400px] shrink-0 bg-muted dark:bg-background"
-              exit={{
-                opacity: 0,
-                x: 0,
-                scale: 1,
-                transition: { duration: 0 },
-              }}
-              initial={{ opacity: 0, x: 10, scale: 1 }}
-            >
-              <AnimatePresence>
-                {!isCurrentVersion && (
-                  <motion.div
-                    animate={{ opacity: 1 }}
-                    className="absolute top-0 left-0 z-50 h-dvh w-[400px] bg-zinc-900/50"
-                    exit={{ opacity: 0 }}
-                    initial={{ opacity: 0 }}
-                  />
-                )}
-              </AnimatePresence>
-
-              <div className="@container flex h-full flex-col">
-                <MessagesPane
-                  chatId={chatId}
-                  className="size-full"
-                  isReadonly={isReadonly}
-                  isVisible={true}
-                  status={status}
-                  votes={votes}
-                />
-              </div>
-            </motion.div>
-          )}
+          <MessagesSidebar
+            chatId={chatId}
+            isCurrentVersion={isCurrentVersion}
+            isMobile={isMobile}
+            isReadonly={isReadonly}
+            status={status}
+            votes={votes}
+          />
 
           <motion.div
-            animate={
-              isMobile
-                ? {
-                    opacity: 1,
-                    x: 0,
-                    y: 0,
-                    height: windowHeight,
-                    width: windowWidth ? windowWidth : "calc(100dvw)",
-                    borderRadius: 0,
-                    transition: {
-                      delay: 0,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 30,
-                      duration: 5000,
-                    },
-                  }
-                : {
-                    opacity: 1,
-                    x: 400,
-                    y: 0,
-                    height: windowHeight,
-                    width: windowWidth
-                      ? windowWidth - 400
-                      : "calc(100dvw-400px)",
-                    borderRadius: 0,
-                    transition: {
-                      delay: 0,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 30,
-                      duration: 5000,
-                    },
-                  }
-            }
+            animate={panelAnimation.animate}
             className="fixed flex h-dvh flex-col overflow-y-auto border-zinc-200 bg-background md:border-l dark:border-zinc-700"
             exit={{
               opacity: 0,
@@ -370,64 +589,20 @@ function PureArtifact({
                 damping: 30,
               },
             }}
-            initial={
-              isMobile
-                ? {
-                    opacity: 1,
-                    x: artifact.boundingBox.left,
-                    y: artifact.boundingBox.top,
-                    height: artifact.boundingBox.height,
-                    width: artifact.boundingBox.width,
-                    borderRadius: 50,
-                  }
-                : {
-                    opacity: 1,
-                    x: artifact.boundingBox.left,
-                    y: artifact.boundingBox.top,
-                    height: artifact.boundingBox.height,
-                    width: artifact.boundingBox.width,
-                    borderRadius: 50,
-                  }
-            }
+            initial={panelAnimation.initial}
           >
-            <div className="flex flex-row items-start justify-between bg-background/80 p-2">
-              <div className="flex flex-row items-start gap-4">
-                <ArtifactCloseButton />
-
-                <div className="flex flex-col">
-                  <div className="font-medium">{artifact.title}</div>
-
-                  {isContentDirty ? (
-                    <div className="text-muted-foreground text-sm">
-                      Saving changes...
-                    </div>
-                  ) : document ? (
-                    <div className="text-muted-foreground text-sm">
-                      {`Updated ${formatDistance(
-                        new Date(document.createdAt),
-                        new Date(),
-                        {
-                          addSuffix: true,
-                        }
-                      )}`}
-                    </div>
-                  ) : (
-                    <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
-                  )}
-                </div>
-              </div>
-
-              <ArtifactActions
-                artifact={artifact}
-                currentVersionIndex={currentVersionIndex}
-                handleVersionChange={handleVersionChange}
-                isCurrentVersion={isCurrentVersion}
-                isReadonly={isReadonly}
-                metadata={metadata}
-                mode={mode}
-                setMetadata={setMetadata}
-              />
-            </div>
+            <ArtifactHeader
+              artifact={artifact}
+              currentVersionIndex={currentVersionIndex}
+              document={document}
+              handleVersionChange={handleVersionChange}
+              isContentDirty={isContentDirty}
+              isCurrentVersion={isCurrentVersion}
+              isReadonly={isReadonly}
+              metadata={metadata}
+              mode={mode}
+              setMetadata={setMetadata}
+            />
 
             <ScrollArea className="h-full max-w-full!">
               <div className="flex flex-col items-center bg-background/80">

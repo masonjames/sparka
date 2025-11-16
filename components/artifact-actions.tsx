@@ -49,6 +49,18 @@ function PureArtifactActions({
     isReadonly,
   };
 
+  function isActionDisabled(action: {
+    isDisabled?: (context: ArtifactActionContext) => boolean;
+  }): boolean {
+    if (isLoading || artifact.status === "streaming") {
+      return true;
+    }
+    if (action.isDisabled) {
+      return action.isDisabled(actionContext);
+    }
+    return false;
+  }
+
   return (
     <div className="flex flex-row gap-1">
       {artifactDefinition.actions
@@ -74,13 +86,7 @@ function PureArtifactActions({
                       "p-2": !action.label,
                       "px-2 py-1.5": action.label,
                     })}
-                    disabled={
-                      isLoading || artifact.status === "streaming"
-                        ? true
-                        : action.isDisabled
-                          ? action.isDisabled(actionContext)
-                          : false
-                    }
+                    disabled={isActionDisabled(action)}
                     onClick={async () => {
                       setIsLoading(true);
 
@@ -104,13 +110,7 @@ function PureArtifactActions({
                     "p-2": !action.label,
                     "px-2 py-1.5": action.label,
                   })}
-                  disabled={
-                    isLoading || artifact.status === "streaming"
-                      ? true
-                      : action.isDisabled
-                        ? action.isDisabled(actionContext)
-                        : false
-                  }
+                  disabled={isActionDisabled(action)}
                   onClick={async () => {
                     setIsLoading(true);
 
