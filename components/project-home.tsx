@@ -142,7 +142,7 @@ export function ProjectHome({
                 <Skeleton className="h-10 w-40" />
               </CardContent>
             </Card>
-          ) : project?.instructions && project.instructions.trim() ? (
+          ) : project?.instructions?.trim() ? (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">

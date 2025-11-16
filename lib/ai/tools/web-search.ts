@@ -75,7 +75,7 @@ async function executeMultiQuerySearch({
     );
   }
 
-  completedSteps++;
+  completedSteps += 1;
   if (writeTopLevelUpdates) {
     dataStream.write({
       type: "data-researchUpdate",

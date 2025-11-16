@@ -160,7 +160,7 @@ except Exception as e:
       let outputText = "";
       try {
         const outLines = (stdout ?? "").trim().split("\n");
-        const lastLine = outLines[outLines.length - 1];
+        const lastLine = outLines.at(-1);
         execInfo = JSON.parse(lastLine);
         outLines.pop(); // remove JSON marker
         outputText = outLines.join("\n");
@@ -186,8 +186,12 @@ except Exception as e:
       }
 
       // Build response similar to previous shape
-      if (outputText) message += `${outputText}\n`;
-      if (stderr && stderr.trim().length > 0) message += `${stderr}\n`;
+      if (outputText) {
+        message += `${outputText}\n`;
+      }
+      if (stderr && stderr.trim().length > 0) {
+        message += `${stderr}\n`;
+      }
       if (execInfo.error) {
         message += `Error: ${execInfo.error.name}: ${execInfo.error.value}\n`;
         log.error(

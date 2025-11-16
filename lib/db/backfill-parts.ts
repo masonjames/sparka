@@ -80,7 +80,7 @@ const runBackfill = async () => {
 
           if (!Array.isArray(parts) || parts.length === 0) {
             // Skip messages with no parts
-            processed++;
+            processed += 1;
             continue;
           }
 
@@ -93,10 +93,10 @@ const runBackfill = async () => {
               await tx.insert(part).values(dbParts);
             });
 
-            successCount++;
+            successCount += 1;
           }
 
-          processed++;
+          processed += 1;
 
           // Show progress every 10 messages
           if (processed % 10 === 0) {
@@ -105,12 +105,12 @@ const runBackfill = async () => {
             );
           }
         } catch (error) {
-          errorCount++;
+          errorCount += 1;
           console.error(
             `  ✗ Error processing message ${msg.id}:`,
             error instanceof Error ? error.message : String(error)
           );
-          processed++;
+          processed += 1;
         }
       }
     }

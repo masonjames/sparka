@@ -39,7 +39,7 @@ export function buildThreadFromLeaf<T extends MessageNode>(
   let iteration = 0;
 
   while (currentMessageId) {
-    iteration++;
+    iteration += 1;
 
     if (iteration > 100) {
       break;

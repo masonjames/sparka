@@ -507,19 +507,16 @@ function PureMultimodalInput({
       {messageIds.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 &&
-        !isEditMode && (
-          <>
-            {emptyStateOverride ? (
-              emptyStateOverride
-            ) : disableSuggestedActions ? null : (
-              <SuggestedActions
-                chatId={chatId}
-                className="mb-4"
-                selectedModelId={selectedModelId}
-              />
-            )}
-          </>
-        )}
+        !isEditMode &&
+        (emptyStateOverride ? (
+          emptyStateOverride
+        ) : disableSuggestedActions ? null : (
+          <SuggestedActions
+            chatId={chatId}
+            className="mb-4"
+            selectedModelId={selectedModelId}
+          />
+        ))}
 
       <input
         accept="image/*,.pdf"

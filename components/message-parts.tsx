@@ -218,7 +218,9 @@ function PureReasoningPart({
   partIdx: number;
 }) {
   const part = useMessagePartByPartIdx(messageId, partIdx);
-  if (part.type !== "reasoning") return null;
+  if (part.type !== "reasoning") {
+    return null;
+  }
 
   return <MessageReasoning content={part.text} isLoading={isLoading} />;
 }

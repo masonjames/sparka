@@ -96,7 +96,7 @@ export async function getChatsByUserId({
   });
 
   try {
-    let conditions;
+    let conditions = eq(chat.userId, id);
     if (projectId === null) {
       // Filter for chats without a project
       conditions = and(eq(chat.userId, id), isNull(chat.projectId));
@@ -339,7 +339,7 @@ export async function saveMessages({
       await tx.insert(message).values(dbMessages);
 
       // Save parts to Part table
-      const allDbParts: Array<Omit<Part, "id" | "createdAt">> = [];
+      const allDbParts: Omit<Part, "id" | "createdAt">[] = [];
       for (const { id, message: msg } of messages) {
         const dbParts = mapUIMessagePartsToDBParts(msg.parts, id);
         allDbParts.push(...dbParts);
