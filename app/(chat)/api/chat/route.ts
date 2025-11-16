@@ -574,9 +574,11 @@ async function createChatStream({
     onError: () => {
       clearTimeout(timeoutId);
       log.error("onError");
-      // Release reserved credits on error (fire and forget)
+      // Release reserved credits on error
       if (reservation) {
-        reservation.cleanup();
+        reservation.cleanup().catch((error) => {
+          log.error({ error }, "Failed to cleanup reservation in onError");
+        });
       }
       return "Oops, an error occured!";
     },
@@ -998,7 +1000,7 @@ async function handleRequestExecution({
     }
     if (anonymousSession) {
       anonymousSession.remainingCredits += baseModelCost;
-      setAnonymousSession(anonymousSession);
+      await setAnonymousSession(anonymousSession);
     }
     throw error;
   }
