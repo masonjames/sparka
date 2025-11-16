@@ -88,14 +88,15 @@ function PureChatHeader({
   return (
     <header className="sticky top-0 flex h-(--header-height) items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2">
       <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
-        <SidebarTrigger className="sm:hidden" />
-
-        <ChatBreadcrumbs
-          chatLabel={chatLabel}
-          className="ml-2"
-          projectHref={projectHref}
-          projectLabel={projectLabel}
-        />
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="sm:hidden" />
+          <ChatBreadcrumbs
+            chatLabel={chatLabel}
+            className="ml-2"
+            projectHref={projectHref}
+            projectLabel={projectLabel}
+          />
+        </div>
 
         {!isReadonly && hasMessages && <ShareButton chatId={chatId} />}
         {isReadonly && (

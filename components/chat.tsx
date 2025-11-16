@@ -202,7 +202,7 @@ export function Chat({
           <ResizablePanel defaultSize={35} minSize={25}>
             <ArtifactPanel
               chatId={id}
-              className="flex h-full min-w-0 flex-1 flex-col "
+              className="flex h-full min-w-0 flex-1 flex-col"
               isAuthenticated={!!session?.user}
               isReadonly={isReadonly}
               status={status}

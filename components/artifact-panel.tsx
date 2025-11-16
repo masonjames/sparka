@@ -18,12 +18,12 @@ import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import {
   Artifact as ArtifactCard,
-  ArtifactHeader,
   ArtifactClose,
-  ArtifactTitle,
-  ArtifactDescription,
-  ArtifactActions as ArtifactHeaderActions,
   ArtifactContent,
+  ArtifactDescription,
+  ArtifactHeader,
+  ArtifactActions as ArtifactHeaderActions,
+  ArtifactTitle,
 } from "./ai-elements/artifact";
 import { ArtifactActions as ArtifactPanelActions } from "./artifact-actions";
 //
@@ -256,7 +256,7 @@ function PureArtifactPanel({
   return (
     <ArtifactCard
       className={cn(
-        "h-full w-full border-border border-0 bg-background transition-all duration-200 ease-out rounded-none",
+        "h-full w-full rounded-none border-0 border-border bg-background transition-all duration-200 ease-out",
         className
       )}
       data-testid="artifact"
