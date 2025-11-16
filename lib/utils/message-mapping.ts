@@ -200,7 +200,7 @@ export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
         default:
           // Handle tool-* parts generically
           if (part.type.startsWith("tool-")) {
-            if (!part.tool_toolCallId || !part.tool_state) {
+            if (!(part.tool_toolCallId && part.tool_state)) {
               // Skip if missing required fields (handles old tool-invocation format)
               return null;
             }

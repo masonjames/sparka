@@ -22,7 +22,7 @@ export function ProjectPageRouter() {
     trpc.project.getById.queryOptions({ id: projectId || "" })
   );
 
-  if (!projectMatch || !project) {
+  if (!(projectMatch && project)) {
     return notFound();
   }
 
