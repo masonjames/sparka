@@ -14,6 +14,7 @@ import { sheetArtifact } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
 import type { Document, Vote } from "@/lib/db/schema";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
@@ -41,6 +42,7 @@ function PureArtifactPanel({
   votes,
   isReadonly,
   isAuthenticated,
+  className,
 }: {
   chatId: string;
   votes: Vote[] | undefined;
@@ -48,6 +50,7 @@ function PureArtifactPanel({
   stop: UseChatHelpers<ChatMessage>["stop"];
   isReadonly: boolean;
   isAuthenticated: boolean;
+  className?: string;
 }) {
   const storeApi = useChatStoreApi();
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
@@ -243,7 +246,10 @@ function PureArtifactPanel({
 
   return (
     <div
-      className="flex h-full w-full flex-col overflow-y-auto border-zinc-200 bg-background transition-all duration-200 ease-out dark:border-zinc-700"
+      className={cn(
+        "flex h-full w-full flex-col overflow-y-auto border-border bg-background transition-all duration-200 ease-out",
+        className
+      )}
       data-testid="artifact"
     >
       <div className="flex flex-row items-start justify-between bg-background/80 p-2">
@@ -346,6 +352,9 @@ export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
     return false;
   }
   if (prevProps.isAuthenticated !== nextProps.isAuthenticated) {
+    return false;
+  }
+  if (prevProps.className !== nextProps.className) {
     return false;
   }
 
