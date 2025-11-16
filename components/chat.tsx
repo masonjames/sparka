@@ -2,7 +2,6 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import { ChatHeader } from "@/components/chat-header";
 import {
   ResizableHandle,
@@ -97,7 +96,6 @@ export function Chat({
   const chatStore = useChatStoreApi();
   const trpc = useTRPC();
   const { data: session } = useSession();
-  const isDesktop = useMediaQuery("(min-width: 768px)");
   const isLoading = id !== useChatId();
 
   const messageIds = useMessageIds() as string[];

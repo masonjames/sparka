@@ -87,13 +87,18 @@ function PureDocumentToolResult({
       type="button"
     >
       <div className="mt-1 text-muted-foreground">
-        {type === "create" ? (
-          <FileIcon />
-        ) : type === "update" ? (
-          <PencilEditIcon />
-        ) : type === "request-suggestions" ? (
-          <MessageIcon />
-        ) : null}
+        {(() => {
+          if (type === "create") {
+            return <FileIcon />;
+          }
+          if (type === "update") {
+            return <PencilEditIcon />;
+          }
+          if (type === "request-suggestions") {
+            return <MessageIcon />;
+          }
+          return null;
+        })()}
       </div>
       <div className="text-left">
         {`${getActionText(type, "past")} "${result.title}"`}
@@ -130,13 +135,18 @@ function PureDocumentToolCall({
     >
       <div className="flex flex-row items-start gap-3">
         <div className="mt-1 text-zinc-500">
-          {type === "create" ? (
-            <FileIcon />
-          ) : type === "update" ? (
-            <PencilEditIcon />
-          ) : type === "request-suggestions" ? (
-            <MessageIcon />
-          ) : null}
+          {(() => {
+            if (type === "create") {
+              return <FileIcon />;
+            }
+            if (type === "update") {
+              return <PencilEditIcon />;
+            }
+            if (type === "request-suggestions") {
+              return <MessageIcon />;
+            }
+            return null;
+          })()}
         </div>
 
         <div className="text-left">

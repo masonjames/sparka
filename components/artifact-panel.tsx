@@ -44,10 +44,10 @@ export type UIArtifact = {
 };
 
 function PureArtifactPanel({
-  chatId,
+  chatId: _chatId,
   status,
   stop,
-  votes,
+  votes: _votes,
   isReadonly,
   isAuthenticated,
   className,
@@ -273,21 +273,29 @@ function PureArtifactPanel({
           <div className="flex flex-col">
             <ArtifactTitle>{artifact.title}</ArtifactTitle>
 
-            {isContentDirty ? (
-              <ArtifactDescription>Saving changes...</ArtifactDescription>
-            ) : document ? (
-              <ArtifactDescription>
-                {`Updated ${formatDistance(
-                  new Date(document.createdAt),
-                  new Date(),
-                  {
-                    addSuffix: true,
-                  }
-                )}`}
-              </ArtifactDescription>
-            ) : (
-              <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
-            )}
+            {(() => {
+              if (isContentDirty) {
+                return (
+                  <ArtifactDescription>Saving changes...</ArtifactDescription>
+                );
+              }
+              if (document) {
+                return (
+                  <ArtifactDescription>
+                    {`Updated ${formatDistance(
+                      new Date(document.createdAt),
+                      new Date(),
+                      {
+                        addSuffix: true,
+                      }
+                    )}`}
+                  </ArtifactDescription>
+                );
+              }
+              return (
+                <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
+              );
+            })()}
           </div>
         </div>
 

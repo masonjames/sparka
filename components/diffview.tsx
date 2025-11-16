@@ -110,14 +110,21 @@ class DiffTextNode extends TextNode {
 function computeProperDiff(oldText: string, newText: string) {
   const changes = diffWords(oldText, newText);
 
-  return changes.map((change) => ({
-    text: change.value,
-    type: change.added
-      ? DiffType.Inserted
-      : change.removed
-        ? DiffType.Deleted
-        : DiffType.Unchanged,
-  }));
+  return changes.map((change) => {
+    let type: DiffTypeValue;
+    if (change.added) {
+      type = DiffType.Inserted;
+    } else if (change.removed) {
+      type = DiffType.Deleted;
+    } else {
+      type = DiffType.Unchanged;
+    }
+
+    return {
+      text: change.value,
+      type,
+    };
+  });
 }
 
 function DiffContentPlugin({
