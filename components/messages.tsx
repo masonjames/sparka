@@ -81,7 +81,7 @@ function PureMessages({
     //   <Conversation className="">
     // <ConversationContent className="">
     <Conversation className="h-full flex-1 overflow-y-hidden">
-      <ConversationContent className="container mx-auto h-full w-full pb-10 sm:max-w-2xl md:max-w-3xl">
+      <ConversationContent className="container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl">
         <PureMessagesInternal isReadonly={isReadonly} votes={votes} />
       </ConversationContent>
       <ConversationScrollButton />

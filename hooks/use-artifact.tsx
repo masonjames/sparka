@@ -18,12 +18,6 @@ const initialArtifactData: UIArtifact = {
   messageId: "",
   status: "idle",
   isVisible: false,
-  boundingBox: {
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-  },
 };
 
 type Selector<T> = (state: UIArtifact) => T;

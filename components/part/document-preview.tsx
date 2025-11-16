@@ -47,22 +47,6 @@ export function DocumentPreview({
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const boundingBox = hitboxRef.current?.getBoundingClientRect();
-
-    if (artifact.documentId && boundingBox) {
-      setArtifact((currentArtifact) => ({
-        ...currentArtifact,
-        boundingBox: {
-          left: boundingBox.x,
-          top: boundingBox.y,
-          width: boundingBox.width,
-          height: boundingBox.height,
-        },
-      }));
-    }
-  }, [artifact.documentId, setArtifact]);
-
   if (artifact.isVisible) {
     if (result) {
       return (
@@ -170,8 +154,6 @@ const PureHitboxLayer = ({
 }) => {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
-      const boundingBox = event.currentTarget.getBoundingClientRect();
-
       setArtifact((artifact) =>
         artifact.status === "streaming"
           ? { ...artifact, isVisible: true }
@@ -182,12 +164,6 @@ const PureHitboxLayer = ({
               messageId,
               kind: result.kind,
               isVisible: true,
-              boundingBox: {
-                left: boundingBox.x,
-                top: boundingBox.y,
-                width: boundingBox.width,
-                height: boundingBox.height,
-              },
             }
       );
     },
