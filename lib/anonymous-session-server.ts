@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ANONYMOUS_SESSION_COOKIES_KEY } from "./constants";
-import { generateUUID } from "./utils";
 
 export async function getAnonymousSession(): Promise<AnonymousSession | null> {
   try {
@@ -44,14 +43,6 @@ export async function setAnonymousSession(
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
-}
-
-export function createAnonymousSession(): AnonymousSession {
-  return {
-    id: generateUUID(),
-    remainingCredits: ANONYMOUS_LIMITS.CREDITS,
-    createdAt: new Date(),
-  };
 }
 
 export async function clearAnonymousSession(): Promise<void> {

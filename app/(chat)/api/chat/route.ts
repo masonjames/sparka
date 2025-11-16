@@ -26,11 +26,11 @@ import { calculateMessagesTokens } from "@/lib/ai/token-utils";
 import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
 import {
-  createAnonymousSession,
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
+import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import type { CreditReservation } from "@/lib/credits/credit-reservation";
 import {
   filterAffordableTools,
