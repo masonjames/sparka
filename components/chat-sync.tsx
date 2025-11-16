@@ -83,7 +83,14 @@ export function ChatSync({
       },
     });
     return instance;
-  }, [id, saveChatMessage, setDataStream, isAuthenticated, chatState, projectId]);
+  }, [
+    id,
+    saveChatMessage,
+    setDataStream,
+    isAuthenticated,
+    chatState,
+    projectId,
+  ]);
 
   const helpers = useChat<ChatMessage>({
     // @ts-expect-error private field

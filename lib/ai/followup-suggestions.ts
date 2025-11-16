@@ -1,12 +1,9 @@
 import { type ModelMessage, streamObject } from "ai";
-import {
-  DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL,
-} from "@/lib/ai/app-models";
+import { z } from "zod";
+import { DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
-
 import type { StreamWriter } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
-import { z } from "zod";
 
 export function generateFollowupSuggestions(modelMessages: ModelMessage[]) {
   const maxQuestionCount = 5;
@@ -52,4 +49,3 @@ export async function streamFollowupSuggestions({
     });
   }
 }
-

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 export function ProjectDetailsDialog({
   open,
@@ -73,7 +73,7 @@ export function ProjectDetailsDialog({
   const placeholder = "Project name";
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -81,8 +81,8 @@ export function ProjectDetailsDialog({
         </DialogHeader>
         <div className="py-4">
           <Input
-            placeholder={placeholder}
-            value={value}
+            autoFocus
+            maxLength={255}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -91,15 +91,15 @@ export function ProjectDetailsDialog({
                 handleOpenChange(false);
               }
             }}
-            autoFocus
-            maxLength={255}
+            placeholder={placeholder}
+            value={value}
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+          <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isDisabled}>
+          <Button disabled={isDisabled} onClick={handleSubmit}>
             {buttonText}
           </Button>
         </DialogFooter>
@@ -107,4 +107,3 @@ export function ProjectDetailsDialog({
     </Dialog>
   );
 }
-

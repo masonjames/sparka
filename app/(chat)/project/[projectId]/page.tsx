@@ -10,7 +10,7 @@ export default async function ProjectPageRoute({
 
   // Prefetch project and its chats
   prefetch(trpc.project.getById.queryOptions({ id: projectId }));
-  prefetch(trpc.chat.getAllChats.queryOptions({ projectId: projectId }));
+  prefetch(trpc.chat.getAllChats.queryOptions({ projectId }));
 
   return (
     <HydrateClient>
@@ -18,11 +18,3 @@ export default async function ProjectPageRoute({
     </HydrateClient>
   );
 }
-
-
-
-
-
-
-
-

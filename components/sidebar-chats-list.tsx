@@ -1,13 +1,16 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useSidebar } from "@/components/ui/sidebar";
+import {
+  useGetAllChats,
+  usePinChat,
+  useRenameChat,
+} from "@/hooks/chat-sync-hooks";
 import type { UIChat } from "@/lib/types/uiChat";
-import { useGetAllChats, usePinChat, useRenameChat } from "@/hooks/chat-sync-hooks";
+import { DeleteChatDialog } from "./delete-chat-dialog";
 import { SidebarChatItem } from "./sidebar-chat-item";
 import { Skeleton } from "./ui/skeleton";
-import { useSidebar } from "@/components/ui/sidebar";
-import { DeleteChatDialog } from "./delete-chat-dialog";
 
 type GroupedChats = {
   pinned: UIChat[];
@@ -100,10 +103,7 @@ export function SidebarChatsList() {
             className="flex h-8 items-center gap-2 rounded-md px-2"
             key={item}
           >
-            <Skeleton
-              className="h-4 flex-1"
-              style={{ width: `${item}%` }}
-            />
+            <Skeleton className="h-4 flex-1" style={{ width: `${item}%` }} />
           </div>
         ))}
       </div>

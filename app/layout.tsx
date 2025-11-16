@@ -5,9 +5,9 @@ import Script from "next/script";
 
 import "./globals.css";
 import { Toaster } from "sonner";
+import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/config";
-import { ConfigProvider } from "@/components/config-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sparka.ai"),
@@ -65,7 +65,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html
       className={`${geist.variable} ${geistMono.variable}`}

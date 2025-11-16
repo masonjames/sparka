@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       "echarts-for-react",
       "@lobehub/icons",
       "lucide-react",
-      "@phosphor-icons/react"
+      "@phosphor-icons/react",
     ],
   },
   // TODO: Uncomment this when we can exclude /api/cron/cleanup from caching selectively
@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
       },
       {
         hostname: "*.public.blob.vercel-storage.com",
-      }
+      },
     ],
   },
   redirects: async () => [

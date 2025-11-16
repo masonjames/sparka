@@ -1,20 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import type { ToolUIPart } from "ai";
 import React from "react";
+import type { BundledLanguage } from "shiki";
 import {
   Sandbox,
-  SandboxHeader,
+  SandboxCode,
   SandboxContent,
+  SandboxCopyButton,
+  SandboxHeader,
+  SandboxOutput,
   SandboxTabs,
   SandboxTabsList,
   SandboxTabsTrigger,
-  SandboxCopyButton,
-  SandboxCode,
-  SandboxOutput,
 } from "@/components/ai-elements/sandbox";
-import type { BundledLanguage } from "shiki";
-import type { ToolUIPart } from "ai";
 
 type SandboxComposedProps = {
   code: string;
@@ -37,9 +37,9 @@ export function SandboxComposed({
 
   return (
     <Sandbox>
-      <SandboxHeader title={title} state={state} />
+      <SandboxHeader state={state} title={title} />
       <SandboxContent>
-        <SandboxTabs value={activeTab} onValueChange={setActiveTab}>
+        <SandboxTabs onValueChange={setActiveTab} value={activeTab}>
           <div className="flex items-center border-neutral-200 border-b dark:border-neutral-800">
             <SandboxTabsList>
               <SandboxTabsTrigger value="code">Code</SandboxTabsTrigger>

@@ -219,7 +219,11 @@ function PureMultimodalInput({
       const projectMatch = currentPath.match(/^\/project\/([^/]+)$/);
       if (projectMatch) {
         const [, projectId] = projectMatch;
-        window.history.pushState({}, "", `/project/${projectId}/chat/${chatId}`);
+        window.history.pushState(
+          {},
+          "",
+          `/project/${projectId}/chat/${chatId}`
+        );
       }
     }
 
@@ -557,9 +561,7 @@ function PureMultimodalInput({
           {!isEditMode && (
             <LimitDisplay
               className="p-2"
-              forceVariant={
-                isModelDisallowedForAnonymous ? "model" : "credits"
-              }
+              forceVariant={isModelDisallowedForAnonymous ? "model" : "credits"}
             />
           )}
 

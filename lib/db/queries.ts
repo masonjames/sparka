@@ -1,24 +1,23 @@
 import "server-only";
 import { del } from "@vercel/blob";
 import { and, asc, desc, eq, gt, gte, inArray, isNull, or } from "drizzle-orm";
-import type { Attachment } from "@/lib/ai/types";
-import type { ArtifactKind } from "../artifacts/artifact-kind";
-import type { ChatMessage } from "@/lib/ai/types";
+import type { Attachment, ChatMessage } from "@/lib/ai/types";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
 } from "@/lib/utils/message-mapping";
+import type { ArtifactKind } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {
   chat,
   type DBMessage,
   document,
   message,
-  part,
   type Part,
-  project,
   type Project,
+  part,
+  project,
   type Suggestion,
   suggestion,
   type User,
@@ -105,7 +104,9 @@ export async function getChatsByUserId({
     } else if (projectId) {
       // Filter for chats in a specific project
       conditions = and(eq(chat.userId, id), eq(chat.projectId, projectId));
-      console.log("[getChatsByUserId] Using specific project condition", { projectId });
+      console.log("[getChatsByUserId] Using specific project condition", {
+        projectId,
+      });
     } else {
       // Get all chats for user
       conditions = eq(chat.userId, id);
@@ -121,22 +122,27 @@ export async function getChatsByUserId({
 
     console.log("[getChatsByUserId] Query completed", {
       count: result.length,
-      sampleChat: result[0] ? {
-        id: result[0].id,
-        updatedAt: result[0].updatedAt,
-        updatedAtType: typeof result[0].updatedAt,
-      } : null,
+      sampleChat: result[0]
+        ? {
+            id: result[0].id,
+            updatedAt: result[0].updatedAt,
+            updatedAtType: typeof result[0].updatedAt,
+          }
+        : null,
     });
 
     return result;
   } catch (error) {
-    console.error("[getChatsByUserId] Failed to get chats by user from database", {
-      error,
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-      userId: id,
-      projectId,
-    });
+    console.error(
+      "[getChatsByUserId] Failed to get chats by user from database",
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        userId: id,
+        projectId,
+      }
+    );
     throw error;
   }
 }
@@ -223,7 +229,11 @@ export async function deleteProject({ id }: { id: string }) {
   }
 }
 
-export async function getChatsByProjectId({ projectId }: { projectId: string }) {
+export async function getChatsByProjectId({
+  projectId,
+}: {
+  projectId: string;
+}) {
   try {
     return await db
       .select()
@@ -244,10 +254,7 @@ export async function moveChatToProject({
   projectId: string | null;
 }) {
   try {
-    return await db
-      .update(chat)
-      .set({ projectId })
-      .where(eq(chat.id, chatId));
+    return await db.update(chat).set({ projectId }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error("Failed to move chat to project in database");
     throw error;
@@ -435,9 +442,8 @@ export async function getAllMessagesByChatId({
     // Reconstruct ChatMessage objects with parts from Part table
     return messages.map((msg) => {
       const dbParts = partsByMessageId.get(msg.id);
-      const parts = dbParts && dbParts.length > 0
-        ? mapDBPartsToUIParts(dbParts)
-        : [];
+      const parts =
+        dbParts && dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [];
 
       return {
         id: msg.id,
@@ -447,8 +453,10 @@ export async function getAllMessagesByChatId({
           createdAt: msg.createdAt,
           isPartial: msg.isPartial,
           parentMessageId: msg.parentMessageId,
-          selectedModel: (msg.selectedModel || "") as ChatMessage["metadata"]["selectedModel"],
-          selectedTool: (msg.selectedTool || undefined) as ChatMessage["metadata"]["selectedTool"],
+          selectedModel: (msg.selectedModel ||
+            "") as ChatMessage["metadata"]["selectedModel"],
+          selectedTool: (msg.selectedTool ||
+            undefined) as ChatMessage["metadata"]["selectedTool"],
         },
       };
     });

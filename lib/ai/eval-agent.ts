@@ -2,9 +2,9 @@ import type { LanguageModelUsage } from "ai";
 import type { AppModelId } from "@/lib/ai/app-models";
 import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
 import { generateFollowupSuggestions } from "@/lib/ai/followup-suggestions";
+import { systemPrompt } from "@/lib/ai/prompts";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
-import { systemPrompt } from "@/lib/ai/prompts";
 
 // No-op StreamWriter for evals - tools can write but nothing happens
 function createNoOpStreamWriter(): StreamWriter {
@@ -179,9 +179,7 @@ export async function runCoreChatAgentEval({
   for await (const chunk of followupSuggestionsResult.partialObjectStream) {
     if (chunk.suggestions) {
       suggestions.push(
-        ...chunk.suggestions.filter(
-          (s): s is string => s !== undefined
-        )
+        ...chunk.suggestions.filter((s): s is string => s !== undefined)
       );
     }
   }
@@ -203,4 +201,3 @@ export async function runCoreChatAgentEval({
     followupSuggestions: finalSuggestions,
   };
 }
-

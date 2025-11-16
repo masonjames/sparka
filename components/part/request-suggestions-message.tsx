@@ -1,9 +1,9 @@
 import {
-  DocumentToolResult,
   DocumentToolCall,
-  RequestSuggestionsTool,
+  DocumentToolResult,
   hasProp,
   isArtifactToolResult,
+  type RequestSuggestionsTool,
 } from "./document-common";
 
 export function RequestSuggestionsMessage({
@@ -23,9 +23,9 @@ export function RequestSuggestionsMessage({
         : undefined;
     return (
       <DocumentToolCall
-        type="request-suggestions"
         args={{ title }}
         isReadonly={isReadonly}
+        type="request-suggestions"
       />
     );
   }
@@ -35,7 +35,9 @@ export function RequestSuggestionsMessage({
   }
   if ("error" in output) {
     return (
-      <div className="rounded border p-2 text-red-500">Error: {String(output.error)}</div>
+      <div className="rounded border p-2 text-red-500">
+        Error: {String(output.error)}
+      </div>
     );
   }
   if (!isArtifactToolResult(output)) {
@@ -50,5 +52,3 @@ export function RequestSuggestionsMessage({
     />
   );
 }
-
-

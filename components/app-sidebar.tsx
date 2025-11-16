@@ -35,7 +35,12 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Models">
-              <Link href="https://airegistry.app" target="_blank" rel="noopener noreferrer" className="flex items-center">
+              <Link
+                className="flex items-center"
+                href="https://airegistry.app"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
                 <Cpu className="size-4" />
                 <span className="group-data-[collapsible=icon]:hidden">
                   Models

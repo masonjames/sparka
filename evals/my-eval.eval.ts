@@ -17,21 +17,18 @@ evalite("Test Capitals", {
   task: async (input) => {
     const result = streamText({
       model: wrapAISDKModel(openai("gpt-4o-mini") as any),
-      system: `Answer the question concisely.`,
+      system: "Answer the question concisely.",
       prompt: input,
     });
-
 
     // All calls are automatically traced
     return await result.output;
   },
-    scorers: [
+  scorers: [
     {
       name: "Contains Paris",
       description: "Checks if the output contains the word 'Paris'.",
-      scorer: ({ output, expected  }) => {
-        return output.includes(expected) ? 1 : 0;
-      },
+      scorer: ({ output, expected }) => (output.includes(expected) ? 1 : 0),
     },
   ],
 });

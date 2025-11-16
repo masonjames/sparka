@@ -8,10 +8,7 @@ import {
   updateProject,
 } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/trpc/init";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const projectRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -132,11 +129,3 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 });
-
-
-
-
-
-
-
-

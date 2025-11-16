@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 import {
@@ -87,5 +87,3 @@ export function DeleteProjectDialog({
     </AlertDialog>
   );
 }
-
-

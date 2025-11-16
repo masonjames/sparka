@@ -15,14 +15,15 @@ import {
   type AppModelId,
   getAppModelDefinition,
 } from "@/lib/ai/app-models";
-import { ChatSDKError } from "@/lib/ai/errors";
-import { calculateMessagesTokens } from "@/lib/ai/token-utils";
-import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
 import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
+import { ChatSDKError } from "@/lib/ai/errors";
 import {
   generateFollowupSuggestions,
   streamFollowupSuggestions,
 } from "@/lib/ai/followup-suggestions";
+import { systemPrompt } from "@/lib/ai/prompts";
+import { calculateMessagesTokens } from "@/lib/ai/token-utils";
+import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import {
   createAnonymousSession,
@@ -54,7 +55,6 @@ import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
 import { getCreditReservation } from "./getCreditReservation";
 import { getThreadUpToMessageId } from "./getThreadUpToMessageId";
-import { systemPrompt } from "@/lib/ai/prompts";
 
 // Create shared Redis clients for resumable stream and cleanup
 let redisPublisher: any = null;
@@ -105,7 +105,6 @@ export function getRedisSubscriber() {
 export function getRedisPublisher() {
   return redisPublisher;
 }
-
 
 export async function POST(request: NextRequest) {
   const log = createModuleLogger("api:chat");

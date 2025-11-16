@@ -1,10 +1,7 @@
 "use client";
 import equal from "fast-deep-equal";
 import { memo, useState } from "react";
-import {
-  Message,
-  MessageContent,
-} from "@/components/ai-elements/message";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { Vote } from "@/lib/db/schema";
 import { useChatId, useMessageById } from "@/lib/stores/hooks-base";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
@@ -86,7 +83,6 @@ export const PureUserMessage = ({
               <MessageContent
                 className="text-left group-[.is-user]:bg-card"
                 data-testid="message-content"
-
               >
                 <AttachmentList
                   attachments={getAttachmentsFromMessage(message)}
@@ -99,13 +95,13 @@ export const PureUserMessage = ({
               </MessageContent>
             ) : (
               <button
-                className="cursor-pointer text-left transition-opacity hover:opacity-80 block"
+                className="block cursor-pointer text-left transition-opacity hover:opacity-80"
                 data-testid="message-content"
                 onClick={() => setMode("edit")}
                 type="button"
               >
                 <MessageContent
-                  className="text-left group-[.is-user]:bg-card group-[.is-user]:max-w-none"
+                  className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
                   data-testid="message-content"
                 >
                   <AttachmentList

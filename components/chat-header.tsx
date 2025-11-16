@@ -42,8 +42,7 @@ function PureChatHeader({
   const { data: privateChat, isLoading: isPrivateChatLoading } = useQuery({
     ...getChatByIdQueryOptions,
     enabled:
-      shouldFetchPrivateChat &&
-      (getChatByIdQueryOptions.enabled ?? true),
+      shouldFetchPrivateChat && (getChatByIdQueryOptions.enabled ?? true),
   });
 
   const getPublicChatQueryOptions = trpc.chat.getPublicChat.queryOptions({
@@ -53,15 +52,11 @@ function PureChatHeader({
   const { data: publicChat, isLoading: isPublicChatLoading } = useQuery({
     ...getPublicChatQueryOptions,
     enabled:
-      shouldFetchPublicChat &&
-      (getPublicChatQueryOptions.enabled ?? true),
+      shouldFetchPublicChat && (getPublicChatQueryOptions.enabled ?? true),
   });
 
   const resolvedProjectId =
-    privateChat?.projectId ??
-    projectId ??
-    publicChat?.projectId ??
-    null;
+    privateChat?.projectId ?? projectId ?? publicChat?.projectId ?? null;
 
   const fallbackProjectId = resolvedProjectId ?? DISABLED_PROJECT_ID;
   const projectQueryOptions = trpc.project.getById.queryOptions({
@@ -82,8 +77,7 @@ function PureChatHeader({
         : "New chat");
 
   const projectLabel = resolvedProjectId
-    ? project?.name ??
-      (isProjectLoading ? "Loading project…" : undefined)
+    ? (project?.name ?? (isProjectLoading ? "Loading project…" : undefined))
     : undefined;
 
   const projectHref = resolvedProjectId
@@ -95,9 +89,9 @@ function PureChatHeader({
       <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
         <ChatBreadcrumbs
           chatLabel={chatLabel}
+          className="ml-2"
           projectHref={projectHref}
           projectLabel={projectLabel}
-          className="ml-2"
         />
 
         {!isReadonly && hasMessages && <ShareButton chatId={chatId} />}
@@ -147,9 +141,7 @@ function ChatBreadcrumbs({
         {projectHref && projectLabel ? (
           <>
             <BreadcrumbItem>
-              <BreadcrumbLink href={projectHref}>
-                {projectLabel}
-              </BreadcrumbLink>
+              <BreadcrumbLink href={projectHref}>{projectLabel}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
           </>

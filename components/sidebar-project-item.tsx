@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-
+import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import {
   MoreHorizontalIcon,
   PencilEditIcon,
@@ -21,9 +21,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import type { Project } from "@/lib/db/schema";
-import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { useRenameProject } from "@/hooks/chat-sync-hooks";
+import type { Project } from "@/lib/db/schema";
 
 export function SidebarProjectItem({
   project,
@@ -83,11 +82,12 @@ export function SidebarProjectItem({
           />
         </div>
       ) : (
-        <SidebarMenuButton asChild isActive={isActive} className="cursor-pointer">
-          <Link
-            href={projectHref}
-            prefetch={false}
-          >
+        <SidebarMenuButton
+          asChild
+          className="cursor-pointer"
+          isActive={isActive}
+        >
+          <Link href={projectHref} prefetch={false}>
             <span>{project.name}</span>
           </Link>
         </SidebarMenuButton>
@@ -95,7 +95,10 @@ export function SidebarProjectItem({
 
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuAction className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground" showOnHover={!isActive}>
+          <SidebarMenuAction
+            className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            showOnHover={!isActive}
+          >
             <MoreHorizontalIcon />
             <span className="sr-only">More</span>
           </SidebarMenuAction>
@@ -122,11 +125,9 @@ export function SidebarProjectItem({
       </DropdownMenu>
       <DeleteProjectDialog
         deleteId={project.id}
-        showDeleteDialog={showDeleteDialog}
         setShowDeleteDialog={setShowDeleteDialog}
+        showDeleteDialog={showDeleteDialog}
       />
     </SidebarMenuItem>
   );
 }
-
-

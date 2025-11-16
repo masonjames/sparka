@@ -196,4 +196,3 @@ export const messagePartSchema = z.union([
 export function validateToolPart(part: unknown) {
   return toolPartSchema.safeParse(part);
 }
-

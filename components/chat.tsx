@@ -4,11 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useGetAllChats } from "@/hooks/chat-sync-hooks";
+import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useChatId, useChatStatus, useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
+import {
+  useChatId,
+  useChatStatus,
+  useLastMessageId,
+  useMessageIds,
+} from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
@@ -59,7 +64,6 @@ export function Chat({
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
   const { data: chats } = useGetAllChats();
 
-
   return (
     <>
       <div
@@ -72,7 +76,7 @@ export function Chat({
           chatId={id}
           hasMessages={messageIds.length > 0}
           isReadonly={isReadonly}
-        projectId={projectId}
+          projectId={projectId}
           user={session?.user}
         />
 
@@ -82,11 +86,11 @@ export function Chat({
           <MessagesPane
             chatId={id}
             className="bg-background"
+            disableSuggestedActions={disableSuggestedActions}
             isReadonly={isReadonly}
             isVisible={!isArtifactVisible}
             status={status}
             votes={votes}
-            disableSuggestedActions={disableSuggestedActions}
           />
         )}
       </div>

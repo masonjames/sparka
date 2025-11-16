@@ -1,14 +1,21 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PencilEditIcon } from "@/components/icons";
 import { MultimodalInput } from "@/components/multimodal-input";
-import type { ChatMessage } from "@/lib/ai/types";
-import { useLastMessageId } from "@/lib/stores/hooks-base";
-import { useTRPC } from "@/trpc/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDeleteChat, useGetAllChats, useRenameChat } from "@/hooks/chat-sync-hooks";
+import { ProjectChatItem } from "@/components/project-chat-item";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -17,20 +24,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ProjectChatItem } from "@/components/project-chat-item";
-import { PencilEditIcon } from "@/components/icons";
-import { ProjectDetailsDialog } from "@/components/project-details-dialog";
-import { useRenameProject } from "@/hooks/chat-sync-hooks";
+  useDeleteChat,
+  useGetAllChats,
+  useRenameChat,
+  useRenameProject,
+} from "@/hooks/chat-sync-hooks";
+import type { ChatMessage } from "@/lib/ai/types";
+import { useLastMessageId } from "@/lib/stores/hooks-base";
+import { useTRPC } from "@/trpc/react";
 
 export function ProjectHome({
   chatId,
@@ -44,7 +48,9 @@ export function ProjectHome({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const parentMessageId = useLastMessageId();
-  const { data: project, isLoading: isLoadingProject } = useQuery(trpc.project.getById.queryOptions({ id: projectId }));
+  const { data: project, isLoading: isLoadingProject } = useQuery(
+    trpc.project.getById.queryOptions({ id: projectId })
+  );
   const { data: chats, isLoading: isLoadingChats } = useGetAllChats();
   const [instructionsDialogOpen, setInstructionsDialogOpen] = useState(false);
   const [instructionsValue, setInstructionsValue] = useState("");
@@ -104,13 +110,13 @@ export function ProjectHome({
           <Skeleton className="mb-3 h-8 w-48" />
         ) : project?.name ? (
           <div className="mb-3 flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <h1 className="font-bold text-2xl">{project.name}</h1>
             <Button
+              className="h-8 w-8"
+              onClick={() => setRenameProjectDialogOpen(true)}
+              size="icon"
               type="button"
               variant="ghost"
-              size="icon"
-              onClick={() => setRenameProjectDialogOpen(true)}
-              className="h-8 w-8"
             >
               <PencilEditIcon size={16} />
               <span className="sr-only">Rename project</span>
@@ -120,9 +126,9 @@ export function ProjectHome({
 
         <MultimodalInput
           chatId={chatId}
+          disableSuggestedActions
           parentMessageId={parentMessageId}
           status={status}
-          disableSuggestedActions
         />
 
         <div className="mt-4">
@@ -142,11 +148,11 @@ export function ProjectHome({
                 <div className="flex items-center justify-between">
                   <CardTitle>Instructions</CardTitle>
                   <Button
+                    className="h-8 w-8"
+                    onClick={handleOpenInstructionsDialog}
+                    size="icon"
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    onClick={handleOpenInstructionsDialog}
-                    className="h-8 w-8"
                   >
                     <PencilEditIcon size={16} />
                     <span className="sr-only">Edit instructions</span>
@@ -154,7 +160,7 @@ export function ProjectHome({
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="line-clamp-3 whitespace-pre-wrap text-sm text-muted-foreground">
+                <div className="line-clamp-3 whitespace-pre-wrap text-muted-foreground text-sm">
                   {project.instructions}
                 </div>
               </CardContent>
@@ -169,8 +175,8 @@ export function ProjectHome({
               </CardHeader>
               <CardContent>
                 <Button
-                  type="button"
                   onClick={handleOpenInstructionsDialog}
+                  type="button"
                   variant="outline"
                 >
                   Set instructions
@@ -184,8 +190,8 @@ export function ProjectHome({
           {isLoadingChats ? (
             [1, 2, 3].map((i) => (
               <div
-                key={i}
                 className="rounded-xl border border-border/60 bg-muted/10 px-4 py-3"
+                key={i}
               >
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="mt-2 h-3 w-24" />
@@ -194,8 +200,8 @@ export function ProjectHome({
           ) : projectChats.length > 0 ? (
             projectChats.map((chat) => (
               <ProjectChatItem
-                key={chat.id}
                 chat={chat}
+                key={chat.id}
                 onDelete={deleteChat}
                 onRename={async (chatId, title) => {
                   await renameChatMutation.mutateAsync({ chatId, title });
@@ -205,15 +211,21 @@ export function ProjectHome({
             ))
           ) : (
             <div className="rounded-xl border border-border/60 px-4 py-6">
-              <p className="text-sm font-medium text-foreground">No chats in this project</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Start a chat to keep conversations organized and re-use project knowledge.
+              <p className="font-medium text-foreground text-sm">
+                No chats in this project
+              </p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                Start a chat to keep conversations organized and re-use project
+                knowledge.
               </p>
             </div>
           )}
         </div>
 
-        <Dialog open={instructionsDialogOpen} onOpenChange={handleCloseInstructionsDialog}>
+        <Dialog
+          onOpenChange={handleCloseInstructionsDialog}
+          open={instructionsDialogOpen}
+        >
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Set project instructions</DialogTitle>
@@ -225,39 +237,41 @@ export function ProjectHome({
             </DialogHeader>
             <div className="py-4">
               <Textarea
-                value={instructionsValue}
+                autoFocus
+                className="min-h-[200px] resize-none"
                 onChange={(e) => setInstructionsValue(e.target.value)}
                 placeholder="Enter project instructions..."
-                className="min-h-[200px] resize-none"
-                autoFocus
+                value={instructionsValue}
               />
             </div>
             <DialogFooter>
               <Button
+                onClick={handleCloseInstructionsDialog}
                 type="button"
                 variant="outline"
-                onClick={handleCloseInstructionsDialog}
               >
                 Cancel
               </Button>
               <Button
-                type="button"
-                onClick={handleSaveInstructions}
                 disabled={setInstructionsMutation.isPending}
+                onClick={handleSaveInstructions}
+                type="button"
               >
-                {setInstructionsMutation.isPending ? "Saving..." : "Save instructions"}
+                {setInstructionsMutation.isPending
+                  ? "Saving..."
+                  : "Save instructions"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <ProjectDetailsDialog
-          open={renameProjectDialogOpen}
-          onOpenChange={setRenameProjectDialogOpen}
-          mode="edit"
           initialValue={project?.name}
-          onSubmit={handleRenameProject}
           isLoading={renameProjectMutation.isPending}
+          mode="edit"
+          onOpenChange={setRenameProjectDialogOpen}
+          onSubmit={handleRenameProject}
+          open={renameProjectDialogOpen}
         />
       </div>
     </div>

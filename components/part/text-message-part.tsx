@@ -18,5 +18,3 @@ export const TextMessagePart = memo(function TextMessagePart({
   }
   return <Response>{part.text}</Response>;
 });
-
-

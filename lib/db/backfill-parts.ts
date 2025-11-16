@@ -1,6 +1,6 @@
 import { config } from "dotenv";
-import { drizzle } from "drizzle-orm/postgres-js";
 import { eq, inArray } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ChatMessage } from "@/lib/ai/types";
 import { mapUIMessagePartsToDBParts } from "@/lib/utils/message-mapping";
@@ -39,9 +39,7 @@ const runBackfill = async () => {
       .from(part)
       .where(inArray(part.messageId, messageIds));
 
-    const messagesWithParts = new Set(
-      existingParts.map((p) => p.messageId)
-    );
+    const messagesWithParts = new Set(existingParts.map((p) => p.messageId));
 
     // Filter messages that need backfilling
     const messagesToBackfill = allMessages.filter(
@@ -141,4 +139,3 @@ runBackfill().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

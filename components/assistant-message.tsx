@@ -1,14 +1,11 @@
 "use client";
 import { memo } from "react";
 import { useChatId } from "@/lib/stores/hooks-base";
-import {
-  Message,
-  MessageContent,
-} from "./ai-elements/message";
+import { Message, MessageContent } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
 import { MessageActions } from "./message-actions";
-import { SourcesAnnotations } from "./part/message-annotations";
 import { MessageParts } from "./message-parts";
+import { SourcesAnnotations } from "./part/message-annotations";
 import { PartialMessageLoading } from "./partial-message-loading";
 import type { BaseMessageProps } from "./user-message";
 

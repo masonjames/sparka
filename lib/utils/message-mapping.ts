@@ -8,7 +8,7 @@ import { validateToolPart } from "./message-part-validators";
  */
 export function mapUIMessagePartsToDBParts(
   parts: ChatMessage["parts"],
-  messageId: string,
+  messageId: string
 ): Array<Omit<Part, "id" | "createdAt">> {
   return parts
     .map((part, index) => {
@@ -139,9 +139,7 @@ export function mapUIMessagePartsToDBParts(
  * Maps database Part rows back to UI message parts
  * Reconstructs the original ChatMessage parts array from Part rows
  */
-export function mapDBPartsToUIParts(
-  dbParts: Part[],
-): ChatMessage["parts"] {
+export function mapDBPartsToUIParts(dbParts: Part[]): ChatMessage["parts"] {
   const parts = dbParts
     .sort((a, b) => a.order - b.order)
     .map((part) => {
@@ -283,4 +281,3 @@ export function mapDBPartsToUIParts(
     (part): part is ChatMessage["parts"][number] => part !== null
   );
 }
-

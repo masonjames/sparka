@@ -1,8 +1,7 @@
-import {
-  convertToModelMessages,
-  stepCountIs,
-  streamText,
-} from "ai";
+import { convertToModelMessages, stepCountIs, streamText } from "ai";
+import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/addExplicitToolRequestToMessages";
+import { filterReasoningParts } from "@/app/(chat)/api/chat/filterReasoningParts";
+import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/getRecentGeneratedImage";
 import {
   type AppModelDefinition,
   type AppModelId,
@@ -14,9 +13,6 @@ import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
 import { getTools } from "@/lib/ai/tools/tools";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
-import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/addExplicitToolRequestToMessages";
-import { filterReasoningParts } from "@/app/(chat)/api/chat/filterReasoningParts";
-import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/getRecentGeneratedImage";
 
 export async function createCoreChatAgent({
   system,
@@ -50,7 +46,7 @@ export async function createCoreChatAgent({
 
   // Process conversation history
   const lastGeneratedImage = getRecentGeneratedImage(messages);
-  
+
   let explicitlyRequestedTools: ToolName[] | null = null;
   if (selectedTool === "deepResearch") {
     explicitlyRequestedTools = ["deepResearch"];
@@ -75,9 +71,8 @@ export async function createCoreChatAgent({
   const modelMessages = convertToModelMessages(messagesWithoutReasoning);
 
   // Replace file URLs with binary data
-  const contextForLLM = await replaceFilePartUrlByBinaryDataInMessages(
-    modelMessages
-  );
+  const contextForLLM =
+    await replaceFilePartUrlByBinaryDataInMessages(modelMessages);
 
   // Create the streamText result
   const result = streamText({
@@ -116,9 +111,7 @@ export async function createCoreChatAgent({
       contextForLLM,
       messageId,
       selectedModel: modelDefinition.apiModelId,
-      attachments: userMessage.parts.filter(
-        (part) => part.type === "file"
-      ),
+      attachments: userMessage.parts.filter((part) => part.type === "file"),
       lastGeneratedImage,
     }),
     onError,
@@ -137,4 +130,3 @@ export async function createCoreChatAgent({
     modelDefinition,
   };
 }
-

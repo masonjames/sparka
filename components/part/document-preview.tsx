@@ -16,12 +16,12 @@ import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import type { UIArtifact } from "../artifact";
 import { CodeEditor } from "../code-editor";
-import { DocumentToolCall, DocumentToolResult } from "./document-common";
 import { InlineDocumentSkeleton } from "../document-skeleton";
 import { FileIcon, FullscreenIcon, LoaderIcon, PencilEditIcon } from "../icons";
 import { ImageEditor } from "../image-editor";
 import { SpreadsheetEditor } from "../sheet-editor";
 import { Editor } from "../text-editor";
+import { DocumentToolCall, DocumentToolResult } from "./document-common";
 
 type DocumentPreviewProps = {
   isReadonly: boolean;
@@ -326,5 +326,3 @@ const DocumentContent = ({ document }: { document: Document }) => {
     </div>
   );
 };
-
-

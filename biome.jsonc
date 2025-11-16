@@ -87,10 +87,7 @@
         "noShadow": "off",
 
         /* 8 errors */
-        "useMaxParams": "off",
-
-        /* 5 errors */
-        "useImageSize": "off"
+        "useMaxParams": "off"
       },
       "complexity": {
         /* Needs more work to fix */

@@ -26,7 +26,7 @@ export function SidebarTopRow() {
             refreshChatID();
           }}
         >
-          <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-lg font-semibold hover:bg-muted">
+          <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 font-semibold text-lg hover:bg-muted">
             <Image
               alt="Sparka AI"
               className="h-6 w-6"

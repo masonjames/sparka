@@ -2,16 +2,16 @@
 
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { useMessageIds } from "@/lib/stores/hooks-base";
 import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-import { useMessageIds } from "@/lib/stores/hooks-base";
 
 export function FollowUpSuggestions({
   suggestions,
@@ -64,8 +64,8 @@ export function FollowUpSuggestions({
       <Suggestions className="gap-1.5">
         {suggestions.map((s) => (
           <Suggestion
+            className="h-7 text-muted-foreground hover:text-foreground"
             key={s}
-            className="h-7 text-muted-foreground  hover:text-foreground"
             onClick={handleClick}
             size="sm"
             suggestion={s}
@@ -83,7 +83,7 @@ export function FollowUpSuggestions({
 
 export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
   const types = useMessagePartTypesById(messageId);
-  const ids =  useMessageIds()
+  const ids = useMessageIds();
   const isLastMessage = ids[ids.length - 1] === messageId;
 
   if (!isLastMessage) {

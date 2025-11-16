@@ -30,5 +30,3 @@ function PureReadDocument({ tool }: { tool: ReadDocumentTool }) {
 }
 
 export const ReadDocument = memo(PureReadDocument, () => true);
-
-

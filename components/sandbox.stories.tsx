@@ -28,5 +28,3 @@ export const CompletedWithOutput: Story = {
     output: "Computation complete",
   },
 };
-
-

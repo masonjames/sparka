@@ -1,8 +1,8 @@
 import {
   type DetailedHTMLProps,
   type HTMLAttributes,
-  type JSX,
   isValidElement,
+  type JSX,
   memo,
 } from "react";
 import type { ExtraProps, Options } from "react-markdown";

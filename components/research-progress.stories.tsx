@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ResearchProgress } from "./research-progress";
 import type { ResearchUpdate } from "@/lib/ai/tools/research-updates-schema";
+import { ResearchProgress } from "./research-progress";
 
 const meta: Meta<typeof ResearchProgress> = {
   title: "Components/AI/ResearchProgress",
@@ -25,7 +25,7 @@ type Story = StoryObj<typeof ResearchProgress>;
 
 const now = Date.now();
 const startedAt = now - 45_000;
-const completedAt = now - 5_000;
+const completedAt = now - 5000;
 
 const runningUpdates: ResearchUpdate[] = [
   {
@@ -120,10 +120,7 @@ const manyWebUpdates: ResearchUpdate[] = [
         type: "web",
         status: "running",
         title: `Search round ${idx}: collecting sources`,
-        queries: [
-          `query ${idx}a`,
-          `query ${idx}b`,
-        ],
+        queries: [`query ${idx}a`, `query ${idx}b`],
         results: [
           {
             url: `https://example.com/source-${idx}-a`,
@@ -180,5 +177,3 @@ export const Empty: Story = {
     isComplete: false,
   },
 };
-
-

@@ -18,11 +18,7 @@ export function SidebarToggle({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          onClick={toggleSidebar}
-          variant="ghost"
-          size="icon"
-        >
+        <Button onClick={toggleSidebar} size="icon" variant="ghost">
           <SidebarLeftIcon size={16} />
         </Button>
       </TooltipTrigger>

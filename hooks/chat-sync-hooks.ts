@@ -11,8 +11,7 @@ import { useDualMutation } from "@/hooks/use-dual-mutation";
 import { useDualQueryOptions } from "@/hooks/use-dual-query";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getAnonymousSession } from "@/lib/anonymous-session-client";
-import type { Document } from "@/lib/db/schema";
-import type { Project } from "@/lib/db/schema";
+import type { Document, Project } from "@/lib/db/schema";
 import {
   chatMessageToDbMessage,
   dbMessageToChatMessage,

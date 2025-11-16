@@ -42,13 +42,14 @@ export function chatMessageToDbMessage(
   const parentMessageId = message.metadata.parentMessageId || null;
   const isPartial = message.metadata.isPartial ?? false;
   const selectedModel = message.metadata.selectedModel;
-  
+
   // Ensure createdAt is a Date object
   let createdAt: Date;
   if (message.metadata?.createdAt) {
-    createdAt = message.metadata.createdAt instanceof Date 
-      ? message.metadata.createdAt 
-      : new Date(message.metadata.createdAt);
+    createdAt =
+      message.metadata.createdAt instanceof Date
+        ? message.metadata.createdAt
+        : new Date(message.metadata.createdAt);
   } else {
     createdAt = new Date();
   }

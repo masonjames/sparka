@@ -1,11 +1,10 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { notFound } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { notFound, usePathname } from "next/navigation";
 import { ChatSystem } from "@/components/chat-system";
-import { useTRPC } from "@/trpc/react";
 import { useChatId } from "@/providers/chat-id-provider";
+import { useTRPC } from "@/trpc/react";
 
 export function ProjectPageRouter() {
   const pathname = usePathname();
@@ -32,10 +31,9 @@ export function ProjectPageRouter() {
     <ChatSystem
       id={id}
       initialMessages={[]}
+      isProjectPage
       isReadonly={false}
       projectId={projectId}
-      isProjectPage
     />
   );
 }
-

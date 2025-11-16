@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { ChatRenameDialog } from "@/components/chat-rename-dialog";
+import {
+  MoreHorizontalIcon,
+  PencilEditIcon,
+  TrashIcon,
+} from "@/components/icons";
+import { ShareDialog } from "@/components/share-button";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,18 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  MoreHorizontalIcon,
-  PencilEditIcon,
-  TrashIcon,
-} from "@/components/icons";
-import { ShareDialog } from "@/components/share-button";
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-import { ChatRenameDialog } from "@/components/chat-rename-dialog";
-import {
   ActionContainer,
   ActionContainerLink,
   ActionContainerTop,
 } from "@/components/ui/extra/action-container";
+import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import type { UIChat } from "@/lib/types/uiChat";
 export function ProjectChatItem({
   chat,
@@ -47,8 +47,8 @@ export function ProjectChatItem({
           href={chatHref}
         />
         <div className="pr-12">
-          <div className="text-sm font-medium">{chat.title}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="font-medium text-sm">{chat.title}</div>
+          <div className="text-muted-foreground text-xs">
             {new Date(chat.updatedAt).toLocaleDateString()}
           </div>
         </div>
@@ -56,10 +56,10 @@ export function ProjectChatItem({
           <DropdownMenu modal={true}>
             <DropdownMenuTrigger asChild>
               <Button
+                className="absolute top-3 right-3 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                size="icon"
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="absolute right-3 top-3 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <MoreHorizontalIcon />
                 <span className="sr-only">More</span>
@@ -98,14 +98,13 @@ export function ProjectChatItem({
 
       {renameDialogOpen && (
         <ChatRenameDialog
-          open={renameDialogOpen}
-          onOpenChange={setRenameDialogOpen}
           currentTitle={chat.title}
-          onSubmit={handleRename}
           isLoading={false}
+          onOpenChange={setRenameDialogOpen}
+          onSubmit={handleRename}
+          open={renameDialogOpen}
         />
       )}
     </>
   );
 }
-

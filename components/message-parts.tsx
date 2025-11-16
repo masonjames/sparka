@@ -8,20 +8,20 @@ import {
   useMessagePartsByPartRange,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
+import { isLastArtifact } from "./isLastArtifact";
+import { CodeInterpreterMessage } from "./part/code-interpreter";
 import { CreateDocumentMessage } from "./part/create-document-message";
-import { UpdateDocumentMessage } from "./part/update-document-message";
-import { RequestSuggestionsMessage } from "./part/request-suggestions-message";
+import { DocumentToolResult } from "./part/document-common";
+import { DocumentPreview } from "./part/document-preview";
 import { GeneratedImage } from "./part/generated-image";
 import { ResearchUpdates } from "./part/message-annotations";
 import { MessageReasoning } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
+import { RequestSuggestionsMessage } from "./part/request-suggestions-message";
 import { Retrieve } from "./part/retrieve";
 import { TextMessagePart } from "./part/text-message-part";
+import { UpdateDocumentMessage } from "./part/update-document-message";
 import { Weather } from "./part/weather";
-import { CodeInterpreterMessage } from "./part/code-interpreter";
-import { DocumentToolResult } from "./part/document-common";
-import { DocumentPreview } from "./part/document-preview";
-import { isLastArtifact } from "./isLastArtifact";
 
 type MessagePartsProps = {
   messageId: string;
@@ -130,7 +130,6 @@ function PureMessagePart({
     return <ReadDocument key={part.toolCallId} tool={part} />;
   }
 
-
   if (part.type === "tool-codeInterpreter") {
     return <CodeInterpreterMessage key={part.toolCallId} tool={part} />;
   }
@@ -221,12 +220,7 @@ function PureReasoningPart({
   const part = useMessagePartByPartIdx(messageId, partIdx);
   if (part.type !== "reasoning") return null;
 
-  return (
-    <MessageReasoning
-      isLoading={isLoading}
-      content={part.text}
-    />
-  );
+  return <MessageReasoning content={part.text} isLoading={isLoading} />;
 }
 
 const ReasoningPart = memo(PureReasoningPart);
@@ -254,13 +248,7 @@ export function PureMessageParts({
 
     if (t === "text") {
       const key = `message-${messageId}-text-${i}`;
-      return (
-        <TextMessagePart
-          key={key}
-          messageId={messageId}
-          partIdx={i}
-        />
-      );
+      return <TextMessagePart key={key} messageId={messageId} partIdx={i} />;
     }
 
     const key = `message-${messageId}-part-${i}-${t}`;

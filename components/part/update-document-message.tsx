@@ -1,13 +1,13 @@
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { isLastArtifact } from "../isLastArtifact";
 import {
-  DocumentToolResult,
   DocumentToolCall,
-  UpdateDocumentTool,
+  DocumentToolResult,
   hasProp,
   isArtifactToolResult,
+  type UpdateDocumentTool,
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
-import { isLastArtifact } from "../isLastArtifact";
 
 export function UpdateDocumentMessage({
   tool,
@@ -26,7 +26,11 @@ export function UpdateDocumentMessage({
         ? input.title
         : undefined;
     return (
-      <DocumentToolCall type="update" args={{ title }} isReadonly={isReadonly} />
+      <DocumentToolCall
+        args={{ title }}
+        isReadonly={isReadonly}
+        type="update"
+      />
     );
   }
   const { output, input, toolCallId } = tool;
@@ -39,7 +43,9 @@ export function UpdateDocumentMessage({
   );
   if ("error" in output) {
     return (
-      <div className="rounded border p-2 text-red-500">Error: {String(output.error)}</div>
+      <div className="rounded border p-2 text-red-500">
+        Error: {String(output.error)}
+      </div>
     );
   }
   if (!isArtifactToolResult(output)) {
@@ -62,5 +68,3 @@ export function UpdateDocumentMessage({
     />
   );
 }
-
-

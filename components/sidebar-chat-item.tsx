@@ -40,7 +40,10 @@ const PureSidebarChatItem = ({
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
-  const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` = chat.projectId ? `/project/${chat.projectId}/chat/${chat.id}` : `/chat/${chat.id}`;
+  const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
+    chat.projectId
+      ? `/project/${chat.projectId}/chat/${chat.id}`
+      : `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);

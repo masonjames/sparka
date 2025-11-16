@@ -53,5 +53,3 @@ export const ResearchUpdates = ({
   }
   return <ReasonSearchResearchProgress updates={updates} />;
 };
-
-

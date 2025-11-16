@@ -2,8 +2,8 @@
 
 import { toast } from "sonner";
 import { CopyIcon } from "@/components/icons";
-import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/ai/types";
+import { cn } from "@/lib/utils";
 
 export type GenerateImageTool = Extract<
   ChatMessage["parts"][number],
@@ -72,5 +72,3 @@ export function GeneratedImage({ tool }: { tool: GenerateImageTool }) {
     </div>
   );
 }
-
-

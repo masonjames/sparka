@@ -60,12 +60,14 @@ export const chatRouter = createTRPCRouter({
 
         console.log("[getAllChats] Retrieved chats from DB", {
           count: chats.length,
-          sampleChat: chats[0] ? {
-            id: chats[0].id,
-            isPinned: chats[0].isPinned,
-            updatedAt: chats[0].updatedAt,
-            updatedAtType: typeof chats[0].updatedAt,
-          } : null,
+          sampleChat: chats[0]
+            ? {
+                id: chats[0].id,
+                isPinned: chats[0].isPinned,
+                updatedAt: chats[0].updatedAt,
+                updatedAtType: typeof chats[0].updatedAt,
+              }
+            : null,
         });
 
         // Sort chats by pinned status, then by last updated date
@@ -76,13 +78,17 @@ export const chatRouter = createTRPCRouter({
           if (!a.isPinned && b.isPinned) {
             return 1;
           }
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
         });
 
         console.log("[getAllChats] After sorting", { count: chats.length });
 
         const result = chats.map(dbChatToUIChat);
-        console.log("[getAllChats] After mapping to UI", { count: result.length });
+        console.log("[getAllChats] After mapping to UI", {
+          count: result.length,
+        });
         return result;
       } catch (error) {
         console.error("[getAllChats] Error:", error);
@@ -361,16 +367,18 @@ export const chatRouter = createTRPCRouter({
 
       // Clone messages and documents with updated IDs
       const { clonedMessages, clonedDocuments } = cloneMessagesWithDocuments(
-        sourceMessages.map((msg) => ({ ...msg, chatId: input.chatId })) as Array<ChatMessage & { chatId: string }>,
+        sourceMessages.map((msg) => ({
+          ...msg,
+          chatId: input.chatId,
+        })) as Array<ChatMessage & { chatId: string }>,
         sourceDocuments,
         newChatId,
         ctx.user.id
       );
 
       // Clone attachments in messages (this has side effects - network calls to blob storage)
-      const messagesWithClonedAttachments = await cloneAttachmentsInMessages(
-        clonedMessages
-      );
+      const messagesWithClonedAttachments =
+        await cloneAttachmentsInMessages(clonedMessages);
 
       // Save cloned messages first, then documents due to foreign key dependency
       await saveMessages({

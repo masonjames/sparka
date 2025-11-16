@@ -1,11 +1,11 @@
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { isLastArtifact } from "../isLastArtifact";
 import {
+  type CreateDocumentTool,
   DocumentToolResult,
-  CreateDocumentTool,
   isArtifactToolResult,
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
-import { isLastArtifact } from "../isLastArtifact";
 
 export function CreateDocumentMessage({
   tool,
@@ -36,7 +36,9 @@ export function CreateDocumentMessage({
   );
   if ("error" in output) {
     return (
-      <div className="rounded border p-2 text-red-500">Error: {String(output.error)}</div>
+      <div className="rounded border p-2 text-red-500">
+        Error: {String(output.error)}
+      </div>
     );
   }
   if (!isArtifactToolResult(output)) {
@@ -59,5 +61,3 @@ export function CreateDocumentMessage({
     />
   );
 }
-
-

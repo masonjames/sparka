@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 export function ChatRenameDialog({
   open,
@@ -54,18 +54,16 @@ export function ChatRenameDialog({
     !chatTitle.trim() || chatTitle.trim() === currentTitle || isLoading;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Rename Chat</DialogTitle>
-          <DialogDescription>
-            Enter a new name for this chat.
-          </DialogDescription>
+          <DialogDescription>Enter a new name for this chat.</DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <Input
-            placeholder="Chat name"
-            value={chatTitle}
+            autoFocus
+            maxLength={255}
             onChange={(e) => setChatTitle(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -74,15 +72,15 @@ export function ChatRenameDialog({
                 handleOpenChange(false);
               }
             }}
-            autoFocus
-            maxLength={255}
+            placeholder="Chat name"
+            value={chatTitle}
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+          <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isDisabled}>
+          <Button disabled={isDisabled} onClick={handleSubmit}>
             Save
           </Button>
         </DialogFooter>
@@ -90,4 +88,3 @@ export function ChatRenameDialog({
     </Dialog>
   );
 }
-

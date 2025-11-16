@@ -1,6 +1,6 @@
-import { Sandbox } from "../sandbox";
-import InteractiveChart, { type BaseChart } from "../interactive-charts";
 import type { ChatMessage } from "@/lib/ai/types";
+import InteractiveChart, { type BaseChart } from "../interactive-charts";
+import { Sandbox } from "../sandbox";
 
 export type CodeInterpreterTool = Extract<
   ChatMessage["parts"][number],
@@ -13,15 +13,21 @@ function isBaseChart(input: unknown): input is BaseChart {
   }
   const maybe = input as Record<string, unknown>;
   const hasType = typeof maybe.type === "string";
-  const hasTitle = typeof maybe.title === "string" || typeof maybe.title === "undefined";
+  const hasTitle =
+    typeof maybe.title === "string" || typeof maybe.title === "undefined";
   const hasElements = Array.isArray(maybe.elements);
   return hasType && hasTitle && hasElements;
 }
 
-export function CodeInterpreterMessage({ tool }: { tool: CodeInterpreterTool }) {
+export function CodeInterpreterMessage({
+  tool,
+}: {
+  tool: CodeInterpreterTool;
+}) {
   const args = tool.input ?? { code: "", title: "", icon: "default" };
   const result = tool.state === "output-available" ? tool.output : null;
-  const chart: BaseChart | null = result && isBaseChart(result.chart) ? result.chart : null;
+  const chart: BaseChart | null =
+    result && isBaseChart(result.chart) ? result.chart : null;
   const code = typeof args.code === "string" ? args.code : "";
   const title = typeof args.title === "string" ? args.title : "";
   return (
@@ -42,5 +48,3 @@ export function CodeInterpreterMessage({ tool }: { tool: CodeInterpreterTool }) 
     </div>
   );
 }
-
-

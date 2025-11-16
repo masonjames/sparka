@@ -1,7 +1,6 @@
 "use client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { notFound } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { notFound, usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { ChatSystem } from "@/components/chat-system";
 import {
@@ -15,7 +14,7 @@ import { useChatId } from "@/providers/chat-id-provider";
 export function ProjectChatPageRouter() {
   const { id } = useChatId();
   const pathname = usePathname();
-  
+
   // Extract projectId from pathname
   const projectMatch = pathname?.match(/^\/project\/([^/]+)/);
   const projectId = projectMatch ? projectMatch[1] : undefined;
@@ -70,4 +69,3 @@ export function ProjectChatPageRouter() {
     />
   );
 }
-

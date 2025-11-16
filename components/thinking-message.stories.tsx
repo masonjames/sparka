@@ -11,5 +11,3 @@ export default meta;
 type Story = StoryObj<typeof ThinkingMessage>;
 
 export const Default: Story = {};
-
-

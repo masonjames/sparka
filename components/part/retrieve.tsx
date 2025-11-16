@@ -137,5 +137,3 @@ export function Retrieve({ tool }: { tool: RetrieveTool }) {
     </div>
   );
 }
-
-

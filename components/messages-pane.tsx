@@ -1,6 +1,6 @@
 "use client";
-import type React from "react";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type React from "react";
 import { memo } from "react";
 import { CloneChatButton } from "@/components/clone-chat-button";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -46,10 +46,10 @@ function PureMessagesPane({
           <div className="mx-auto w-full p-2 @[400px]:px-4 @[400px]:pb-4 md:max-w-3xl @[400px]:md:pb-6">
             <MultimodalInput
               chatId={chatId}
-              parentMessageId={parentMessageId}
-              status={status}
               disableSuggestedActions={disableSuggestedActions}
               emptyStateOverride={emptyStateOverride}
+              parentMessageId={parentMessageId}
+              status={status}
             />
           </div>
         )}

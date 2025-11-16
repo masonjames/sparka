@@ -5,7 +5,11 @@ import {
 } from "@/components/ai-elements/conversation";
 import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
 import type { Vote } from "@/lib/db/schema";
-import { useChatId, useChatStatus, useMessageIds } from "@/lib/stores/hooks-base";
+import {
+  useChatId,
+  useChatStatus,
+  useMessageIds,
+} from "@/lib/stores/hooks-base";
 import { Greeting } from "./greeting";
 import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
@@ -72,10 +76,10 @@ function PureMessages({
   isVisible: _isVisible,
 }: MessagesProps) {
   return (
-      //   <Conversation className="">
-      // <ConversationContent className="">
-     <Conversation className="flex-1 h-full overflow-y-hidden">
-      <ConversationContent className="w-full h-full mx-auto container pb-10 sm:max-w-2xl md:max-w-3xl">
+    //   <Conversation className="">
+    // <ConversationContent className="">
+    <Conversation className="h-full flex-1 overflow-y-hidden">
+      <ConversationContent className="container mx-auto h-full w-full pb-10 sm:max-w-2xl md:max-w-3xl">
         <PureMessagesInternal isReadonly={isReadonly} votes={votes} />
       </ConversationContent>
       <ConversationScrollButton />
