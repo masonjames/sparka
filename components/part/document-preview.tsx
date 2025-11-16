@@ -150,7 +150,7 @@ const PureHitboxLayer = ({
   messageId: string;
 }) => {
   const handleClick = useCallback(
-    (event: MouseEvent<HTMLElement>) => {
+    (_event: MouseEvent<HTMLElement>) => {
       setArtifact((artifact) =>
         artifact.status === "streaming"
           ? { ...artifact, isVisible: true }
