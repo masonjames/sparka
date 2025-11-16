@@ -96,7 +96,7 @@ function mapFilePart(
       return {
         ...part,
         data: found.data,
-        mediaType: part.mediaType ?? found.mediaType ?? part.mediaType,
+        mediaType: part.mediaType ?? found.mediaType,
       };
     }
   }
@@ -114,7 +114,7 @@ function mapImagePart(
       return {
         ...part,
         image: found.data,
-        mediaType: part.mediaType ?? found.mediaType ?? part.mediaType,
+        mediaType: part.mediaType ?? found.mediaType,
       };
     }
   }

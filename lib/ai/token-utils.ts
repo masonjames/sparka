@@ -162,7 +162,7 @@ function truncateToolResultPart(
       truncatedPart: {
         ...part,
         output: {
-          type: "text" as const,
+          type: "text",
           value: trimPrompt(part.output.value, targetTokens),
         },
       },
@@ -201,10 +201,8 @@ function truncateToolArrayContent(
     tokensToRemove -= tokensRemoved;
   }
 
-  return {
-    ...lastMessage,
-    content,
-  } as ModelMessage;
+  // biome-ignore lint/style/useObjectSpread: Spread syntax causes TypeScript error with ModelMessage union types
+  return Object.assign({}, lastMessage, { content });
 }
 
 function truncateLastMessageIfNeeded(

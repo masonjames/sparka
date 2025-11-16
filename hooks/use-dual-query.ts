@@ -116,10 +116,7 @@ export function useDualQuery<
     | UseDualUndefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
     | UseDualQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
   queryClient?: QueryClient
-):
-  | DefinedUseQueryResult<TData, TError>
-  | UseQueryResult<TData, TError>
-  | UseQueryResult<TData, TError> {
+): DefinedUseQueryResult<TData, TError> | UseQueryResult<TData, TError> {
   const merged = useDualQueryOptions<TQueryFnData, TError, TData, TQueryKey>(
     options
   );

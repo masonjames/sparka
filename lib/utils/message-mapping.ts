@@ -1,3 +1,4 @@
+import { isDataUIPart, isToolUIPart } from "ai";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Part } from "@/lib/db/schema";
 import { validateToolPart } from "./message-part-validators";
@@ -78,19 +79,16 @@ function handleDefaultPartToDB(
     return null;
   }
 
-  if (part.type.startsWith("tool-")) {
+  if (isToolUIPart(part)) {
     return handleToolPartToDB(part, basePart);
   }
 
-  if (part.type.startsWith("data-")) {
-    basePart.data_type = part.type.replace("data-", "");
-    basePart.data_blob = "data" in part ? part.data : part;
+  if (isDataUIPart(part)) {
+    basePart.data_type = part.type;
+    basePart.data_blob = part.data;
     return basePart;
   }
-
-  basePart.data_type = part.type;
-  basePart.data_blob = part;
-  return basePart;
+  throw new Error(`Unsupported part type: ${part.type}`);
 }
 
 function mapUIPartToDBPart(
@@ -102,6 +100,8 @@ function mapUIPartToDBPart(
 
   if ("providerMetadata" in part && part.providerMetadata) {
     basePart.providerMetadata = part.providerMetadata;
+  } else if ("callProviderMetadata" in part && part.callProviderMetadata) {
+    basePart.providerMetadata = part.callProviderMetadata;
   }
 
   switch (part.type) {

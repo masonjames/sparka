@@ -6,7 +6,8 @@ function isPublicApiRoute(pathname: string): boolean {
   return (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/trpc") ||
-    pathname === "/api/chat"
+    pathname === "/api/chat" ||
+    pathname.startsWith("/api/chat/")
   );
 }
 
@@ -19,6 +20,9 @@ function isMetadataRoute(pathname: string): boolean {
 }
 
 function isPublicPage(pathname: string): boolean {
+  if (pathname === "/") {
+    return true;
+  }
   return (
     pathname.startsWith("/models") ||
     pathname.startsWith("/compare") ||
@@ -34,35 +38,25 @@ function isAuthPage(pathname: string): boolean {
 
 export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
+  const { pathname } = url;
 
-  if (isPublicApiRoute(url.pathname) || isMetadataRoute(url.pathname)) {
+  if (isPublicApiRoute(pathname) || isMetadataRoute(pathname)) {
     return;
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
   const isLoggedIn = !!session?.user;
 
-  if (isLoggedIn && isAuthPage(url.pathname)) {
+  if (isLoggedIn && isAuthPage(pathname)) {
     return NextResponse.redirect(new URL("/", url));
   }
 
-  if (isAuthPage(url.pathname) || isPublicPage(url.pathname)) {
+  if (isAuthPage(pathname) || isPublicPage(pathname)) {
     return;
   }
 
-  const isOnChat = url.pathname.startsWith("/");
-  if (isOnChat) {
-    if (url.pathname === "/") {
-      return;
-    }
-    if (isLoggedIn) {
-      return;
-    }
+  if (!isLoggedIn) {
     return NextResponse.redirect(new URL("/login", url));
-  }
-
-  if (isLoggedIn) {
-    return NextResponse.redirect(new URL("/", url));
   }
 }
 

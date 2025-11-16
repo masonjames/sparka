@@ -27,12 +27,8 @@ type ValidatedPart = {
 function validateAndGetMessagePart<UI_MESSAGE extends UIMessage>(
   messages: UI_MESSAGE[] | null | undefined,
   messageId: string,
-  partIdx: number,
-  requireThrottled: boolean
+  partIdx: number
 ): ValidatedPart {
-  if (requireThrottled && !messages) {
-    throw new Error("No messages available");
-  }
   if (!messages) {
     throw new Error("No messages available");
   }
@@ -84,13 +80,8 @@ export const withMarkdownMemo =
       ...base,
       _markdownCache: initialPrecompute.cache,
       getMarkdownBlocksForPart: (messageId: string, partIdx: number) => {
-        const list = get()._throttledMessages;
-        const { text } = validateAndGetMessagePart(
-          list,
-          messageId,
-          partIdx,
-          true
-        );
+        const list = get()._throttledMessages ?? get().messages;
+        const { text } = validateAndGetMessagePart(list, messageId, partIdx);
         const cached = getMarkdownFromCache({
           cache: get()._markdownCache,
           messageId,
@@ -101,12 +92,7 @@ export const withMarkdownMemo =
       },
       getMarkdownBlockCountForPart: (messageId: string, partIdx: number) => {
         const list = get()._throttledMessages || get().messages;
-        const { text } = validateAndGetMessagePart(
-          list,
-          messageId,
-          partIdx,
-          false
-        );
+        const { text } = validateAndGetMessagePart(list, messageId, partIdx);
         const cached = getMarkdownFromCache({
           cache: get()._markdownCache,
           messageId,
@@ -128,13 +114,8 @@ export const withMarkdownMemo =
         partIdx: number,
         blockIdx: number
       ) => {
-        const list = get()._throttledMessages;
-        const { text } = validateAndGetMessagePart(
-          list,
-          messageId,
-          partIdx,
-          true
-        );
+        const list = get()._throttledMessages ?? get().messages;
+        const { text } = validateAndGetMessagePart(list, messageId, partIdx);
         const cached = getMarkdownFromCache({
           cache: get()._markdownCache,
           messageId,
