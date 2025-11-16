@@ -1,9 +1,10 @@
 import { memo } from "react";
 import {
   Conversation,
+  ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
+// import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
 import type { Vote } from "@/lib/db/schema";
 import {
   useChatId,
