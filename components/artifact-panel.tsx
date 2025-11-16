@@ -16,8 +16,16 @@ import type { Document, Vote } from "@/lib/db/schema";
 import { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
-import { ArtifactActions } from "./artifact-actions";
-import { ArtifactCloseButton } from "./artifact-close-button";
+import {
+  Artifact as ArtifactCard,
+  ArtifactHeader,
+  ArtifactClose,
+  ArtifactTitle,
+  ArtifactDescription,
+  ArtifactActions as ArtifactHeaderActions,
+  ArtifactContent,
+} from "./ai-elements/artifact";
+import { ArtifactActions as ArtifactPanelActions } from "./artifact-actions";
 //
 import { Toolbar } from "./toolbar";
 import { ScrollArea } from "./ui/scroll-area";
@@ -53,7 +61,8 @@ function PureArtifactPanel({
   className?: string;
 }) {
   const storeApi = useChatStoreApi();
-  const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
+  const { artifact, setArtifact, metadata, setMetadata, closeArtifact } =
+    useArtifact();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
@@ -245,26 +254,29 @@ function PureArtifactPanel({
   }
 
   return (
-    <div
+    <ArtifactCard
       className={cn(
-        "flex h-full w-full flex-col overflow-y-auto border-border bg-background transition-all duration-200 ease-out",
+        "h-full w-full border-border border-0 bg-background transition-all duration-200 ease-out rounded-none",
         className
       )}
       data-testid="artifact"
     >
-      <div className="flex flex-row items-start justify-between bg-background/80 p-2">
+      <ArtifactHeader className="items-start bg-background/80 p-2">
         <div className="flex flex-row items-start gap-4">
-          <ArtifactCloseButton />
+          <ArtifactClose
+            className="h-fit p-2 dark:hover:bg-zinc-700"
+            data-testid="artifact-close-button"
+            onClick={closeArtifact}
+            variant="outline"
+          />
 
           <div className="flex flex-col">
-            <div className="font-medium">{artifact.title}</div>
+            <ArtifactTitle>{artifact.title}</ArtifactTitle>
 
             {isContentDirty ? (
-              <div className="text-muted-foreground text-sm">
-                Saving changes...
-              </div>
+              <ArtifactDescription>Saving changes...</ArtifactDescription>
             ) : document ? (
-              <div className="text-muted-foreground text-sm">
+              <ArtifactDescription>
                 {`Updated ${formatDistance(
                   new Date(document.createdAt),
                   new Date(),
@@ -272,69 +284,73 @@ function PureArtifactPanel({
                     addSuffix: true,
                   }
                 )}`}
-              </div>
+              </ArtifactDescription>
             ) : (
               <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
             )}
           </div>
         </div>
 
-        <ArtifactActions
-          artifact={artifact}
-          currentVersionIndex={currentVersionIndex}
-          handleVersionChange={handleVersionChange}
-          isCurrentVersion={isCurrentVersion}
-          isReadonly={isReadonly}
-          metadata={metadata}
-          mode={mode}
-          setMetadata={setMetadata}
-        />
-      </div>
-
-      <ScrollArea className="h-full max-w-full!">
-        <div className="flex flex-col items-center bg-background/80">
-          <artifactDefinition.content
-            content={
-              isCurrentVersion
-                ? artifact.content
-                : getDocumentContentById(currentVersionIndex)
-            }
+        <ArtifactHeaderActions>
+          <ArtifactPanelActions
+            artifact={artifact}
             currentVersionIndex={currentVersionIndex}
-            getDocumentContentById={getDocumentContentById}
+            handleVersionChange={handleVersionChange}
             isCurrentVersion={isCurrentVersion}
-            isInline={false}
-            isLoading={isDocumentsFetching && !artifact.content}
             isReadonly={isReadonly}
             metadata={metadata}
             mode={mode}
-            onSaveContent={saveContent}
             setMetadata={setMetadata}
-            status={artifact.status}
-            suggestions={[]}
-            title={artifact.title}
           />
+        </ArtifactHeaderActions>
+      </ArtifactHeader>
 
-          {isCurrentVersion && !isReadonly && (
-            <Toolbar
-              artifactKind={artifact.kind}
-              isToolbarVisible={isToolbarVisible}
-              setIsToolbarVisible={setIsToolbarVisible}
-              status={status}
-              stop={stop}
-              storeApi={storeApi}
+      <ArtifactContent className="p-0">
+        <ScrollArea className="h-full max-w-full!">
+          <div className="flex flex-col items-center bg-background/80">
+            <artifactDefinition.content
+              content={
+                isCurrentVersion
+                  ? artifact.content
+                  : getDocumentContentById(currentVersionIndex)
+              }
+              currentVersionIndex={currentVersionIndex}
+              getDocumentContentById={getDocumentContentById}
+              isCurrentVersion={isCurrentVersion}
+              isInline={false}
+              isLoading={isDocumentsFetching && !artifact.content}
+              isReadonly={isReadonly}
+              metadata={metadata}
+              mode={mode}
+              onSaveContent={saveContent}
+              setMetadata={setMetadata}
+              status={artifact.status}
+              suggestions={[]}
+              title={artifact.title}
             />
-          )}
-        </div>
-      </ScrollArea>
 
-      {!(isCurrentVersion || isReadonly) && (
-        <VersionFooter
-          currentVersionIndex={currentVersionIndex}
-          documents={documents}
-          handleVersionChange={handleVersionChange}
-        />
-      )}
-    </div>
+            {isCurrentVersion && !isReadonly && (
+              <Toolbar
+                artifactKind={artifact.kind}
+                isToolbarVisible={isToolbarVisible}
+                setIsToolbarVisible={setIsToolbarVisible}
+                status={status}
+                stop={stop}
+                storeApi={storeApi}
+              />
+            )}
+          </div>
+        </ScrollArea>
+
+        {!(isCurrentVersion || isReadonly) && (
+          <VersionFooter
+            currentVersionIndex={currentVersionIndex}
+            documents={documents}
+            handleVersionChange={handleVersionChange}
+          />
+        )}
+      </ArtifactContent>
+    </ArtifactCard>
   );
 }
 
