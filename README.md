@@ -20,6 +20,11 @@ https://www.sparka.ai/
 <br />
 </div>
 
+
+
+> ⚠️ **Active Development**: This project is under active maintenance with frequent updates—expect occasional breaking changes until the first stable release.
+
+
 ## Stack
 
 - [Next.js 16](https://nextjs.org) - App Router, React Server Components
