@@ -601,9 +601,11 @@ function PureMultimodalInput({
             data-testid="multimodal-input"
             initialValue={getInitialInput()}
             onEnterSubmit={(event) => {
+              const isComposing =
+                "isComposing" in event ? event.isComposing : false;
               const shouldSubmit = isMobile
-                ? event.ctrlKey && !("isComposing" in event)
-                : !(event.shiftKey || "isComposing" in event);
+                ? event.ctrlKey && !isComposing
+                : !(event.shiftKey || isComposing);
 
               if (shouldSubmit) {
                 if (!submission.enabled) {
