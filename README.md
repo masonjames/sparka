@@ -20,10 +20,11 @@ https://www.sparka.ai/
 <br />
 </div>
 
-
+<br />
 
 > ⚠️ **Active Development**: This project is under active maintenance with frequent updates—expect occasional breaking changes until the first stable release.
 
+<br />
 
 ## Stack
 
