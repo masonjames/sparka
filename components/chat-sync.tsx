@@ -2,12 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ChatMessage } from "@/lib/ai/types";
+import { ChatSDKError } from "@/lib/ai/errors";
 import {
   useChatStateInstance,
   useChatStoreApi,
@@ -38,6 +39,7 @@ export function ChatSync({
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setDataStream } = useDataStream();
+  const [autoResume, setAutoResume] = useState(true);
 
   useRecreateChat(id, initialMessages);
 
@@ -51,11 +53,14 @@ export function ChatSync({
       generateId: generateUUID,
       onFinish: ({ message }) => {
         saveChatMessage({ message, chatId: id });
+        setAutoResume(true);
       },
       transport: new DefaultChatTransport({
         api: "/api/chat",
         fetch: fetchWithErrorHandlers,
         prepareSendMessagesRequest({ messages, id: requestId, body }) {
+          setAutoResume(true);
+
           return {
             body: {
               id: requestId,
@@ -71,6 +76,14 @@ export function ChatSync({
         setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       },
       onError: (error) => {
+        if (
+          error instanceof ChatSDKError &&
+          error.type === "not_found" &&
+          error.surface === "stream"
+        ) {
+          setAutoResume(false);
+        }
+
         console.error(error);
         const cause = error.cause;
         if (cause && typeof cause === "string") {
@@ -85,6 +98,7 @@ export function ChatSync({
     return instance;
   }, [
     id,
+    autoResume,
     saveChatMessage,
     setDataStream,
     isAuthenticated,
@@ -108,7 +122,7 @@ export function ChatSync({
   }, [helpers.stop, helpers.sendMessage, helpers.regenerate, chatStore]);
 
   useAutoResume({
-    autoResume: true,
+    autoResume,
     initialMessages,
     resumeStream: helpers.resumeStream,
   });
