@@ -595,40 +595,36 @@ function PureMultimodalInput({
             uploadQueue={uploadQueue}
           />
 
-          <LexicalChatInput
-            autoFocus
-            className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
-            data-testid="multimodal-input"
-            initialValue={getInitialInput()}
-            onEnterSubmit={(event) => {
-              const isComposing =
-                "isComposing" in event ? event.isComposing : false;
-              const shouldSubmit = isMobile
-                ? event.ctrlKey && !isComposing
-                : !(event.shiftKey || isComposing);
+            <LexicalChatInput
+              autoFocus
+              className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
+              data-testid="multimodal-input"
+              initialValue={getInitialInput()}
+              onEnterSubmit={(event) => {
+                const shouldSubmit = isMobile ? event.ctrlKey : !event.shiftKey;
 
-              if (shouldSubmit) {
-                if (!submission.enabled) {
-                  if (submission.message) {
-                    toast.error(submission.message);
+                if (shouldSubmit) {
+                  if (!submission.enabled) {
+                    if (submission.message) {
+                      toast.error(submission.message);
+                    }
+                    return true;
                   }
+                  submitForm();
                   return true;
                 }
-                submitForm();
-                return true;
-              }
 
-              return false;
-            }}
-            onInputChange={handleInputChange}
-            onPaste={handlePaste}
-            placeholder={
-              isMobile
-                ? "Send a message... (Ctrl+Enter to send)"
-                : "Send a message..."
-            }
-            ref={editorRef}
-          />
+                return false;
+              }}
+              onInputChange={handleInputChange}
+              onPaste={handlePaste}
+              placeholder={
+                isMobile
+                  ? "Send a message... (Ctrl+Enter to send)"
+                  : "Send a message..."
+              }
+              ref={editorRef}
+            />
 
           <ChatInputBottomControls
             fileInputRef={fileInputRef}
