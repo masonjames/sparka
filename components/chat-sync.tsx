@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useAutoResume } from "@/hooks/use-auto-resume";
-import type { ChatMessage } from "@/lib/ai/types";
 import { ChatSDKError } from "@/lib/ai/errors";
+import type { ChatMessage } from "@/lib/ai/types";
 import {
   useChatStateInstance,
   useChatStoreApi,
@@ -98,7 +98,6 @@ export function ChatSync({
     return instance;
   }, [
     id,
-    autoResume,
     saveChatMessage,
     setDataStream,
     isAuthenticated,
