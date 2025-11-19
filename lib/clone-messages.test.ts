@@ -89,30 +89,51 @@ describe("cloneMessagesWithDocuments", () => {
       chatId: sourceChatId,
     });
 
-    // Minimal tool parts that reference a document id
-    // These shapes are intentionally narrow and only include the fields
-    // that clone-messages.ts cares about at runtime.
+    // Minimal tool parts that reference a document id.
+    // Shapes match the actual tool output types so the test type-checks.
     messageWithDoc.parts = [
       {
         type: "tool-createDocument",
+        toolCallId: "call-create",
         state: "output-available",
+        input: {
+          title: "Doc title",
+          description: "desc",
+          kind: "text",
+        },
         output: {
           id: "doc-1",
+          title: "Doc title",
+          kind: "text",
+          content: "A document was created and is now visible to the user.",
         },
       },
       {
         type: "tool-updateDocument",
+        toolCallId: "call-update",
         state: "output-available",
+        input: {
+          id: "doc-1",
+          description: "desc",
+        },
         output: {
           id: "doc-1",
+          title: "Doc title",
+          kind: "text",
+          content: "The document has been updated successfully.",
           success: true,
         },
       },
       {
         type: "tool-deepResearch",
+        toolCallId: "call-deep",
         state: "output-available",
+        input: {},
         output: {
           id: "doc-1",
+          title: "Doc title",
+          kind: "text",
+          content: "Deep research report content",
           format: "report",
         },
       },
@@ -160,7 +181,9 @@ describe("cloneMessagesWithDocuments", () => {
         (part.type === "tool-createDocument" ||
           part.type === "tool-updateDocument" ||
           part.type === "tool-deepResearch") &&
-        part.state === "output-available"
+        part.state === "output-available" &&
+        part.output &&
+        "id" in part.output
       ) {
         assert.equal(part.output.id, newDocumentId);
       }

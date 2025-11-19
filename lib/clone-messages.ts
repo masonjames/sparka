@@ -42,50 +42,6 @@ function cloneMessages<
 
   return clonedMessages;
 }
-
-function cloneChatMessages(
-  sourceMessages: Array<ChatMessage & { chatId: string }>,
-  newChatId: string
-): Array<ChatMessage & { chatId: string }> {
-  const idMap = new Map<string, string>();
-  for (const message of sourceMessages) {
-    idMap.set(message.id, generateUUID());
-  }
-
-  const clonedMessages: Array<ChatMessage & { chatId: string }> = [];
-
-  for (const message of sourceMessages) {
-    const newId = idMap.get(message.id);
-    if (!newId) {
-      throw new Error(`Message ID ${message.id} not found in mapping`);
-    }
-
-    const parentId = message.metadata.parentMessageId;
-    let newParentId: string | null = null;
-
-    if (parentId) {
-      const mappedParentId = idMap.get(parentId);
-      if (!mappedParentId) {
-        throw new Error(`Parent message ID ${parentId} not found in mapping`);
-      }
-      newParentId = mappedParentId;
-    }
-
-    const clonedMessage: ChatMessage & { chatId: string } = {
-      ...message,
-      id: newId,
-      chatId: newChatId,
-      metadata: {
-        ...message.metadata,
-        parentMessageId: newParentId,
-      },
-    };
-
-    clonedMessages.push(clonedMessage);
-  }
-
-  return clonedMessages;
-}
 function createDocumentIdMap<T extends { id: string }>(
   documents: T[]
 ): Map<string, string> {
@@ -330,6 +286,15 @@ export async function cloneAttachmentsInMessages<
 }
 
 export function cloneMessagesWithDocuments<
+  TMessage extends {
+    id: string;
+    chatId: string;
+    parentMessageId?: string | null;
+    parts: ChatMessage["parts"];
+    metadata?: {
+      parentMessageId: string | null;
+    } & Record<string, unknown>;
+  },
   TDocument extends {
     id: string;
     messageId: string;
@@ -340,24 +305,69 @@ export function cloneMessagesWithDocuments<
     createdAt: Date;
   },
 >(
-  sourceMessages: Array<ChatMessage & { chatId: string }>,
+  sourceMessages: TMessage[],
   sourceDocuments: TDocument[],
   newChatId: string,
   newUserId: string
 ): {
-  clonedMessages: Array<ChatMessage & { chatId: string }>;
+  clonedMessages: TMessage[];
   clonedDocuments: TDocument[];
   messageIdMap: Map<string, string>;
   documentIdMap: Map<string, string>;
 } {
-  // Step 1: Clone ChatMessages, including their metadata.parentMessageId
-  const clonedMessages = cloneChatMessages(sourceMessages, newChatId);
+  // Step 1: Clone messages (id, chatId, and parentMessageId field)
+  const clonedMessagesBase = cloneMessages(sourceMessages, newChatId);
 
   // Step 2: Create message ID mapping for later use
   const messageIdMap = new Map<string, string>();
   for (let i = 0; i < sourceMessages.length; i++) {
-    messageIdMap.set(sourceMessages[i].id, clonedMessages[i].id);
+    messageIdMap.set(sourceMessages[i].id, clonedMessagesBase[i].id);
   }
+
+  // Step 2b: If messages have metadata.parentMessageId (ChatMessage),
+  // remap it using the messageIdMap so the thread structure is preserved.
+  const clonedMessages: TMessage[] = clonedMessagesBase.map(
+    (clonedMessage, index) => {
+      const sourceMessage = sourceMessages[index];
+
+      const oldMetadataParentId =
+        sourceMessage.metadata?.parentMessageId ?? null;
+
+      if (oldMetadataParentId === null) {
+        // Ensure we don't accidentally carry over an old parent in metadata
+        if (!clonedMessage.metadata) {
+          return clonedMessage;
+        }
+
+        return {
+          ...clonedMessage,
+          metadata: {
+            ...clonedMessage.metadata,
+            parentMessageId: null,
+          },
+        };
+      }
+
+      const newMetadataParentId = messageIdMap.get(oldMetadataParentId);
+      if (!newMetadataParentId) {
+        throw new Error(
+          `Parent message ID ${oldMetadataParentId} from metadata not found in mapping`
+        );
+      }
+
+      const existingMetadata = clonedMessage.metadata ?? {
+        parentMessageId: null,
+      };
+
+      return {
+        ...clonedMessage,
+        metadata: {
+          ...existingMetadata,
+          parentMessageId: newMetadataParentId,
+        },
+      };
+    }
+  );
 
   // Step 3: Create document ID mapping
   const documentIdMap = createDocumentIdMap(sourceDocuments);
