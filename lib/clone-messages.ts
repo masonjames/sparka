@@ -22,12 +22,13 @@ function cloneMessages<
 
     let newParentId: string | null = null;
     if (message.parentMessageId) {
-      newParentId = idMap.get(message.parentMessageId) || null;
-      if (!newParentId) {
+      const mappedParentId = idMap.get(message.parentMessageId);
+      if (!mappedParentId) {
         throw new Error(
           `Parent message ID ${message.parentMessageId} not found in mapping`
         );
       }
+      newParentId = mappedParentId;
     }
 
     const clonedMessage: T = {
@@ -36,6 +37,50 @@ function cloneMessages<
       chatId: newChatId,
       parentMessageId: newParentId,
     };
+    clonedMessages.push(clonedMessage);
+  }
+
+  return clonedMessages;
+}
+
+function cloneChatMessages(
+  sourceMessages: Array<ChatMessage & { chatId: string }>,
+  newChatId: string
+): Array<ChatMessage & { chatId: string }> {
+  const idMap = new Map<string, string>();
+  for (const message of sourceMessages) {
+    idMap.set(message.id, generateUUID());
+  }
+
+  const clonedMessages: Array<ChatMessage & { chatId: string }> = [];
+
+  for (const message of sourceMessages) {
+    const newId = idMap.get(message.id);
+    if (!newId) {
+      throw new Error(`Message ID ${message.id} not found in mapping`);
+    }
+
+    const parentId = message.metadata.parentMessageId;
+    let newParentId: string | null = null;
+
+    if (parentId) {
+      const mappedParentId = idMap.get(parentId);
+      if (!mappedParentId) {
+        throw new Error(`Parent message ID ${parentId} not found in mapping`);
+      }
+      newParentId = mappedParentId;
+    }
+
+    const clonedMessage: ChatMessage & { chatId: string } = {
+      ...message,
+      id: newId,
+      chatId: newChatId,
+      metadata: {
+        ...message.metadata,
+        parentMessageId: newParentId,
+      },
+    };
+
     clonedMessages.push(clonedMessage);
   }
 
@@ -285,12 +330,6 @@ export async function cloneAttachmentsInMessages<
 }
 
 export function cloneMessagesWithDocuments<
-  TMessage extends {
-    id: string;
-    chatId: string;
-    parentMessageId?: string | null;
-    parts: any;
-  },
   TDocument extends {
     id: string;
     messageId: string;
@@ -301,18 +340,18 @@ export function cloneMessagesWithDocuments<
     createdAt: Date;
   },
 >(
-  sourceMessages: TMessage[],
+  sourceMessages: Array<ChatMessage & { chatId: string }>,
   sourceDocuments: TDocument[],
   newChatId: string,
   newUserId: string
 ): {
-  clonedMessages: TMessage[];
+  clonedMessages: Array<ChatMessage & { chatId: string }>;
   clonedDocuments: TDocument[];
   messageIdMap: Map<string, string>;
   documentIdMap: Map<string, string>;
 } {
-  // Step 1: Clone messages using the existing cloneMessages function
-  const clonedMessages = cloneMessages(sourceMessages, newChatId);
+  // Step 1: Clone ChatMessages, including their metadata.parentMessageId
+  const clonedMessages = cloneChatMessages(sourceMessages, newChatId);
 
   // Step 2: Create message ID mapping for later use
   const messageIdMap = new Map<string, string>();
