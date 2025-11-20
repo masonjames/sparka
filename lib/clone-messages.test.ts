@@ -31,9 +31,21 @@ describe("cloneMessagesWithDocuments", () => {
     const newChatId = "new-chat";
     const userId = "user-1";
 
-    const m1 = createMessage({ id: "m1", parentMessageId: null, chatId: sourceChatId });
-    const m2 = createMessage({ id: "m2", parentMessageId: "m1", chatId: sourceChatId });
-    const m3 = createMessage({ id: "m3", parentMessageId: "m2", chatId: sourceChatId });
+    const m1 = createMessage({
+      id: "m1",
+      parentMessageId: null,
+      chatId: sourceChatId,
+    });
+    const m2 = createMessage({
+      id: "m2",
+      parentMessageId: "m1",
+      chatId: sourceChatId,
+    });
+    const m3 = createMessage({
+      id: "m3",
+      parentMessageId: "m2",
+      chatId: sourceChatId,
+    });
 
     const { clonedMessages, messageIdMap } = cloneMessagesWithDocuments(
       [m1, m2, m3],
@@ -64,9 +76,13 @@ describe("cloneMessagesWithDocuments", () => {
     assert(newM2Id);
     assert(newM3Id);
 
-    const clonedM1 = clonedMessages.find((m) => m.id === newM1Id)!;
-    const clonedM2 = clonedMessages.find((m) => m.id === newM2Id)!;
-    const clonedM3 = clonedMessages.find((m) => m.id === newM3Id)!;
+    const clonedM1 = clonedMessages.find((m) => m.id === newM1Id);
+    const clonedM2 = clonedMessages.find((m) => m.id === newM2Id);
+    const clonedM3 = clonedMessages.find((m) => m.id === newM3Id);
+
+    assert(clonedM1);
+    assert(clonedM2);
+    assert(clonedM3);
 
     // Root has no parent
     assert.equal(clonedM1.metadata.parentMessageId, null);
@@ -151,12 +167,13 @@ describe("cloneMessagesWithDocuments", () => {
       },
     ];
 
-    const {
-      clonedMessages,
-      clonedDocuments,
-      messageIdMap,
-      documentIdMap,
-    } = cloneMessagesWithDocuments([messageWithDoc], sourceDocuments, newChatId, userId);
+    const { clonedMessages, clonedDocuments, messageIdMap, documentIdMap } =
+      cloneMessagesWithDocuments(
+        [messageWithDoc],
+        sourceDocuments,
+        newChatId,
+        userId
+      );
 
     assert.equal(clonedMessages.length, 1);
     assert.equal(clonedDocuments.length, 1);
