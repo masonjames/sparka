@@ -3,9 +3,12 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { Action } from "@/components/ai-elements/actions";
-// ChatMessage type not needed directly here
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSendMessage, useSetMessages } from "@/lib/stores/hooks";
+import type { ChatMessage } from "@/lib/ai/types";
+import {
+  useChatStoreApi,
+  useChatActions,
+  useChatMessages as useAiChatMessages,
+} from "@ai-sdk-tools/store";
 
 export function RetryButton({
   messageId,
@@ -14,9 +17,9 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const setMessages = useSetMessages();
-  const sendMessage = useSendMessage();
+  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
   const chatStore = useChatStoreApi();
+  const messages = useAiChatMessages<ChatMessage>();
 
   const handleRetry = useCallback(() => {
     if (!sendMessage) {
@@ -25,7 +28,7 @@ export function RetryButton({
     }
 
     // Find the current message (AI response) and its parent (user message)
-    const currentMessages = chatStore.getState().messages;
+    const currentMessages = messages;
     const currentMessageIdx = currentMessages.findIndex(
       (msg) => msg.id === messageId
     );

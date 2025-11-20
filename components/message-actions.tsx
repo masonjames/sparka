@@ -7,14 +7,16 @@ import { useCopyToClipboard } from "usehooks-ts";
 import { Action, Actions } from "@/components/ai-elements/actions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Vote } from "@/lib/db/schema";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
+import { useMessageRoleById } from "@/lib/stores/hooks";
+import { useMessageById } from "@ai-sdk-tools/store";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 import { MessageSiblings } from "./message-siblings";
 import { RetryButton } from "./retry-button";
 import { Tag } from "./tag";
+import type { ChatMessage } from "@/lib/ai/types";
 export function PureMessageActions({
   chatId,
   messageId,
@@ -176,7 +178,7 @@ export function PureMessageActions({
 }
 
 function SelectedModelId({ messageId }: { messageId: string }) {
-  const message = useMessageById(messageId);
+  const message = useMessageById<ChatMessage>(messageId);
   return message?.metadata?.selectedModel ? (
     <div className="ml-2 flex items-center">
       <Tag>{message.metadata.selectedModel}</Tag>

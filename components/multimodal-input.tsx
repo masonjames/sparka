@@ -32,11 +32,11 @@ import {
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import {
-  useChatHelperStop,
   useMessageIds,
-  useSetMessages,
+  useChatMessages,
+  useLastMessageId,
 } from "@/lib/stores/hooks";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
@@ -51,6 +51,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LimitDisplay } from "./upgrade-cta/limit-display";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
+import { useChatActions } from "@ai-sdk-tools/store";
 
 const IMAGE_UPLOAD_LIMITS = {
   maxBytes: 1024 * 1024,
@@ -75,13 +76,14 @@ function PureMultimodalInput({
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
 }) {
-  const storeApi = useChatStoreApi();
+  const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
-  const setMessages = useSetMessages();
   const messageIds = useMessageIds();
-
+  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const messages = useChatMessages();
+  const lastMessageId = useLastMessageId();
   const {
     editorRef,
     selectedTool,
@@ -208,10 +210,6 @@ function PureMultimodalInput({
 
   const coreSubmitLogic = useCallback(() => {
     const input = getInputValue();
-    const sendMessage = storeApi.getState().currentChatHelpers?.sendMessage;
-    if (!sendMessage) {
-      return;
-    }
 
     // For new chats, we need to update the url to include the chatId
     if (window.location.pathname === "/") {
@@ -221,7 +219,7 @@ function PureMultimodalInput({
     // Get the appropriate parent message ID
     const effectiveParentMessageId = isEditMode
       ? parentMessageId
-      : storeApi.getState().getLastMessageId();
+      : lastMessageId;
 
     // In edit mode, trim messages to the parent message
     if (isEditMode) {
@@ -230,16 +228,12 @@ function PureMultimodalInput({
         setMessages([]);
       } else {
         // Find the parent message and trim to that point
-        const parentIndex = storeApi
-          .getState()
-          .getThrottledMessages()
-          .findIndex((msg: ChatMessage) => msg.id === parentMessageId);
+        const parentIndex = messages.findIndex(
+          (msg) => msg.id === parentMessageId
+        );
         if (parentIndex !== -1) {
           // Keep messages up to and including the parent
-          const messagesUpToParent = storeApi
-            .getState()
-            .getThrottledMessages()
-            .slice(0, parentIndex + 1);
+          const messagesUpToParent = messages.slice(0, parentIndex + 1);
           setMessages(messagesUpToParent);
         }
       }
@@ -697,7 +691,7 @@ function PureChatInputBottomControls({
   uploadQueue: string[];
   submission: { enabled: boolean; message?: string };
 }) {
-  const stopHelper = useChatHelperStop();
+  const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
     <PromptInputToolbar className="flex w-full min-w-0 flex-row justify-between @[400px]:gap-2 gap-1 border-t">
       <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">

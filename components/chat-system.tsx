@@ -8,9 +8,11 @@ import { DataStreamProvider } from "@/components/data-stream-provider";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
-import { ChatStoreProvider } from "@/lib/stores/chat-store-context";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 import { MessageTreeProvider } from "@/providers/message-tree-provider";
+import { Provider as AiSdkToolsStoreProvider } from '@ai-sdk-tools/store';
+import { useRef } from "react";
+import { createChatStore, CustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 
 export const ChatSystem = memo(function ChatSystem({
   id,
@@ -25,10 +27,16 @@ export const ChatSystem = memo(function ChatSystem({
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
 }) {
+
+  const storeRef = useRef<CustomChatStoreApi<ChatMessage> | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createChatStore<ChatMessage>(initialMessages);
+  }
   return (
     <ArtifactProvider>
       <DataStreamProvider>
-        <ChatStoreProvider initialMessages={initialMessages}>
+        <AiSdkToolsStoreProvider initialMessages={initialMessages} store={storeRef.current}>
+        {/* <ChatStoreProvider initialMessages={initialMessages}> */}
           <MessageTreeProvider>
             {isReadonly ? (
               <>
@@ -57,7 +65,8 @@ export const ChatSystem = memo(function ChatSystem({
               </ChatInputProvider>
             )}
           </MessageTreeProvider>
-        </ChatStoreProvider>
+        {/* </ChatStoreProvider> */}
+          </AiSdkToolsStoreProvider>
       </DataStreamProvider>
     </ArtifactProvider>
   );

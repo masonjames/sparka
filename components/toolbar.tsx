@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/tooltip";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import type { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSendMessage } from "@/lib/stores/hooks";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
+import { useChatActions } from "@ai-sdk-tools/store";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact";
 import type { ArtifactToolbarItem } from "./create-artifact";
@@ -62,7 +62,7 @@ function Tool({
   onClick,
   storeApi,
 }: ToolProps) {
-  const sendMessage = useSendMessage();
+  const { sendMessage } = useChatActions<ChatMessage>();
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -87,9 +87,7 @@ function Tool({
       setSelectedTool(description);
     } else {
       setSelectedTool(null);
-      if (sendMessage) {
-        onClick({ sendMessage, storeApi });
-      }
+      onClick({ sendMessage, storeApi });
     }
   };
 
@@ -151,7 +149,7 @@ function ReadingLevelSelector({
   isAnimating: boolean;
   storeApi: ReturnType<typeof useChatStoreApi>;
 }) {
-  const sendMessage = useSendMessage();
+  const { sendMessage } = useChatActions<ChatMessage>();
   const LEVELS = [
     "Elementary",
     "Middle School",

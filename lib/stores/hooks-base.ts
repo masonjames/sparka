@@ -3,13 +3,13 @@ import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
 import type { BaseChatStoreState } from "./chat-store-base";
-import { useChatStoreContext } from "./chat-store-context";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 
 export function useBaseChatStore<T = BaseChatStoreState<ChatMessage>>(
   selector?: (store: BaseChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
 ) {
-  const store = useChatStoreContext();
+  const store = useChatStoreApi<ChatMessage>();
   if (!store) {
     throw new Error("useBaseChatStore must be used within ChatStoreProvider");
   }
@@ -121,10 +121,9 @@ export const useChatActions = () =>
   );
 export const useSetMessages = () =>
   useBaseChatStore((state) => state.setMessages);
-export const useChatHelperStop = () =>
-  useBaseChatStore((state) => state.currentChatHelpers?.stop);
+export const useChatHelperStop = () => useBaseChatStore((state) => state.stop);
 export const useSendMessage = () =>
-  useBaseChatStore((state) => state.currentChatHelpers?.sendMessage);
+  useBaseChatStore((state) => state.sendMessage);
 
 export const useLastMessageId = () =>
   useBaseChatStore((state) => state.getLastMessageId());

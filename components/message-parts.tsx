@@ -2,7 +2,7 @@
 
 import { memo, useMemo } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import {
   useMessagePartByPartIdx,
   useMessagePartsByPartRange,
@@ -136,7 +136,7 @@ function PureMessagePart({
   const part = useMessagePartByPartIdx(messageId, partIdx);
   const { type } = part;
   const researchUpdates = useResearchUpdates(messageId, partIdx, type);
-  const chatStore = useChatStoreApi();
+  const chatStore = useChatStoreApi<ChatMessage>();
 
   if (type === "tool-getWeather") {
     const { toolCallId, state } = part;
@@ -175,7 +175,7 @@ function PureMessagePart({
     if (state === "output-available") {
       const { output, input } = part;
       const shouldShowFullPreview = isLastArtifact(
-        chatStore.getState().messages,
+        chatStore.getState().getInternalMessages(),
         toolCallId
       );
 

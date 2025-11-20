@@ -18,7 +18,7 @@ Ship a full-featured AI chat in minutes with Claude, GPT-4, Gemini, Grok, and 12
 
 ## Stack
 
-- [Next.js 15](https://nextjs.org) - App Router, React Server Components
+- [Next.js 16](https://nextjs.org) - App Router, React Server Components
 - [TypeScript](https://www.typescriptlang.org) - Full type safety
 - [Vercel AI SDK v5](https://sdk.vercel.ai) - Unified AI provider integration with 120+ models
 - [Better Auth](https://www.better-auth.com) - Authentication & authorization

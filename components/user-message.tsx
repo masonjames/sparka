@@ -6,7 +6,8 @@ import {
   MessageContent as AIMessageContent,
 } from "@/components/ai-elements/message";
 import type { Vote } from "@/lib/db/schema";
-import { useChatId, useMessageById } from "@/lib/stores/hooks";
+import { useMessageById } from "@/lib/stores/hooks";
+import { useChatId } from "@ai-sdk-tools/store";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
 import { AttachmentList } from "./attachment-list";
 import { ImageModal } from "./image-modal";

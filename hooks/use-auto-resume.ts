@@ -4,7 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useEffect } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useSetMessages } from "@/lib/stores/hooks";
+import { useChatActions } from "@ai-sdk-tools/store";
 
 export type UseAutoResumeProps = {
   autoResume: boolean;
@@ -18,7 +18,7 @@ export function useAutoResume({
   resumeStream,
 }: UseAutoResumeProps) {
   const { dataStream } = useDataStream();
-  const setMessages = useSetMessages();
+  const { setMessages } = useChatActions<ChatMessage>();
 
   useEffect(() => {
     if (!autoResume) {

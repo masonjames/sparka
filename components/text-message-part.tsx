@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { Response } from "./ai-elements/memo-response";
+import { Response } from "./ai-elements/response";
 
 export const TextMessagePart = memo(function TextMessagePart({
   messageId,
@@ -10,5 +10,5 @@ export const TextMessagePart = memo(function TextMessagePart({
   messageId: string;
   partIdx: number;
 }) {
-  return <Response messageId={messageId} partIdx={partIdx} />;
+  return <Response />;
 });
