@@ -1,9 +1,9 @@
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
 import type { BaseChatStoreState } from "./chat-store-base";
-import { useChatStoreApi } from "@ai-sdk-tools/store";
 
 export function useBaseChatStore<T = BaseChatStoreState<ChatMessage>>(
   selector?: (store: BaseChatStoreState<ChatMessage>) => T,

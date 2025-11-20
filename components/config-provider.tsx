@@ -12,7 +12,9 @@ export function ConfigProvider({
   value: SiteConfig;
   children: React.ReactNode;
 }): JSX.Element {
-  return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
+  return (
+    <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
+  );
 }
 
 export function useConfig(): SiteConfig {
@@ -22,5 +24,3 @@ export function useConfig(): SiteConfig {
   }
   return ctx;
 }
-
-

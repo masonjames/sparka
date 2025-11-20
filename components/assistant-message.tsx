@@ -1,6 +1,6 @@
 "use client";
-import { memo } from "react";
 import { useChatId } from "@ai-sdk-tools/store";
+import { memo } from "react";
 import {
   Message as AIMessage,
   MessageContent as AIMessageContent,

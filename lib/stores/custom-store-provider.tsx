@@ -1,22 +1,22 @@
 "use client";
 
+import type { UIMessage } from "@ai-sdk/react";
 import {
   Provider as ChatProvider,
   ChatStoreContext,
   createChatStoreCreator,
 } from "@ai-sdk-tools/store";
-import type { UIMessage } from "@ai-sdk/react";
+import { type PropsWithChildren, useContext, useRef } from "react";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
-import { useContext, useRef, type PropsWithChildren } from "react";
-import {
-  type PartsAugmentedState,
-  withMessageParts,
-} from "./with-message-parts";
 import {
   type MarkdownMemoAugmentedState,
   withMarkdownMemo,
 } from "./with-markdown-memo";
+import {
+  type PartsAugmentedState,
+  withMessageParts,
+} from "./with-message-parts";
 
 export type NewChatStoreProviderProps<TMessage extends UIMessage = UIMessage> =
   PropsWithChildren<{
@@ -28,17 +28,17 @@ export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
   MarkdownMemoAugmentedState<UI_MESSAGE> & PartsAugmentedState<UI_MESSAGE>;
 
 export function createChatStore<TMessage extends UIMessage = UIMessage>(
-  initialMessages: TMessage[] = [],
+  initialMessages: TMessage[] = []
 ) {
   return createStore<CustomChatStoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(
         withMarkdownMemo<TMessage>(initialMessages)(
-          withMessageParts(createChatStoreCreator<TMessage>(initialMessages)),
-        ),
+          withMessageParts(createChatStoreCreator<TMessage>(initialMessages))
+        )
       ),
-      { name: "chat-store" },
-    ),
+      { name: "chat-store" }
+    )
   );
 }
 
@@ -58,8 +58,8 @@ export function CustomStoreProvider<TMessage extends UIMessage = UIMessage>({
 
   return (
     <ChatProvider<TMessage>
-      key={chatKey}
       initialMessages={initialMessages}
+      key={chatKey}
       store={storeRef.current || undefined}
     >
       {children}

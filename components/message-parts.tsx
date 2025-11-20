@@ -1,8 +1,8 @@
 "use client";
 
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { memo, useMemo } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useChatStoreApi } from "@ai-sdk-tools/store";
 import {
   useMessagePartByPartIdx,
   useMessagePartsByPartRange,

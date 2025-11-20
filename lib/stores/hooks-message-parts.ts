@@ -2,8 +2,8 @@ import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
-import type { PartsAugmentedState } from "./with-message-parts";
 import { useCustomChatStoreApi } from "./custom-store-provider";
+import type { PartsAugmentedState } from "./with-message-parts";
 
 export function usePartsStore<T>(
   selector: (store: PartsAugmentedState<ChatMessage>) => T,

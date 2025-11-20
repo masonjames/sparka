@@ -18,8 +18,6 @@ export function PureMessageSiblings({
   const siblingInfo = getMessageSiblingInfo(messageId);
   const hasSiblings = siblingInfo && siblingInfo.siblings.length > 1;
 
-
-
   return (
     <div className="flex items-center justify-center gap-1">
       {hasSiblings && (

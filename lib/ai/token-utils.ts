@@ -1,6 +1,5 @@
 import type { ModelMessage } from "ai";
 import { getEncoding } from "js-tiktoken";
-import { env } from "@/lib/env";
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
 
 const MinChunkSize = 140;
@@ -38,10 +37,7 @@ export function calculateMessagesTokens(messages: ModelMessage[]): number {
 }
 
 // trim prompt to maximum context size
-export function trimPrompt(
-  prompt: string,
-  contextSize: number
-) {
+export function trimPrompt(prompt: string, contextSize: number) {
   if (!prompt) {
     return "";
   }

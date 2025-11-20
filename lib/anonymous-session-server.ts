@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { env } from "@/lib/env";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ANONYMOUS_SESSION_COOKIES_KEY } from "./constants";

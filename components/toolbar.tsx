@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useChatActions, type useChatStoreApi } from "@ai-sdk-tools/store";
 import cx from "classnames";
 import {
   AnimatePresence,
@@ -26,8 +27,6 @@ import {
 } from "@/components/ui/tooltip";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import { useChatStoreApi } from "@ai-sdk-tools/store";
-import { useChatActions } from "@ai-sdk-tools/store";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact";
 import type { ArtifactToolbarItem } from "./create-artifact";

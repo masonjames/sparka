@@ -5,9 +5,9 @@ import { type OpenAIResponsesProviderOptions, openai } from "@ai-sdk/openai";
 import type { ModelId } from "@airegistry/vercel-gateway";
 import { getModelAndProvider } from "@airegistry/vercel-gateway";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
+import type { ImageModelId } from "../models/image-model-id";
 import type { AppModelId } from "./app-models";
 import { getAppModelDefinition, getImageModelDefinition } from "./app-models";
-import type { ImageModelId } from "../models/image-model-id";
 
 const _telemetryConfig = {
   telemetry: {

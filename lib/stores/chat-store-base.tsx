@@ -1,9 +1,13 @@
-'use client';
-import { createStore } from 'zustand/vanilla';
-import type { StateCreator } from 'zustand';
-import { createChatStoreCreator, type StoreState } from './ai-sdk-tools/chat-store-base';
-import type { UIMessage } from 'ai';
-export type { StoreState as BaseChatStoreState } from '@ai-sdk-tools/store';
+"use client";
+import type { UIMessage } from "ai";
+import type { StateCreator } from "zustand";
+import { createStore } from "zustand/vanilla";
+import {
+  createChatStoreCreator,
+  type StoreState,
+} from "./ai-sdk-tools/chat-store-base";
+
+export type { StoreState as BaseChatStoreState } from "@ai-sdk-tools/store";
 
 // interface BaseChatStoreState2<UI_MESSAGE extends UIMessage>
 //   extends ChatState<UI_MESSAGE> {
@@ -145,7 +149,7 @@ export function createBaseStore<UI_MESSAGE extends UIMessage>(
   initialMessages: UI_MESSAGE[] = []
 ) {
   return createStore<StoreState<UI_MESSAGE>>()(
-    createChatStoreCreator<UI_MESSAGE>(initialMessages),
+    createChatStoreCreator<UI_MESSAGE>(initialMessages)
   );
 }
 

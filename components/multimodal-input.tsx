@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
 import { PlusIcon } from "lucide-react";
 import type React from "react";
 import {
@@ -32,11 +33,10 @@ import {
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useChatStoreApi } from "@ai-sdk-tools/store";
 import {
-  useMessageIds,
   useChatMessages,
   useLastMessageId,
+  useMessageIds,
 } from "@/lib/stores/hooks";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
@@ -51,7 +51,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LimitDisplay } from "./upgrade-cta/limit-display";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
-import { useChatActions } from "@ai-sdk-tools/store";
 
 const IMAGE_UPLOAD_LIMITS = {
   maxBytes: 1024 * 1024,

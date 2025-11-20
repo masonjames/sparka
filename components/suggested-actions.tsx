@@ -1,10 +1,10 @@
 "use client";
 
+import { useChatActions } from "@ai-sdk-tools/store";
 import { motion } from "motion/react";
 import { memo } from "react";
-import type { ChatMessage } from "@/lib/ai/types";
 import type { AppModelId } from "@/lib/ai/app-models";
-import { useChatActions } from "@ai-sdk-tools/store";
+import type { ChatMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 

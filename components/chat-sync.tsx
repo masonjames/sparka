@@ -36,7 +36,6 @@ export function ChatSync({
   const isAuthenticated = !!session?.user;
   // const chatState = useChatStateInstance();
 
-
   // console.log('chatState', chatState);
   // const chat = useMemo(() => {
   //   const instance = new ZustandChat<ChatMessage>({
@@ -82,40 +81,40 @@ export function ChatSync({
   const helpers = useChat<ChatMessage>({
     // store: chatStore,
     experimental_throttle: 100,
-      id,
-      generateId: generateUUID,
-      onFinish: ({ message }) => {
-        saveChatMessage({ message, chatId: id });
+    id,
+    generateId: generateUUID,
+    onFinish: ({ message }) => {
+      saveChatMessage({ message, chatId: id });
+    },
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      fetch: fetchWithErrorHandlers,
+      prepareSendMessagesRequest({ messages, id, body }) {
+        console.log("prepareSendMessagesRequest", messages, id, body);
+        return {
+          body: {
+            id,
+            message: messages.at(-1),
+            prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+            ...body,
+          },
+        };
       },
-      transport: new DefaultChatTransport({
-        api: "/api/chat",
-        fetch: fetchWithErrorHandlers,
-        prepareSendMessagesRequest({ messages, id, body }) {
-          console.log('prepareSendMessagesRequest', messages, id, body);
-          return {
-            body: {
-              id,
-              message: messages.at(-1),
-              prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-              ...body,
-            },
-          };
-        },
-      }),
-      onData: (dataPart) => {
-        setDataStream((ds) => (ds ? [...ds, dataPart] : []));
-      },
-      onError: (error) => {
-        console.error(error);
-        const cause = error.cause;
-        if (cause && typeof cause === "string") {
-          toast.error(error.message ?? "An error occured, please try again!", {
-            description: cause,
-          });
-        } else {
-          toast.error(error.message ?? "An error occured, please try again!");
-        }
-      },
+    }),
+    onData: (dataPart) => {
+      setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+    },
+    onError: (error) => {
+      console.error(error);
+      const cause = error.cause;
+      if (cause && typeof cause === "string") {
+        toast.error(error.message ?? "An error occured, please try again!", {
+          description: cause,
+        });
+      } else {
+        toast.error(error.message ?? "An error occured, please try again!");
+      }
+    },
   });
 
   // useEffect(() => {

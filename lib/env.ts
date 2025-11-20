@@ -30,10 +30,8 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   },
-  client: {
-  },
-  experimental__runtimeEnv: {
-  },
+  client: {},
+  experimental__runtimeEnv: {},
 });
 
 if (

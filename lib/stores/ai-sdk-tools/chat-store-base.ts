@@ -8,6 +8,7 @@ import { useStore } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { useShallow } from "zustand/shallow";
 import { createStore, type StateCreator } from "zustand/vanilla";
+
 const debug = {
   warn: (...args: any[]) => {
     console.warn(...args);
@@ -82,7 +83,7 @@ function startFreezeDetector({
         "[Freeze]",
         `${Math.round(blockedMs)}ms`,
         "lastAction=",
-        __lastActionLabel,
+        __lastActionLabel
       );
     }
     __freezeLastTs = now;
@@ -102,7 +103,7 @@ if (typeof window !== "undefined") {
 // Enhanced throttle with requestIdleCallback support
 function enhancedThrottle<T extends (...args: any[]) => void>(
   func: T,
-  wait: number,
+  wait: number
 ): T {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let previous = 0;
@@ -192,7 +193,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   _throttledMessages: TMessage[] | null;
   _messageIndex: MessageIndex<TMessage>;
   _memoizedSelectors: Map<string, { result: any; deps: any[] }>;
-  
+
   // Transient data parts (not persisted in messages)
   _transientDataParts: Map<string, any>;
 
@@ -236,7 +237,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
 
   // Effects
   registerThrottledMessagesEffect: (effect: () => void) => () => void;
-  
+
   // Transient data methods
   setTransientDataPart: (type: string, data: any) => void;
   getTransientDataPart: (type: string) => any;
@@ -247,7 +248,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
 const MESSAGES_THROTTLE_MS = 16; // ~60fps for smooth streaming
 
 export function createChatStoreCreator<TMessage extends UIMessage>(
-  initialMessages: TMessage[] = [],
+  initialMessages: TMessage[] = []
 ): StateCreator<StoreState<TMessage>, [], []> {
   let throttledMessagesUpdater: (() => void) | null = null;
   const messageIndex = new MessageIndex<TMessage>();
@@ -306,27 +307,27 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
         if (messages === currentState.messages) return;
 
         set({
-          messages: messages,
+          messages,
           _memoizedSelectors: new Map(), // Clear memoized selectors
         });
         markLastAction("chat:setMessages");
         // batchUpdates(() => {
-          // Avoid unnecessary work if messages haven't changed
+        // Avoid unnecessary work if messages haven't changed
 
-          // During streaming, update immediately for smooth text rendering
-          if (currentState.status === "streaming") {
-            // batchUpdates(() => {
-              const state = get();
-              const newThrottledMessages = [...state.messages];
-              state._messageIndex.update(newThrottledMessages);
+        // During streaming, update immediately for smooth text rendering
+        if (currentState.status === "streaming") {
+          // batchUpdates(() => {
+          const state = get();
+          const newThrottledMessages = [...state.messages];
+          state._messageIndex.update(newThrottledMessages);
 
-              set({
-                _throttledMessages: newThrottledMessages,
-              });
-            // }, 1); // High priority for streaming updates
+          set({
+            _throttledMessages: newThrottledMessages,
+          });
+          // }, 1); // High priority for streaming updates
           // } else {
-            throttledMessagesUpdater?.();
-          }
+          throttledMessagesUpdater?.();
+        }
         // });
       },
 
@@ -344,7 +345,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
         markLastAction("chat:setNewChat");
         batchUpdates(() => {
           set({
-            messages: messages,
+            messages,
             status: "ready",
             error: undefined,
             id,
@@ -362,7 +363,6 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           _memoizedSelectors: new Map(),
         }));
         batchUpdates(() => {
-
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
             batchUpdates(() => {
@@ -394,30 +394,30 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
       replaceMessage: (index, message) => {
         markLastAction("chat:replaceMessage");
         // batchUpdates(() => {
-          const currentState = get();
-          set((state) => {
-            const newMessages = [...state.messages];
-            newMessages[index] = structuredClone(message);
-            return {
-              messages: newMessages,
-              _memoizedSelectors: new Map(),
-            };
+        const currentState = get();
+        set((state) => {
+          const newMessages = [...state.messages];
+          newMessages[index] = structuredClone(message);
+          return {
+            messages: newMessages,
+            _memoizedSelectors: new Map(),
+          };
+        });
+
+        // During streaming, update immediately for smooth text rendering
+        if (currentState.status === "streaming") {
+          // batchUpdates(() => {
+          const state = get();
+          const newThrottledMessages = [...state.messages];
+          state._messageIndex.update(newThrottledMessages);
+
+          set({
+            _throttledMessages: newThrottledMessages,
           });
-
-          // During streaming, update immediately for smooth text rendering
-          if (currentState.status === "streaming") {
-            // batchUpdates(() => {
-              const state = get();
-              const newThrottledMessages = [...state.messages];
-              state._messageIndex.update(newThrottledMessages);
-
-              set({
-                _throttledMessages: newThrottledMessages,
-              });
-            // }, 1); // High priority for streaming updates
-          } else {
-            throttledMessagesUpdater?.();
-          }
+          // }, 1); // High priority for streaming updates
+        } else {
+          throttledMessagesUpdater?.();
+        }
         // });
       },
 
@@ -462,7 +462,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               ...newState,
               _memoizedSelectors: new Map(), // Clear memoized selectors on sync
             },
-            false,
+            false
             // 'syncFromUseChat',
           );
           if (newState.messages) {
@@ -544,7 +544,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
       getMemoizedSelector: <T>(
         key: string,
         selector: () => T,
-        deps: any[],
+        deps: any[]
       ): T => {
         const state = get();
         const cached = state._memoizedSelectors.get(key);
@@ -571,7 +571,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           throttledEffects.delete(effect);
         };
       },
-      
+
       // Transient data methods
       setTransientDataPart: (type, data) => {
         markLastAction("chat:setTransientDataPart");
@@ -583,12 +583,12 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           });
         });
       },
-      
+
       getTransientDataPart: (type) => {
         const state = get();
         return state._transientDataParts.get(type);
       },
-      
+
       removeTransientDataPart: (type) => {
         markLastAction("chat:removeTransientDataPart");
         batchUpdates(() => {
@@ -599,7 +599,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           });
         });
       },
-      
+
       clearTransientDataParts: () => {
         markLastAction("chat:clearTransientDataParts");
         batchUpdates(() => set({ _transientDataParts: new Map() }));
@@ -609,13 +609,13 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 }
 
 export function createChatStore<TMessage extends UIMessage = UIMessage>(
-  initialMessages: TMessage[] = [],
+  initialMessages: TMessage[] = []
 ) {
   return createStore<StoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(createChatStoreCreator<TMessage>(initialMessages)),
-      { name: "chat-store" },
-    ),
+      { name: "chat-store" }
+    )
   );
 }
 
@@ -624,7 +624,7 @@ type ChatStoreApi<TMessage extends UIMessage = UIMessage> = ReturnType<
 >;
 
 export const ChatStoreContext = createContext<ChatStoreApi<any> | undefined>(
-  undefined,
+  undefined
 );
 
 export function Provider<TMessage extends UIMessage = UIMessage>({
@@ -643,13 +643,13 @@ export function Provider<TMessage extends UIMessage = UIMessage>({
   return React.createElement(
     ChatStoreContext.Provider,
     { value: storeRef.current },
-    children,
+    children
   );
 }
 
 // Standard Zustand v5 store hook
 export function useChatStore<T, TMessage extends UIMessage = UIMessage>(
-  selector: (store: StoreState<TMessage>) => T,
+  selector: (store: StoreState<TMessage>) => T
 ): T;
 export function useChatStore<
   TMessage extends UIMessage = UIMessage,
@@ -675,11 +675,10 @@ export function useChatStoreApi<TMessage extends UIMessage = UIMessage>() {
 }
 
 // Optimized selector hooks with memoization
-export const useChatMessages = <TMessage extends UIMessage = UIMessage>() => {
-  return useChatStore(
-    useShallow((state: StoreState<TMessage>) => state.getThrottledMessages()),
+export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
+  useChatStore(
+    useShallow((state: StoreState<TMessage>) => state.getThrottledMessages())
   );
-};
 
 // Stable selector functions to avoid recreation
 const statusSelector = (state: StoreState<any>) => state.status;
@@ -693,37 +692,35 @@ export const useChatError = () => useChatStore(errorSelector);
 export const useChatId = () => useChatStore(idSelector);
 export const useMessageIds = <TMessage extends UIMessage = UIMessage>() =>
   useChatStore(
-    useShallow((state: StoreState<TMessage>) => state.getMessageIds()),
+    useShallow((state: StoreState<TMessage>) => state.getMessageIds())
   );
 
 // Optimized message selector with O(1) lookup
 export const useMessageById = <TMessage extends UIMessage = UIMessage>(
-  messageId: string,
-) => {
-  return useChatStore(
+  messageId: string
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) => {
         const message = state.getMessageById(messageId);
         if (!message) throw new Error(`Message not found for id: ${messageId}`);
         return message;
       },
-      [messageId],
-    ),
+      [messageId]
+    )
   );
-};
 
 // Virtualization helper for large message lists
 export const useVirtualMessages = <TMessage extends UIMessage = UIMessage>(
   start: number,
-  end?: number,
-) => {
-  return useChatStore(
+  end?: number
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) => state.getMessagesSlice(start, end),
-      [start, end],
-    ),
+      [start, end]
+    )
   );
-};
 
 export const useMessageCount = () => useChatStore(messageCountSelector);
 
@@ -732,32 +729,32 @@ export const useChatReset = () => useChatStore((state) => state.reset);
 // Stable fallback functions to prevent infinite loops
 const fallbackSendMessage = async () => {
   debug.warn(
-    "sendMessage not configured - make sure useChat is called with transport",
+    "sendMessage not configured - make sure useChat is called with transport"
   );
 };
 const fallbackRegenerate = async () => {
   debug.warn(
-    "regenerate not configured - make sure useChat is called with transport",
+    "regenerate not configured - make sure useChat is called with transport"
   );
 };
 const fallbackStop = async () => {
   debug.warn(
-    "stop not configured - make sure useChat is called with transport",
+    "stop not configured - make sure useChat is called with transport"
   );
 };
 const fallbackResumeStream = async () => {
   debug.warn(
-    "resumeStream not configured - make sure useChat is called with transport",
+    "resumeStream not configured - make sure useChat is called with transport"
   );
 };
 const fallbackAddToolResult = async () => {
   debug.warn(
-    "addToolResult not configured - make sure useChat is called with transport",
+    "addToolResult not configured - make sure useChat is called with transport"
   );
 };
 const fallbackClearError = () => {
   debug.warn(
-    "clearError not configured - make sure useChat is called with transport",
+    "clearError not configured - make sure useChat is called with transport"
   );
 };
 
@@ -801,24 +798,23 @@ export const useChatActions = <
       resumeStream: state.resumeStream || fallbackResumeStream,
       addToolResult: state.addToolResult || fallbackAddToolResult,
       clearError: state.clearError || fallbackClearError,
-    })),
+    }))
   );
 
 // Memoized complex selector hook
 export const useSelector = <TMessage extends UIMessage = UIMessage, T = any>(
   key: string,
   selector: (messages: TMessage[]) => T,
-  deps: any[] = [],
-) => {
-  return useChatStore(
+  deps: any[] = []
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) =>
         state.getMemoizedSelector(
           key,
           () => selector(state.getThrottledMessages()),
-          [state.getMessageCount(), ...deps],
+          [state.getMessageCount(), ...deps]
         ),
-      [key, selector, deps],
-    ),
+      [key, selector, deps]
+    )
   );
-};

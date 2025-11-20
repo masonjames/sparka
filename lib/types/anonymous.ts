@@ -1,7 +1,6 @@
 import type { AppModelId } from "../ai/app-models";
 import type { ToolName } from "../ai/types";
 import type { DBMessage } from "../db/schema";
-import { env } from "../env";
 import type { UIChat } from "./uiChat";
 
 export type AnonymousSession = {
