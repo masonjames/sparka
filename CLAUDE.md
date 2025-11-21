@@ -78,7 +78,7 @@ bd dep list <task-id>
 
 ## Upstream Sync Workflow
 
-This repository is a fork with custom modifications. Regular syncing with upstream ensures we get the latest features and fixes.
+This repository is a fork with custom modifications. Regular syncing with upstream ensures we get the latest features and fixes while preserving our Stripe/Ghost subscription integrations.
 
 ### Git Remote Configuration
 ```bash
@@ -90,90 +90,246 @@ git remote -v
 # upstream: https://github.com/FranciscoMoretti/sparka.git
 ```
 
-### Syncing with Upstream (Recommended Method)
+### Syncing with Upstream (Merge Method)
 
-**Context**: This fork has "unrelated histories" with upstream. The cleanest approach is to reapply custom changes onto fresh upstream code.
+**Recommended**: Direct merge preserves git history and is easier to manage than rebasing custom changes.
 
-#### Step-by-Step Sync Process
+#### Step-by-Step Merge Process
 
 1. **Fetch latest upstream changes**
 ```bash
 git fetch upstream
 ```
 
-2. **Create backup branch** (safety first!)
+2. **Create safety backup** (always!)
 ```bash
-git branch backup-before-sync-$(date +%Y%m%d)
+git branch backup-before-upstream-merge-$(date +%Y%m%d)
 ```
 
-3. **Create fresh branch from upstream**
-```bash
-git checkout -b sync-upstream upstream/main
-```
-
-4. **Apply custom branding**
-   - Update `lib/config.ts`: Change `appName`, `githubUrl`, `appPrefix`, organization details
-   - Update `package.json`: Change `name` field
-   - Update `app/manifest.webmanifest`: Change app name and description
-   - Commit: `git commit -m "chore: Apply custom branding"`
-
-5. **Re-apply custom features** (e.g., Stripe subscription system)
-   - Use documentation from previous implementation
-   - Adapt to any upstream changes
-   - Test thoroughly before committing
-
-6. **Test the sync branch**
-```bash
-bun install
-bun test:types
-bun dev  # Manual testing
-```
-
-7. **Replace main branch** (once tested)
+3. **Merge upstream into local main**
 ```bash
 git checkout main
-git reset --hard sync-upstream
-git push origin main --force-with-lease
+git merge upstream/main
 ```
 
-8. **Deploy to Vercel**
+4. **Resolve conflicts** (see Conflict Resolution Guide below)
+   - Most conflicts will be in files we've customized
+   - Follow the patterns in the guide to preserve custom features
+   - When in doubt, prefer upstream's refactoring but preserve our features
+
+5. **Post-merge fixes**
 ```bash
-vercel --prod
+# Regenerate lockfile with our dependencies
+bun install
+
+# Fix any type errors
+bun test:types
+
+# Run linter
+bun lint
+```
+
+6. **Test locally**
+```bash
+bun dev
+# Test authentication, chat, and subscription flows
+```
+
+7. **Commit merge and fixes**
+```bash
+git add -A
+git commit -m "merge: sync with upstream and fix conflicts"
+```
+
+8. **Deploy to Vercel for testing**
+```bash
+vercel  # Preview deployment
+# Test thoroughly before production
+vercel --prod  # Once validated
+```
+
+### Conflict Resolution Guide
+
+Common conflicts and how to resolve them:
+
+#### 1. **package.json**
+- **Keep**: Stripe dependency, custom package name
+- **Take upstream**: Version updates for other dependencies
+- **Add**: React version overrides if not present
+```json
+{
+  "dependencies": {
+    "stripe": "^19.3.0",  // Keep our addition
+    "streamdown": "1.5.0"  // Take upstream version
+  },
+  "overrides": {
+    "react": "19.2.0",      // Force matching versions
+    "react-dom": "19.2.0"   // Prevents hydration errors
+  }
+}
+```
+
+#### 2. **lib/env.ts**
+- **Keep**: Custom environment validators (hostname, cookie domain, subdomain)
+- **Keep**: Stripe/Ghost environment variables
+- **Take upstream**: New optional features
+```typescript
+// Keep these custom validators
+const optionalHostname = z.string()...
+const optionalCookieDomain = z.string()...
+const optionalSubdomain = z.string()...
+
+// Keep Stripe/Ghost env vars
+STRIPE_SECRET_KEY: z.string().optional(),
+GHOST_ADMIN_URL: z.string().optional(),
+// ... etc
+```
+
+#### 3. **trpc/routers/_app.ts**
+- **Merge both**: Include both upstream's new routers and our entitlements router
+```typescript
+export const appRouter = createTRPCRouter({
+  // ... upstream routers
+  project: projectRouter,        // Upstream addition
+  entitlements: entitlementsRouter, // Our custom router
+});
+```
+
+#### 4. **Database Migrations**
+- **Conflict**: Both branches created migration 0031
+- **Resolution**: Renumber ours to next available (0032)
+```bash
+# Rename our migration file
+mv lib/db/migrations/0031_our_migration.sql lib/db/migrations/0032_our_migration.sql
+
+# Update _journal.json to include both migrations in order
+```
+
+#### 5. **Chat Routes** (`app/(chat)/api/chat/route.ts`)
+- **Take upstream**: Session refactoring (cleaner architecture)
+- **Note for later**: Re-implement entitlement checks after testing
+- Upstream's `validateAndSetupSession()` provides better structure
+- Can add entitlement checks as a follow-up enhancement
+
+#### 6. **UI Components** (React 19 SSR Issues)
+- **Button components**: Must handle `disabled` properly
+```typescript
+// In components/ui/button.tsx
+const buttonProps = {
+  ...(disabled && { disabled: true }),  // Only add if truthy
+  ...props,
+}
+```
+- **Fix duplicate props**: Check that props aren't passed both explicitly and via spread
+
+#### 7. **API Routes** (Next.js 15+ Dynamic Rendering)
+- Add `export const dynamic = "force-dynamic"` to routes using `request.headers`
+```typescript
+// In app/api/cron/cleanup/route.ts
+export const dynamic = "force-dynamic";  // Required for SSR
 ```
 
 ### Custom Modifications to Preserve
 
-When syncing, ensure these customizations are reapplied:
+Track these customizations during merges:
 
-#### Branding Changes
-- `lib/config.ts`: App name, GitHub URL, organization details
-- `package.json`: Package name
-- `app/manifest.webmanifest`: PWA manifest details
+#### Branding Changes (Auto-merge Usually Works)
+- ✅ `lib/config.ts`: App name, GitHub URL, organization details
+- ✅ `package.json`: Package name (`chat-by-mason-james`)
+- ✅ `app/manifest.webmanifest`: PWA manifest details
 
-#### Custom Features
-- **Stripe Subscription System** (if implemented):
-  - Database schema: `Subscription` table
-  - API routes: `/api/stripe/*`
-  - Components: `components/subscription/*`
-  - tRPC router: `trpc/routers/subscription.router.ts`
-  - Documentation: `STRIPE_SETUP.md`, `STRIPE_IMPLEMENTATION_SUMMARY.md`
+#### Custom Features (Require Manual Attention)
+
+**Stripe/Ghost Integration**:
+- 📦 `package.json`: `stripe` dependency
+- 🗄️ Database: `Entitlement`, `WebhookEvent` tables (migration 0032)
+- 🔧 `lib/env.ts`: Stripe/Ghost environment variables + custom validators
+- 🛣️ `trpc/routers/_app.ts`: `entitlementsRouter` registration
+- 📂 `trpc/routers/entitlements.router.ts`: Full router implementation
+- 📂 `lib/entitlements/`: Provisioning logic, Ghost sync
+- 📂 `app/api/stripe/`: Webhook handlers
+- 📂 `app/api/ghost/`: Webhook handlers
+
+**Environment Validators**:
+- ✅ `lib/env.ts`: Custom hostname, cookie domain, subdomain validators
+- Needed for multi-domain setup and Better Auth cookie sharing
+
+**Database Schema**:
+```sql
+-- Custom tables to preserve
+CREATE TABLE "Entitlement" (...);
+CREATE TABLE "WebhookEvent" (...);
+```
+
+### Post-Merge Checklist
+
+After completing a merge:
+
+- [ ] `bun install` - Regenerate lockfile
+- [ ] `bun test:types` - Verify TypeScript compilation
+- [ ] `bun lint` - Check code quality
+- [ ] `bun dev` - Test locally
+  - [ ] Anonymous chat works
+  - [ ] Authenticated chat works
+  - [ ] Model selection works
+  - [ ] File uploads work
+- [ ] `vercel` - Deploy preview
+  - [ ] No build warnings/errors
+  - [ ] Test all features in preview
+- [ ] `vercel --prod` - Deploy to production (after validation)
+
+### Common Post-Merge Issues
+
+**React Version Mismatch**:
+```json
+// Add to package.json if missing
+"overrides": {
+  "react": "19.2.0",
+  "react-dom": "19.2.0"
+}
+```
+Then `rm -rf node_modules && bun install`
+
+**Hydration Errors**:
+- Check Button components for proper `disabled` handling
+- Ensure boolean attributes use conditional spread: `...(prop && { prop: true })`
+- Remove duplicate prop declarations
+
+**Build Warnings (Dynamic Routes)**:
+- Add `export const dynamic = "force-dynamic"` to API routes using request data
+- Especially cron routes, webhooks, or auth-dependent endpoints
 
 ### Sync Frequency
 - **Recommended**: Monthly or when major upstream features are released
-- **Monitor**: Watch upstream repository for important updates
+- **Monitor**: Watch https://github.com/FranciscoMoretti/sparka for updates
 - **Before major features**: Sync first to avoid conflicts with new work
+- **After sync**: Test thoroughly in preview before production deploy
 
 ### Troubleshooting Sync Issues
 
-**If upstream has breaking changes**:
-1. Check upstream CHANGELOG or commit messages
-2. Review migration guides in upstream repository
-3. Test thoroughly in staging before production deploy
+**Merge conflicts in multiple files**:
+1. Use the Conflict Resolution Guide above
+2. Resolve one file at a time
+3. Test after each resolution
+4. Commit incrementally if helpful
 
-**If custom features conflict**:
-1. Review upstream changes to related files
-2. Adapt custom code to work with upstream changes
-3. Consider contributing generic features back to upstream
+**Tests fail after merge**:
+1. Check for missing dependencies: `bun install`
+2. Verify environment variables are set
+3. Check database migrations are applied
+4. Review upstream CHANGELOG for breaking changes
+
+**Features broken after merge**:
+1. Check if upstream refactored related code
+2. Review our customizations in that area
+3. Adapt custom code to new patterns
+4. Consider if feature should be re-implemented differently
+
+**Entitlement/subscription logic needs updating**:
+1. Review upstream session/auth changes
+2. Check if `validateAndSetupSession` can incorporate our checks
+3. Update entitlement logic to work with new patterns
+4. Test both free and paid user flows
 
 ## Database Commands
 
@@ -226,6 +382,8 @@ Backend routers are in `trpc/routers/`:
 - `credits.router.ts` - Credit management
 - `vote.router.ts` - Message voting
 - `document.router.ts` - Document operations
+- `project.router.ts` - Project management (upstream)
+- `entitlements.router.ts` - **Custom**: Stripe/Ghost subscription management
 
 All routers must be registered in `trpc/routers/_app.ts`.
 
@@ -281,6 +439,8 @@ Key tables:
 - `message` - Chat messages
 - `vote` - Message votes
 - `document` - Generated documents
+- `Entitlement` - **Custom**: User subscription/entitlement tracking
+- `WebhookEvent` - **Custom**: Stripe/Ghost webhook event log
 
 ### AI Tools System
 

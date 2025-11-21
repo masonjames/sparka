@@ -21,7 +21,34 @@ All code is TypeScript. Prefer React Server Components in `app/`; mark interacti
 Co-locate `<name>.test.ts(x)` beside the code they cover and run via `bun run test:unit`. Place Playwright specs in `tests/e2e/` for onboarding, entitlement, and Ghost/Stripe coverage; export `PLAYWRIGHT=True` before `bun run test:playwright`. Always finish a PR check with `bun run test:types` to guard shared contracts.
 
 ## Git, Upstream, & Deployment
-This fork tracks `upstream=https://github.com/FranciscoMoretti/sparka.git`; sync by fetching upstream, branching from `upstream/main`, reapplying branding, then running the full test suite (see `CLAUDE.md` for step-by-step). Use `gh` for status/PRs and `vercel link && vercel deploy --project prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r` for previews after `vercel env pull .env.local`. Never skip `CLAUDE.md` when onboarding new agents or planning deployments.
+
+This fork tracks `upstream=https://github.com/FranciscoMoretti/sparka.git` and includes custom Stripe/Ghost subscription integrations.
+
+### Upstream Merging Strategy
+**Use direct merge** (not rebase): `git fetch upstream && git merge upstream/main`
+- Always create backup: `git branch backup-before-upstream-merge-$(date +%Y%m%d)`
+- Expect conflicts in: `package.json`, `lib/env.ts`, `trpc/routers/_app.ts`, database migrations
+- See **Conflict Resolution Guide** in `CLAUDE.md` for specific patterns
+- After merge: `bun install && bun test:types && bun dev` to validate
+- Deploy preview first: `vercel` then `vercel --prod` after testing
+
+### Critical Files During Merges
+**Always preserve custom features in**:
+- `package.json`: Stripe dependency, React version overrides
+- `lib/env.ts`: Stripe/Ghost env vars, custom validators (hostname, cookie domain, subdomain)
+- `trpc/routers/_app.ts`: `entitlementsRouter` registration
+- `trpc/routers/entitlements.router.ts`: Full implementation
+- `lib/db/migrations/0032_*`: Entitlement/WebhookEvent tables
+- `lib/entitlements/`: Provisioning logic
+- `app/api/stripe/`, `app/api/ghost/`: Webhook handlers
+
+**Common post-merge fixes**:
+- React hydration: Button components need `...(disabled && { disabled: true })`
+- Dynamic routes: Add `export const dynamic = "force-dynamic"` to API routes using `request.headers`
+- Migration conflicts: Renumber our migration if both created same number
+
+### Deployment Workflow
+Use `gh` for status/PRs and `vercel link && vercel deploy --project prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r` for previews. Always `vercel env pull .env.local` before local testing. Never skip `CLAUDE.md` when onboarding new agents or planning deployments.
 
 ## Security & Configuration Tips
 Mirror `.env.example` into `.env.local`, populate secrets, and sync with `vercel env pull` before running `bun dev`. Set `APP_BASE_URL_OVERRIDE` + `NEXT_PUBLIC_APP_BASE_URL` to the canonical domain (e.g., `https://chat.masonjames.com`), `AUTH_COOKIE_DOMAIN_OVERRIDE` to `.masonjames.com` to share Better Auth cookies across subdomains, and keep `AUTH_TRUSTED_ORIGINS` updated for every future app host. `proxy.ts` assumes HTTPS headers, so configure preview deployments accordingly. Run migrations against a disposable database (`bun run db:migrate && bunx drizzle-kit studio`) before production pushes, and never commit AI keys, Better Auth secrets, or Ghost/Stripe credentials.
