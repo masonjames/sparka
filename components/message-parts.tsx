@@ -1,8 +1,8 @@
 "use client";
 
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { memo } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import {
   useMessagePartByPartIdx,
   useMessagePartsByPartRange,
@@ -10,7 +10,6 @@ import {
 } from "@/lib/stores/hooks-message-parts";
 import { isLastArtifact } from "./is-last-artifact";
 import { CodeInterpreterMessage } from "./part/code-interpreter";
-import { CreateDocumentMessage } from "./part/create-document-message";
 import { DocumentToolResult } from "./part/document-common";
 import { DocumentPreview } from "./part/document-preview";
 import { GeneratedImage } from "./part/generated-image";
@@ -83,7 +82,7 @@ function renderDeepResearchPart({
     ChatMessage["parts"][number],
     { type: "data-researchUpdate" }
   >["data"][];
-  chatStore: ReturnType<typeof useChatStoreApi>;
+  chatStore: ReturnType<typeof useChatStoreApi<ChatMessage>>;
   messageId: string;
   isReadonly: boolean;
 }) {
@@ -168,21 +167,63 @@ function PureMessagePart({
   const part = useMessagePartByPartIdx(messageId, partIdx);
   const { type } = part;
   const researchUpdates = useResearchUpdates(messageId, partIdx, type);
-  const chatStore = useChatStoreApi();
+  const chatStore = useChatStoreApi<ChatMessage>();
 
   if (part.type === "tool-getWeather") {
     return <Weather key={part.toolCallId} tool={part} />;
   }
 
-  if (part.type === "tool-createDocument") {
-    return (
-      <CreateDocumentMessage
-        isReadonly={isReadonly}
-        key={part.toolCallId}
-        messageId={messageId}
-        tool={part}
-      />
-    );
+  if (type === "tool-createDocument") {
+    const { toolCallId, state } = part;
+    if (state === "input-available") {
+      const { input } = part;
+      return (
+        <div key={toolCallId}>
+          <DocumentPreview
+            args={input}
+            isReadonly={isReadonly}
+            messageId={messageId}
+          />
+        </div>
+      );
+    }
+
+    if (state === "output-available") {
+      const { output, input } = part;
+      const shouldShowFullPreview = isLastArtifact(
+        chatStore.getState().getInternalMessages(),
+        toolCallId
+      );
+
+      if ("error" in output) {
+        return (
+          <div className="rounded border p-2 text-red-500" key={toolCallId}>
+            Error: {String(output.error)}
+          </div>
+        );
+      }
+
+      return (
+        <div key={toolCallId}>
+          {shouldShowFullPreview ? (
+            <DocumentPreview
+              args={input}
+              isReadonly={isReadonly}
+              messageId={messageId}
+              result={output}
+              type="create"
+            />
+          ) : (
+            <DocumentToolResult
+              isReadonly={isReadonly}
+              messageId={messageId}
+              result={output}
+              type="create"
+            />
+          )}
+        </div>
+      );
+    }
   }
 
   if (part.type === "tool-updateDocument") {

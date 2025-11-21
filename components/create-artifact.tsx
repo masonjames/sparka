@@ -1,10 +1,10 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { useChatStoreApi } from "@ai-sdk-tools/store";
 import type { QueryClient } from "@tanstack/react-query";
 import type { DataUIPart } from "ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { Suggestion } from "@/lib/db/schema";
-import type { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import type { useTRPC } from "@/trpc/react";
 import type { UIArtifact } from "./artifact-panel";
 
@@ -29,7 +29,7 @@ type ArtifactAction<M = any> = {
 
 export type ArtifactToolbarContext = {
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
 export type ArtifactToolbarItem = {

@@ -13,7 +13,7 @@ import { codeArtifact } from "@/lib/artifacts/code/client";
 import { sheetArtifact } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
 import type { Document, Vote } from "@/lib/db/schema";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import {
@@ -60,7 +60,7 @@ function PureArtifactPanel({
   isAuthenticated: boolean;
   className?: string;
 }) {
-  const storeApi = useChatStoreApi();
+  const storeApi = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, metadata, setMetadata, closeArtifact } =
     useArtifact();
   const queryClient = useQueryClient();

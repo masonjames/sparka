@@ -1,20 +1,25 @@
+// This file has hooks that are enabled by the with-message-parts middleware
+
 import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
-import { useChatStoreContext } from "./chat-store-context";
-import type { PartsAugmentedState } from "./with-message-parts";
+import {
+  useCustomChatStoreApi,
+  type CustomChatStoreState,
+} from "./custom-store-provider";
 
 export function usePartsStore<T>(
-  selector: (store: PartsAugmentedState<ChatMessage>) => T,
-  equalityFn?: (a: T, b: T) => boolean
+  selector: (store: CustomChatStoreState<ChatMessage>) => T,
+  equalityFn?: (a: T, b: T) => boolean,
 ): T {
-  const store = useChatStoreContext();
+  const store = useCustomChatStoreApi<ChatMessage>();
   if (!store) {
     throw new Error("usePartsStore must be used within ChatStoreProvider");
   }
   return useStoreWithEqualityFn(store, selector, equalityFn);
 }
+
 
 export const useMessagePartTypesById = (
   messageId: string

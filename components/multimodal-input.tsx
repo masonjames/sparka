@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
 import { PlusIcon } from "lucide-react";
 import type React from "react";
 import {
@@ -32,12 +33,10 @@ import {
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import {
-  useChatHelperStop,
+  useLastMessageId,
   useMessageIds,
-  useSetMessages,
-} from "@/lib/stores/hooks-base";
+} from "@/lib/stores/hooks";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
@@ -80,13 +79,13 @@ function PureMultimodalInput({
   disableSuggestedActions?: boolean;
   emptyStateOverride?: React.ReactNode;
 }) {
-  const storeApi = useChatStoreApi();
+  const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
-  const setMessages = useSetMessages();
   const messageIds = useMessageIds();
-
+  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const lastMessageId = useLastMessageId();
   const {
     editorRef,
     selectedTool,
@@ -250,17 +249,13 @@ function PureMultimodalInput({
 
   const coreSubmitLogic = useCallback(() => {
     const input = getInputValue();
-    const sendMessage = storeApi.getState().currentChatHelpers?.sendMessage;
-    if (!sendMessage) {
-      return;
-    }
 
     updateChatUrl(chatId);
 
     // Get the appropriate parent message ID
     const effectiveParentMessageId = isEditMode
       ? parentMessageId
-      : storeApi.getState().getLastMessageId();
+      : lastMessageId;
 
     // In edit mode, trim messages to the parent message
     if (isEditMode) {
@@ -311,8 +306,8 @@ function PureMultimodalInput({
     parentMessageId,
     selectedModelId,
     editorRef,
+    lastMessageId,
     onSendMessage,
-    storeApi,
     updateChatUrl,
     trimMessagesInEditMode,
   ]);
@@ -724,7 +719,7 @@ function PureChatInputBottomControls({
   uploadQueue: string[];
   submission: { enabled: boolean; message?: string };
 }) {
-  const stopHelper = useChatHelperStop();
+  const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
     <PromptInputToolbar className="flex w-full min-w-0 flex-row justify-between @[400px]:gap-2 gap-1 border-t">
       <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">

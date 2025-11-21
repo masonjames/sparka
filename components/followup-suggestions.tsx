@@ -1,10 +1,10 @@
 "use client";
 
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import {
   useMessagePartByPartIdx,
@@ -25,10 +25,8 @@ export function FollowUpSuggestions({
 
   const handleClick = useCallback(
     (suggestion: string) => {
-      const sendMessage = storeApi.getState().currentChatHelpers?.sendMessage;
-      if (!sendMessage) {
-        return;
-      }
+      const sendMessage = storeApi.getState().sendMessage;
+      if (!sendMessage) return;
 
       const parentMessageId = storeApi.getState().getLastMessageId();
 

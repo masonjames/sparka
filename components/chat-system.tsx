@@ -8,31 +8,35 @@ import { DataStreamProvider } from "@/components/data-stream-provider";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
-import { ChatStoreProvider } from "@/lib/stores/chat-store-context";
+import {
+  CustomStoreProvider
+} from "@/lib/stores/custom-store-provider";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 import { MessageTreeProvider } from "@/providers/message-tree-provider";
 
-export const ChatSystem = memo(
-  ({
-    id,
-    initialMessages,
-    isReadonly,
-    initialTool = null,
-    overrideModelId,
-    projectId,
-    isProjectPage = false,
-  }: {
-    id: string;
-    initialMessages: ChatMessage[];
-    isReadonly: boolean;
-    initialTool?: UiToolName | null;
-    overrideModelId?: AppModelId;
-    projectId?: string;
-    isProjectPage?: boolean;
-  }) => (
+export const ChatSystem = memo(function ChatSystem({
+  id,
+  initialMessages,
+  isReadonly,
+  initialTool = null,
+  overrideModelId,
+  projectId,
+  isProjectPage = false,
+}: {
+  id: string;
+  initialMessages: ChatMessage[];
+  isReadonly: boolean;
+  initialTool?: UiToolName | null;
+  overrideModelId?: AppModelId;
+  projectId?: string;
+  isProjectPage?: boolean;
+}) {
+  return (
     <ArtifactProvider>
       <DataStreamProvider>
-        <ChatStoreProvider initialMessages={initialMessages}>
+        <CustomStoreProvider<ChatMessage>
+          initialMessages={initialMessages}
+        >
           <MessageTreeProvider>
             {isReadonly ? (
               <>
@@ -75,8 +79,8 @@ export const ChatSystem = memo(
               </ChatInputProvider>
             )}
           </MessageTreeProvider>
-        </ChatStoreProvider>
+        </CustomStoreProvider>
       </DataStreamProvider>
     </ArtifactProvider>
-  )
-);
+  );
+});

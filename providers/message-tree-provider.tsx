@@ -1,5 +1,6 @@
 "use client";
 
+import { useChatActions } from "@ai-sdk-tools/store";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
@@ -10,7 +11,6 @@ import {
   useState,
 } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useSetMessages } from "@/lib/stores/hooks-base";
 import {
   buildThreadFromLeaf,
   findLeafDfsToRightFromMessageId,
@@ -41,7 +41,7 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
-  const setMessages = useSetMessages();
+  const { setMessages } = useChatActions<ChatMessage>();
 
   // Select the appropriate chat ID based on isShared flag
   // Subscribe to query cache changes for the specific chat messages query

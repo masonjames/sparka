@@ -1,7 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { memo } from "react";
 import { Action } from "@/components/ai-elements/actions";
-import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks-base";
 import { useMessageTree } from "@/providers/message-tree-provider";
 import { useSession } from "@/providers/session-provider";
 
@@ -18,9 +17,6 @@ export function PureMessageSiblings({
   const { getMessageSiblingInfo, navigateToSibling } = useMessageTree();
   const siblingInfo = getMessageSiblingInfo(messageId);
   const hasSiblings = siblingInfo && siblingInfo.siblings.length > 1;
-
-  const _role = useMessageRoleById(messageId);
-  const _message = useMessageById(messageId);
 
   return (
     <div className="flex items-center justify-center gap-1">

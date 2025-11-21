@@ -1,6 +1,6 @@
 "use client";
+import { useChatId } from "@ai-sdk-tools/store";
 import { memo } from "react";
-import { useChatId } from "@/lib/stores/hooks-base";
 import { Message, MessageContent } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
 import { MessageActions } from "./message-actions";

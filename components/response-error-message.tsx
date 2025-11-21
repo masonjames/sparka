@@ -1,11 +1,11 @@
+import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
 import { RefreshCcwIcon } from "lucide-react";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSetMessages } from "@/lib/stores/hooks-base";
+import type { ChatMessage } from "@/lib/ai/types";
 import { Button } from "./ui/button";
 
 export function ResponseErrorMessage() {
-  const setMessages = useSetMessages();
-  const chatStore = useChatStoreApi();
+  const { setMessages, regenerate } = useChatActions<ChatMessage>();
+  const chatStore = useChatStoreApi<ChatMessage>();
 
   return (
     <div className="mx-auto flex w-full flex-col items-center gap-4 rounded-lg px-6 py-8 shadow-xs md:max-w-2xl">
@@ -36,7 +36,7 @@ export function ResponseErrorMessage() {
             .getState()
             .messages.slice(0, -1);
           setMessages(messagesWithoutLastAssistant);
-          chatStore.getState().currentChatHelpers?.regenerate?.();
+          regenerate();
         }}
         variant="outline"
       >

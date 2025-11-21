@@ -1,4 +1,4 @@
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { isLastArtifact } from "../is-last-artifact";
 import {
   DocumentToolCall,
@@ -8,6 +8,7 @@ import {
   type UpdateDocumentTool,
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
+import type { ChatMessage } from "@/lib/ai/types";
 
 export function UpdateDocumentMessage({
   tool,
@@ -18,7 +19,7 @@ export function UpdateDocumentMessage({
   isReadonly: boolean;
   messageId: string;
 }) {
-  const chatStore = useChatStoreApi();
+  const chatStore = useChatStoreApi<ChatMessage>();
   if (tool.state === "input-available") {
     const toolInput = tool.input;
     const title =

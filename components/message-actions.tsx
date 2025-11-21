@@ -1,3 +1,4 @@
+import { useChatStoreApi, useMessageById } from "@ai-sdk-tools/store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import equal from "fast-deep-equal";
 import { Pencil, PencilOff } from "lucide-react";
@@ -9,9 +10,9 @@ import {
   MessageActions as Actions,
 } from "@/components/ai-elements/message";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { ChatMessage } from "@/lib/ai/types";
 import type { Vote } from "@/lib/db/schema";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useMessageById, useMessageRoleById } from "@/lib/stores/hooks-base";
+import { useMessageRoleById } from "@/lib/stores/hooks";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
@@ -179,7 +180,7 @@ export function PureMessageActions({
 }
 
 function SelectedModelId({ messageId }: { messageId: string }) {
-  const message = useMessageById(messageId);
+  const message = useMessageById<ChatMessage>(messageId);
   return message?.metadata?.selectedModel ? (
     <div className="ml-2 flex items-center">
       <Tag>{message.metadata.selectedModel}</Tag>
