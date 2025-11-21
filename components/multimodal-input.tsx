@@ -34,10 +34,10 @@ import {
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import {
-  useChatMessages,
   useLastMessageId,
   useMessageIds,
 } from "@/lib/stores/hooks";
+import { useChatMessages } from "@ai-sdk-tools/store";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";

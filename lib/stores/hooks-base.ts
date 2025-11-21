@@ -21,11 +21,6 @@ export function useBaseChatStore<T = StoreState<ChatMessage>>(
 }
 
 // Base selector hooks using throttled messages where relevant
-export const useChatMessages = () =>
-  useBaseChatStore((state) => state.getThrottledMessages());
-export const useChatStatus = () => useBaseChatStore((state) => state.status);
-export const useChatError = () => useBaseChatStore((state) => state.error);
-export const useChatId = () => useBaseChatStore((state) => state.id);
 export const useMessageIds = () =>
   useBaseChatStore((state) => state.getMessageIds(), shallow);
 
@@ -45,17 +40,6 @@ export const useLastUsageUntilMessageId = (messageId: string | null) =>
       ?.metadata?.usage;
   }, shallow);
 
-export const useMessageById = (messageId: string): ChatMessage =>
-  useBaseChatStore((state) => {
-    const message = state
-      .getThrottledMessages()
-      .find((m) => m.id === messageId);
-    if (!message) {
-      throw new Error(`Message not found for id: ${messageId}`);
-    }
-    return message;
-  });
-
 export const useMessageRoleById = (messageId: string): ChatMessage["role"] =>
   useBaseChatStore((state) => {
     const message = state
@@ -66,16 +50,6 @@ export const useMessageRoleById = (messageId: string): ChatMessage["role"] =>
     }
     return message.role;
   });
-export const useMessagePartsById = (messageId: string): ChatMessage["parts"] =>
-  useBaseChatStore((state) => {
-    const message = state
-      .getThrottledMessages()
-      .find((m) => m.id === messageId);
-    if (!message) {
-      throw new Error(`Message not found for id: ${messageId}`);
-    }
-    return message.parts;
-  }, shallow);
 export const useMessageResearchUpdatePartsById = (
   messageId: string
 ): Extract<ChatMessage["parts"][number], { type: "data-researchUpdate" }>[] =>
@@ -93,6 +67,7 @@ export const useMessageResearchUpdatePartsById = (
       { type: "data-researchUpdate" }
     >[];
   }, equal);
+
 export const useMessageMetadataById = (
   messageId: string
 ): ChatMessage["metadata"] =>
@@ -105,26 +80,6 @@ export const useMessageMetadataById = (
     }
     return message.metadata;
   }, shallow);
-
-export const useChatActions = () =>
-  useBaseChatStore(
-    (state) => ({
-      setMessages: state.setMessages,
-      pushMessage: state.pushMessage,
-      popMessage: state.popMessage,
-      replaceMessage: state.replaceMessage,
-      setStatus: state.setStatus,
-      setError: state.setError,
-      setId: state.setId,
-      setNewChat: state.setNewChat,
-    }),
-    shallow
-  );
-export const useSetMessages = () =>
-  useBaseChatStore((state) => state.setMessages);
-export const useChatHelperStop = () => useBaseChatStore((state) => state.stop);
-export const useSendMessage = () =>
-  useBaseChatStore((state) => state.sendMessage);
 
 export const useLastMessageId = () =>
   useBaseChatStore((state) => state.getLastMessageId());

@@ -1,10 +1,9 @@
 "use client";
-import { useChatId } from "@ai-sdk-tools/store";
+import { useChatId, useMessageById } from "@ai-sdk-tools/store";
 import equal from "fast-deep-equal";
 import { memo, useState } from "react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { Vote } from "@/lib/db/schema";
-import { useMessageById } from "@/lib/stores/hooks";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
 import { AttachmentList } from "./attachment-list";
 import { ImageModal } from "./image-modal";
