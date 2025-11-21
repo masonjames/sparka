@@ -49,14 +49,15 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button"
 
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      disabled={disabled || undefined}
-      {...props}
-    />
-  )
+  // Only include disabled attribute if it's explicitly true
+  const buttonProps = {
+    "data-slot": "button" as const,
+    className: cn(buttonVariants({ variant, size, className })),
+    ...(disabled && { disabled: true }),
+    ...props,
+  }
+
+  return <Comp {...buttonProps} />
 }
 
 export { Button, buttonVariants }
