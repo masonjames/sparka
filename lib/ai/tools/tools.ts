@@ -7,7 +7,6 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { retrieve } from "@/lib/ai/tools/retrieve";
-import { stockChart } from "@/lib/ai/tools/stock-chart";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Session } from "@/lib/auth";
@@ -69,7 +68,6 @@ export function getTools({
         }
       : {}),
 
-    ...(siteConfig.integrations.sandbox ? { stockChart } : {}),
     ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
     ...(siteConfig.integrations.openai
       ? { generateImage: generateImage({ attachments, lastGeneratedImage }) }

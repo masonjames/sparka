@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  useMessageMetadataById,
-  useMessagePartTypesById,
-} from "@/lib/stores/hooks";
+import { useMessageMetadataById } from "@/lib/stores/hooks-base";
+import { useMessagePartTypesById } from "@/lib/stores/hooks-message-parts";
 import { Skeleton } from "./ui/skeleton";
 
 export function PartialMessageLoading({ messageId }: { messageId: string }) {

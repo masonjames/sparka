@@ -22,8 +22,6 @@ export type AppModelDefinition = Omit<ModelDefinition, "id"> & {
 const DISABLED_MODELS: Partial<Record<ModelId, true>> = {
   // 'anthropic/claude-opus-4': true,
   // 'anthropic/claude-opus-4.1': true,
-  "cohere/command-r": true,
-  "cohere/command-r-plus": true,
   "morph/morph-v3-large": true,
   "morph/morph-v3-fast": true,
 };
@@ -90,9 +88,9 @@ const _modelsByIdCache = new Map<string, AppModelDefinition>();
 
 function getModelsByIdDict(): Map<string, AppModelDefinition> {
   if (_modelsByIdCache.size === 0) {
-    allAppModels.forEach((model) => {
+    for (const model of allAppModels) {
       _modelsByIdCache.set(model.id, model);
-    });
+    }
   }
   return _modelsByIdCache;
 }
@@ -111,9 +109,9 @@ const _imageModelsByIdCache = new Map<string, ImageModelDefinition>();
 
 function getImageModelsByIdDict(): Map<string, ImageModelDefinition> {
   if (_imageModelsByIdCache.size === 0) {
-    allImageModels.forEach((model) => {
+    for (const model of allImageModels) {
       _imageModelsByIdCache.set(model.id, model);
-    });
+    }
   }
   return _imageModelsByIdCache;
 }
@@ -131,7 +129,7 @@ export function getImageModelDefinition(
 
 export const DEFAULT_CHAT_MODEL: ModelId = "openai/gpt-5-nano";
 export const DEFAULT_PDF_MODEL: ModelId = "openai/gpt-5-mini";
-export const DEFAULT_TITLE_MODEL: ModelId = "openai/gpt-5-nano";
+export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
 export const DEFAULT_ARTIFACT_MODEL: ModelId = "openai/gpt-5-nano";
 export const DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL: ModelId =
   "google/gemini-2.5-flash-lite";

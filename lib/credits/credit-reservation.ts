@@ -2,13 +2,13 @@ import {
   finalizeCreditsUsage,
   releaseReservedCredits,
 } from "@/lib/repositories/credits";
-import { reserveCredits } from "./reserveCredits";
+import { reserveCredits } from "./reserve-credits";
 
 export class CreditReservation {
   private readonly userId: string;
   private readonly amount: number;
   private released = false;
-  public readonly budget: number;
+  readonly budget: number;
 
   constructor(userId: string, amount: number) {
     this.userId = userId;
@@ -37,7 +37,7 @@ export class CreditReservation {
     }
   }
 
-  async cleanup() {
+  cleanup() {
     return this.release();
   }
 }

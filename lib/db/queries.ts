@@ -1,7 +1,22 @@
 import "server-only";
 import { del } from "@vercel/blob";
-import { and, asc, desc, eq, gt, gte, inArray } from "drizzle-orm";
-import type { Attachment } from "@/lib/ai/types";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  type SQL,
+} from "drizzle-orm";
+import type { Attachment, ChatMessage } from "@/lib/ai/types";
+import { chatMessageToDbMessage } from "@/lib/message-conversion";
+import {
+  mapDBPartsToUIParts,
+  mapUIMessagePartsToDBParts,
+} from "@/lib/utils/message-mapping";
 import type { ArtifactKind } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {
@@ -9,6 +24,9 @@ import {
   type DBMessage,
   document,
   message,
+  type Part,
+  part,
+  project,
   type Suggestion,
   suggestion,
   type User,
@@ -29,10 +47,12 @@ export async function saveChat({
   id,
   userId,
   title,
+  projectId,
 }: {
   id: string;
   userId: string;
   title: string;
+  projectId?: string;
 }) {
   try {
     return await db.insert(chat).values({
@@ -41,6 +61,7 @@ export async function saveChat({
       updatedAt: new Date(),
       userId,
       title,
+      projectId: projectId ?? null,
     });
   } catch (error) {
     console.error("Failed to save chat in database");
@@ -68,15 +89,183 @@ export async function deleteChatById({ id }: { id: string }) {
   }
 }
 
-export async function getChatsByUserId({ id }: { id: string }) {
+export async function getChatsByUserId({
+  id,
+  projectId,
+}: {
+  id: string;
+  projectId?: string | null;
+}) {
+  console.log("[getChatsByUserId] Starting", {
+    userId: id,
+    projectId,
+    projectIdType: typeof projectId,
+    projectIdIsNull: projectId === null,
+    projectIdIsUndefined: projectId === undefined,
+  });
+
+  try {
+    let conditions: SQL<unknown> | undefined = eq(chat.userId, id);
+    if (projectId === null) {
+      // Filter for chats without a project
+      conditions = and(eq(chat.userId, id), isNull(chat.projectId));
+      console.log("[getChatsByUserId] Using null project condition");
+    } else if (projectId) {
+      // Filter for chats in a specific project
+      conditions = and(eq(chat.userId, id), eq(chat.projectId, projectId));
+      console.log("[getChatsByUserId] Using specific project condition", {
+        projectId,
+      });
+    } else {
+      // Get all chats for user
+      conditions = eq(chat.userId, id);
+      console.log("[getChatsByUserId] Using all chats condition");
+    }
+
+    console.log("[getChatsByUserId] Executing query");
+    const result = await db
+      .select()
+      .from(chat)
+      .where(conditions)
+      .orderBy(desc(chat.updatedAt));
+
+    console.log("[getChatsByUserId] Query completed", {
+      count: result.length,
+      sampleChat: result[0]
+        ? {
+            id: result[0].id,
+            updatedAt: result[0].updatedAt,
+            updatedAtType: typeof result[0].updatedAt,
+          }
+        : null,
+    });
+
+    return result;
+  } catch (error) {
+    console.error(
+      "[getChatsByUserId] Failed to get chats by user from database",
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        userId: id,
+        projectId,
+      }
+    );
+    throw error;
+  }
+}
+
+export async function createProject({
+  id,
+  userId,
+  name,
+  instructions = "",
+}: {
+  id: string;
+  userId: string;
+  name: string;
+  instructions?: string;
+}) {
+  try {
+    return await db.insert(project).values({
+      id,
+      userId,
+      name,
+      instructions,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  } catch (error) {
+    console.error("Failed to create project in database");
+    throw error;
+  }
+}
+
+export async function getProjectsByUserId({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(project)
+      .where(eq(project.userId, userId))
+      .orderBy(desc(project.updatedAt));
+  } catch (error) {
+    console.error("Failed to get projects by user from database");
+    throw error;
+  }
+}
+
+export async function getProjectById({ id }: { id: string }) {
+  try {
+    const [selectedProject] = await db
+      .select()
+      .from(project)
+      .where(eq(project.id, id));
+    return selectedProject;
+  } catch (error) {
+    console.error("Failed to get project by id from database");
+    throw error;
+  }
+}
+
+export async function updateProject({
+  id,
+  updates,
+}: {
+  id: string;
+  updates: Partial<{ name: string; instructions: string }>;
+}) {
+  try {
+    return await db
+      .update(project)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(project.id, id));
+  } catch (error) {
+    console.error("Failed to update project in database");
+    throw error;
+  }
+}
+
+export async function deleteProject({ id }: { id: string }) {
+  try {
+    return await db.delete(project).where(eq(project.id, id));
+  } catch (error) {
+    console.error("Failed to delete project from database");
+    throw error;
+  }
+}
+
+export async function getChatsByProjectId({
+  projectId,
+}: {
+  projectId: string;
+}) {
   try {
     return await db
       .select()
       .from(chat)
-      .where(eq(chat.userId, id))
+      .where(eq(chat.projectId, projectId))
       .orderBy(desc(chat.updatedAt));
   } catch (error) {
-    console.error("Failed to get chats by user from database");
+    console.error("Failed to get chats by project id from database");
+    throw error;
+  }
+}
+
+export async function moveChatToProject({
+  chatId,
+  projectId,
+}: {
+  chatId: string;
+  projectId: string | null;
+}) {
+  try {
+    return await db.update(chat).set({ projectId }).where(eq(chat.id, chatId));
+  } catch (error) {
+    console.error("Failed to move chat to project in database");
     throw error;
   }
 }
@@ -100,14 +289,35 @@ export async function getChatById({ id }: { id: string }) {
   }
 }
 
-export async function saveMessage({ _message }: { _message: DBMessage }) {
+export async function saveMessage({
+  id,
+  chatId,
+  message: chatMessage,
+}: {
+  id: string;
+  chatId: string;
+  message: ChatMessage;
+}) {
   try {
-    const result = await db.insert(message).values(_message);
+    return await db.transaction(async (tx) => {
+      // Convert ChatMessage to DBMessage (without parts)
+      const dbMessage = chatMessageToDbMessage(chatMessage, chatId);
+      dbMessage.id = id;
 
-    // Update chat's updatedAt timestamp
-    await updateChatUpdatedAt({ chatId: _message.chatId });
+      // Insert message (without parts - parts are stored in Part table)
+      await tx.insert(message).values(dbMessage);
 
-    return result;
+      // Save parts to Part table
+      const mappedDBParts = mapUIMessagePartsToDBParts(chatMessage.parts, id);
+      if (mappedDBParts.length > 0) {
+        await tx.insert(part).values(mappedDBParts);
+      }
+
+      // Update chat's updatedAt timestamp
+      await updateChatUpdatedAt({ chatId });
+
+      return;
+    });
   } catch (error) {
     console.error("Failed to save message in database", error);
     throw error;
@@ -115,52 +325,150 @@ export async function saveMessage({ _message }: { _message: DBMessage }) {
 }
 
 // TODO: This should indicate the it's only updating messages for a single chat
-export async function saveMessages({ _messages }: { _messages: DBMessage[] }) {
+export async function saveMessages({
+  messages,
+}: {
+  messages: Array<{
+    id: string;
+    chatId: string;
+    message: ChatMessage;
+  }>;
+}) {
   try {
-    if (_messages.length === 0) {
+    if (messages.length === 0) {
       return;
     }
-    const result = await db.insert(message).values(_messages);
+    return await db.transaction(async (tx) => {
+      // Insert messages (without parts - parts are stored in Part table)
+      const dbMessages = messages.map(({ id, chatId, message: msg }) => {
+        const dbMsg = chatMessageToDbMessage(msg, chatId);
+        dbMsg.id = id;
+        return dbMsg;
+      });
+      await tx.insert(message).values(dbMessages);
 
-    // Update chat's updatedAt timestamp for all affected chats
-    const uniqueChatIds = [...new Set(_messages.map((msg) => msg.chatId))];
-    await Promise.all(
-      uniqueChatIds.map((chatId) => updateChatUpdatedAt({ chatId }))
-    );
+      // Save parts to Part table
+      const allDbParts: Omit<Part, "id" | "createdAt">[] = [];
+      for (const { id, message: msg } of messages) {
+        const dbParts = mapUIMessagePartsToDBParts(msg.parts, id);
+        allDbParts.push(...dbParts);
+      }
+      if (allDbParts.length > 0) {
+        await tx.insert(part).values(allDbParts);
+      }
 
-    return result;
+      // Update chat's updatedAt timestamp for all affected chats
+      const uniqueChatIds = [...new Set(messages.map(({ chatId }) => chatId))];
+      await Promise.all(
+        uniqueChatIds.map((chatId) => updateChatUpdatedAt({ chatId }))
+      );
+
+      return;
+    });
   } catch (error) {
     console.error("Failed to save messages in database", error);
     throw error;
   }
 }
 
-export async function updateMessage({ _message }: { _message: DBMessage }) {
+export async function updateMessage({
+  id,
+  chatId,
+  message: chatMessage,
+}: {
+  id: string;
+  chatId: string;
+  message: ChatMessage;
+}) {
   try {
-    return await db
-      .update(message)
-      .set({
-        parts: _message.parts,
-        annotations: _message.annotations,
-        attachments: _message.attachments,
-        createdAt: _message.createdAt,
-        isPartial: _message.isPartial,
-        parentMessageId: _message.parentMessageId,
-      })
-      .where(eq(message.id, _message.id));
+    return await db.transaction(async (tx) => {
+      // Convert ChatMessage to DBMessage (without parts)
+      const dbMessage = chatMessageToDbMessage(chatMessage, chatId);
+      dbMessage.id = id;
+
+      // Update message (without parts - parts are stored in Part table)
+      await tx
+        .update(message)
+        .set({
+          annotations: dbMessage.annotations,
+          attachments: dbMessage.attachments,
+          createdAt: dbMessage.createdAt,
+          isPartial: dbMessage.isPartial,
+          parentMessageId: dbMessage.parentMessageId,
+        })
+        .where(eq(message.id, id));
+
+      // Update parts in Part table
+      // Delete existing parts
+      await tx.delete(part).where(eq(part.messageId, id));
+
+      // Insert new parts
+      const mappedDBParts = mapUIMessagePartsToDBParts(chatMessage.parts, id);
+      if (mappedDBParts.length > 0) {
+        await tx.insert(part).values(mappedDBParts);
+      }
+
+      return;
+    });
   } catch (error) {
     console.error("Failed to update message in database", error);
     throw error;
   }
 }
 
-export async function getAllMessagesByChatId({ chatId }: { chatId: string }) {
+export async function getAllMessagesByChatId({
+  chatId,
+}: {
+  chatId: string;
+}): Promise<ChatMessage[]> {
   try {
-    return await db
+    const messages = await db
       .select()
       .from(message)
       .where(eq(message.chatId, chatId))
       .orderBy(asc(message.createdAt));
+
+    if (messages.length === 0) {
+      return [];
+    }
+
+    // Load all parts for all messages in a single query
+    const messageIds = messages.map((msg) => msg.id);
+    const allParts = await db
+      .select()
+      .from(part)
+      .where(inArray(part.messageId, messageIds))
+      .orderBy(asc(part.messageId), asc(part.order));
+
+    // Group parts by messageId
+    const partsByMessageId = new Map<string, Part[]>();
+    for (const dbPart of allParts) {
+      const existing = partsByMessageId.get(dbPart.messageId) ?? [];
+      existing.push(dbPart);
+      partsByMessageId.set(dbPart.messageId, existing);
+    }
+
+    // Reconstruct ChatMessage objects with parts from Part table
+    return messages.map((msg) => {
+      const dbParts = partsByMessageId.get(msg.id);
+      const parts =
+        dbParts && dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [];
+
+      return {
+        id: msg.id,
+        role: msg.role as ChatMessage["role"],
+        parts,
+        metadata: {
+          createdAt: msg.createdAt,
+          isPartial: msg.isPartial,
+          parentMessageId: msg.parentMessageId,
+          selectedModel: (msg.selectedModel ||
+            "") as ChatMessage["metadata"]["selectedModel"],
+          selectedTool: (msg.selectedTool ||
+            undefined) as ChatMessage["metadata"]["selectedTool"],
+        },
+      };
+    });
   } catch (error) {
     console.error("Failed to get all messages by chat ID", error);
     throw error;
@@ -471,7 +779,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
         and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
       );
 
-    const messageIds = messagesToDelete.map((message) => message.id);
+    const messageIds = messagesToDelete.map((msg) => msg.id);
 
     if (messageIds.length > 0) {
       // Clean up attachments before deleting messages

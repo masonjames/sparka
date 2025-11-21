@@ -22,12 +22,16 @@ export const ChatSystem = memo(function ChatSystem({
   isReadonly,
   initialTool = null,
   overrideModelId,
+  projectId,
+  isProjectPage = false,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   isReadonly: boolean;
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
+  projectId?: string;
+  isProjectPage?: boolean;
 }) {
   const storeRef = useRef<CustomChatStoreApi<ChatMessage> | null>(null);
   if (storeRef.current === null) {
@@ -36,20 +40,28 @@ export const ChatSystem = memo(function ChatSystem({
   return (
     <ArtifactProvider>
       <DataStreamProvider>
-        <AiSdkToolsStoreProvider
+        <AiSdkToolsStoreProvider<ChatMessage>
           initialMessages={initialMessages}
+          
           store={storeRef.current}
         >
           {/* <ChatStoreProvider initialMessages={initialMessages}> */}
           <MessageTreeProvider>
             {isReadonly ? (
               <>
-                <ChatSync id={id} initialMessages={initialMessages} />
-                <Chat
+                <ChatSync
                   id={id}
                   initialMessages={initialMessages}
+                  projectId={projectId}
+                />
+                <Chat
+                  disableSuggestedActions={isProjectPage}
+                  id={id}
+                  initialMessages={initialMessages}
+                  isProjectPage={isProjectPage}
                   isReadonly={isReadonly}
                   key={id}
+                  projectId={projectId}
                 />
               </>
             ) : (
@@ -58,12 +70,19 @@ export const ChatSystem = memo(function ChatSystem({
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >
-                <ChatSync id={id} initialMessages={initialMessages} />
-                <Chat
+                <ChatSync
                   id={id}
                   initialMessages={initialMessages}
+                  projectId={projectId}
+                />
+                <Chat
+                  disableSuggestedActions={isProjectPage}
+                  id={id}
+                  initialMessages={initialMessages}
+                  isProjectPage={isProjectPage}
                   isReadonly={isReadonly}
                   key={id}
+                  projectId={projectId}
                 />
                 <DataStreamHandler id={id} />
               </ChatInputProvider>

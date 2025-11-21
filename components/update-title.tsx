@@ -1,4 +1,4 @@
-import { TextShimmerLoader } from "@/components/prompt-kit/loader";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { cn } from "@/lib/utils";
 
 export const UpdateTitle = ({
@@ -12,10 +12,9 @@ export const UpdateTitle = ({
 }) => {
   if (isRunning) {
     return (
-      <TextShimmerLoader
-        className={cn("font-medium text-sm", className)}
-        text={title}
-      />
+      <Shimmer as="h3" className={cn("font-medium text-sm", className)}>
+        {title}
+      </Shimmer>
     );
   }
 

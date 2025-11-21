@@ -14,7 +14,7 @@ export const systemPrompt = () => `You are a friendly assistant!
 ## Content Rules:
   - Responses must be informative, long and very detailed which address the question's answer straight forward instead of taking it to the conclusion.
   - Use structured answers with markdown format and tables too.
-  - Mermaid: Return diagrams in fenced mermaid code blocks.
+  - If a diagram is needed, return it in a fenced mermaid code block.
 
 ### Citation rules:
 - Insert citation right after the relevant sentence/paragraph — not in a footer
@@ -66,23 +66,30 @@ IMPORTANT CSV FORMATTING RULES:
 export const updateDocumentPrompt = (
   currentContent: string | null,
   type: ArtifactKind
-) =>
-  type === "text"
-    ? `\
+) => {
+  if (type === "text") {
+    return `\
 Improve the following contents of the document based on the given prompt.
 
 ${currentContent}
-`
-    : type === "code"
-      ? `\
+`;
+  }
+
+  if (type === "code") {
+    return `\
 Improve the following code snippet based on the given prompt.
 
 ${currentContent}
-`
-      : type === "sheet"
-        ? `\
+`;
+  }
+
+  if (type === "sheet") {
+    return `\
 Improve the following spreadsheet based on the given prompt.
 
 ${currentContent}
-`
-        : "";
+`;
+  }
+
+  return "";
+};

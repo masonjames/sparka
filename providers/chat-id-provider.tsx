@@ -24,6 +24,8 @@ type ChatId = {
   type: "chat" | "provisional" | "shared";
 };
 
+const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
+
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const provisionalChatIdRef = useRef<string>(generateUUID());
@@ -39,6 +41,24 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
           type: "shared",
         };
       }
+    }
+
+    // Handle project routes
+    const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
+    if (projectMatch) {
+      const [, _projectId, chatId] = projectMatch;
+      if (chatId) {
+        // /project/:projectId/chat/:chatId
+        return {
+          id: chatId,
+          type: "chat",
+        };
+      }
+      // /project/:projectId - provisional chat
+      return {
+        id: provisionalChatIdRef.current,
+        type: "provisional",
+      };
     }
 
     if (pathname === "/") {

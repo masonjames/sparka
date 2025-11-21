@@ -6,7 +6,7 @@ import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { Suggestion } from "@/lib/db/schema";
 import type { useTRPC } from "@/trpc/react";
-import type { UIArtifact } from "./artifact";
+import type { UIArtifact } from "./artifact-panel";
 
 export type ArtifactActionContext<M = any> = {
   content: string;
@@ -29,7 +29,7 @@ type ArtifactAction<M = any> = {
 
 export type ArtifactToolbarContext = {
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
 export type ArtifactToolbarItem = {

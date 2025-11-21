@@ -25,7 +25,7 @@ export type BaseChart = {
 };
 
 export function InteractiveChart({ chart }: { chart: BaseChart }) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   // TOOD: Update for multitheme support
   // const textColor = theme === 'dark' ? '#e5e5e5' : '#171717';
   const textColor = "#e5e5e5";
@@ -237,7 +237,7 @@ export function InteractiveChart({ chart }: { chart: BaseChart }) {
             notMerge={true}
             option={getChartOptions()}
             style={{ height: "400px", width: "100%" }}
-            theme={theme === "dark" ? "dark" : undefined}
+            theme={resolvedTheme === "dark" ? "dark" : undefined}
           />
         </div>
       </Card>

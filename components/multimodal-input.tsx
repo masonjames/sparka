@@ -59,6 +59,7 @@ const IMAGE_UPLOAD_LIMITS = {
 const IMAGE_UPLOAD_MAX_MB = Math.round(
   IMAGE_UPLOAD_LIMITS.maxBytes / (1024 * 1024)
 );
+const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
 function PureMultimodalInput({
   chatId,
@@ -67,6 +68,8 @@ function PureMultimodalInput({
   isEditMode = false,
   parentMessageId,
   onSendMessage,
+  disableSuggestedActions = false,
+  emptyStateOverride,
 }: {
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -74,6 +77,8 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
+  disableSuggestedActions?: boolean;
+  emptyStateOverride?: React.ReactNode;
 }) {
   const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
@@ -134,21 +139,14 @@ function PureMultimodalInput({
 
   // Centralized submission gating
 
-  let selectedModelDef: AppModelDefinition | null = null;
+  let _selectedModelDef: AppModelDefinition | null = null;
   try {
-    selectedModelDef = getAppModelDefinition(selectedModelId);
+    _selectedModelDef = getAppModelDefinition(selectedModelId);
   } catch {
-    selectedModelDef = getAppModelDefinition(DEFAULT_CHAT_MODEL);
+    _selectedModelDef = getAppModelDefinition(DEFAULT_CHAT_MODEL);
   }
-  const isImageOutputModel = Boolean(selectedModelDef?.output?.image);
   const submission: { enabled: false; message: string } | { enabled: true } =
     (() => {
-      if (isImageOutputModel) {
-        return {
-          enabled: false,
-          message: "Image models are not supported yet",
-        };
-      }
       if (isModelDisallowedForAnonymous) {
         return { enabled: false, message: "Log in to use this model" };
       }
@@ -207,13 +205,54 @@ function PureMultimodalInput({
     [selectedModelId, switchToPdfCompatibleModel, switchToImageCompatibleModel]
   );
 
+  // Update URL when sending message in new chat or project
+  const updateChatUrl = useCallback((chatIdToAdd: string) => {
+    const currentPath = window.location.pathname;
+    if (currentPath === "/") {
+      window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
+      return;
+    }
+
+    // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
+    const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
+    if (projectMatch) {
+      const [, projectId] = projectMatch;
+      window.history.pushState(
+        {},
+        "",
+        `/project/${projectId}/chat/${chatIdToAdd}`
+      );
+    }
+  }, []);
+
+  // Trim messages in edit mode
+  const trimMessagesInEditMode = useCallback(
+    (parentId: string | null) => {
+      if (parentId === null) {
+        setMessages([]);
+        return;
+      }
+
+      const parentIndex = storeApi
+        .getState()
+        .getThrottledMessages()
+        .findIndex((msg: ChatMessage) => msg.id === parentId);
+
+      if (parentIndex !== -1) {
+        const messagesUpToParent = storeApi
+          .getState()
+          .getThrottledMessages()
+          .slice(0, parentIndex + 1);
+        setMessages(messagesUpToParent);
+      }
+    },
+    [setMessages, storeApi]
+  );
+
   const coreSubmitLogic = useCallback(() => {
     const input = getInputValue();
 
-    // For new chats, we need to update the url to include the chatId
-    if (window.location.pathname === "/") {
-      window.history.pushState({}, "", `/chat/${chatId}`);
-    }
+    updateChatUrl(chatId);
 
     // Get the appropriate parent message ID
     const effectiveParentMessageId = isEditMode
@@ -222,20 +261,7 @@ function PureMultimodalInput({
 
     // In edit mode, trim messages to the parent message
     if (isEditMode) {
-      if (parentMessageId === null) {
-        // If no parent, clear all messages
-        setMessages([]);
-      } else {
-        // Find the parent message and trim to that point
-        const parentIndex = messages.findIndex(
-          (msg) => msg.id === parentMessageId
-        );
-        if (parentIndex !== -1) {
-          // Keep messages up to and including the parent
-          const messagesUpToParent = messages.slice(0, parentIndex + 1);
-          setMessages(messagesUpToParent);
-        }
-      }
+      trimMessagesInEditMode(parentMessageId);
     }
 
     const message: ChatMessage = {
@@ -281,10 +307,11 @@ function PureMultimodalInput({
     saveChatMessage,
     parentMessageId,
     selectedModelId,
-    setMessages,
     editorRef,
     onSendMessage,
     storeApi,
+    updateChatUrl,
+    trimMessagesInEditMode,
   ]);
 
   const submitForm = useCallback(() => {
@@ -486,18 +513,30 @@ function PureMultimodalInput({
     },
   });
 
+  const showEmptyState =
+    messageIds.length === 0 &&
+    attachments.length === 0 &&
+    uploadQueue.length === 0 &&
+    !isEditMode;
+
+  let emptyStateContent: React.ReactNode = null;
+  if (showEmptyState) {
+    if (emptyStateOverride) {
+      emptyStateContent = emptyStateOverride;
+    } else if (!disableSuggestedActions) {
+      emptyStateContent = (
+        <SuggestedActions
+          chatId={chatId}
+          className="mb-4"
+          selectedModelId={selectedModelId}
+        />
+      );
+    }
+  }
+
   return (
     <div className="relative">
-      {messageIds.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 &&
-        !isEditMode && (
-          <SuggestedActions
-            chatId={chatId}
-            className="mb-4"
-            selectedModelId={selectedModelId}
-          />
-        )}
+      {emptyStateContent}
 
       <input
         accept="image/*,.pdf"
@@ -539,13 +578,7 @@ function PureMultimodalInput({
           {!isEditMode && (
             <LimitDisplay
               className="p-2"
-              forceVariant={
-                isImageOutputModel
-                  ? "image"
-                  : isModelDisallowedForAnonymous
-                    ? "model"
-                    : "credits"
-              }
+              forceVariant={isModelDisallowedForAnonymous ? "model" : "credits"}
             />
           )}
 
@@ -565,9 +598,7 @@ function PureMultimodalInput({
             data-testid="multimodal-input"
             initialValue={getInitialInput()}
             onEnterSubmit={(event) => {
-              const shouldSubmit = isMobile
-                ? event.ctrlKey && !event.isComposing
-                : !(event.shiftKey || event.isComposing);
+              const shouldSubmit = isMobile ? event.ctrlKey : !event.shiftKey;
 
               if (shouldSubmit) {
                 if (!submission.enabled) {

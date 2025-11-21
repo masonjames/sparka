@@ -5,7 +5,10 @@ import { Pencil, PencilOff } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
-import { Action, Actions } from "@/components/ai-elements/actions";
+import {
+  MessageAction as Action,
+  MessageActions as Actions,
+} from "@/components/ai-elements/message";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Vote } from "@/lib/db/schema";

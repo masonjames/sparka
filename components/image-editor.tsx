@@ -39,7 +39,9 @@ export function ImageEditor({
             className={cn("h-fit w-full max-w-[800px]", {
               "p-0 md:p-20": !isInline,
             })}
+            height={600}
             src={`data:image/png;base64,${content}`}
+            width={800}
           />
         </picture>
       )}

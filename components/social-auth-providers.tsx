@@ -1,6 +1,7 @@
 "use client";
 
-import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
+import { GithubLogo } from "@phosphor-icons/react/dist/csr/GithubLogo";
+import { GoogleLogo } from "@phosphor-icons/react/dist/csr/GoogleLogo";
 import { Button } from "@/components/ui/button";
 import authClient from "@/lib/auth-client";
 import { useConfig } from "./config-provider";

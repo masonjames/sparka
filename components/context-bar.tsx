@@ -22,7 +22,7 @@ import { PromptInputContextBar } from "@/components/ai-elements/prompt-input";
 import { AttachmentList } from "@/components/attachment-list";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import type { Attachment } from "@/lib/ai/types";
-import { useLastUsageUntilMessageId } from "@/lib/stores/hooks";
+import { useLastUsageUntilMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 
 export function ContextBar({

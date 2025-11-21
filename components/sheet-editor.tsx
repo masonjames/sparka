@@ -27,7 +27,7 @@ const PureSpreadsheetEditor = ({
   isCurrentVersion: _isCurrentVersion,
   isReadonly,
 }: SheetEditorProps) => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const parseData = useMemo(() => {
     if (!content) {
@@ -119,7 +119,7 @@ const PureSpreadsheetEditor = ({
 
   return (
     <DataGrid
-      className={theme === "dark" ? "rdg-dark" : "rdg-light"}
+      className={resolvedTheme === "dark" ? "rdg-dark" : "rdg-light"}
       columns={columns}
       defaultColumnOptions={{
         resizable: true,

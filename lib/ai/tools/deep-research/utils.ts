@@ -1,6 +1,6 @@
+import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import type { ModelId } from "@airegistry/vercel-gateway";
 import type { ModelMessage, ToolModelMessage } from "ai";
-import { experimental_createMCPClient } from "ai";
 import type { StreamWriter } from "@/lib/ai/types";
 import { getAppModelDefinition } from "../../app-models";
 import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";

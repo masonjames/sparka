@@ -29,8 +29,10 @@ export function SecureKeysDisclaimer() {
           >
             View self-hosting instructions
             <svg
+              aria-label="External link arrow"
               className="ml-1 h-3 w-3"
               fill="none"
+              role="img"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >

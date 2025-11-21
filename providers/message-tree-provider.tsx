@@ -64,30 +64,36 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
       setAllMessages(initialData);
     }
 
-    // Subscribe to cache changes
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      // Check if this event is for our specific query
-      if (event.type === "updated" && event.query.queryKey) {
-        const eventQueryKey = event.query.queryKey;
+    const handleCacheUpdate = (event: {
+      type: string;
+      query: {
+        queryKey?: unknown;
+        state: { data?: unknown };
+      };
+    }) => {
+      if (event.type !== "updated" || !event.query.queryKey) {
+        return;
+      }
 
-        // Get current query key to avoid stale closure issues
-        const currentQueryKey =
-          type === "shared"
-            ? trpc.chat.getPublicChatMessages.queryKey({
-                chatId: id,
-              })
-            : trpc.chat.getChatMessages.queryKey({ chatId: id });
+      const eventQueryKey = event.query.queryKey;
+      const currentQueryKey =
+        type === "shared"
+          ? trpc.chat.getPublicChatMessages.queryKey({ chatId: id })
+          : trpc.chat.getChatMessages.queryKey({ chatId: id });
 
-        // Compare query keys (simple deep comparison for this case)
-        if (JSON.stringify(eventQueryKey) === JSON.stringify(currentQueryKey)) {
-          console.log("event.query.state.data", event.query.state.data);
-          const newData = event.query.state.data as ChatMessage[] | undefined;
-          if (newData) {
-            setAllMessages(newData);
-          }
+      if (JSON.stringify(eventQueryKey) === JSON.stringify(currentQueryKey)) {
+        console.log("event.query.state.data", event.query.state.data);
+        const newData = event.query.state.data as ChatMessage[] | undefined;
+        if (newData) {
+          setAllMessages(newData);
         }
       }
-    });
+    };
+
+    // Subscribe to cache changes
+    const unsubscribe = queryClient
+      .getQueryCache()
+      .subscribe(handleCacheUpdate);
 
     return unsubscribe;
   }, [
@@ -104,7 +110,7 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
     if (!allMessages) {
       return map;
     }
-    allMessages.forEach((message) => {
+    for (const message of allMessages) {
       const parentId = message.metadata?.parentMessageId || null;
 
       if (!map.has(parentId)) {
@@ -114,16 +120,16 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
       if (siblings) {
         siblings.push(message);
       }
-    });
+    }
 
     // Sort siblings by createdAt
-    map.forEach((siblings) => {
+    for (const siblings of map.values()) {
       siblings.sort(
         (a, b) =>
           new Date(a.metadata?.createdAt || new Date()).getTime() -
           new Date(b.metadata?.createdAt || new Date()).getTime()
       );
-    });
+    }
 
     return map;
   }, [allMessages]);

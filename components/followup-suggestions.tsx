@@ -3,14 +3,15 @@
 import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
+import { useMessageIds } from "@/lib/stores/hooks-base";
 import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
-import { Button } from "./ui/button";
 
 export function FollowUpSuggestions({
   suggestions,
@@ -58,27 +59,34 @@ export function FollowUpSuggestions({
   return (
     <div className={cn("mt-2 mb-2 flex flex-col gap-2", className)}>
       <div className="font-medium text-muted-foreground text-xs">Related</div>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <Suggestions className="gap-1.5">
         {suggestions.map((s) => (
-          <Button
-            className="h-7 rounded-full bg-muted/40 px-2.5 text-muted-foreground text-xs shadow-none hover:bg-muted hover:text-foreground"
+          <Suggestion
+            className="h-7 text-muted-foreground hover:text-foreground"
             key={s}
-            onClick={() => handleClick(s)}
+            onClick={handleClick}
             size="sm"
+            suggestion={s}
             type="button"
             variant="ghost"
           >
             {s}
             <PlusIcon className="size-3 opacity-70" />
-          </Button>
+          </Suggestion>
         ))}
-      </div>
+      </Suggestions>
     </div>
   );
 }
 
 export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
   const types = useMessagePartTypesById(messageId);
+  const ids = useMessageIds();
+  const isLastMessage = ids.at(-1) === messageId;
+
+  if (!isLastMessage) {
+    return null;
+  }
 
   const partIdx = types.indexOf("data-followupSuggestions");
   if (partIdx === -1) {

@@ -1,6 +1,7 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+@source "../node_modules/streamdown/dist/index.js";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -513,7 +514,6 @@
   line-height: 20px;
   font-weight: 400;
   text-align: left;
-  border-radius: 10px;
 }
 
 .editor-input {

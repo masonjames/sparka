@@ -1,6 +1,6 @@
 import type { ModelId } from "@airegistry/vercel-gateway";
 import type { Chat, DBMessage } from "@/lib/db/schema";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 import type { ChatMessage, UiToolName } from "./ai/types";
 
 // Helper functions for type conversion
@@ -13,13 +13,17 @@ export function dbChatToUIChat(chat: Chat): UIChat {
     visibility: chat.visibility,
     userId: chat.userId,
     isPinned: chat.isPinned,
+    projectId: chat.projectId ?? null,
   };
 }
 
 export function dbMessageToChatMessage(message: DBMessage): ChatMessage {
+  // Note: This function should not be used directly for messages with parts
+  // Use getAllMessagesByChatId which reconstructs parts from Part table
+  // Parts are now stored in Part table, not in Message.parts
   return {
     id: message.id,
-    parts: message.parts as ChatMessage["parts"],
+    parts: [], // Parts are stored in Part table - use getAllMessagesByChatId instead
     role: message.role as ChatMessage["role"],
     metadata: {
       createdAt: message.createdAt,
@@ -39,14 +43,25 @@ export function chatMessageToDbMessage(
   const isPartial = message.metadata.isPartial ?? false;
   const selectedModel = message.metadata.selectedModel;
 
+  // Ensure createdAt is a Date object
+  let createdAt: Date;
+  if (message.metadata?.createdAt) {
+    createdAt =
+      message.metadata.createdAt instanceof Date
+        ? message.metadata.createdAt
+        : new Date(message.metadata.createdAt);
+  } else {
+    createdAt = new Date();
+  }
+
+  // Parts are stored in Part table, not in Message.parts
   return {
     id: message.id,
     chatId,
     role: message.role,
-    parts: message.parts,
     attachments: [],
     lastContext: message.metadata?.usage || null,
-    createdAt: message.metadata?.createdAt || new Date(),
+    createdAt,
     annotations: [],
     isPartial,
     parentMessageId,

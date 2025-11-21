@@ -240,8 +240,8 @@ export function ShareDialog({
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
 }) {
-  const handleDialogOpenChange = (open: boolean) => {
-    onOpenChange(open);
+  const handleDialogOpenChange = (isOpen: boolean) => {
+    onOpenChange(isOpen);
   };
 
   return (

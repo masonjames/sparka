@@ -11,7 +11,7 @@ export function ConfigProvider({
 }: {
   value: SiteConfig;
   children: React.ReactNode;
-}): JSX.Element {
+}): React.ReactNode {
   return (
     <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
   );

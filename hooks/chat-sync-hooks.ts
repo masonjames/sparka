@@ -11,13 +11,13 @@ import { useDualMutation } from "@/hooks/use-dual-mutation";
 import { useDualQueryOptions } from "@/hooks/use-dual-query";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getAnonymousSession } from "@/lib/anonymous-session-client";
-import type { Document } from "@/lib/db/schema";
+import type { Document, Project } from "@/lib/db/schema";
 import {
   chatMessageToDbMessage,
   dbMessageToChatMessage,
 } from "@/lib/message-conversion";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 import { generateUUID, getTextContentFromMessage } from "@/lib/utils";
 import {
   cloneAnonymousChat,
@@ -64,9 +64,11 @@ export function useSaveChat() {
         createdAt: new Date(),
         updatedAt: new Date(),
         visibility: "private" as const,
+        isPinned: false,
+        projectId: null,
       };
 
-      await saveAnonymousChatToStorage({ ...tempChat, isPinned: false });
+      await saveAnonymousChatToStorage(tempChat);
       return { tempChat, message };
     },
     onSuccess: async ({ tempChat, message }) => {
@@ -77,7 +79,6 @@ export function useSaveChat() {
         await saveAnonymousChatToStorage({
           ...tempChat,
           title: data.title,
-          isPinned: false,
         });
 
         // Invalidate chats to refresh the UI
@@ -270,6 +271,50 @@ export function useRenameChat() {
   return renameMutation;
 }
 
+export function useRenameProject() {
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+
+  return useMutation(
+    trpc.project.update.mutationOptions({
+      onMutate: async (variables) => {
+        const listKey = trpc.project.list.queryKey();
+        await queryClient.cancelQueries({ queryKey: listKey });
+        const previous = queryClient.getQueryData<Project[]>(listKey);
+        const nextName =
+          typeof variables.updates.name === "string"
+            ? variables.updates.name
+            : undefined;
+        if (nextName) {
+          queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
+            old
+              ? old.map((p) =>
+                  p.id === variables.id ? { ...p, name: nextName } : p
+                )
+              : old
+          );
+        }
+        return { previous } as { previous?: Project[] };
+      },
+      onError: (_error, _variables, context) => {
+        const listKey = trpc.project.list.queryKey();
+        if ((context as { previous?: Project[] } | undefined)?.previous) {
+          queryClient.setQueryData(listKey, (context as any).previous);
+        }
+        toast.error("Failed to rename project");
+      },
+      onSuccess: () => {
+        toast.success("Project renamed");
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.project.list.queryKey(),
+        });
+      },
+    })
+  );
+}
+
 export function usePinChat() {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -457,9 +502,10 @@ export function useCloneChat() {
         );
       const newId = generateUUID();
       await cloneAnonymousChat(
-        originalMessages.map((message) =>
-          chatMessageToDbMessage(message, chatId)
-        ),
+        originalMessages.map((message) => ({
+          ...chatMessageToDbMessage(message, chatId),
+          parts: message.parts,
+        })),
         originalChat,
         originalDocuments as Document[],
         newId
@@ -484,7 +530,7 @@ export function useSaveMessageMutation() {
 
   return useDualMutation({
     shouldUseLocal: () => !isAuthenticated,
-    mutationFn: async ({
+    mutationFn: ({
       message: _message,
       chatId: _chatId,
     }: {
@@ -492,7 +538,7 @@ export function useSaveMessageMutation() {
       chatId: string;
     }) => {
       // Posting chats persists via server side; local cache updates handled in onMutateAction
-      return { success: true } as const;
+      return Promise.resolve({ success: true } as const);
     },
     localMutationFn: async ({
       message,
@@ -501,7 +547,10 @@ export function useSaveMessageMutation() {
       message: ChatMessage;
       chatId: string;
     }) => {
-      await saveAnonymousMessage(chatMessageToDbMessage(message, chatId));
+      await saveAnonymousMessage({
+        ...chatMessageToDbMessage(message, chatId),
+        parts: message.parts,
+      });
       return { success: true } as const;
     },
     onMutate: async ({ message, chatId }) => {
@@ -736,6 +785,7 @@ export function useGetAllChats(limit?: number) {
             visibility: chat.visibility,
             userId: "",
             isPinned: chat.isPinned,
+            projectId: null,
           }) satisfies UIChat
       );
     },
@@ -786,7 +836,7 @@ export function useGetCredits() {
 
   const queryOptions = useDualQueryOptions({
     ...trpc.credits.getAvailableCredits.queryOptions(),
-    localQueryFn: async () => {
+    localQueryFn: () => {
       const anonymousSession = getAnonymousSession();
       return {
         totalCredits:

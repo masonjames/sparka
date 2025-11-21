@@ -27,6 +27,20 @@ type ConsoleProps = {
   setConsoleOutputs: Dispatch<SetStateAction<ConsoleOutput[]>>;
 };
 
+function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
+  if (consoleOutput.status === "in_progress") {
+    return "Initializing...";
+  }
+  if (consoleOutput.status === "loading_packages") {
+    const textContents = consoleOutput.contents
+      .filter((content) => content.type === "text")
+      .map((content) => content.value)
+      .join("");
+    return textContents;
+  }
+  return null;
+}
+
 export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
   const [height, setHeight] = useState<number>(300);
   const [isResizing, setIsResizing] = useState(false);
@@ -84,6 +98,7 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
         onMouseDown={startResizing}
         role="slider"
         style={{ bottom: height - 4 }}
+        tabIndex={0}
       />
 
       <div
@@ -138,30 +153,26 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
                     <LoaderIcon />
                   </div>
                   <div className="text-muted-foreground">
-                    {consoleOutput.status === "in_progress"
-                      ? "Initializing..."
-                      : consoleOutput.status === "loading_packages"
-                        ? consoleOutput.contents.map((content) =>
-                            content.type === "text" ? content.value : null
-                          )
-                        : null}
+                    {getConsoleStatusText(consoleOutput)}
                   </div>
                 </div>
               ) : (
                 <div className="flex w-full flex-col gap-2 overflow-x-scroll text-zinc-900 dark:text-zinc-50">
-                  {consoleOutput.contents.map((content, index) =>
+                  {consoleOutput.contents.map((content, contentIndex) =>
                     content.type === "image" ? (
-                      <picture key={`${consoleOutput.id}-${index}`}>
+                      <picture key={`${consoleOutput.id}-${contentIndex}`}>
                         <img
                           alt="output"
                           className="w-full max-w-(--breakpoint-toast-mobile) rounded-md"
+                          height="auto"
                           src={content.value}
+                          width="100%"
                         />
                       </picture>
                     ) : (
                       <div
                         className="w-full whitespace-pre-line break-words"
-                        key={`${consoleOutput.id}-${index}`}
+                        key={`${consoleOutput.id}-${contentIndex}`}
                       >
                         {content.value}
                       </div>

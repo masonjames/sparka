@@ -67,7 +67,7 @@ const initialFilters = enabledFeatures.reduce<FeatureFilter>((acc, feature) => {
 function getFeatureIcons(modelDefinition: ModelDefinitionLike) {
   const features = modelDefinition;
 
-  const icons: JSX.Element[] = [];
+  const icons: React.ReactNode[] = [];
 
   const enabled = getEnabledFeatures();
   const featureIconMap = [
@@ -88,7 +88,7 @@ function getFeatureIcons(modelDefinition: ModelDefinitionLike) {
     },
   ];
 
-  featureIconMap.forEach(({ condition, config }) => {
+  for (const { condition, config } of featureIconMap) {
     if (condition && config) {
       const IconComponent = config.icon;
       icons.push(
@@ -101,7 +101,7 @@ function getFeatureIcons(modelDefinition: ModelDefinitionLike) {
         </div>
       );
     }
-  });
+  }
 
   return icons;
 }
@@ -230,7 +230,7 @@ function PureModelSelectorPopoverContent<
     onSelectModel: (id: TModelId) => void;
   }) => React.ReactNode;
 }) {
-  const enabledFeatures = getEnabledFeatures();
+  const availableFeatures = getEnabledFeatures();
 
   return (
     <Command>
@@ -278,7 +278,7 @@ function PureModelSelectorPopoverContent<
                   )}
                 </div>
                 <div className="grid grid-cols-1 gap-2">
-                  {enabledFeatures.map((feature) => {
+                  {availableFeatures.map((feature) => {
                     const IconComponent = feature.icon;
                     return (
                       <div

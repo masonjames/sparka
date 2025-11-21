@@ -23,7 +23,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 
 const PureSidebarChatItem = ({
   chat,
@@ -40,6 +40,10 @@ const PureSidebarChatItem = ({
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
+  const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
+    chat.projectId
+      ? `/project/${chat.projectId}/chat/${chat.id}`
+      : `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -87,7 +91,7 @@ const PureSidebarChatItem = ({
       ) : (
         <SidebarMenuButton asChild isActive={isActive}>
           <Link
-            href={`/chat/${chat.id}`}
+            href={chatHref}
             onClick={(e) => {
               // Allow middle-click and ctrl+click to open in new tab
               if (e.button === 1 || e.ctrlKey || e.metaKey) {
@@ -98,7 +102,7 @@ const PureSidebarChatItem = ({
               e.preventDefault();
 
               // Use History API for client-side navigation
-              window.history.pushState(null, "", `/chat/${chat.id}`);
+              window.history.pushState(null, "", chatHref);
               setOpenMobile(false);
             }} // TODO: Restore the prefetching after solving conflict with ppr
             prefetch={false}

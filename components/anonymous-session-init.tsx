@@ -4,10 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import {
   clearAnonymousSession,
-  createAnonymousSession,
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-client";
+import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";

@@ -7,9 +7,7 @@ const ANONYMOUS_CHATS_KEY = "anonymous-chats";
 const ANONYMOUS_MESSAGES_KEY = "anonymous-messages";
 const ANONYMOUS_DOCUMENTS_KEY = "anonymous-documents";
 
-export async function loadAnonymousMessagesFromStorage(): Promise<
-  AnonymousMessage[]
-> {
+export function loadAnonymousMessagesFromStorage(): AnonymousMessage[] {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -35,11 +33,11 @@ export async function loadAnonymousMessagesFromStorage(): Promise<
   }
 }
 
-export async function deleteAnonymousChat(chatId: string): Promise<boolean> {
+export function deleteAnonymousChat(chatId: string): Promise<boolean> {
   try {
     const session = getAnonymousSession();
     if (!session) {
-      return false;
+      return Promise.resolve(false);
     }
 
     // Get messages for this chat BEFORE removing them
@@ -80,17 +78,14 @@ export async function deleteAnonymousChat(chatId: string): Promise<boolean> {
       JSON.stringify(filteredDocuments)
     );
 
-    return true;
+    return Promise.resolve(true);
   } catch (error) {
     console.error("Error deleting anonymous chat:", error);
-    return false;
+    return Promise.resolve(false);
   }
 }
 
-export async function renameAnonymousChat(
-  chatId: string,
-  title: string
-): Promise<void> {
+export function renameAnonymousChat(chatId: string, title: string): void {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -110,10 +105,7 @@ export async function renameAnonymousChat(
   }
 }
 
-export async function pinAnonymousChat(
-  chatId: string,
-  isPinned: boolean
-): Promise<void> {
+export function pinAnonymousChat(chatId: string, isPinned: boolean): void {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -130,13 +122,14 @@ export async function pinAnonymousChat(
     localStorage.setItem(ANONYMOUS_CHATS_KEY, JSON.stringify(updatedChats));
   } catch (error) {
     console.error("Error pinning anonymous chat:", error);
+    return;
   }
 }
 
 // Module-level functions for chat operations
-export async function saveAnonymousChatToStorage(
+export function saveAnonymousChatToStorage(
   chat: Omit<AnonymousChat, "userId">
-): Promise<void> {
+): void {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -153,6 +146,7 @@ export async function saveAnonymousChatToStorage(
       updatedAt: chat.updatedAt.toISOString(),
       visibility: chat.visibility,
       isPinned: chat.isPinned,
+      projectId: chat.projectId ?? null,
       userId: session.id,
     };
 
@@ -336,6 +330,7 @@ export async function cloneAnonymousChat(
       updatedAt: new Date(),
       visibility: "private" as const,
       isPinned: false, // New cloned chats are not pinned by default
+      projectId: null,
     };
 
     await saveAnonymousChatToStorage(newChat);
@@ -345,7 +340,7 @@ export async function cloneAnonymousChat(
   }
 }
 
-export async function loadAnonymousDocumentsFromStorage(): Promise<any[]> {
+export function loadAnonymousDocumentsFromStorage(): any[] {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -393,9 +388,7 @@ export async function loadAnonymousDocumentsByDocumentId(
   return documents.filter((document) => document.id === documentId);
 }
 
-export async function loadAnonymousChatsFromStorage(): Promise<
-  AnonymousChat[]
-> {
+export function loadAnonymousChatsFromStorage(): AnonymousChat[] {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -423,9 +416,7 @@ export async function loadAnonymousChatsFromStorage(): Promise<
   }
 }
 
-export async function loadAnonymousChatById(
-  chatId: string
-): Promise<AnonymousChat | null> {
+export function loadAnonymousChatById(chatId: string): AnonymousChat | null {
   try {
     const session = getAnonymousSession();
     if (!session) {
@@ -439,7 +430,7 @@ export async function loadAnonymousChatById(
 
     const parsedChats = JSON.parse(savedChats) as AnonymousChat[];
     const chat = parsedChats.find(
-      (chat: AnonymousChat) => chat.id === chatId && chat.userId === session.id
+      (c: AnonymousChat) => c.id === chatId && c.userId === session.id
     );
 
     if (!chat) {

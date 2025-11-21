@@ -4,16 +4,21 @@ const MODEL_REGISTRY_URL = "airegistry.app";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
+  cacheComponents: true,
+
   transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
-    ppr: "incremental",
+    turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
       "@lobehub/icons",
+      "lucide-react",
+      "@phosphor-icons/react",
     ],
-    // Enable external packages for server components to allow pino transports
   },
+  // TODO: Uncomment this when we can exclude /api/cron/cleanup from caching selectively
+  // cacheComponents: true,
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
     remotePatterns: [
@@ -27,6 +32,9 @@ const nextConfig: NextConfig = {
       },
       {
         hostname: "avatars.githubusercontent.com",
+      },
+      {
+        hostname: "*.public.blob.vercel-storage.com",
       },
     ],
   },

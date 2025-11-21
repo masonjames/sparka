@@ -32,14 +32,16 @@ export function buildThreadFromLeaf<T extends MessageNode>(
   leafMessageId: string
 ): T[] {
   const messageMap = new Map<string, T>();
-  allMessages.forEach((msg) => messageMap.set(msg.id, msg));
+  for (const msg of allMessages) {
+    messageMap.set(msg.id, msg);
+  }
 
   const thread: T[] = [];
   let currentMessageId: string | null = leafMessageId;
   let iteration = 0;
 
   while (currentMessageId) {
-    iteration++;
+    iteration += 1;
 
     if (iteration > 100) {
       break;

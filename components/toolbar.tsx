@@ -28,7 +28,7 @@ import {
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatInput } from "@/providers/chat-input-provider";
-import { artifactDefinitions } from "./artifact";
+import { artifactDefinitions } from "./artifact-panel";
 import type { ArtifactToolbarItem } from "./create-artifact";
 import { ArrowUpIcon, StopIcon, SummarizeIcon } from "./icons";
 
@@ -45,9 +45,9 @@ type ToolProps = {
     storeApi,
   }: {
     sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-    storeApi: ReturnType<typeof useChatStoreApi>;
+    storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
   }) => void;
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
 function Tool({
@@ -146,7 +146,7 @@ function ReadingLevelSelector({
 }: {
   setSelectedTool: Dispatch<SetStateAction<string | null>>;
   isAnimating: boolean;
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }) {
   const { sendMessage } = useChatActions<ChatMessage>();
   const LEVELS = [
@@ -271,7 +271,7 @@ export function Tools({
   isAnimating: boolean;
   setIsToolbarVisible: Dispatch<SetStateAction<boolean>>;
   tools: ArtifactToolbarItem[];
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }) {
   const [primaryTool, ...secondaryTools] = tools;
 
@@ -326,15 +326,15 @@ function PureToolbar({
   status: UseChatHelpers<ChatMessage>["status"];
   stop: UseChatHelpers<ChatMessage>["stop"];
   artifactKind: ArtifactKind;
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }) {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useOnClickOutside(toolbarRef, () => {
+  useOnClickOutside(toolbarRef as React.RefObject<HTMLElement>, () => {
     setIsToolbarVisible(false);
     setSelectedTool(null);
   });
@@ -388,25 +388,27 @@ function PureToolbar({
   return (
     <TooltipProvider delayDuration={0}>
       <motion.div
-        animate={
-          isToolbarVisible
-            ? selectedTool === "adjust-reading-level"
-              ? {
-                  opacity: 1,
-                  y: 0,
-                  height: 6 * 43,
-                  transition: { delay: 0 },
-                  scale: 0.95,
-                }
-              : {
-                  opacity: 1,
-                  y: 0,
-                  height: toolsByArtifactKind.length * 50,
-                  transition: { delay: 0 },
-                  scale: 1,
-                }
-            : { opacity: 1, y: 0, height: 54, transition: { delay: 0 } }
-        }
+        animate={(() => {
+          if (!isToolbarVisible) {
+            return { opacity: 1, y: 0, height: 54, transition: { delay: 0 } };
+          }
+          if (selectedTool === "adjust-reading-level") {
+            return {
+              opacity: 1,
+              y: 0,
+              height: 6 * 43,
+              transition: { delay: 0 },
+              scale: 0.95,
+            };
+          }
+          return {
+            opacity: 1,
+            y: 0,
+            height: toolsByArtifactKind.length * 50,
+            transition: { delay: 0 },
+            scale: 1,
+          };
+        })()}
         className="absolute right-6 bottom-6 flex cursor-pointer flex-col justify-end rounded-full border bg-background p-1.5 shadow-lg"
         exit={{ opacity: 0, y: -20, transition: { duration: 0.1 } }}
         initial={{ opacity: 0, y: -20, scale: 1 }}
@@ -434,38 +436,46 @@ function PureToolbar({
         ref={toolbarRef}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
-        {status === "streaming" ? (
-          <motion.div
-            animate={{ scale: 1.4 }}
-            className="p-3"
-            exit={{ scale: 1 }}
-            initial={{ scale: 1 }}
-            key="stop-icon"
-            onClick={() => {
-              stop();
-            }}
-          >
-            <StopIcon />
-          </motion.div>
-        ) : selectedTool === "adjust-reading-level" ? (
-          <ReadingLevelSelector
-            isAnimating={isAnimating}
-            key="reading-level-selector"
-            setSelectedTool={setSelectedTool}
-            storeApi={storeApi}
-          />
-        ) : (
-          <Tools
-            isAnimating={isAnimating}
-            isToolbarVisible={isToolbarVisible}
-            key="tools"
-            selectedTool={selectedTool}
-            setIsToolbarVisible={setIsToolbarVisible}
-            setSelectedTool={setSelectedTool}
-            storeApi={storeApi}
-            tools={toolsByArtifactKind}
-          />
-        )}
+        {(() => {
+          if (status === "streaming") {
+            return (
+              <motion.div
+                animate={{ scale: 1.4 }}
+                className="p-3"
+                exit={{ scale: 1 }}
+                initial={{ scale: 1 }}
+                key="stop-icon"
+                onClick={() => {
+                  stop();
+                }}
+              >
+                <StopIcon />
+              </motion.div>
+            );
+          }
+          if (selectedTool === "adjust-reading-level") {
+            return (
+              <ReadingLevelSelector
+                isAnimating={isAnimating}
+                key="reading-level-selector"
+                setSelectedTool={setSelectedTool}
+                storeApi={storeApi}
+              />
+            );
+          }
+          return (
+            <Tools
+              isAnimating={isAnimating}
+              isToolbarVisible={isToolbarVisible}
+              key="tools"
+              selectedTool={selectedTool}
+              setIsToolbarVisible={setIsToolbarVisible}
+              setSelectedTool={setSelectedTool}
+              storeApi={storeApi}
+              tools={toolsByArtifactKind}
+            />
+          );
+        })()}
       </motion.div>
     </TooltipProvider>
   );
