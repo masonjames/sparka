@@ -1,3 +1,5 @@
+// This file has hooks that are enabled by the with-message-parts middleware
+
 import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";

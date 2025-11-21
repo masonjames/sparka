@@ -1,4 +1,7 @@
 "use client";
+
+// This file is a middleware that can extend @ai-sdk-tools/store with message parts functionality
+
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
 import type { StoreState as BaseChatStoreState } from "@ai-sdk-tools/store";
