@@ -48,6 +48,107 @@ const _getFeatureIconsForCard = (model: ModelDefinition) => {
   return icons;
 };
 
+// Disabled model placeholder card
+function DisabledModelCard({
+  model,
+  disabledReason,
+  className,
+}: {
+  model: ModelDefinition;
+  disabledReason: string;
+  className?: string;
+}) {
+  const provider = model.owned_by as ProviderId;
+
+  return (
+    <Card
+      className={cn("cursor-not-allowed opacity-50", "bg-muted/50", className)}
+    >
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-muted p-1 transition-transform">
+            <PlaceholderIcon />
+          </div>
+          <div className="text-left">
+            <CardTitle className="font-semibold text-sm">
+              {model.name}
+            </CardTitle>
+            <CardDescription className="capitalize">{provider}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="w-full text-center text-muted-foreground text-xs">
+          {disabledReason}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Model capabilities badges
+function ModelCapabilities({ model }: { model: ModelDefinition }) {
+  return (
+    <div className="mt-3 flex w-full flex-wrap gap-1">
+      {model.reasoning && (
+        <Badge className="text-xs" variant="outline">
+          Reasoning
+        </Badge>
+      )}
+      {model.toolCall && (
+        <Badge className="text-xs" variant="outline">
+          Function Calling
+        </Badge>
+      )}
+      {model.input?.image && (
+        <Badge className="text-xs" variant="outline">
+          Vision
+        </Badge>
+      )}
+      {model.input?.pdf && (
+        <Badge className="text-xs" variant="outline">
+          PDF
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+// Model token limits display
+function ModelTokenLimits({
+  maxTokens,
+  contextLength,
+}: {
+  maxTokens: number | undefined;
+  contextLength: number | undefined;
+}) {
+  return (
+    <div className="flex flex-col text-start text-[11px] text-muted-foreground sm:flex-row sm:items-center sm:gap-3 sm:text-xs">
+      {maxTokens && (
+        <div className="flex items-center gap-1">
+          <span className="font-medium">{maxTokens.toLocaleString()}</span>
+          <span className="hidden sm:inline">Max out</span>
+          <span className="text-[10px] text-muted-foreground/80 uppercase tracking-wide sm:hidden">
+            out
+          </span>
+        </div>
+      )}
+      {maxTokens && contextLength && (
+        <div className="hidden h-3 w-px bg-border/60 sm:block" />
+      )}
+      {contextLength && (
+        <div className="flex items-center gap-1">
+          <span className="font-medium">{contextLength.toLocaleString()}</span>
+          <span className="hidden sm:inline">Max in</span>
+          <span className="text-[10px] text-muted-foreground/80 uppercase tracking-wide sm:hidden">
+            in
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ModelCard({
   model,
   isSelected,
@@ -69,34 +170,11 @@ export function ModelCard({
   // Show placeholder if disabled with reason
   if (isDisabled && disabledReason) {
     return (
-      <Card
-        className={cn(
-          "cursor-not-allowed opacity-50",
-          "bg-muted/50",
-          className
-        )}
-      >
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-muted p-1 transition-transform">
-              <PlaceholderIcon />
-            </div>
-            <div className="text-left">
-              <CardTitle className="font-semibold text-sm">
-                {model.name}
-              </CardTitle>
-              <CardDescription className="capitalize">
-                {provider}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full text-center text-muted-foreground text-xs">
-            {disabledReason}
-          </div>
-        </CardContent>
-      </Card>
+      <DisabledModelCard
+        className={className}
+        disabledReason={disabledReason}
+        model={model}
+      />
     );
   }
 
@@ -137,54 +215,8 @@ export function ModelCard({
       )}
 
       <CardContent>
-        <div className="flex flex-col text-start text-[11px] text-muted-foreground sm:flex-row sm:items-center sm:gap-3 sm:text-xs">
-          {maxTokens && (
-            <div className="flex items-center gap-1">
-              <span className="font-medium">{maxTokens.toLocaleString()}</span>
-              <span className="hidden sm:inline">Max out</span>
-              <span className="text-[10px] text-muted-foreground/80 uppercase tracking-wide sm:hidden">
-                out
-              </span>
-            </div>
-          )}
-          {maxTokens && contextLength && (
-            <div className="hidden h-3 w-px bg-border/60 sm:block" />
-          )}
-          {contextLength && (
-            <div className="flex items-center gap-1">
-              <span className="font-medium">
-                {contextLength.toLocaleString()}
-              </span>
-              <span className="hidden sm:inline">Max in</span>
-              <span className="text-[10px] text-muted-foreground/80 uppercase tracking-wide sm:hidden">
-                in
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex w-full flex-wrap gap-1">
-          {model.reasoning && (
-            <Badge className="text-xs" variant="outline">
-              Reasoning
-            </Badge>
-          )}
-          {model.toolCall && (
-            <Badge className="text-xs" variant="outline">
-              Function Calling
-            </Badge>
-          )}
-          {model.input?.image && (
-            <Badge className="text-xs" variant="outline">
-              Vision
-            </Badge>
-          )}
-          {model.input?.pdf && (
-            <Badge className="text-xs" variant="outline">
-              PDF
-            </Badge>
-          )}
-        </div>
+        <ModelTokenLimits contextLength={contextLength} maxTokens={maxTokens} />
+        <ModelCapabilities model={model} />
       </CardContent>
 
       {model.pricing && (

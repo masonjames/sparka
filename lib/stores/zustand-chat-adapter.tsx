@@ -44,17 +44,29 @@ export class ZustandChatState<UI_MESSAGE extends UIMessage>
     subscribeToSlice<BaseChatStoreState<UI_MESSAGE>, UI_MESSAGE[]>(
       this.store,
       (s) => s._throttledMessages || s.messages,
-      () => this.messagesCallbacks.forEach((cb) => cb())
+      () => {
+        for (const cb of this.messagesCallbacks) {
+          cb();
+        }
+      }
     );
     subscribeToSlice<BaseChatStoreState<UI_MESSAGE>, ChatStatus>(
       this.store,
       (s) => s.status,
-      () => this.statusCallbacks.forEach((cb) => cb())
+      () => {
+        for (const cb of this.statusCallbacks) {
+          cb();
+        }
+      }
     );
     subscribeToSlice<BaseChatStoreState<UI_MESSAGE>, Error | undefined>(
       this.store,
       (s) => s.error,
-      () => this.errorCallbacks.forEach((cb) => cb())
+      () => {
+        for (const cb of this.errorCallbacks) {
+          cb();
+        }
+      }
     );
   }
 
@@ -120,7 +132,7 @@ export class ZustandChat<
   UI_MESSAGE extends UIMessage,
 > extends AbstractChat<UI_MESSAGE> {
   private readonly zustandState: ZustandChatState<UI_MESSAGE>;
-  public store: ReturnType<typeof createBaseStore<UI_MESSAGE>>;
+  store: ReturnType<typeof createBaseStore<UI_MESSAGE>>;
 
   constructor({
     messages,

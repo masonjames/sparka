@@ -1,6 +1,6 @@
 import type { ModelId } from "@airegistry/vercel-gateway";
 import type { Chat, DBMessage } from "@/lib/db/schema";
-import type { UIChat } from "@/lib/types/uiChat";
+import type { UIChat } from "@/lib/types/ui-chat";
 import type { ChatMessage, UiToolName } from "./ai/types";
 
 // Helper functions for type conversion
@@ -13,6 +13,7 @@ export function dbChatToUIChat(chat: Chat): UIChat {
     visibility: chat.visibility,
     userId: chat.userId,
     isPinned: chat.isPinned,
+    projectId: chat.projectId ?? null,
   };
 }
 
@@ -41,13 +42,14 @@ export function chatMessageToDbMessage(
   const parentMessageId = message.metadata.parentMessageId || null;
   const isPartial = message.metadata.isPartial ?? false;
   const selectedModel = message.metadata.selectedModel;
-  
+
   // Ensure createdAt is a Date object
   let createdAt: Date;
   if (message.metadata?.createdAt) {
-    createdAt = message.metadata.createdAt instanceof Date 
-      ? message.metadata.createdAt 
-      : new Date(message.metadata.createdAt);
+    createdAt =
+      message.metadata.createdAt instanceof Date
+        ? message.metadata.createdAt
+        : new Date(message.metadata.createdAt);
   } else {
     createdAt = new Date();
   }

@@ -12,32 +12,43 @@ import { ChatStoreProvider } from "@/lib/stores/chat-store-context";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 import { MessageTreeProvider } from "@/providers/message-tree-provider";
 
-export const ChatSystem = memo(function ChatSystem({
-  id,
-  initialMessages,
-  isReadonly,
-  initialTool = null,
-  overrideModelId,
-}: {
-  id: string;
-  initialMessages: ChatMessage[];
-  isReadonly: boolean;
-  initialTool?: UiToolName | null;
-  overrideModelId?: AppModelId;
-}) {
-  return (
+export const ChatSystem = memo(
+  ({
+    id,
+    initialMessages,
+    isReadonly,
+    initialTool = null,
+    overrideModelId,
+    projectId,
+    isProjectPage = false,
+  }: {
+    id: string;
+    initialMessages: ChatMessage[];
+    isReadonly: boolean;
+    initialTool?: UiToolName | null;
+    overrideModelId?: AppModelId;
+    projectId?: string;
+    isProjectPage?: boolean;
+  }) => (
     <ArtifactProvider>
       <DataStreamProvider>
         <ChatStoreProvider initialMessages={initialMessages}>
           <MessageTreeProvider>
             {isReadonly ? (
               <>
-                <ChatSync id={id} initialMessages={initialMessages} />
-                <Chat
+                <ChatSync
                   id={id}
                   initialMessages={initialMessages}
+                  projectId={projectId}
+                />
+                <Chat
+                  disableSuggestedActions={isProjectPage}
+                  id={id}
+                  initialMessages={initialMessages}
+                  isProjectPage={isProjectPage}
                   isReadonly={isReadonly}
                   key={id}
+                  projectId={projectId}
                 />
               </>
             ) : (
@@ -46,12 +57,19 @@ export const ChatSystem = memo(function ChatSystem({
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >
-                <ChatSync id={id} initialMessages={initialMessages} />
-                <Chat
+                <ChatSync
                   id={id}
                   initialMessages={initialMessages}
+                  projectId={projectId}
+                />
+                <Chat
+                  disableSuggestedActions={isProjectPage}
+                  id={id}
+                  initialMessages={initialMessages}
+                  isProjectPage={isProjectPage}
                   isReadonly={isReadonly}
                   key={id}
+                  projectId={projectId}
                 />
                 <DataStreamHandler id={id} />
               </ChatInputProvider>
@@ -60,5 +78,5 @@ export const ChatSystem = memo(function ChatSystem({
         </ChatStoreProvider>
       </DataStreamProvider>
     </ArtifactProvider>
-  );
-});
+  )
+);

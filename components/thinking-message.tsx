@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import { PulseDotLoader } from "./prompt-kit/loader";
 
 export const ThinkingMessage = () => {
   const role = "assistant";
@@ -12,7 +11,9 @@ export const ThinkingMessage = () => {
       data-testid="message-assistant-loading"
       initial={{ y: 5, opacity: 0 }}
     >
-      <PulseDotLoader className="m-1.5 size-3 animate-[pulse-dot_2s_ease-in-out_infinite] bg-muted-foreground" />
+      <div className="m-1.5 size-3 animate-[pulse-dot_2s_ease-in-out_infinite] rounded-full bg-muted-foreground">
+        <span className="sr-only">Loading</span>
+      </div>
     </motion.div>
   );
 };

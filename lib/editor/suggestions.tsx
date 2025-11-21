@@ -23,50 +23,84 @@ type Position = {
   end: number;
 };
 
+type TraverseState = {
+  positions: Position | null;
+  currentPos: number;
+};
+
+function checkTextNode(
+  node: LexicalNode,
+  searchText: string,
+  state: TraverseState
+): void {
+  if (!$isTextNode(node)) {
+    return;
+  }
+
+  const text = node.getTextContent();
+  if (text.includes(searchText)) {
+    const index = text.indexOf(searchText);
+    if (index !== -1) {
+      state.positions = {
+        start: state.currentPos + index,
+        end: state.currentPos + index + searchText.length,
+      };
+    }
+  }
+
+  state.currentPos += text.length;
+}
+
+function traverseChildren(
+  node: LexicalNode,
+  searchText: string,
+  state: TraverseState
+): void {
+  if (!$isElementNode(node)) {
+    return;
+  }
+
+  const children = node.getChildren();
+  for (const child of children) {
+    traverseNode(child, searchText, state);
+    if (state.positions) {
+      return;
+    }
+  }
+}
+
+function traverseNode(
+  node: LexicalNode,
+  searchText: string,
+  state: TraverseState
+): void {
+  if (state.positions) {
+    return;
+  }
+
+  checkTextNode(node, searchText, state);
+  if (state.positions) {
+    return;
+  }
+
+  traverseChildren(node, searchText, state);
+}
+
 function findPositionsInEditor(
   editor: LexicalEditor,
   searchText: string
 ): Position | null {
-  let positions: { start: number; end: number } | null = null;
+  const state: TraverseState = {
+    positions: null,
+    currentPos: 0,
+  };
 
   editor.getEditorState().read(() => {
     const root = $getRoot();
-    let currentPos = 0;
-
-    function traverse(node: LexicalNode) {
-      if ($isTextNode(node) && node.getTextContent().includes(searchText)) {
-        const text = node.getTextContent();
-        const index = text.indexOf(searchText);
-
-        if (index !== -1) {
-          positions = {
-            start: currentPos + index,
-            end: currentPos + index + searchText.length,
-          };
-          return;
-        }
-      }
-
-      if ($isTextNode(node)) {
-        currentPos += node.getTextContent().length;
-      }
-
-      // Only element nodes have children
-      if ($isElementNode(node)) {
-        const children = node.getChildren();
-        for (const child of children) {
-          traverse(child);
-          if (positions) {
-            return;
-          }
-        }
-      }
-    }
-
-    traverse(root);
+    traverseNode(root, searchText, state);
   });
 
-  return positions;
+  return state.positions;
 }
 
 export function projectWithPositions(
@@ -190,12 +224,12 @@ export function registerSuggestions(
     }
 
     // Add new suggestion nodes
-    suggestions.forEach((suggestion) => {
+    for (const suggestion of suggestions) {
       if (suggestion.selectionStart && suggestion.selectionEnd) {
         const suggestionNode = createSuggestionDecorator(suggestion, editor);
         // Insert at the end for now - proper positioning would need more work
         root.append(suggestionNode);
       }
-    });
+    }
   });
 }

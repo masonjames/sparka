@@ -26,11 +26,11 @@ const SourcesList = ({
   sources: SearchResultItem[] | undefined;
 }) => (
   <div className="space-y-3">
-    {sources?.map((source: SearchResultItem, i: number) => (
+    {sources?.map((source: SearchResultItem) => (
       <a
         className="block rounded-lg bg-neutral-50 p-4 transition-colors hover:bg-neutral-100 dark:bg-neutral-800/50 dark:hover:bg-neutral-800"
         href={source.url}
-        key={i}
+        key={source.url}
         rel="noopener noreferrer"
         target="_blank"
       >

@@ -28,6 +28,25 @@ export const userCredit = pgTable("UserCredit", {
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
 
+export const project = pgTable(
+  "Project",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    instructions: text("instructions").notNull().default(""),
+  },
+  (t) => ({
+    Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
+  })
+);
+
+export type Project = InferSelectModel<typeof project>;
+
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
@@ -40,6 +59,9 @@ export const chat = pgTable("Chat", {
     .notNull()
     .default("private"),
   isPinned: boolean("isPinned").notNull().default(false),
+  projectId: uuid("projectId").references(() => project.id, {
+    onDelete: "set null",
+  }),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -132,37 +154,37 @@ export const part = pgTable(
     Part_message_id_idx: index("Part_message_id_idx").on(t.messageId),
     Part_message_id_order_idx: index("Part_message_id_order_idx").on(
       t.messageId,
-      t.order,
+      t.order
     ),
     text_chk: check(
       "Part_text_required_if_type_text",
-      sql`CASE WHEN ${t.type} = 'text' THEN ${t.text_text} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} = 'text' THEN ${t.text_text} IS NOT NULL ELSE TRUE END`
     ),
     reasoning_chk: check(
       "Part_reasoning_required_if_type_reasoning",
-      sql`CASE WHEN ${t.type} = 'reasoning' THEN ${t.reasoning_text} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} = 'reasoning' THEN ${t.reasoning_text} IS NOT NULL ELSE TRUE END`
     ),
     file_chk: check(
       "Part_file_required_if_type_file",
-      sql`CASE WHEN ${t.type} = 'file' THEN ${t.file_mediaType} IS NOT NULL AND ${t.file_url} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} = 'file' THEN ${t.file_mediaType} IS NOT NULL AND ${t.file_url} IS NOT NULL ELSE TRUE END`
     ),
     source_url_chk: check(
       "Part_source_url_required_if_type_source_url",
-      sql`CASE WHEN ${t.type} = 'source-url' THEN ${t.source_url_sourceId} IS NOT NULL AND ${t.source_url_url} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} = 'source-url' THEN ${t.source_url_sourceId} IS NOT NULL AND ${t.source_url_url} IS NOT NULL ELSE TRUE END`
     ),
     source_document_chk: check(
       "Part_source_document_required_if_type_source_document",
-      sql`CASE WHEN ${t.type} = 'source-document' THEN ${t.source_document_sourceId} IS NOT NULL AND ${t.source_document_mediaType} IS NOT NULL AND ${t.source_document_title} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} = 'source-document' THEN ${t.source_document_sourceId} IS NOT NULL AND ${t.source_document_mediaType} IS NOT NULL AND ${t.source_document_title} IS NOT NULL ELSE TRUE END`
     ),
     tool_chk: check(
       "Part_tool_required_if_type_tool",
-      sql`CASE WHEN ${t.type} LIKE 'tool-%' THEN ${t.tool_toolCallId} IS NOT NULL AND ${t.tool_state} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} LIKE 'tool-%' THEN ${t.tool_toolCallId} IS NOT NULL AND ${t.tool_state} IS NOT NULL ELSE TRUE END`
     ),
     data_chk: check(
       "Part_data_required_if_type_data",
-      sql`CASE WHEN ${t.type} LIKE 'data-%' THEN ${t.data_type} IS NOT NULL ELSE TRUE END`,
+      sql`CASE WHEN ${t.type} LIKE 'data-%' THEN ${t.data_type} IS NOT NULL ELSE TRUE END`
     ),
-  }),
+  })
 );
 
 export type Part = InferSelectModel<typeof part>;
@@ -210,7 +232,9 @@ export const document = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.id, table.createdAt] }),
-    document_message_id_idx: index("Document_message_id_idx").on(table.messageId),
+    document_message_id_idx: index("Document_message_id_idx").on(
+      table.messageId
+    ),
   })
 );
 

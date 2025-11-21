@@ -5,10 +5,9 @@ import Script from "next/script";
 
 import "./globals.css";
 import { Toaster } from "sonner";
+import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/config";
-import { ConfigProvider } from "@/components/config-provider";
-import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sparka.ai"),
@@ -68,7 +67,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html
       className={`${geist.variable} ${geistMono.variable}`}
@@ -80,16 +78,9 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: THEME_COLOR_SCRIPT,
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.__ENTITLEMENT_SYSTEM_ENABLED__ = ${isEntitlementSystemEnabled};`,
-          }}
-        />
+        <Script id="theme-color-script" strategy="beforeInteractive">
+          {THEME_COLOR_SCRIPT}
+        </Script>
         {process.env.NODE_ENV !== "production" ? (
           <Script
             src="https://unpkg.com/react-scan/dist/auto.global.js"

@@ -75,7 +75,7 @@ async function executeMultiQuerySearch({
     );
   }
 
-  completedSteps++;
+  completedSteps += 1;
   if (writeTopLevelUpdates) {
     dataStream.write({
       type: "data-researchUpdate",
@@ -135,7 +135,7 @@ Avoid:
         .describe("A list of domains to exclude from all search results.")
         .nullable(),
     }),
-    execute: async ({
+    execute: ({
       search_queries,
       topics,
       searchDepth,
@@ -200,7 +200,7 @@ Avoid:
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
     }),
-    execute: async ({
+    execute: ({
       search_queries,
     }: {
       search_queries: { query: string; maxResults: number | null }[];

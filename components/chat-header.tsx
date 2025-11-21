@@ -1,27 +1,129 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
 import { Share } from "lucide-react";
 import { memo } from "react";
 import { HeaderActions } from "@/components/header-actions";
-import { SidebarToggle } from "@/components/sidebar-toggle";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useGetChatByIdQueryOptions } from "@/hooks/chat-sync-hooks";
 import type { Session } from "@/lib/auth";
+import { useChatId } from "@/providers/chat-id-provider";
+import { useTRPC } from "@/trpc/react";
 import { ShareButton } from "./share-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+
+const DISABLED_PROJECT_ID = "00000000-0000-0000-0000-000000000000";
+
+function getChatLabel({
+  privateTitle,
+  publicTitle,
+  isPrivateChatLoading,
+  isPublicChatLoading,
+  hasMessages,
+}: {
+  privateTitle?: string;
+  publicTitle?: string;
+  isPrivateChatLoading: boolean;
+  isPublicChatLoading: boolean;
+  hasMessages: boolean;
+}): string {
+  if (privateTitle) {
+    return privateTitle;
+  }
+  if (publicTitle) {
+    return publicTitle;
+  }
+  if (isPrivateChatLoading || isPublicChatLoading) {
+    return "Loading chat…";
+  }
+  if (hasMessages) {
+    return "Untitled chat";
+  }
+  return "New chat";
+}
 
 function PureChatHeader({
   chatId,
   isReadonly,
   hasMessages,
+  projectId,
   user,
 }: {
   chatId: string;
   isReadonly: boolean;
   hasMessages: boolean;
+  projectId?: string;
   user: Session["user"];
 }) {
+  const trpc = useTRPC();
+  const { type } = useChatId();
+  const isAuthenticated = !!user;
+
+  const shouldFetchPrivateChat = isAuthenticated && type === "chat";
+  const getChatByIdQueryOptions = useGetChatByIdQueryOptions(chatId);
+  const { data: privateChat, isLoading: isPrivateChatLoading } = useQuery({
+    ...getChatByIdQueryOptions,
+    enabled:
+      shouldFetchPrivateChat && (getChatByIdQueryOptions.enabled ?? true),
+  });
+
+  const getPublicChatQueryOptions = trpc.chat.getPublicChat.queryOptions({
+    chatId,
+  });
+  const shouldFetchPublicChat = type === "shared";
+  const { data: publicChat, isLoading: isPublicChatLoading } = useQuery({
+    ...getPublicChatQueryOptions,
+    enabled:
+      shouldFetchPublicChat && (getPublicChatQueryOptions.enabled ?? true),
+  });
+
+  const resolvedProjectId =
+    privateChat?.projectId ?? projectId ?? publicChat?.projectId ?? null;
+
+  const fallbackProjectId = resolvedProjectId ?? DISABLED_PROJECT_ID;
+  const projectQueryOptions = trpc.project.getById.queryOptions({
+    id: fallbackProjectId,
+  });
+  const { data: project, isFetching: isProjectLoading } = useQuery({
+    ...projectQueryOptions,
+    enabled: isAuthenticated && !!resolvedProjectId,
+  });
+
+  const chatLabel = getChatLabel({
+    privateTitle: privateChat?.title,
+    publicTitle: publicChat?.title,
+    isPrivateChatLoading,
+    isPublicChatLoading,
+    hasMessages,
+  });
+
+  const projectLabel = resolvedProjectId
+    ? (project?.name ?? (isProjectLoading ? "Loading project…" : undefined))
+    : undefined;
+
+  const projectHref = resolvedProjectId
+    ? `/project/${resolvedProjectId}`
+    : undefined;
+
   return (
     <header className="sticky top-0 flex h-(--header-height) items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2">
-      <div className="flex items-center gap-2">
-        <SidebarToggle />
+      <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="sm:hidden" />
+          <ChatBreadcrumbs
+            chatLabel={chatLabel}
+            className="ml-2"
+            projectHref={projectHref}
+            projectLabel={projectLabel}
+          />
+        </div>
 
         {!isReadonly && hasMessages && <ShareButton chatId={chatId} />}
         {isReadonly && (
@@ -49,7 +151,38 @@ function PureChatHeader({
   );
 }
 
-export const ChatHeader = memo(
-  PureChatHeader,
-  (prevProps, nextProps) => prevProps.hasMessages === nextProps.hasMessages
-);
+function ChatBreadcrumbs({
+  chatLabel,
+  projectHref,
+  projectLabel,
+  className,
+}: {
+  chatLabel: string;
+  projectHref?: string;
+  projectLabel?: string;
+  className?: string;
+}) {
+  if (!chatLabel) {
+    return null;
+  }
+
+  return (
+    <Breadcrumb className={className}>
+      <BreadcrumbList>
+        {projectHref && projectLabel ? (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink href={projectHref}>{projectLabel}</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        ) : null}
+        <BreadcrumbItem>
+          <BreadcrumbPage>{chatLabel}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+export const ChatHeader = memo(PureChatHeader);

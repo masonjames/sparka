@@ -12,7 +12,6 @@ import type { getWeather } from "@/lib/ai/tools/get-weather";
 import type { readDocument } from "@/lib/ai/tools/read-document";
 import type { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import type { retrieve } from "@/lib/ai/tools/retrieve";
-import type { stockChart } from "@/lib/ai/tools/stock-chart";
 import type { updateDocument } from "@/lib/ai/tools/update-document";
 import type { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Suggestion } from "@/lib/db/schema";
@@ -29,7 +28,6 @@ export const toolNameSchema = z.enum([
   "readDocument",
   "retrieve",
   "webSearch",
-  "stockChart",
   "codeInterpreter",
   "generateImage",
   "deepResearch",
@@ -70,7 +68,6 @@ type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
 type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
 type generateImageTool = InferUITool<ReturnType<typeof generateImage>>;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
-type stockChartTool = InferUITool<typeof stockChart>;
 type codeInterpreterTool = InferUITool<typeof codeInterpreter>;
 type retrieveTool = InferUITool<typeof retrieve>;
 
@@ -83,7 +80,6 @@ export type ChatTools = {
   readDocument: readDocumentTool;
   generateImage: generateImageTool;
   webSearch: webSearchTool;
-  stockChart: stockChartTool;
   codeInterpreter: codeInterpreterTool;
   retrieve: retrieveTool;
 };

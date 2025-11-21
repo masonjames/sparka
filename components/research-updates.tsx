@@ -7,13 +7,11 @@ import { WebToolAction } from "./tool-actions";
 // Web updates component
 const _WebUpdates: React.FC<{ updates: WebSearchUpdate[] }> = ({ updates }) => (
   <>
-    {updates.map((update, updateIndex) => (
-      <div className="space-y-2" key={`web-update-${updateIndex}`}>
-        {update.results?.map((result, resultIndex) => (
-          <WebToolAction
-            key={`web-${updateIndex}-${resultIndex}`}
-            result={result}
-          />
+    {updates.map((update, idx) => (
+      // biome-ignore lint/suspicious/noArrayIndexKey: no id for now
+      <div className="space-y-2" key={idx}>
+        {update.results?.map((result) => (
+          <WebToolAction key={result.url} result={result} />
         ))}
       </div>
     ))}

@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { UIArtifact } from "@/components/artifact";
+import type { UIArtifact } from "@/components/artifact-panel";
 
 const initialArtifactData: UIArtifact = {
   documentId: "init",
@@ -18,12 +18,6 @@ const initialArtifactData: UIArtifact = {
   messageId: "",
   status: "idle",
   isVisible: false,
-  boundingBox: {
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-  },
 };
 
 type Selector<T> = (state: UIArtifact) => T;
@@ -129,9 +123,9 @@ export function useArtifact() {
   );
 
   const setMetadata = useCallback(
-    (metadata: any | ((current: any) => any)) => {
+    (metadataArg: any | ((current: any) => any)) => {
       if (artifact.documentId) {
-        setMetadataStore(artifact.documentId, metadata);
+        setMetadataStore(artifact.documentId, metadataArg);
       }
     },
     [artifact.documentId, setMetadataStore]

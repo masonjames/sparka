@@ -17,8 +17,7 @@ abstract class TextSplitter implements TextSplitterParams {
 
   createDocuments(texts: string[]): string[] {
     const documents: string[] = [];
-    for (let i = 0; i < texts.length; i += 1) {
-      const text = texts[i];
+    for (const text of texts) {
       if (text == null) {
         continue;
       }
@@ -38,12 +37,49 @@ abstract class TextSplitter implements TextSplitterParams {
     return text === "" ? null : text;
   }
 
+  private addCurrentDocToResults({
+    docs,
+    currentDoc,
+    separator,
+  }: {
+    docs: string[];
+    currentDoc: string[];
+    separator: string;
+  }): void {
+    const doc = this.joinDocs(currentDoc, separator);
+    if (doc !== null) {
+      docs.push(doc);
+    }
+  }
+
+  private trimCurrentDocForOverlap({
+    currentDoc,
+    overlapLimit,
+    total,
+    nextLength,
+  }: {
+    currentDoc: string[];
+    overlapLimit: number;
+    total: number;
+    nextLength: number;
+  }): number {
+    let updatedTotal = total;
+    while (
+      updatedTotal > overlapLimit ||
+      (updatedTotal + nextLength > this.chunkSize && updatedTotal > 0)
+    ) {
+      updatedTotal -= currentDoc[0]?.length ?? 0;
+      currentDoc.shift();
+    }
+    return updatedTotal;
+  }
+
   mergeSplits(splits: string[], separator: string): string[] {
     const docs: string[] = [];
     const currentDoc: string[] = [];
     let total = 0;
-    // Use no overlap when splitting at character level (separator is empty string)
     const overlapLimit = separator === "" ? 0 : this.chunkOverlap;
+
     for (const d of splits) {
       const _len = d.length;
       if (total + _len > this.chunkSize) {
@@ -54,29 +90,20 @@ which is longer than the specified ${this.chunkSize}`
           );
         }
         if (currentDoc.length > 0) {
-          const doc = this.joinDocs(currentDoc, separator);
-          if (doc !== null) {
-            docs.push(doc);
-          }
-          // Keep on popping if:
-          // - we have a larger chunk than in the chunk overlap
-          // - or if we still have any chunks and the length is long
-          while (
-            total > overlapLimit ||
-            (total + _len > this.chunkSize && total > 0)
-          ) {
-            total -= currentDoc[0]?.length;
-            currentDoc.shift();
-          }
+          this.addCurrentDocToResults({ docs, currentDoc, separator });
+          total = this.trimCurrentDocForOverlap({
+            currentDoc,
+            overlapLimit,
+            total,
+            nextLength: _len,
+          });
         }
       }
       currentDoc.push(d);
       total += _len;
     }
-    const doc = this.joinDocs(currentDoc, separator);
-    if (doc !== null) {
-      docs.push(doc);
-    }
+
+    this.addCurrentDocToResults({ docs, currentDoc, separator });
     return docs;
   }
 }
@@ -97,65 +124,57 @@ export class RecursiveCharacterTextSplitter
     this.separators = fields?.separators ?? this.separators;
   }
 
-  splitText(text: string): string[] {
-    if (this.chunkOverlap >= this.chunkSize) {
-      throw new Error("Cannot have chunkOverlap >= chunkSize");
-    }
-    const finalChunks: string[] = [];
-
-    // Get appropriate separator to use
-    let separator: string = this.separators.at(-1) ?? "";
+  private findBestSeparator(text: string): string {
     for (const s of this.separators) {
-      if (s === "") {
-        separator = s;
-        break;
-      }
-      if (text.includes(s)) {
-        separator = s;
-        break;
+      if (s === "" || text.includes(s)) {
+        return s;
       }
     }
+    return this.separators.at(-1) ?? "";
+  }
 
-    // Now that we have the separator, split the text
-    let splits: string[];
-    if (separator) {
-      splits = text.split(separator);
-    } else {
-      splits = text.split("");
-    }
-
-    // If we're splitting on spaces and the entire text fits within one chunk,
-    // return minimally merged tokens while keeping parenthesized phrases intact.
-    if (separator === " ") {
-      const trimmed = text.trim();
-      if (trimmed.length <= this.chunkSize) {
-        const parts = splits.map((s) => s.trim()).filter((s) => s !== "");
-        const combined: string[] = [];
-        for (let i = 0; i < parts.length; i += 1) {
-          const current = parts[i] ?? "";
-          const next = parts[i + 1] ?? "";
-          if (
-            current.includes("(") &&
-            !current.includes(")") &&
-            next.includes(")")
-          ) {
-            combined.push(`${current} ${next}`);
-            i += 1; // skip next since it's merged
-          } else {
-            combined.push(current);
-          }
-        }
-        return combined;
+  private combineParenthesizedPhrases(parts: string[]): string[] {
+    const combined: string[] = [];
+    for (let i = 0; i < parts.length; i += 1) {
+      const current = parts[i] ?? "";
+      const next = parts[i + 1] ?? "";
+      if (
+        current.includes("(") &&
+        !current.includes(")") &&
+        next.includes(")")
+      ) {
+        combined.push(`${current} ${next}`);
+        i += 1;
+      } else {
+        combined.push(current);
       }
     }
+    return combined;
+  }
 
-    // Now go merging things, recursively splitting longer texts.
+  private handleSpaceSeparatorOptimization(
+    text: string,
+    splits: string[]
+  ): string[] | null {
+    const trimmed = text.trim();
+    if (trimmed.length <= this.chunkSize) {
+      const parts = splits.map((s) => s.trim()).filter((s) => s !== "");
+      return this.combineParenthesizedPhrases(parts);
+    }
+    return null;
+  }
+
+  private processSplits(
+    splits: string[],
+    separator: string,
+    finalChunks: string[]
+  ): void {
     let goodSplits: string[] = [];
     for (const s of splits) {
       if (s.length < this.chunkSize) {
         goodSplits.push(s);
       } else {
-        if (goodSplits.length) {
+        if (goodSplits.length > 0) {
           const mergedText = this.mergeSplits(goodSplits, separator);
           finalChunks.push(...mergedText);
           goodSplits = [];
@@ -164,10 +183,29 @@ export class RecursiveCharacterTextSplitter
         finalChunks.push(...otherInfo);
       }
     }
-    if (goodSplits.length) {
+    if (goodSplits.length > 0) {
       const mergedText = this.mergeSplits(goodSplits, separator);
       finalChunks.push(...mergedText);
     }
+  }
+
+  splitText(text: string): string[] {
+    if (this.chunkOverlap >= this.chunkSize) {
+      throw new Error("Cannot have chunkOverlap >= chunkSize");
+    }
+    const finalChunks: string[] = [];
+
+    const separator = this.findBestSeparator(text);
+    const splits = separator ? text.split(separator) : text.split("");
+
+    if (separator === " ") {
+      const optimized = this.handleSpaceSeparatorOptimization(text, splits);
+      if (optimized) {
+        return optimized;
+      }
+    }
+
+    this.processSplits(splits, separator, finalChunks);
     return finalChunks;
   }
 }

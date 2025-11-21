@@ -1,10 +1,7 @@
 "use client";
 import equal from "fast-deep-equal";
 import { memo, useState } from "react";
-import {
-  Message as AIMessage,
-  MessageContent as AIMessageContent,
-} from "@/components/ai-elements/message";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { Vote } from "@/lib/db/schema";
 import { useChatId, useMessageById } from "@/lib/stores/hooks-base";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
@@ -67,7 +64,7 @@ export const PureUserMessage = ({
 
   return (
     <>
-      <AIMessage
+      <Message
         className={cn(
           // TODO: Consider not using this max-w class override when editing is cohesive with displaying the message
           mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
@@ -83,10 +80,9 @@ export const PureUserMessage = ({
         >
           {mode === "view" ? (
             isReadonly ? (
-              <AIMessageContent
+              <MessageContent
                 className="text-left group-[.is-user]:bg-card"
                 data-testid="message-content"
-
               >
                 <AttachmentList
                   attachments={getAttachmentsFromMessage(message)}
@@ -96,16 +92,16 @@ export const PureUserMessage = ({
                 <pre className="whitespace-pre-wrap font-sans">
                   {textPart.text}
                 </pre>
-              </AIMessageContent>
+              </MessageContent>
             ) : (
               <button
-                className="cursor-pointer text-left transition-opacity hover:opacity-80 block"
+                className="block cursor-pointer text-left transition-opacity hover:opacity-80"
                 data-testid="message-content"
                 onClick={() => setMode("edit")}
                 type="button"
               >
-                <AIMessageContent
-                  className="text-left group-[.is-user]:bg-card group-[.is-user]:max-w-none"
+                <MessageContent
+                  className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
                   data-testid="message-content"
                 >
                   <AttachmentList
@@ -116,7 +112,7 @@ export const PureUserMessage = ({
                   <pre className="whitespace-pre-wrap font-sans">
                     {textPart.text}
                   </pre>
-                </AIMessageContent>
+                </MessageContent>
               </button>
             )
           ) : (
@@ -145,7 +141,7 @@ export const PureUserMessage = ({
             />
           </div>
         </div>
-      </AIMessage>
+      </Message>
       <ImageModal
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}

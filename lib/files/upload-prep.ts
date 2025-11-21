@@ -2,6 +2,8 @@
 
 import imageCompression from "browser-image-compression";
 
+const FILE_EXTENSION_REGEX = /\.[^.]+$/;
+
 export async function compressImageIfNeeded(
   file: File,
   {
@@ -49,13 +51,15 @@ export async function compressImageIfNeeded(
       return file;
     }
 
-    const base = file.name.replace(/\.[^.]+$/, "");
-    const ext =
-      outputMime === "image/jpeg"
-        ? "jpg"
-        : outputMime === "image/png"
-          ? "png"
-          : (outputMime.split("/")[1] ?? "jpg");
+    const base = file.name.replace(FILE_EXTENSION_REGEX, "");
+    let ext: string;
+    if (outputMime === "image/jpeg") {
+      ext = "jpg";
+    } else if (outputMime === "image/png") {
+      ext = "png";
+    } else {
+      ext = outputMime.split("/")[1] ?? "jpg";
+    }
     return new File([resultBlob], `${base}.${ext}`, {
       type: outputMime,
       lastModified: Date.now(),

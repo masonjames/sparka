@@ -4,6 +4,7 @@ const MODEL_REGISTRY_URL = "airegistry.app";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
+  cacheComponents: true,
 
   transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
@@ -13,7 +14,7 @@ const nextConfig: NextConfig = {
       "echarts-for-react",
       "@lobehub/icons",
       "lucide-react",
-      "@phosphor-icons/react"
+      "@phosphor-icons/react",
     ],
   },
   turbopack: {
@@ -37,7 +38,7 @@ const nextConfig: NextConfig = {
       },
       {
         hostname: "*.public.blob.vercel-storage.com",
-      }
+      },
     ],
   },
   redirects: async () => [

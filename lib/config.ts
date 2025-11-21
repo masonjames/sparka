@@ -91,7 +91,7 @@ export const siteConfig: SiteConfig = {
     paymentProcessors: [],
   },
   integrations: {
-    sandbox: Boolean(env.SANDBOX_TEMPLATE_ID),
+    sandbox: true,
     webSearch: Boolean(env.TAVILY_API_KEY),
     openai: Boolean(env.OPENAI_API_KEY),
   },

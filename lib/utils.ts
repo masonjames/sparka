@@ -1,6 +1,7 @@
 import type { FileUIPart, ModelMessage, TextPart } from 'ai';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { v7 as uuidv7 } from 'uuid';
 
 import type { Document } from '@/lib/db/schema';
 import type { Attachment, ChatMessage } from './ai/types';
@@ -86,11 +87,7 @@ export function getLocalStorage(key: string) {
 }
 
 export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return uuidv7();
 }
 
 export function getMostRecentUserMessage(messages: Array<ChatMessage>) {

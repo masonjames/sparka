@@ -20,9 +20,12 @@ export type XSearchResponse = {
 // Initialize Exa client
 const exa = new Exa(env.EXA_API_KEY as string);
 
+// Regex for extracting tweet ID from URL
+const TWEET_ID_REGEX = /(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/;
+
 // Extract tweet ID from URL
 const extractTweetId = (url: string): string | null => {
-  const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  const match = url.match(TWEET_ID_REGEX);
   return match ? match[1] : null;
 };
 
