@@ -2,12 +2,14 @@ import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
-import { useCustomChatStoreApi } from "./custom-store-provider";
-import type { PartsAugmentedState } from "./with-message-parts";
+import {
+  useCustomChatStoreApi,
+  type CustomChatStoreState,
+} from "./custom-store-provider";
 
 export function usePartsStore<T>(
-  selector: (store: PartsAugmentedState<ChatMessage>) => T,
-  equalityFn?: (a: T, b: T) => boolean
+  selector: (store: CustomChatStoreState<ChatMessage>) => T,
+  equalityFn?: (a: T, b: T) => boolean,
 ): T {
   const store = useCustomChatStoreApi<ChatMessage>();
   if (!store) {
@@ -15,6 +17,7 @@ export function usePartsStore<T>(
   }
   return useStoreWithEqualityFn(store, selector, equalityFn);
 }
+
 
 export const useMessagePartTypesById = (
   messageId: string

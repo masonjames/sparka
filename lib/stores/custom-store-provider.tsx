@@ -15,14 +15,9 @@ import {
   withMessageParts,
 } from "./with-message-parts";
 
-export type NewChatStoreProviderProps<TMessage extends UIMessage = UIMessage> =
-  PropsWithChildren<{
-    initialMessages?: TMessage[];
-    chatKey: string;
-  }>;
 
 export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
-  PartsAugmentedState<UI_MESSAGE>;
+  PartsAugmentedState<UI_MESSAGE> // & OtherAugmentedState<UI_MESSAGE> to extend
 
 export function createChatStore<TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = []
@@ -50,11 +45,14 @@ export function useCustomChatStoreApi<
 }
 
 
+type ChatProviderProps = Parameters<typeof ChatProvider>[0];
+
 export function CustomStoreProvider<TMessage extends UIMessage = UIMessage>({
   initialMessages = [],
-  chatKey,
   children,
-}: NewChatStoreProviderProps<TMessage>) {
+}:   PropsWithChildren<{
+    initialMessages?: TMessage[];
+  }> & Omit<ChatProviderProps, 'initialMessages' | 'store'>) {
   const storeRef = useRef<CustomChatStoreApi<TMessage> | null>(null);
 
   if (storeRef.current === null) {
@@ -63,7 +61,6 @@ export function CustomStoreProvider<TMessage extends UIMessage = UIMessage>({
 
   return (
     <ChatProvider<TMessage>
-      key={chatKey}
       initialMessages={initialMessages}
       store={storeRef.current || undefined}
     >

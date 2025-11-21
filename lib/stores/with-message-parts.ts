@@ -1,7 +1,7 @@
 "use client";
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
-import type { BaseChatStoreState } from "./chat-store-base";
+import type { StoreState as BaseChatStoreState } from "@ai-sdk-tools/store";
 
 // Helper types to safely derive the message part and part.type types from UI_MESSAGE
 type UIMessageParts<UI_MSG> = UI_MSG extends { parts: infer P } ? P : never;
