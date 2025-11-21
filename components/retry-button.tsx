@@ -1,6 +1,6 @@
 import {
-  useChatMessages as useAiChatMessages,
   useChatActions,
+  useChatStoreApi
 } from "@ai-sdk-tools/store";
 import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
@@ -16,7 +16,7 @@ export function RetryButton({
   className?: string;
 }) {
   const { setMessages, sendMessage } = useChatActions<ChatMessage>();
-  const messages = useAiChatMessages<ChatMessage>();
+  const chatStore = useChatStoreApi<ChatMessage>();
 
   const handleRetry = useCallback(() => {
     if (!sendMessage) {
@@ -25,7 +25,7 @@ export function RetryButton({
     }
 
     // Find the current message (AI response) and its parent (user message)
-    const currentMessages = messages;
+    const currentMessages = chatStore.getState().messages;
     const currentMessageIdx = currentMessages.findIndex(
       (msg) => msg.id === messageId
     );
@@ -63,7 +63,7 @@ export function RetryButton({
     );
 
     toast.success("Retrying message...");
-  }, [sendMessage, messageId, setMessages, messages]);
+  }, [sendMessage, messageId, setMessages, chatStore]);
 
   return (
     <Action
