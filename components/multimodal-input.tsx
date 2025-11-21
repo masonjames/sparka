@@ -37,7 +37,6 @@ import {
   useLastMessageId,
   useMessageIds,
 } from "@/lib/stores/hooks";
-import { useChatMessages } from "@ai-sdk-tools/store";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
@@ -86,7 +85,6 @@ function PureMultimodalInput({
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const messageIds = useMessageIds();
   const { setMessages, sendMessage } = useChatActions<ChatMessage>();
-  const messages = useChatMessages();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -308,8 +306,8 @@ function PureMultimodalInput({
     parentMessageId,
     selectedModelId,
     editorRef,
+    lastMessageId,
     onSendMessage,
-    storeApi,
     updateChatUrl,
     trimMessagesInEditMode,
   ]);
