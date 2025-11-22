@@ -3,7 +3,7 @@ import { Share } from "lucide-react";
 import { memo } from "react";
 import { HeaderActions } from "@/components/header-actions";
 import { HeaderBreadcrumb } from "@/components/header-breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import type { Session } from "@/lib/auth";
 import { ShareButton } from "./share-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -21,11 +21,13 @@ function PureChatHeader({
   projectId?: string;
   user?: Session["user"];
 }) {
+  const { isMobile } = useSidebar();
+
   return (
     <header className="sticky top-0 flex h-(--header-height) items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2">
       <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
         <div className="flex items-center gap-2">
-          <SidebarTrigger className="sm:hidden" />
+          {isMobile && <SidebarTrigger />}
           <HeaderBreadcrumb
             chatId={chatId}
             className="ml-2"
@@ -57,7 +59,7 @@ function PureChatHeader({
         )}
       </div>
 
-      <HeaderActions user={user} />
+      <HeaderActions />
     </header>
   );
 }

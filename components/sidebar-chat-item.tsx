@@ -2,14 +2,12 @@
 import Link from "next/link";
 import { memo, useState } from "react";
 import { toast } from "sonner";
-
-import { MoreHorizontalIcon } from "@/components/icons";
 import { ChatMenuItems } from "@/components/chat-menu-items";
+import { MoreHorizontalIcon } from "@/components/icons";
 import { ShareDialog } from "@/components/share-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";

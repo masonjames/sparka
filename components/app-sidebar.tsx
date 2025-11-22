@@ -13,8 +13,8 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { AppSidebarFooterConditional } from "./app-sidebar-footer-conditional";
 import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
+import { SidebarUserNav } from "./sidebar-user-nav";
 
 export function AppSidebar() {
   return (
@@ -57,7 +57,7 @@ export function AppSidebar() {
         </SidebarContent>
       </ScrollArea>
 
-      <AppSidebarFooterConditional />
+      <SidebarUserNav />
     </Sidebar>
   );
 }
