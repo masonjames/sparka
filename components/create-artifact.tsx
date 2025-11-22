@@ -59,6 +59,7 @@ type ArtifactConfig<T extends string, M = any> = {
   kind: T;
   description: string;
   content: ComponentType<ArtifactContent<M>>;
+  footer?: ComponentType<ArtifactContent<M>>;
   actions: ArtifactAction<M>[];
   toolbar: ArtifactToolbarItem[];
   initialize?: ({
@@ -85,6 +86,8 @@ export class Artifact<T extends string, M = any> {
   readonly kind: T;
   readonly description: string;
   readonly content: ComponentType<ArtifactContent<M>>;
+  readonly footer?: ComponentType<ArtifactContent<M>>;
+
   readonly actions: ArtifactAction<M>[];
   readonly toolbar: ArtifactToolbarItem[];
   readonly initialize?: ({
@@ -110,6 +113,7 @@ export class Artifact<T extends string, M = any> {
     this.kind = config.kind;
     this.description = config.description;
     this.content = config.content;
+    this.footer = config.footer;
     this.actions = config.actions || [];
     this.toolbar = config.toolbar || [];
     this.initialize = config.initialize || (async () => ({}));

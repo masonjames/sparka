@@ -126,6 +126,9 @@ function PureArtifactPanel({
     throw new Error("Artifact definition not found!");
   }
 
+  const ArtifactContentComponent = artifactDefinition.content;
+  const ArtifactFooterComponent = artifactDefinition.footer;
+
   const handleContentChange = useCallback(
     (updatedContent: string) => {
       if (!documents) {
@@ -253,6 +256,27 @@ function PureArtifactPanel({
     return null;
   }
 
+  const resolvedContent = isCurrentVersion
+    ? artifact.content
+    : getDocumentContentById(currentVersionIndex);
+
+  const sharedArtifactProps = {
+    content: resolvedContent,
+    currentVersionIndex,
+    getDocumentContentById,
+    isCurrentVersion,
+    isInline: false,
+    isLoading: isDocumentsFetching && !artifact.content,
+    isReadonly,
+    metadata,
+    mode,
+    onSaveContent: saveContent,
+    setMetadata,
+    status: artifact.status,
+    suggestions: [],
+    title: artifact.title,
+  };
+
   return (
     <ArtifactCard
       className={cn(
@@ -313,29 +337,10 @@ function PureArtifactPanel({
         </ArtifactHeaderActions>
       </ArtifactHeader>
 
-      <ArtifactContent className="p-0">
+      <ArtifactContent className="flex h-full flex-col p-0">
         <ScrollArea className="h-full max-w-full!">
           <div className="flex flex-col items-center bg-background/80">
-            <artifactDefinition.content
-              content={
-                isCurrentVersion
-                  ? artifact.content
-                  : getDocumentContentById(currentVersionIndex)
-              }
-              currentVersionIndex={currentVersionIndex}
-              getDocumentContentById={getDocumentContentById}
-              isCurrentVersion={isCurrentVersion}
-              isInline={false}
-              isLoading={isDocumentsFetching && !artifact.content}
-              isReadonly={isReadonly}
-              metadata={metadata}
-              mode={mode}
-              onSaveContent={saveContent}
-              setMetadata={setMetadata}
-              status={artifact.status}
-              suggestions={[]}
-              title={artifact.title}
-            />
+            <ArtifactContentComponent {...sharedArtifactProps} />
 
             {isCurrentVersion && !isReadonly && (
               <Toolbar
@@ -349,6 +354,10 @@ function PureArtifactPanel({
             )}
           </div>
         </ScrollArea>
+
+        {ArtifactFooterComponent ? (
+          <ArtifactFooterComponent {...sharedArtifactProps} />
+        ) : null}
 
         {!(isCurrentVersion || isReadonly) && (
           <VersionFooter
