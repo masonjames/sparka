@@ -36,52 +36,7 @@ export function ChatSync({
   const { setDataStream } = useDataStream();
   const [autoResume, setAutoResume] = useState(true);
 
-  // useRecreateChat(id, initialMessages);
-
   const isAuthenticated = !!session?.user;
-  // const chatState = useChatStateInstance();
-
-  // console.log('chatState', chatState);
-  // const chat = useMemo(() => {
-  //   const instance = new ZustandChat<ChatMessage>({
-  //     state: chatState,
-  //     id,
-  //     generateId: generateUUID,
-  //     onFinish: ({ message }) => {
-  //       saveChatMessage({ message, chatId: id });
-  //     },
-  //     transport: new DefaultChatTransport({
-  //       api: "/api/chat",
-  //       fetch: fetchWithErrorHandlers,
-  //       prepareSendMessagesRequest({ messages, id, body }) {
-  //         console.log('prepareSendMessagesRequest', messages, id, body);
-  //         return {
-  //           body: {
-  //             id,
-  //             message: messages.at(-1),
-  //             prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-  //             ...body,
-  //           },
-  //         };
-  //       },
-  //     }),
-  //     onData: (dataPart) => {
-  //       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
-  //     },
-  //     onError: (error) => {
-  //       console.error(error);
-  //       const cause = error.cause;
-  //       if (cause && typeof cause === "string") {
-  //         toast.error(error.message ?? "An error occured, please try again!", {
-  //           description: cause,
-  //         });
-  //       } else {
-  //         toast.error(error.message ?? "An error occured, please try again!");
-  //       }
-  //     },
-  //   });
-  //   return instance;
-  // }, [id, saveChatMessage, setDataStream, isAuthenticated, chatState]);
 
   const helpers = useChat<ChatMessage>({
     // store: chatStore,

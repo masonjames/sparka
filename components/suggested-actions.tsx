@@ -64,7 +64,7 @@ function PureSuggestedActions({
                 return;
               }
 
-              window.history.replaceState({}, "", `/chat/${chatId}`);
+              window.history.pushState({}, "", `/chat/${chatId}`);
 
               sendMessage(
                 {

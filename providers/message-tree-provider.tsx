@@ -1,7 +1,8 @@
 "use client";
 
-import { useChatActions } from "@ai-sdk-tools/store";
+import { useChatActions, useChatReset } from "@ai-sdk-tools/store";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -38,18 +39,21 @@ type MessageTreeProviderProps = {
 
 export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
   const { id, type } = useChatId();
+  const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const { setMessages } = useChatActions<ChatMessage>();
+  const reset = useChatReset();
 
   // Select the appropriate chat ID based on isShared flag
   // Subscribe to query cache changes for the specific chat messages query
   useEffect(() => {
     // TODO: IS this effect still needed or can it be replaced with a useQuery ?
-    if (type === "provisional" && window.location.pathname === "/") {
+    if (type === "provisional" && pathname === "/") {
       // New chat
       setAllMessages([]);
+      reset();
     }
 
     const queryKey =
@@ -99,9 +103,11 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
   }, [
     id,
     type,
+    pathname,
     trpc.chat.getChatMessages,
     trpc.chat.getPublicChatMessages,
     queryClient,
+    reset,
   ]);
 
   // Build parent->children mapping once

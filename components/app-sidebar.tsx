@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -56,8 +57,10 @@ export function AppSidebar() {
           <AppSidebarHistoryConditional />
         </SidebarContent>
       </ScrollArea>
-
-      <SidebarUserNav />
+      <SidebarSeparator />
+      <SidebarFooter>
+        <SidebarUserNav />
+      </SidebarFooter>
     </Sidebar>
   );
 }
