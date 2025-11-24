@@ -12,15 +12,6 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
-// function useRecreateChat(id: string, initialMessages: ChatMessage[]) {
-//   const chatStore = useChatStoreApi();
-//   useEffect(() => {
-//     if (id !== chatStore.getState().id) {
-//       chatStore.getState().setNewChat(id, initialMessages || []);
-//     }
-//   }, [id, initialMessages, chatStore]);
-// }
-
 export function ChatSync({
   id,
   initialMessages,
@@ -30,7 +21,6 @@ export function ChatSync({
   initialMessages: ChatMessage[];
   projectId?: string;
 }) {
-  // const chatStore = useChatStoreApi();
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setDataStream } = useDataStream();
@@ -39,7 +29,6 @@ export function ChatSync({
   const isAuthenticated = !!session?.user;
 
   const helpers = useChat<ChatMessage>({
-    // store: chatStore,
     experimental_throttle: 100,
     id,
     messages: initialMessages,
