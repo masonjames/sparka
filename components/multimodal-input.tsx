@@ -305,6 +305,7 @@ function PureMultimodalInput({
     editorRef,
     lastMessageId,
     onSendMessage,
+    sendMessage,
     updateChatUrl,
     trimMessagesInEditMode,
   ]);

@@ -45,6 +45,7 @@ export function ChatSync({
     messages: initialMessages,
     generateId: generateUUID,
     onFinish: ({ message }) => {
+      console.log("onFinish", message);
       saveChatMessage({ message, chatId: id });
       setAutoResume(true);
     },
@@ -89,17 +90,7 @@ export function ChatSync({
     },
   });
 
-  // useEffect(() => {
-  //   console.log('setting current chat helpers');
-
-  //   chatStore.getState()._syncState({
-  //     // ...chatStore.getState(),
-  //     stop: helpers.stop,
-  //     sendMessage: helpers.sendMessage,
-  //     regenerate: helpers.regenerate,
-  //   });
-
-  // }, [helpers.stop, helpers.sendMessage, helpers.regenerate, chatStore]);
+  console.log("messages helpers", helpers.messages);
 
   useAutoResume({
     autoResume,
