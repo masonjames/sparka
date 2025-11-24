@@ -42,6 +42,7 @@ export function ChatSync({
     // store: chatStore,
     experimental_throttle: 100,
     id,
+    messages: initialMessages,
     generateId: generateUUID,
     onFinish: ({ message }) => {
       saveChatMessage({ message, chatId: id });
