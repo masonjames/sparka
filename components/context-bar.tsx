@@ -18,7 +18,7 @@ import {
   ContextReasoningUsage,
   ContextTrigger,
 } from "@/components/ai-elements/context";
-import { PromptInputContextBar } from "@/components/ai-elements/prompt-input";
+import { PromptInputHeader } from "@/components/ai-elements/prompt-input";
 import { AttachmentList } from "@/components/attachment-list";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import type { Attachment } from "@/lib/ai/types";
@@ -62,7 +62,7 @@ export function ContextBar({
       style={{ overflow: "hidden" }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
     >
-      <PromptInputContextBar className="w-full border-b">
+      <PromptInputHeader className="w-full border-b">
         {(attachments.length > 0 || uploadQueue.length > 0) && (
           <AttachmentList
             attachments={attachments}
@@ -81,7 +81,7 @@ export function ContextBar({
             />
           </div>
         )}
-      </PromptInputContextBar>
+      </PromptInputHeader>
     </motion.div>
   );
 }

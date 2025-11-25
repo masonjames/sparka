@@ -17,8 +17,8 @@ import { toast } from "sonner";
 import {
   PromptInput,
   PromptInputButton,
+  PromptInputFooter,
   PromptInputSubmit,
-  PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { ContextBar } from "@/components/context-bar";
@@ -549,8 +549,9 @@ function PureMultimodalInput({
           className={`${className} @container relative transition-colors ${
             isDragActive ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : ""
           }`}
-          onSubmit={(e) => {
-            e.preventDefault();
+          {...getRootProps({ onError: undefined, onSubmit: undefined })}
+          onSubmit={(_message, event) => {
+            event.preventDefault();
             if (!submission.enabled) {
               if (submission.message) {
                 toast.error(submission.message);
@@ -559,7 +560,6 @@ function PureMultimodalInput({
             }
             submitForm();
           }}
-          {...getRootProps()}
         >
           <input {...getInputProps()} />
 
@@ -580,7 +580,7 @@ function PureMultimodalInput({
 
           <ContextBar
             attachments={attachments}
-            className=""
+            className="w-full"
             onImageClick={handleImageClick}
             onRemove={removeAttachment}
             parentMessageId={parentMessageId}
@@ -719,7 +719,7 @@ function PureChatInputBottomControls({
 }) {
   const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
-    <PromptInputToolbar className="flex w-full min-w-0 flex-row justify-between @[400px]:gap-2 gap-1 border-t">
+    <PromptInputFooter className="flex w-full min-w-0 flex-row justify-between @[400px]:gap-2 gap-1 border-t px-1 py-1 [.border-t]:pt-1">
       <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
         <ModelSelector
@@ -752,7 +752,7 @@ function PureChatInputBottomControls({
         }}
         status={status}
       />
-    </PromptInputToolbar>
+    </PromptInputFooter>
   );
 }
 

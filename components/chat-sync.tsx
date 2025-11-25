@@ -57,7 +57,9 @@ export function ChatSync({
       },
     }),
     onData: (dataPart) => {
-      setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+      setDataStream((ds) =>
+        ds ? [...ds, dataPart as (typeof ds)[number]] : []
+      );
     },
     onError: (error) => {
       if (
