@@ -86,10 +86,7 @@ export function ChatInputProvider({
     overrideModelId || defaultModel
   );
 
-  const [inputValue, setInputValue] = useState<string>(() => {
-    const initial = initialInput || getLocalStorageInput();
-    return initial;
-  });
+  const inputValueRef = useRef<string>(initialInput || getLocalStorageInput());
 
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
     initialTool
@@ -141,7 +138,7 @@ export function ChatInputProvider({
   const clearInput = useCallback(() => {
     editorRef.current?.clear();
     setLocalStorageInput("");
-    setInputValue("");
+    inputValueRef.current = "";
     setIsEmpty(true);
   }, [setLocalStorageInput]);
 
@@ -153,7 +150,7 @@ export function ChatInputProvider({
     setAttachments([]);
   }, []);
 
-  const getInputValue = useCallback(() => inputValue, [inputValue]);
+  const getInputValue = useCallback(() => inputValueRef.current, []);
 
   // Save to localStorage when input changes (will be called by the lexical editor)
   const handleInputChange = useCallback(
@@ -161,7 +158,7 @@ export function ChatInputProvider({
       if (localStorageEnabled) {
         setLocalStorageInput(value);
       }
-      setInputValue(value);
+      inputValueRef.current = value;
       // Update isEmpty state reactively
       setIsEmpty(value.trim().length === 0);
     },
