@@ -6,11 +6,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
-import { useAutoResume } from "@/hooks/use-auto-resume";
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+
+const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)(?:\/chat\/)?$/;
 
 export function ChatSync({
   id,
@@ -81,11 +82,11 @@ export function ChatSync({
 
   console.log("messages helpers", helpers.messages);
 
-  useAutoResume({
-    autoResume,
-    initialMessages,
-    resumeStream: helpers.resumeStream,
-  });
+  // useAutoResume({
+  //   autoResume,
+  //   initialMessages,
+  //   resumeStream: helpers.resumeStream,
+  // });
 
   return null;
 }

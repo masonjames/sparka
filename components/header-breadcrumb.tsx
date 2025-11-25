@@ -1,4 +1,5 @@
 "use client";
+import { useMessageIds } from "@ai-sdk-tools/store";
 import { ChevronDown } from "lucide-react";
 import {
   type KeyboardEvent,
@@ -51,10 +52,12 @@ export function HeaderBreadcrumb({
   className,
 }: HeaderBreadcrumbProps) {
   const { type, id: chatId } = useChatId();
+  const messageIds = useMessageIds();
   const isAuthenticated = !!user;
 
+  const provisionalChatSaved = type === "provisional" && messageIds.length >= 2;
   const { data: chat } = useGetChatById(chatId, {
-    enabled: type === "provisional" || type === "chat",
+    enabled: type === "chat" || provisionalChatSaved,
   });
   const { data: publicChat } = usePublicChat(chatId, {
     enabled: type === "shared",
@@ -64,7 +67,7 @@ export function HeaderBreadcrumb({
 
   const { data: project, isFetching: isProjectLoading } = useProject(
     resolvedProjectId,
-    { enabled: isAuthenticated }
+    { enabled: isAuthenticated && Boolean(resolvedProjectId) }
   );
 
   const chatLabel = chat?.title ?? publicChat?.title ?? "";
@@ -87,6 +90,10 @@ export function HeaderBreadcrumb({
     setDraft: setChatTitleDraft,
     value: chat?.title,
   });
+
+  if (!provisionalChatSaved) {
+    return null;
+  }
 
   const canManageChat = !isReadonly && !!chat;
 
