@@ -1,8 +1,12 @@
 "use client";
-
-import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useEffect, useState } from "react";
+import {
+  type KeyboardEvent,
+  memo,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { DeleteChatDialog } from "@/components/delete-chat-dialog";
@@ -21,103 +25,50 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  useGetChatByIdQueryOptions,
+  useGetChatById,
   usePinChat,
+  useProject,
   useRenameChat,
 } from "@/hooks/chat-sync-hooks";
+import { usePublicChat } from "@/hooks/use-shared-chat";
 import type { Session } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
-import { useTRPC } from "@/trpc/react";
-
-const DISABLED_PROJECT_ID = "00000000-0000-0000-0000-000000000000";
-
-function getChatLabel({
-  privateTitle,
-  publicTitle,
-  isPrivateChatLoading,
-  isPublicChatLoading,
-  hasMessages,
-}: {
-  privateTitle?: string;
-  publicTitle?: string;
-  isPrivateChatLoading: boolean;
-  isPublicChatLoading: boolean;
-  hasMessages: boolean;
-}): string {
-  if (privateTitle) {
-    return privateTitle;
-  }
-  if (publicTitle) {
-    return publicTitle;
-  }
-  if (isPrivateChatLoading || isPublicChatLoading) {
-    return "Loading chat…";
-  }
-  if (hasMessages) {
-    return "Untitled chat";
-  }
-  return "New chat";
-}
 
 type HeaderBreadcrumbProps = {
   chatId: string;
   projectId?: string;
-  hasMessages: boolean;
   user?: Session["user"];
   isReadonly: boolean;
   className?: string;
 };
 
 export function HeaderBreadcrumb({
-  chatId,
-  projectId,
-  hasMessages,
+  chatId: _chatId,
+  projectId: _projectId,
   user,
   isReadonly,
   className,
 }: HeaderBreadcrumbProps) {
-  const trpc = useTRPC();
-  const { type } = useChatId();
+  const { type, id: chatId } = useChatId();
   const isAuthenticated = !!user;
-  const shouldFetchPrivateChat = isAuthenticated && type === "chat";
-  const getChatByIdQueryOptions = useGetChatByIdQueryOptions(chatId);
-  const { data: privateChat, isLoading: isPrivateChatLoading } = useQuery({
-    ...getChatByIdQueryOptions,
-    enabled:
-      shouldFetchPrivateChat && (getChatByIdQueryOptions.enabled ?? true),
+
+  const { data: chat } = useGetChatById(chatId, {
+    enabled: type === "provisional" || type === "chat",
+  });
+  const { data: publicChat } = usePublicChat(chatId, {
+    enabled: type === "shared",
   });
 
-  const getPublicChatQueryOptions = trpc.chat.getPublicChat.queryOptions({
-    chatId,
-  });
-  const shouldFetchPublicChat = type === "shared";
-  const { data: publicChat, isLoading: isPublicChatLoading } = useQuery({
-    ...getPublicChatQueryOptions,
-    enabled:
-      shouldFetchPublicChat && (getPublicChatQueryOptions.enabled ?? true),
-  });
+  const resolvedProjectId = chat?.projectId ?? publicChat?.projectId ?? null;
 
-  const resolvedProjectId =
-    privateChat?.projectId ?? projectId ?? publicChat?.projectId ?? null;
+  const { data: project, isFetching: isProjectLoading } = useProject(
+    resolvedProjectId,
+    { enabled: isAuthenticated }
+  );
 
-  const fallbackProjectId = resolvedProjectId ?? DISABLED_PROJECT_ID;
-  const projectQueryOptions = trpc.project.getById.queryOptions({
-    id: fallbackProjectId,
-  });
-  const { data: project, isFetching: isProjectLoading } = useQuery({
-    ...projectQueryOptions,
-    enabled: isAuthenticated && !!resolvedProjectId,
-  });
-
-  const chatLabel = getChatLabel({
-    privateTitle: privateChat?.title,
-    publicTitle: publicChat?.title,
-    isPrivateChatLoading,
-    isPublicChatLoading,
-    hasMessages,
-  });
-  const shouldHideBreadcrumb = chatLabel === "New chat";
+  const chatLabel = chat?.title ?? publicChat?.title ?? "";
+  const shouldHideBreadcrumb = !chatLabel;
 
   const projectLabel = resolvedProjectId
     ? (project?.name ?? (isProjectLoading ? "Loading project…" : undefined))
@@ -134,27 +85,24 @@ export function HeaderBreadcrumb({
   useSyncDraftValue({
     isEditing: isChatEditing,
     setDraft: setChatTitleDraft,
-    value: privateChat?.title,
+    value: chat?.title,
   });
 
-  const canManageChat = !isReadonly && !!privateChat;
+  const canManageChat = !isReadonly && !!chat;
 
   const handlePinToggle = () => {
-    pinChatMutation({ chatId, isPinned: !privateChat?.isPinned });
+    pinChatMutation({ chatId, isPinned: !chat?.isPinned });
   };
 
   const handleChatRename = () =>
     performChatRename({
       chatId,
       chatTitleDraft,
-      privateChat,
+      privateChat: chat,
       renameChat: renameChatMutation,
       setChatTitleDraft,
       setIsChatEditing,
     });
-
-  const crumbButtonClass =
-    "group flex max-w-[220px] items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
   const handleChatInputKeyDown = createInputKeyDownHandler({
     onEnter: () => {
@@ -164,7 +112,7 @@ export function HeaderBreadcrumb({
     },
     onEscape: () => {
       setIsChatEditing(false);
-      setChatTitleDraft(privateChat?.title ?? "");
+      setChatTitleDraft(chat?.title ?? "");
     },
   });
 
@@ -175,23 +123,8 @@ export function HeaderBreadcrumb({
 
   const startChatRename = () => {
     setIsChatEditing(true);
-    setChatTitleDraft(privateChat?.title ?? "");
+    setChatTitleDraft(chat?.title ?? "");
   };
-
-  const chatBreadcrumbContent = getChatBreadcrumbContent({
-    canManageChat,
-    crumbButtonClass,
-    handleChatInputKeyDown,
-    handleChatRename,
-    isChatEditing,
-    onChatTitleChange: (value: string) => setChatTitleDraft(value),
-    openChatDeleteDialog,
-    chatLabel,
-    chatTitleDraft,
-    startChatRename,
-    isPinned: !!privateChat?.isPinned,
-    onTogglePin: handlePinToggle,
-  });
 
   if (shouldHideBreadcrumb) {
     return null;
@@ -207,7 +140,23 @@ export function HeaderBreadcrumb({
       <Breadcrumb className={cn("flex-1", className)}>
         <BreadcrumbList>
           {projectBreadcrumb}
-          <BreadcrumbItem>{chatBreadcrumbContent}</BreadcrumbItem>
+          <BreadcrumbItem>
+            {
+              <PureChatBreadcrumb
+                canManageChat={canManageChat}
+                chatLabel={chatLabel}
+                chatTitleDraft={chatTitleDraft}
+                handleChatInputKeyDown={handleChatInputKeyDown}
+                handleChatRename={handleChatRename}
+                isChatEditing={isChatEditing}
+                isPinned={!!chat?.isPinned}
+                onChatTitleChange={(value: string) => setChatTitleDraft(value)}
+                onTogglePin={handlePinToggle}
+                openChatDeleteDialog={openChatDeleteDialog}
+                startChatRename={startChatRename}
+              />
+            }
+          </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
@@ -220,11 +169,10 @@ export function HeaderBreadcrumb({
   );
 }
 
-type ChatBreadcrumbArgs = {
+type ChatBreadcrumbProps = {
   canManageChat: boolean;
   chatLabel: string;
   chatTitleDraft: string;
-  crumbButtonClass: string;
   handleChatInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   handleChatRename: () => Promise<void> | void;
   isChatEditing: boolean;
@@ -235,11 +183,10 @@ type ChatBreadcrumbArgs = {
   startChatRename: () => void;
 };
 
-function getChatBreadcrumbContent({
+const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
   canManageChat,
   chatLabel,
   chatTitleDraft,
-  crumbButtonClass,
   handleChatInputKeyDown,
   handleChatRename,
   isChatEditing,
@@ -247,8 +194,8 @@ function getChatBreadcrumbContent({
   onChatTitleChange,
   onTogglePin,
   openChatDeleteDialog,
-  startChatRename,
-}: ChatBreadcrumbArgs): ReactNode {
+  startChatRename: startChatRenameProp,
+}: ChatBreadcrumbProps) {
   if (isChatEditing) {
     return (
       <Input
@@ -267,7 +214,10 @@ function getChatBreadcrumbContent({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className={crumbButtonClass} type="button">
+          <button
+            className="group flex max-w-[220px] items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-foreground text-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            type="button"
+          >
             <span className="truncate">{chatLabel}</span>
             <ChevronDown aria-hidden className="size-4 text-muted-foreground" />
           </button>
@@ -277,7 +227,7 @@ function getChatBreadcrumbContent({
             includeShareItem={false}
             isPinned={isPinned}
             onDelete={openChatDeleteDialog}
-            onRename={startChatRename}
+            onRename={startChatRenameProp}
             onTogglePin={onTogglePin}
           />
         </DropdownMenuContent>
@@ -286,7 +236,7 @@ function getChatBreadcrumbContent({
   }
 
   return <BreadcrumbPage>{chatLabel}</BreadcrumbPage>;
-}
+});
 
 type PerformChatRenameArgs = {
   chatId: string;

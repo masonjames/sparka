@@ -31,7 +31,6 @@ function PureChatHeader({
           <HeaderBreadcrumb
             chatId={chatId}
             className="ml-2"
-            hasMessages={hasMessages}
             isReadonly={isReadonly}
             projectId={projectId}
             user={user}
