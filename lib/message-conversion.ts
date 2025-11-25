@@ -31,6 +31,7 @@ export function dbMessageToChatMessage(message: DBMessage): ChatMessage {
       parentMessageId: message.parentMessageId,
       selectedModel: (message.selectedModel as ModelId) || ("" as ModelId),
       selectedTool: (message.selectedTool as UiToolName | null) || undefined,
+      usage: message.lastContext as ChatMessage["metadata"]["usage"],
     },
   };
 }
