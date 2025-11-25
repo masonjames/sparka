@@ -22,6 +22,7 @@ import {
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { ContextBar } from "@/components/context-bar";
+import { ContextUsageFromParent } from "@/components/context-usage";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
@@ -583,8 +584,6 @@ function PureMultimodalInput({
             className="w-full"
             onImageClick={handleImageClick}
             onRemove={removeAttachment}
-            parentMessageId={parentMessageId}
-            selectedModelId={selectedModelId}
             uploadQueue={uploadQueue}
           />
 
@@ -623,6 +622,7 @@ function PureMultimodalInput({
             fileInputRef={fileInputRef}
             isEmpty={isEmpty}
             onModelChange={handleModelChange}
+            parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
             selectedTool={selectedTool}
             setSelectedTool={setSelectedTool}
@@ -705,6 +705,7 @@ function PureChatInputBottomControls({
   submitForm,
   uploadQueue: _uploadQueue,
   submission,
+  parentMessageId,
 }: {
   selectedModelId: AppModelId;
   onModelChange: (modelId: AppModelId) => void;
@@ -716,10 +717,11 @@ function PureChatInputBottomControls({
   submitForm: () => void;
   uploadQueue: string[];
   submission: { enabled: boolean; message?: string };
+  parentMessageId: string | null;
 }) {
   const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
-    <PromptInputFooter className="flex w-full min-w-0 flex-row justify-between @[400px]:gap-2 gap-1 border-t px-1 py-1 [.border-t]:pt-1">
+    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[400px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
       <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
         <ModelSelector
@@ -733,25 +735,33 @@ function PureChatInputBottomControls({
           tools={selectedTool}
         />
       </PromptInputTools>
-      <PromptInputSubmit
-        className={"@[400px]:size-10 size-8 shrink-0"}
-        disabled={status === "ready" && !submission.enabled}
-        onClick={(e) => {
-          e.preventDefault();
-          if (status === "streaming" || status === "submitted") {
-            stopHelper?.();
-          } else if (status === "ready" || status === "error") {
-            if (!submission.enabled) {
-              if (submission.message) {
-                toast.error(submission.message);
+      <div className="flex items-center gap-1">
+        <ContextUsageFromParent
+          className="@[400px]:block hidden"
+          iconOnly
+          parentMessageId={parentMessageId}
+          selectedModelId={selectedModelId}
+        />
+        <PromptInputSubmit
+          className={"@[400px]:size-10 size-8 shrink-0"}
+          disabled={status === "ready" && !submission.enabled}
+          onClick={(e) => {
+            e.preventDefault();
+            if (status === "streaming" || status === "submitted") {
+              stopHelper?.();
+            } else if (status === "ready" || status === "error") {
+              if (!submission.enabled) {
+                if (submission.message) {
+                  toast.error(submission.message);
+                }
+                return;
               }
-              return;
+              submitForm();
             }
-            submitForm();
-          }
-        }}
-        status={status}
-      />
+          }}
+          status={status}
+        />
+      </div>
     </PromptInputFooter>
   );
 }
@@ -790,6 +800,9 @@ const ChatInputBottomControls = memo(
       return false;
     }
     if (prevProps.submission.message !== nextProps.submission.message) {
+      return false;
+    }
+    if (prevProps.parentMessageId !== nextProps.parentMessageId) {
       return false;
     }
     return true;
