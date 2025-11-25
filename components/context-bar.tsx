@@ -31,11 +31,10 @@ export function ContextBar({
       style={{ overflow: "hidden" }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
     >
-      <PromptInputHeader className="w-full border-b">
+      <PromptInputHeader className="w-full border-b bg-muted">
         {(attachments.length > 0 || uploadQueue.length > 0) && (
           <AttachmentList
             attachments={attachments}
-            className="grow px-3 py-2"
             onImageClick={onImageClick}
             onRemove={onRemove}
             testId="attachments-preview"
