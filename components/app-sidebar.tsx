@@ -1,4 +1,4 @@
-import { Cpu } from "lucide-react";
+import { ArrowUpRightIcon, Cpu } from "lucide-react";
 import Link from "next/link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SearchChatsButton } from "@/components/search-chats";
@@ -43,9 +43,12 @@ export function AppSidebar() {
                 target="_blank"
               >
                 <Cpu className="size-4" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  Models
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    Models
+                  </span>
+                  <ArrowUpRightIcon className="size-3" />
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
