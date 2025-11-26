@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
 import { PlusIcon } from "lucide-react";
 import type React from "react";
 import {
@@ -16,12 +17,13 @@ import { toast } from "sonner";
 import {
   PromptInput,
   PromptInputButton,
+  PromptInputFooter,
   PromptInputSubmit,
-  PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { ContextBar } from "@/components/context-bar";
-import { useSaveMessageMutation, useEntitlementStatus } from "@/hooks/chat-sync-hooks";
+import { ContextUsageFromParent } from "@/components/context-usage";
+import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
@@ -32,12 +34,7 @@ import {
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import {
-  useChatHelperStop,
-  useMessageIds,
-  useSetMessages,
-} from "@/lib/stores/hooks-base";
+import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
@@ -80,13 +77,13 @@ function PureMultimodalInput({
   disableSuggestedActions?: boolean;
   emptyStateOverride?: React.ReactNode;
 }) {
-  const storeApi = useChatStoreApi();
+  const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
-  const setMessages = useSetMessages();
   const messageIds = useMessageIds();
-
+  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const lastMessageId = useLastMessageId();
   const {
     editorRef,
     selectedTool,
@@ -103,11 +100,6 @@ function PureMultimodalInput({
   } = useChatInput();
 
   const isAnonymous = !session?.user;
-  const { entitled, isLoading: isLoadingEntitlement } = useEntitlementStatus();
-  
-  // Check if entitlement system is enabled (Ghost or Stripe configured)
-  const isEntitlementSystemEnabled = typeof window !== "undefined" &&
-    (window as any).__ENTITLEMENT_SYSTEM_ENABLED__;
   const isModelDisallowedForAnonymous =
     isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
 
@@ -255,17 +247,13 @@ function PureMultimodalInput({
 
   const coreSubmitLogic = useCallback(() => {
     const input = getInputValue();
-    const sendMessage = storeApi.getState().currentChatHelpers?.sendMessage;
-    if (!sendMessage) {
-      return;
-    }
 
     updateChatUrl(chatId);
 
     // Get the appropriate parent message ID
     const effectiveParentMessageId = isEditMode
       ? parentMessageId
-      : storeApi.getState().getLastMessageId();
+      : lastMessageId;
 
     // In edit mode, trim messages to the parent message
     if (isEditMode) {
@@ -316,8 +304,9 @@ function PureMultimodalInput({
     parentMessageId,
     selectedModelId,
     editorRef,
+    lastMessageId,
     onSendMessage,
-    storeApi,
+    sendMessage,
     updateChatUrl,
     trimMessagesInEditMode,
   ]);
@@ -561,8 +550,9 @@ function PureMultimodalInput({
           className={`${className} @container relative transition-colors ${
             isDragActive ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : ""
           }`}
-          onSubmit={(e) => {
-            e.preventDefault();
+          {...getRootProps({ onError: undefined, onSubmit: undefined })}
+          onSubmit={(_message, event) => {
+            event.preventDefault();
             if (!submission.enabled) {
               if (submission.message) {
                 toast.error(submission.message);
@@ -571,7 +561,6 @@ function PureMultimodalInput({
             }
             submitForm();
           }}
-          {...getRootProps()}
         >
           <input {...getInputProps()} />
 
@@ -592,11 +581,9 @@ function PureMultimodalInput({
 
           <ContextBar
             attachments={attachments}
-            className=""
+            className="w-full"
             onImageClick={handleImageClick}
             onRemove={removeAttachment}
-            parentMessageId={parentMessageId}
-            selectedModelId={selectedModelId}
             uploadQueue={uploadQueue}
           />
 
@@ -635,6 +622,7 @@ function PureMultimodalInput({
             fileInputRef={fileInputRef}
             isEmpty={isEmpty}
             onModelChange={handleModelChange}
+            parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
             selectedTool={selectedTool}
             setSelectedTool={setSelectedTool}
@@ -717,6 +705,7 @@ function PureChatInputBottomControls({
   submitForm,
   uploadQueue: _uploadQueue,
   submission,
+  parentMessageId,
 }: {
   selectedModelId: AppModelId;
   onModelChange: (modelId: AppModelId) => void;
@@ -728,10 +717,11 @@ function PureChatInputBottomControls({
   submitForm: () => void;
   uploadQueue: string[];
   submission: { enabled: boolean; message?: string };
+  parentMessageId: string | null;
 }) {
-  const stopHelper = useChatHelperStop();
+  const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
-    <PromptInputToolbar className="flex w-full min-w-0 flex-row justify-between @[400px]:gap-2 gap-1 border-t">
+    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[400px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
       <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
         <ModelSelector
@@ -745,26 +735,34 @@ function PureChatInputBottomControls({
           tools={selectedTool}
         />
       </PromptInputTools>
-      <PromptInputSubmit
-        className={"@[400px]:size-10 size-8 shrink-0"}
-        disabled={status === "ready" && !submission.enabled}
-        onClick={(e) => {
-          e.preventDefault();
-          if (status === "streaming" || status === "submitted") {
-            stopHelper?.();
-          } else if (status === "ready" || status === "error") {
-            if (!submission.enabled) {
-              if (submission.message) {
-                toast.error(submission.message);
+      <div className="flex items-center gap-1">
+        <ContextUsageFromParent
+          className="@[400px]:block hidden"
+          iconOnly
+          parentMessageId={parentMessageId}
+          selectedModelId={selectedModelId}
+        />
+        <PromptInputSubmit
+          className={"@[400px]:size-10 size-8 shrink-0"}
+          disabled={status === "ready" && !submission.enabled}
+          onClick={(e) => {
+            e.preventDefault();
+            if (status === "streaming" || status === "submitted") {
+              stopHelper?.();
+            } else if (status === "ready" || status === "error") {
+              if (!submission.enabled) {
+                if (submission.message) {
+                  toast.error(submission.message);
+                }
+                return;
               }
-              return;
+              submitForm();
             }
-            submitForm();
-          }
-        }}
-        status={status}
-      />
-    </PromptInputToolbar>
+          }}
+          status={status}
+        />
+      </div>
+    </PromptInputFooter>
   );
 }
 
@@ -802,6 +800,9 @@ const ChatInputBottomControls = memo(
       return false;
     }
     if (prevProps.submission.message !== nextProps.submission.message) {
+      return false;
+    }
+    if (prevProps.parentMessageId !== nextProps.parentMessageId) {
       return false;
     }
     return true;

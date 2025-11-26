@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useChatActions, type useChatStoreApi } from "@ai-sdk-tools/store";
 import cx from "classnames";
 import {
   AnimatePresence,
@@ -26,8 +27,6 @@ import {
 } from "@/components/ui/tooltip";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import type { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSendMessage } from "@/lib/stores/hooks-base";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact-panel";
 import type { ArtifactToolbarItem } from "./create-artifact";
@@ -46,9 +45,9 @@ type ToolProps = {
     storeApi,
   }: {
     sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-    storeApi: ReturnType<typeof useChatStoreApi>;
+    storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
   }) => void;
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
 function Tool({
@@ -62,7 +61,7 @@ function Tool({
   onClick,
   storeApi,
 }: ToolProps) {
-  const sendMessage = useSendMessage();
+  const { sendMessage } = useChatActions<ChatMessage>();
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -87,9 +86,7 @@ function Tool({
       setSelectedTool(description);
     } else {
       setSelectedTool(null);
-      if (sendMessage) {
-        onClick({ sendMessage, storeApi });
-      }
+      onClick({ sendMessage, storeApi });
     }
   };
 
@@ -149,9 +146,9 @@ function ReadingLevelSelector({
 }: {
   setSelectedTool: Dispatch<SetStateAction<string | null>>;
   isAnimating: boolean;
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }) {
-  const sendMessage = useSendMessage();
+  const { sendMessage } = useChatActions<ChatMessage>();
   const LEVELS = [
     "Elementary",
     "Middle School",
@@ -274,7 +271,7 @@ export function Tools({
   isAnimating: boolean;
   setIsToolbarVisible: Dispatch<SetStateAction<boolean>>;
   tools: ArtifactToolbarItem[];
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }) {
   const [primaryTool, ...secondaryTools] = tools;
 
@@ -329,16 +326,15 @@ function PureToolbar({
   status: UseChatHelpers<ChatMessage>["status"];
   stop: UseChatHelpers<ChatMessage>["stop"];
   artifactKind: ArtifactKind;
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }) {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // @ts-expect-error - usehooks-ts types are not updated for React 19
-  useOnClickOutside(toolbarRef, () => {
+  useOnClickOutside(toolbarRef as React.RefObject<HTMLElement>, () => {
     setIsToolbarVisible(false);
     setSelectedTool(null);
   });

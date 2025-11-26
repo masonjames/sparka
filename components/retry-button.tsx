@@ -1,11 +1,9 @@
+import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
 import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
-
 import { Action } from "@/components/ai-elements/actions";
-// ChatMessage type not needed directly here
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import { useSendMessage, useSetMessages } from "@/lib/stores/hooks-base";
+import type { ChatMessage } from "@/lib/ai/types";
 
 export function RetryButton({
   messageId,
@@ -14,9 +12,8 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const setMessages = useSetMessages();
-  const sendMessage = useSendMessage();
-  const chatStore = useChatStoreApi();
+  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const chatStore = useChatStoreApi<ChatMessage>();
 
   const handleRetry = useCallback(() => {
     if (!sendMessage) {

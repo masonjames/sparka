@@ -395,6 +395,7 @@ export async function updateMessage({
           createdAt: dbMessage.createdAt,
           isPartial: dbMessage.isPartial,
           parentMessageId: dbMessage.parentMessageId,
+          lastContext: dbMessage.lastContext,
         })
         .where(eq(message.id, id));
 
@@ -466,6 +467,7 @@ export async function getAllMessagesByChatId({
             "") as ChatMessage["metadata"]["selectedModel"],
           selectedTool: (msg.selectedTool ||
             undefined) as ChatMessage["metadata"]["selectedTool"],
+          usage: msg.lastContext as ChatMessage["metadata"]["usage"],
         },
       };
     });

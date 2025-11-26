@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
 
-export function usePublicChat(chatId: string) {
+export function usePublicChat(
+  chatId: string,
+  { enabled }: { enabled?: boolean } = {}
+) {
   const trpc = useTRPC();
 
   return useQuery({
     ...trpc.chat.getPublicChat.queryOptions({ chatId }),
-    enabled: !!chatId,
+    enabled: enabled ?? true,
   });
 }
 

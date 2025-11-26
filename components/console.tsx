@@ -1,11 +1,4 @@
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
 import { CrossSmallIcon, LoaderIcon, TerminalWindowIcon } from "./icons";
@@ -22,11 +15,6 @@ export type ConsoleOutput = {
   contents: ConsoleOutputContent[];
 };
 
-type ConsoleProps = {
-  consoleOutputs: ConsoleOutput[];
-  setConsoleOutputs: Dispatch<SetStateAction<ConsoleOutput[]>>;
-};
-
 function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
   if (consoleOutput.status === "in_progress") {
     return "Initializing...";
@@ -41,44 +29,18 @@ function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
   return null;
 }
 
-export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
-  const [height, setHeight] = useState<number>(300);
-  const [isResizing, setIsResizing] = useState(false);
+export function Console({
+  consoleOutputs,
+  setConsoleOutputs,
+  className,
+}: {
+  consoleOutputs: ConsoleOutput[];
+  setConsoleOutputs: Dispatch<SetStateAction<ConsoleOutput[]>>;
+  className?: string;
+}) {
   const consoleEndRef = useRef<HTMLDivElement>(null);
 
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
-
-  const minHeight = 100;
-  const maxHeight = 800;
-
-  const startResizing = useCallback(() => {
-    setIsResizing(true);
-  }, []);
-
-  const stopResizing = useCallback(() => {
-    setIsResizing(false);
-  }, []);
-
-  const resize = useCallback(
-    (e: MouseEvent) => {
-      if (isResizing) {
-        const newHeight = window.innerHeight - e.clientY;
-        if (newHeight >= minHeight && newHeight <= maxHeight) {
-          setHeight(newHeight);
-        }
-      }
-    },
-    [isResizing]
-  );
-
-  useEffect(() => {
-    window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResizing);
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-    };
-  }, [resize, stopResizing]);
 
   useEffect(() => {
     consoleEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -91,25 +53,8 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
   }, [isArtifactVisible, setConsoleOutputs]);
 
   return consoleOutputs.length > 0 ? (
-    <>
-      <div
-        aria-valuenow={minHeight}
-        className="fixed z-50 h-2 w-full cursor-ns-resize"
-        onMouseDown={startResizing}
-        role="slider"
-        style={{ bottom: height - 4 }}
-        tabIndex={0}
-      />
-
-      <div
-        className={cn(
-          "fixed bottom-0 z-40 flex w-full flex-col overflow-x-hidden overflow-y-scroll border-zinc-200 border-t bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900",
-          {
-            "select-none": isResizing,
-          }
-        )}
-        style={{ height }}
-      >
+    <div className={cn("flex w-full flex-col overflow-hidden", className)}>
+      <div className="flex h-full w-full flex-col overflow-x-hidden overflow-y-scroll border-zinc-200 border-t bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="sticky top-0 z-50 flex h-fit w-full flex-row items-center justify-between border-zinc-200 border-b bg-muted px-2 py-1 dark:border-zinc-700">
           <div className="flex flex-row items-center gap-3 pl-2 text-sm text-zinc-800 dark:text-zinc-50">
             <div className="text-muted-foreground">
@@ -171,7 +116,7 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
                       </picture>
                     ) : (
                       <div
-                        className="w-full whitespace-pre-line break-words"
+                        className="break-word-wrap w-full whitespace-pre-line"
                         key={`${consoleOutput.id}-${contentIndex}`}
                       >
                         {content.value}
@@ -185,6 +130,6 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
           <div ref={consoleEndRef} />
         </div>
       </div>
-    </>
+    </div>
   ) : null;
 }

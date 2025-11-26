@@ -1,9 +1,10 @@
 "use client";
 
+import { useChatActions } from "@ai-sdk-tools/store";
 import { motion } from "motion/react";
 import { memo } from "react";
 import type { AppModelId } from "@/lib/ai/app-models";
-import { useSendMessage } from "@/lib/stores/hooks-base";
+import type { ChatMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
@@ -18,7 +19,7 @@ function PureSuggestedActions({
   selectedModelId,
   className,
 }: SuggestedActionsProps) {
-  const sendMessage = useSendMessage();
+  const { sendMessage } = useChatActions<ChatMessage>();
   const suggestedActions = [
     {
       title: "What are the advantages",
@@ -63,7 +64,7 @@ function PureSuggestedActions({
                 return;
               }
 
-              window.history.replaceState({}, "", `/chat/${chatId}`);
+              window.history.pushState({}, "", `/chat/${chatId}`);
 
               sendMessage(
                 {

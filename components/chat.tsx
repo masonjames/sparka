@@ -1,5 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useChatActions, useChatId, useChatStatus } from "@ai-sdk-tools/store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { ChatHeader } from "@/components/chat-header";
@@ -13,12 +14,7 @@ import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Session } from "@/lib/auth";
 import type { Vote } from "@/lib/db/schema";
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
-import {
-  useChatId,
-  useChatStatus,
-  useMessageIds,
-} from "@/lib/stores/hooks-base";
+import { useMessageIds } from "@/lib/stores/hooks";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
@@ -93,20 +89,17 @@ export function Chat({
   isProjectPage?: boolean;
   projectId?: string;
 }) {
-  const chatStore = useChatStoreApi();
   const trpc = useTRPC();
   const { data: session } = useSession();
   const isLoading = id !== useChatId();
 
   const messageIds = useMessageIds() as string[];
   const status = useChatStatus();
-  const stopAsync: UseChatHelpers<ChatMessage>["stop"] = useCallback(() => {
-    const helpers = chatStore.getState().currentChatHelpers;
-    if (!helpers?.stop) {
-      return Promise.resolve();
-    }
-    return helpers.stop();
-  }, [chatStore]);
+  const { stop } = useChatActions<ChatMessage>();
+  const stopAsync: UseChatHelpers<ChatMessage>["stop"] = useCallback(
+    async () => stop?.(),
+    [stop]
+  );
   // regenerate no longer needs to be drilled; components call the store directly
 
   const { data: votes } = useQuery({

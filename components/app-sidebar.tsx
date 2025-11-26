@@ -1,4 +1,4 @@
-import { Cpu } from "lucide-react";
+import { ArrowUpRightIcon, Cpu } from "lucide-react";
 import Link from "next/link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SearchChatsButton } from "@/components/search-chats";
@@ -7,14 +7,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { AppSidebarFooterConditional } from "./app-sidebar-footer-conditional";
 import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
+import { SidebarUserNav } from "./sidebar-user-nav";
 
 export function AppSidebar() {
   return (
@@ -42,9 +43,12 @@ export function AppSidebar() {
                 target="_blank"
               >
                 <Cpu className="size-4" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  Models
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    Models
+                  </span>
+                  <ArrowUpRightIcon className="size-3" />
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -56,8 +60,10 @@ export function AppSidebar() {
           <AppSidebarHistoryConditional />
         </SidebarContent>
       </ScrollArea>
-
-      <AppSidebarFooterConditional />
+      <SidebarSeparator />
+      <SidebarFooter>
+        <SidebarUserNav />
+      </SidebarFooter>
     </Sidebar>
   );
 }

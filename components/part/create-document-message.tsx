@@ -1,4 +1,5 @@
-import { useChatStoreApi } from "@/lib/stores/chat-store-context";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
+import type { ChatMessage } from "@/lib/ai/types";
 import { isLastArtifact } from "../is-last-artifact";
 import {
   type CreateDocumentTool,
@@ -16,7 +17,7 @@ export function CreateDocumentMessage({
   isReadonly: boolean;
   messageId: string;
 }) {
-  const chatStore = useChatStoreApi();
+  const chatStore = useChatStoreApi<ChatMessage>();
   if (tool.state === "input-available") {
     return (
       <DocumentPreview

@@ -1,10 +1,10 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { useChatStoreApi } from "@ai-sdk-tools/store";
 import type { QueryClient } from "@tanstack/react-query";
 import type { DataUIPart } from "ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { Suggestion } from "@/lib/db/schema";
-import type { useChatStoreApi } from "@/lib/stores/chat-store-context";
 import type { useTRPC } from "@/trpc/react";
 import type { UIArtifact } from "./artifact-panel";
 
@@ -29,7 +29,7 @@ type ArtifactAction<M = any> = {
 
 export type ArtifactToolbarContext = {
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  storeApi: ReturnType<typeof useChatStoreApi>;
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
 export type ArtifactToolbarItem = {
@@ -59,6 +59,7 @@ type ArtifactConfig<T extends string, M = any> = {
   kind: T;
   description: string;
   content: ComponentType<ArtifactContent<M>>;
+  footer?: ComponentType<ArtifactContent<M>>;
   actions: ArtifactAction<M>[];
   toolbar: ArtifactToolbarItem[];
   initialize?: ({
@@ -85,6 +86,8 @@ export class Artifact<T extends string, M = any> {
   readonly kind: T;
   readonly description: string;
   readonly content: ComponentType<ArtifactContent<M>>;
+  readonly footer?: ComponentType<ArtifactContent<M>>;
+
   readonly actions: ArtifactAction<M>[];
   readonly toolbar: ArtifactToolbarItem[];
   readonly initialize?: ({
@@ -110,6 +113,7 @@ export class Artifact<T extends string, M = any> {
     this.kind = config.kind;
     this.description = config.description;
     this.content = config.content;
+    this.footer = config.footer;
     this.actions = config.actions || [];
     this.toolbar = config.toolbar || [];
     this.initialize = config.initialize || (async () => ({}));

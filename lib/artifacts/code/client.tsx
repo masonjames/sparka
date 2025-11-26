@@ -93,39 +93,34 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       }));
     }
   },
-  content: ({
-    metadata,
-    setMetadata,
-    isReadonly,
-    content,
-    title,
-    ...props
-  }) => {
+  content: ({ isReadonly, content, title, ...props }) => {
     const language = getLanguageFromFileName(title) || "python";
 
     return (
-      <>
-        <div className="w-full px-1">
-          <CodeEditor
-            {...props}
-            content={content}
-            isReadonly={isReadonly}
-            language={language}
-          />
-        </div>
+      <CodeEditor
+        {...props}
+        content={content}
+        isReadonly={isReadonly}
+        language={language}
+      />
+    );
+  },
+  footer: ({ metadata, setMetadata }) => {
+    if (!metadata?.outputs?.length) {
+      return null;
+    }
 
-        {metadata?.outputs && (
-          <Console
-            consoleOutputs={metadata.outputs}
-            setConsoleOutputs={() => {
-              setMetadata({
-                ...metadata,
-                outputs: [],
-              });
-            }}
-          />
-        )}
-      </>
+    return (
+      <Console
+        className="min-h-[200px]"
+        consoleOutputs={metadata.outputs}
+        setConsoleOutputs={() => {
+          setMetadata({
+            ...metadata,
+            outputs: [],
+          });
+        }}
+      />
     );
   },
   actions: [

@@ -37,6 +37,27 @@ import { useChatId } from "@/providers/chat-id-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
+const DISABLED_PROJECT_ID = "00000000-0000-0000-0000-000000000000";
+
+async function invalidateChat({
+  queryClient,
+  trpc,
+  chatId,
+}: {
+  queryClient: ReturnType<typeof useQueryClient>;
+  trpc: ReturnType<typeof useTRPC>;
+  chatId: string;
+}) {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: trpc.chat.getAllChats.queryKey(),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: trpc.chat.getChatById.queryKey({ chatId }),
+    }),
+  ]);
+}
+
 export function useSaveChat() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -71,7 +92,7 @@ export function useSaveChat() {
       await saveAnonymousChatToStorage(tempChat);
       return { tempChat, message };
     },
-    onSuccess: async ({ tempChat, message }) => {
+    onSuccess: async ({ tempChat, message }, { chatId }) => {
       // Generate proper title asynchronously after successful save
       const data = await generateTitleMutation.mutateAsync({ message });
       if (data?.title) {
@@ -82,9 +103,7 @@ export function useSaveChat() {
         });
 
         // Invalidate chats to refresh the UI
-        queryClient.invalidateQueries({
-          queryKey: trpc.chat.getAllChats.queryKey(),
-        });
+        await invalidateChat({ queryClient, trpc, chatId });
       }
     },
     onError: (error) => {
@@ -110,6 +129,25 @@ export function useSaveChat() {
     isSaving: saveChatMutation.isPending,
     isGeneratingTitle: generateTitleMutation.isPending,
   };
+}
+
+export function useProject(
+  projectId: string | null,
+  { enabled }: { enabled?: boolean } = {}
+) {
+  const trpc = useTRPC();
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+
+  const fallbackProjectId = projectId ?? DISABLED_PROJECT_ID;
+  const projectQueryOptions = trpc.project.getById.queryOptions({
+    id: fallbackProjectId,
+  });
+
+  return useQuery({
+    ...projectQueryOptions,
+    enabled: (enabled ?? true) && isAuthenticated && !!projectId,
+  });
 }
 
 export function useGetChatMessagesQueryOptions() {
@@ -245,26 +283,67 @@ export function useRenameChat() {
       await renameAnonymousChat(chatId, title);
     },
     onMutate: async ({ chatId, title }: { chatId: string; title: string }) => {
-      await queryClient.cancelQueries({ queryKey: getAllChatsQueryKey });
+      const chatByIdQueryKey = trpc.chat.getChatById.queryKey({ chatId });
+
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: getAllChatsQueryKey }),
+        queryClient.cancelQueries({ queryKey: chatByIdQueryKey }),
+      ]);
+
       const previousChats =
         queryClient.getQueryData<UIChat[]>(getAllChatsQueryKey);
-      queryClient.setQueryData<UIChat[]>(getAllChatsQueryKey, (old) => {
-        if (!old) {
-          return old;
+      const previousChatById = queryClient.getQueryData<UIChat | null>(
+        chatByIdQueryKey
+      );
+
+      queryClient.setQueryData<UIChat[] | undefined>(
+        getAllChatsQueryKey,
+        (old) => {
+          if (!old) {
+            return old;
+          }
+          return old.map((c) => (c.id === chatId ? { ...c, title } : c));
         }
-        return old.map((c) => (c.id === chatId ? { ...c, title } : c));
-      });
-      return { previousChats } as { previousChats?: UIChat[] };
+      );
+
+      if (previousChatById) {
+        queryClient.setQueryData<UIChat | null>(chatByIdQueryKey, {
+          ...previousChatById,
+          title,
+        });
+      }
+
+      return {
+        previousChats,
+        previousChatById,
+      } as {
+        previousChats?: UIChat[];
+        previousChatById?: UIChat | null;
+      };
     },
-    onError: (_err, _vars, context) => {
-      const ctx = context as { previousChats?: UIChat[] } | undefined;
+    onError: (_err, { chatId }, context) => {
+      const ctx = context as
+        | {
+            previousChats?: UIChat[];
+            previousChatById?: UIChat | null;
+          }
+        | undefined;
+
       if (ctx?.previousChats) {
         queryClient.setQueryData(getAllChatsQueryKey, ctx.previousChats);
       }
+
+      if (ctx?.previousChatById !== undefined) {
+        const chatByIdQueryKey = trpc.chat.getChatById.queryKey({ chatId });
+        queryClient.setQueryData<UIChat | null>(
+          chatByIdQueryKey,
+          ctx.previousChatById
+        );
+      }
       toast.error("Failed to rename chat");
     },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: getAllChatsQueryKey });
+    onSettled: async (_data, _error, { chatId }) => {
+      await invalidateChat({ queryClient, trpc, chatId });
     },
   });
 
@@ -369,8 +448,8 @@ export function usePinChat() {
       }
       toast.error("Failed to pin chat");
     },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: getAllChatsQueryKey });
+    onSettled: async (_data, _error, { chatId }) => {
+      await invalidateChat({ queryClient, trpc, chatId });
     },
   });
 
@@ -576,7 +655,7 @@ export function useSaveMessageMutation() {
       console.error("Failed to save message:", err);
       toast.error("Failed to save message");
     },
-    onSuccess: (_data, { message, chatId }, _ctx) => {
+    onSuccess: async (_data, { message, chatId }, _ctx) => {
       if (isAuthenticated) {
         if (message.role === "assistant") {
           queryClient.invalidateQueries({
@@ -596,9 +675,7 @@ export function useSaveMessageMutation() {
         }
       }
       if (message.role === "assistant") {
-        queryClient.invalidateQueries({
-          queryKey: trpc.chat.getAllChats.queryKey(),
-        });
+        await invalidateChat({ queryClient, trpc, chatId });
       }
     },
   });
@@ -824,9 +901,15 @@ export function useGetChatByIdQueryOptions(chatId: string) {
   return getChatByIdQueryOptions;
 }
 
-export function useGetChatById(chatId: string) {
+export function useGetChatById(
+  chatId: string,
+  { enabled }: { enabled?: boolean } = {}
+) {
   const options = useGetChatByIdQueryOptions(chatId);
-  return useQuery(options);
+  return useQuery({
+    ...options,
+    enabled: enabled ?? options.enabled ?? true,
+  });
 }
 
 export function useGetCredits() {
