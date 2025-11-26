@@ -103,6 +103,7 @@ https://www.sparka.ai/
      - One auth provider (choose one pair):
        - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`
        - `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`
+       - `VERCEL_APP_CLIENT_ID` and `VERCEL_APP_CLIENT_SECRET`
 
    ### Self-hosted / other platforms
 
@@ -118,6 +119,7 @@ https://www.sparka.ai/
      - One auth provider (choose one pair):
        - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`
        - `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`
+       - `VERCEL_APP_CLIENT_ID` and `VERCEL_APP_CLIENT_SECRET`
 
    **Optional:**
 
