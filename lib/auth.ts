@@ -28,6 +28,8 @@ export const auth = betterAuth({
     const googleSecret = env.AUTH_GOOGLE_SECRET;
     const githubId = env.AUTH_GITHUB_ID;
     const githubSecret = env.AUTH_GITHUB_SECRET;
+    const vercelId = env.VERCEL_APP_CLIENT_ID;
+    const vercelSecret = env.VERCEL_APP_CLIENT_SECRET;
 
     const google =
       typeof googleId === "string" &&
@@ -45,7 +47,15 @@ export const auth = betterAuth({
         ? { clientId: githubId, clientSecret: githubSecret }
         : undefined;
 
-    return { google, github } as const;
+    const vercel =
+      typeof vercelId === "string" &&
+      vercelId.length > 0 &&
+      typeof vercelSecret === "string" &&
+      vercelSecret.length > 0
+        ? { clientId: vercelId, clientSecret: vercelSecret }
+        : undefined;
+
+    return { google, github, vercel } as const;
   })(),
   plugins: [nextCookies()],
 });

@@ -13,6 +13,8 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
     AUTH_GITHUB_SECRET: z.string().optional(),
+    VERCEL_APP_CLIENT_ID: z.string().optional(),
+    VERCEL_APP_CLIENT_SECRET: z.string().optional(),
 
     // One of the AI Gateway API key or Vercel OIDC token must be configured
     AI_GATEWAY_API_KEY: z.string().optional(),
@@ -39,10 +41,11 @@ export const env = createEnv({
 if (
   typeof window === "undefined" &&
   !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET) &&
-  !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
+  !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET) &&
+  !(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET)
 ) {
   throw new Error(
-    "No social auth providers configured: enable Google by setting AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET, or enable GitHub by setting AUTH_GITHUB_ID and AUTH_GITHUB_SECRET."
+    "No social auth providers configured: enable Google (AUTH_GOOGLE_ID/SECRET), GitHub (AUTH_GITHUB_ID/SECRET), or Vercel (VERCEL_APP_CLIENT_ID/SECRET)."
   );
 }
 
