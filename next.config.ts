@@ -2,14 +2,10 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const MODEL_REGISTRY_URL = "airegistry.app";
-const ASYNC_HOOKS_STUB = path.resolve(
-  import.meta.dirname,
-  "stubs/async_hooks.ts"
-);
+const ASYNC_HOOKS_STUB = path.resolve(import.meta.dirname, "stubs/async_hooks.js");
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
-  cacheComponents: true,
 
   transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
@@ -21,12 +17,6 @@ const nextConfig: NextConfig = {
       "lucide-react",
       "@phosphor-icons/react",
     ],
-    turbo: {
-      resolveAlias: {
-        "node:async_hooks": ASYNC_HOOKS_STUB,
-        async_hooks: ASYNC_HOOKS_STUB,
-      },
-    },
   },
   turbopack: {
     root: import.meta.dirname,
