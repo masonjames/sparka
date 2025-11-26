@@ -155,6 +155,7 @@ function renderWebSearchPart({
 }
 
 // Render a single part by index with minimal subscriptions
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: branching reflects tool part permutations
 function PureMessagePart({
   messageId,
   partIdx,

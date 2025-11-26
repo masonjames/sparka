@@ -38,7 +38,9 @@ export function useCustomChatStoreApi<
   TMessage extends UIMessage = UIMessage,
 >() {
   const store = useContext(ChatStoreContext);
-  if (!store) throw new Error("useChatStoreApi must be used within Provider");
+  if (!store) {
+    throw new Error("useChatStoreApi must be used within Provider");
+  }
   return store as CustomChatStoreApi<TMessage>;
 }
 

@@ -1,24 +1,26 @@
 import "server-only";
-import { eq, and, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { entitlement, user, webhookEvent } from "@/lib/db/schema";
 import type { Entitlement } from "@/lib/db/schema";
-import { grantCredits, addCredits } from "@/lib/repositories/credits";
-import { createModuleLogger } from "@/lib/logger";
+import { entitlement, user, webhookEvent } from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { createModuleLogger } from "@/lib/logger";
+import { grantCredits } from "@/lib/repositories/credits";
 
 const logger = createModuleLogger("entitlements");
 
 // Credit amounts per tier - adjust based on your pricing
 const TIER_CREDITS: Record<string, number> = {
-  "pro": 1000,
-  "premium": 5000,
-  "enterprise": 20000,
-  "default": 500,
+  pro: 1000,
+  premium: 5000,
+  enterprise: 20_000,
+  default: 500,
 };
 
 function getCreditsForTier(tier: string | null): number {
-  if (!tier) return TIER_CREDITS.default;
+  if (!tier) {
+    return TIER_CREDITS.default;
+  }
   return TIER_CREDITS[tier.toLowerCase()] ?? TIER_CREDITS.default;
 }
 
@@ -42,15 +44,15 @@ async function logWebhookEvent({
       .select()
       .from(webhookEvent)
       .where(
-        and(
-          eq(webhookEvent.source, source),
-          eq(webhookEvent.eventId, eventId)
-        )
+        and(eq(webhookEvent.source, source), eq(webhookEvent.eventId, eventId))
       )
       .limit(1);
 
     if (existing.length > 0 && existing[0].processed) {
-      logger.info({ source, eventId, eventType }, "Event already processed, skipping");
+      logger.info(
+        { source, eventId, eventType },
+        "Event already processed, skipping"
+      );
       return false; // Already processed
     }
 
@@ -77,7 +79,11 @@ async function logWebhookEvent({
 /**
  * Mark webhook event as processed
  */
-async function markWebhookProcessed(source: "ghost" | "stripe", eventId: string, error?: string) {
+async function markWebhookProcessed(
+  source: "ghost" | "stripe",
+  eventId: string,
+  error?: string
+) {
   try {
     // Get current retry count if there's an error
     let newRetryCount = 0;
@@ -104,13 +110,13 @@ async function markWebhookProcessed(source: "ghost" | "stripe", eventId: string,
         retryCount: newRetryCount,
       })
       .where(
-        and(
-          eq(webhookEvent.source, source),
-          eq(webhookEvent.eventId, eventId)
-        )
+        and(eq(webhookEvent.source, source), eq(webhookEvent.eventId, eventId))
       );
   } catch (err) {
-    logger.error({ err, source, eventId }, "Failed to mark webhook as processed");
+    logger.error(
+      { err, source, eventId },
+      "Failed to mark webhook as processed"
+    );
   }
 }
 
@@ -150,7 +156,7 @@ async function ensureUser(email: string, name?: string): Promise<string> {
 
 /**
  * Provision entitlement from Ghost webhook
- * 
+ *
  * Ghost webhook payload (member.added, member.edited):
  * {
  *   member: {
@@ -181,7 +187,9 @@ export async function provisionFromGhost(payload: any): Promise<void> {
       payload,
     });
 
-    if (!canProcess) return;
+    if (!canProcess) {
+      return;
+    }
 
     const member = payload.member?.current;
     if (!member) {
@@ -209,7 +217,7 @@ export async function provisionFromGhost(payload: any): Promise<void> {
           userId,
           source: "ghost",
           externalId: member.id,
-          tier: tier,
+          tier,
           status: "active",
           creditsGranted: credits,
           metadata: { ghostTiers: tiers },
@@ -221,7 +229,7 @@ export async function provisionFromGhost(payload: any): Promise<void> {
           target: [entitlement.source, entitlement.externalId],
           set: {
             status: "active",
-            tier: tier,
+            tier,
             creditsGranted: credits,
             metadata: { ghostTiers: tiers },
             updatedAt: new Date(),
@@ -266,12 +274,12 @@ export async function provisionFromGhost(payload: any): Promise<void> {
 
 /**
  * Provision entitlement from Stripe webhook
- * 
+ *
  * Stripe event types:
  * - customer.subscription.created
  * - customer.subscription.updated
  * - customer.subscription.deleted
- * 
+ *
  * Payload:
  * {
  *   id: "evt_xxx",
@@ -309,7 +317,9 @@ export async function provisionFromStripe(event: any): Promise<void> {
       payload: event,
     });
 
-    if (!canProcess) return;
+    if (!canProcess) {
+      return;
+    }
 
     const subscription = event.data?.object;
     if (!subscription) {
@@ -323,7 +333,7 @@ export async function provisionFromStripe(event: any): Promise<void> {
     const productId = subscription.items?.data?.[0]?.price?.product;
 
     // Try to get user from metadata or lookup by customer ID
-    let userId = subscription.metadata?.userId;
+    const userId = subscription.metadata?.userId;
 
     if (!userId) {
       // TODO: Implement customer lookup - for now, we'll need userId in metadata
@@ -348,7 +358,7 @@ export async function provisionFromStripe(event: any): Promise<void> {
           userId,
           source: "stripe",
           externalId: subscriptionId,
-          tier: tier,
+          tier,
           status: "active",
           creditsGranted: credits,
           metadata: {
@@ -364,7 +374,7 @@ export async function provisionFromStripe(event: any): Promise<void> {
           target: [entitlement.source, entitlement.externalId],
           set: {
             status: "active",
-            tier: tier,
+            tier,
             creditsGranted: credits,
             updatedAt: new Date(),
           },
@@ -409,9 +419,12 @@ export async function provisionFromStripe(event: any): Promise<void> {
  * Sync entitlement from Ghost Admin API by email
  * Used for JIT provisioning when user logs in
  */
-export async function syncFromGhostByEmail(email: string, userId: string): Promise<void> {
+export async function syncFromGhostByEmail(
+  email: string,
+  userId: string
+): Promise<void> {
   try {
-    if (!env.GHOST_ADMIN_URL || !env.GHOST_ADMIN_API_KEY) {
+    if (!(env.GHOST_ADMIN_URL && env.GHOST_ADMIN_API_KEY)) {
       logger.warn("Ghost Admin API not configured, skipping sync");
       return;
     }
@@ -436,14 +449,18 @@ export async function syncFromGhostByEmail(email: string, userId: string): Promi
     const member = members[0];
     const status = member.status;
     const tiers = member.tiers || [];
-    
+
     // Ghost member status can be: 'free', 'paid', or 'comped' (complimentary)
     // Both 'paid' and 'comped' should have access
-    const hasAccess = (status === "paid" || status === "comped") && tiers.length > 0;
+    const hasAccess =
+      (status === "paid" || status === "comped") && tiers.length > 0;
     const tier = hasAccess ? tiers[0].slug : null;
     const credits = getCreditsForTier(tier);
-    
-    logger.info({ email, userId, status, tiers, hasAccess }, "Ghost member found");
+
+    logger.info(
+      { email, userId, status, tiers, hasAccess },
+      "Ghost member found"
+    );
 
     if (hasAccess) {
       // Upsert entitlement
@@ -453,7 +470,7 @@ export async function syncFromGhostByEmail(email: string, userId: string): Promi
           userId,
           source: "ghost",
           externalId: member.id,
-          tier: tier,
+          tier,
           status: "active",
           creditsGranted: credits,
           metadata: { ghostTiers: tiers },
@@ -465,7 +482,7 @@ export async function syncFromGhostByEmail(email: string, userId: string): Promi
           target: [entitlement.source, entitlement.externalId],
           set: {
             status: "active",
-            tier: tier,
+            tier,
             creditsGranted: credits,
             updatedAt: new Date(),
           },
@@ -474,7 +491,10 @@ export async function syncFromGhostByEmail(email: string, userId: string): Promi
       // Grant credits
       await grantCredits({ userId, amount: credits });
 
-      logger.info({ userId, email, tier, credits }, "Synced Ghost entitlement from API");
+      logger.info(
+        { userId, email, tier, credits },
+        "Synced Ghost entitlement from API"
+      );
     }
   } catch (error) {
     logger.error({ error, email, userId }, "Failed to sync from Ghost");
@@ -495,10 +515,7 @@ export async function isChatEntitled(userId: string): Promise<{
       .select()
       .from(entitlement)
       .where(
-        and(
-          eq(entitlement.userId, userId),
-          eq(entitlement.status, "active")
-        )
+        and(eq(entitlement.userId, userId), eq(entitlement.status, "active"))
       )
       .limit(1);
 
@@ -525,7 +542,9 @@ export async function isChatEntitled(userId: string): Promise<{
 /**
  * Get all active entitlements for a user
  */
-export async function getUserEntitlements(userId: string): Promise<Entitlement[]> {
+export async function getUserEntitlements(
+  userId: string
+): Promise<Entitlement[]> {
   try {
     return await db
       .select()

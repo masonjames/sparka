@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import crypto from "node:crypto";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { provisionFromGhost } from "@/lib/entitlements/provisioning";
-import { createModuleLogger } from "@/lib/logger";
 import { env } from "@/lib/env";
+import { createModuleLogger } from "@/lib/logger";
 
 const logger = createModuleLogger("ghost-webhook");
 
@@ -16,7 +16,9 @@ function verifyGhostSignature(
   signature: string | null,
   secret: string
 ): boolean {
-  if (!signature) return false;
+  if (!signature) {
+    return false;
+  }
 
   const hmac = crypto.createHmac("sha256", secret);
   hmac.update(payload);
@@ -30,14 +32,14 @@ function verifyGhostSignature(
 
 /**
  * POST /api/webhooks/ghost
- * 
+ *
  * Receives Ghost webhooks for member events
- * 
+ *
  * Expected events:
  * - member.added
  * - member.edited
  * - member.deleted
- * 
+ *
  * Setup in Ghost Admin: Settings → Integrations → Webhooks
  * - Target URL: https://yourdomain.com/api/webhooks/ghost
  * - Secret: Set GHOST_WEBHOOK_SECRET in env
@@ -66,10 +68,7 @@ export async function POST(request: NextRequest) {
 
     if (!isValid) {
       logger.warn({ signature }, "Invalid Ghost webhook signature");
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     // Parse payload

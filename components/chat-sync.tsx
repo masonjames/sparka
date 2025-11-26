@@ -11,8 +11,6 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
-const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)(?:\/chat\/)?$/;
-
 export function ChatSync({
   id,
   initialMessages,
@@ -25,7 +23,7 @@ export function ChatSync({
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setDataStream } = useDataStream();
-  const [autoResume, setAutoResume] = useState(true);
+  const [, setAutoResume] = useState(true);
 
   const isAuthenticated = !!session?.user;
 

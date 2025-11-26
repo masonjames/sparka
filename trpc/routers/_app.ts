@@ -2,9 +2,9 @@ import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 import { chatRouter } from "./chat.router";
 import { creditsRouter } from "./credits.router";
 import { documentRouter } from "./document.router";
+import { entitlementsRouter } from "./entitlements.router";
 import { projectRouter } from "./project.router";
 import { voteRouter } from "./vote.router";
-import { entitlementsRouter } from "./entitlements.router";
 
 /**
  * This is the primary router for your server.

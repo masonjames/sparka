@@ -1,9 +1,13 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { magicLink } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
+import { magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
-import { appBaseUrl, authTrustedOrigins, authCookieDomain } from "@/lib/app-url";
+import {
+  appBaseUrl,
+  authCookieDomain,
+  authTrustedOrigins,
+} from "@/lib/app-url";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import { db } from "./db/client";
@@ -22,12 +26,12 @@ export type Session = {
 const magicLinkLogger = createModuleLogger("magic-link");
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const rawFromEmail = env.RESEND_FROM_EMAIL?.trim();
-const fromEmailAddress =
-  rawFromEmail && rawFromEmail.includes("<")
-    ? rawFromEmail
-    : rawFromEmail
-      ? `Chat by Mason James <${rawFromEmail}>`
-      : null;
+let fromEmailAddress: string | null = null;
+if (rawFromEmail?.includes("<")) {
+  fromEmailAddress = rawFromEmail;
+} else if (rawFromEmail) {
+  fromEmailAddress = `Chat by Mason James <${rawFromEmail}>`;
+}
 
 const buildMagicLinkEmailHtml = (magicLinkUrl: string) => `
   <!DOCTYPE html>
@@ -99,7 +103,7 @@ export const auth = betterAuth({
 
     return { google, github } as const;
   })(),
-  
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Can enable later when email provider is configured
@@ -117,8 +121,11 @@ export const auth = betterAuth({
     nextCookies(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        if (!env.RESEND_API_KEY || !fromEmailAddress) {
-          magicLinkLogger.warn({ email }, "Resend not configured - magic link not sent");
+        if (!(env.RESEND_API_KEY && fromEmailAddress)) {
+          magicLinkLogger.warn(
+            { email },
+            "Resend not configured - magic link not sent"
+          );
           return;
         }
 
@@ -136,7 +143,10 @@ export const auth = betterAuth({
           });
           magicLinkLogger.info({ email }, "Magic link email sent via Resend");
         } catch (error) {
-          magicLinkLogger.error({ email, error }, "Failed to send magic link email via Resend");
+          magicLinkLogger.error(
+            { email, error },
+            "Failed to send magic link email via Resend"
+          );
           throw error;
         }
       },

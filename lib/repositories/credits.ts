@@ -156,7 +156,7 @@ export async function grantCredits({
   amount: number;
 }): Promise<void> {
   await ensureUserCreditRow(userId);
-  
+
   await db
     .update(userCredit)
     .set({
@@ -176,7 +176,7 @@ export async function addCredits({
   amount: number;
 }): Promise<void> {
   await ensureUserCreditRow(userId);
-  
+
   await db
     .update(userCredit)
     .set({

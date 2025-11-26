@@ -1,6 +1,11 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const MODEL_REGISTRY_URL = "airegistry.app";
+const ASYNC_HOOKS_STUB = path.resolve(
+  import.meta.dirname,
+  "stubs/async_hooks.ts"
+);
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
@@ -16,9 +21,15 @@ const nextConfig: NextConfig = {
       "lucide-react",
       "@phosphor-icons/react",
     ],
+    turbo: {
+      resolveAlias: {
+        "node:async_hooks": ASYNC_HOOKS_STUB,
+        async_hooks: ASYNC_HOOKS_STUB,
+      },
+    },
   },
   turbopack: {
-    root: __dirname,
+    root: import.meta.dirname,
   },
   // TODO: Uncomment this when we can exclude /api/cron/cleanup from caching selectively
   // cacheComponents: true,
@@ -63,6 +74,21 @@ const nextConfig: NextConfig = {
       permanent: true,
     },
   ],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        async_hooks: false,
+        "node:async_hooks": false,
+      };
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        async_hooks: ASYNC_HOOKS_STUB,
+        "node:async_hooks": ASYNC_HOOKS_STUB,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

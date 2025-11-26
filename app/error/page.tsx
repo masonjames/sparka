@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -36,27 +36,25 @@ export default function AuthErrorPage({ searchParams }: ErrorPageProps) {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           ⚠️
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          We hit a snag
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+        <h1 className="font-semibold text-2xl tracking-tight">We hit a snag</h1>
+        <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
           {message}
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/login"
             className={cn(buttonVariants({ variant: "default" }), "flex-1")}
+            href="/login"
           >
             Try again
           </Link>
           <Link
-            href="mailto:support@masonjames.com"
             className={cn(buttonVariants({ variant: "outline" }), "flex-1")}
+            href="mailto:support@masonjames.com"
           >
             Contact support
           </Link>
         </div>
-        <p className="text-muted-foreground mt-6 text-xs">
+        <p className="mt-6 text-muted-foreground text-xs">
           Error code: <span className="font-mono">{errorCode}</span>
         </p>
       </div>

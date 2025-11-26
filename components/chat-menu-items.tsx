@@ -34,7 +34,16 @@ export function ChatMenuItems({
         <span>{isPinned ? "Unpin" : "Pin"}</span>
       </DropdownMenuItem>
 
-      {includeShareItem && <ShareMenuItem onShare={onShare ?? (() => {})} />}
+      {includeShareItem && (
+        <ShareMenuItem
+          onShare={
+            onShare ??
+            (() => {
+              /* noop */
+            })
+          }
+        />
+      )}
 
       <DropdownMenuItem
         className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"

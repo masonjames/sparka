@@ -30,20 +30,21 @@ export function SignupForm({
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background text-muted-foreground px-2">
+                <span className="bg-background px-2 text-muted-foreground">
                   Or continue with
                 </span>
               </div>
             </div>
             <SocialAuthProviders />
-            <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
-              Email, Google, and GitHub signup paths create a <span className="font-medium text-foreground">Free</span> tier account.
-              Upgrade to the paid experience anytime through the{" "}
+            <div className="rounded-md border border-dashed bg-muted/30 p-3 text-muted-foreground text-xs">
+              Email, Google, and GitHub signup paths create a{" "}
+              <span className="font-medium text-foreground">Free</span> tier
+              account. Upgrade to the paid experience anytime through the{" "}
               <a
                 className="font-medium text-foreground underline underline-offset-4"
                 href="https://masonjames.com/#/portal/"
-                target="_blank"
                 rel="noreferrer"
+                target="_blank"
               >
                 Mason James Portal
               </a>{" "}

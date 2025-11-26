@@ -1,22 +1,22 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { provisionFromStripe } from "@/lib/entitlements/provisioning";
-import { createModuleLogger } from "@/lib/logger";
 import { env } from "@/lib/env";
+import { createModuleLogger } from "@/lib/logger";
 
 const logger = createModuleLogger("stripe-webhook");
 
 /**
  * POST /api/webhooks/stripe
- * 
+ *
  * Receives Stripe webhooks for subscription events
- * 
+ *
  * Expected events:
  * - customer.subscription.created
  * - customer.subscription.updated
  * - customer.subscription.deleted
- * 
+ *
  * Setup in Stripe Dashboard: Developers → Webhooks → Add endpoint
  * - Endpoint URL: https://yourdomain.com/api/webhooks/stripe
  * - Events to send: customer.subscription.*
@@ -25,7 +25,7 @@ const logger = createModuleLogger("stripe-webhook");
 export async function POST(request: NextRequest) {
   try {
     // Verify Stripe configuration
-    if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
+    if (!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET)) {
       logger.error("Stripe not configured");
       return NextResponse.json(
         { error: "Stripe not configured" },
@@ -43,10 +43,7 @@ export async function POST(request: NextRequest) {
 
     if (!signature) {
       logger.warn("Missing Stripe signature");
-      return NextResponse.json(
-        { error: "Missing signature" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Missing signature" }, { status: 401 });
     }
 
     // Verify webhook signature
@@ -59,13 +56,13 @@ export async function POST(request: NextRequest) {
       );
     } catch (err) {
       logger.warn({ error: err }, "Invalid Stripe signature");
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    logger.info({ eventType: event.type, eventId: event.id }, "Received Stripe webhook");
+    logger.info(
+      { eventType: event.type, eventId: event.id },
+      "Received Stripe webhook"
+    );
 
     // Handle subscription events
     if (
@@ -75,7 +72,10 @@ export async function POST(request: NextRequest) {
     ) {
       await provisionFromStripe(event);
     } else {
-      logger.info({ eventType: event.type }, "Unhandled Stripe webhook event type");
+      logger.info(
+        { eventType: event.type },
+        "Unhandled Stripe webhook event type"
+      );
     }
 
     return NextResponse.json({ received: true, eventId: event.id });

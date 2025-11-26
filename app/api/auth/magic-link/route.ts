@@ -1,24 +1,25 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { resolveRequestAwareAppUrl } from "@/lib/app-url";
-import { createModuleLogger } from "@/lib/logger";
+import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
-import { syncFromGhostByEmail } from "@/lib/entitlements/provisioning";
+import { createModuleLogger } from "@/lib/logger";
 
 const logger = createModuleLogger("magic-link");
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * POST /api/auth/magic-link
- * 
+ *
  * Request body: { email: string }
- * 
+ *
  * Generates a magic link login URL using Better Auth. Email delivery happens
  * inside the Better Auth magic-link plugin (Resend).
  * Also syncs entitlements from Ghost if configured.
- * 
+ *
  * Returns: { success: boolean, message: string }
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: clearer as a single flow for auth/validation
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,8 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(
         { success: false, error: "Invalid email format" },
         { status: 400 }
@@ -43,8 +43,12 @@ export async function POST(request: NextRequest) {
     logger.info({ email }, "Generating magic link");
 
     const requestOrigin = request.nextUrl.origin;
-    const callbackResolution = resolveRequestAwareAppUrl("/", { requestOrigin });
-    const errorCallbackResolution = resolveRequestAwareAppUrl("/error", { requestOrigin });
+    const callbackResolution = resolveRequestAwareAppUrl("/", {
+      requestOrigin,
+    });
+    const errorCallbackResolution = resolveRequestAwareAppUrl("/error", {
+      requestOrigin,
+    });
 
     const callbackURL = callbackResolution.url;
     const errorCallbackURL = errorCallbackResolution.url;
@@ -61,23 +65,21 @@ export async function POST(request: NextRequest) {
       },
       "Using callback URLs"
     );
-    
+
     // Better Auth handles the token generation
     const magicLinkEndpoint = (auth.api as Record<string, unknown>)
       .signInMagicLink as
-      | ((
-          args: {
-            body: {
-              email: string;
-              callbackURL?: string;
-              name?: string;
-              newUserCallbackURL?: string;
-              errorCallbackURL?: string;
-            };
-            headers: HeadersInit;
-            method?: "POST";
-          }
-        ) => Promise<unknown>)
+      | ((args: {
+          body: {
+            email: string;
+            callbackURL?: string;
+            name?: string;
+            newUserCallbackURL?: string;
+            errorCallbackURL?: string;
+          };
+          headers: HeadersInit;
+          method?: "POST";
+        }) => Promise<unknown>)
       | undefined;
 
     if (!magicLinkEndpoint) {
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
     } else if (result && typeof result === "object" && "status" in result) {
       status = Boolean((result as { status?: boolean }).status);
     }
-    
+
     logger.info({ status }, "Magic link request processed");
 
     if (!status) {
@@ -141,16 +143,19 @@ export async function POST(request: NextRequest) {
       message: "Magic link sent! Check your email to sign in.",
     });
   } catch (error) {
-    logger.error({
-      error,
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    }, "Failed to generate magic link");
+    logger.error(
+      {
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      "Failed to generate magic link"
+    );
     return NextResponse.json(
       {
         success: false,
         error: "Failed to generate magic link",
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

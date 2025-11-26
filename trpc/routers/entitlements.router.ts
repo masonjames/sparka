@@ -1,4 +1,7 @@
-import { isChatEntitled, getUserEntitlements } from "@/lib/entitlements/provisioning";
+import {
+  getUserEntitlements,
+  isChatEntitled,
+} from "@/lib/entitlements/provisioning";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const entitlementsRouter = createTRPCRouter({

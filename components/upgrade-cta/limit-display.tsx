@@ -4,15 +4,15 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
-import { useGetCredits, useEntitlementStatus } from "@/hooks/chat-sync-hooks";
+import { useEntitlementStatus, useGetCredits } from "@/hooks/chat-sync-hooks";
 import { cn } from "@/lib/utils";
-import { env } from "@/lib/env";
 import { useSession } from "@/providers/session-provider";
 import { Button } from "../ui/button";
 
-const GHOST_PORTAL_URL = typeof window !== "undefined"
-  ? (window as any).__GHOST_PORTAL_URL__ || "https://masonjames.com/#/portal"
-  : "https://masonjames.com/#/portal";
+const GHOST_PORTAL_URL =
+  typeof window !== "undefined"
+    ? (window as any).__GHOST_PORTAL_URL__ || "https://masonjames.com/#/portal"
+    : "https://masonjames.com/#/portal";
 
 const VARIANT_CONFIG: Record<
   "credits" | "model" | "image",
@@ -42,8 +42,8 @@ const VARIANT_CONFIG: Record<
               <a
                 className="font-medium text-red-700 underline hover:no-underline dark:text-red-300"
                 href={GHOST_PORTAL_URL}
-                target="_blank"
                 rel="noopener noreferrer"
+                target="_blank"
               >
                 Subscribe for 10,000 credits/month
               </a>
@@ -61,8 +61,8 @@ const VARIANT_CONFIG: Record<
               <a
                 className="font-medium text-amber-700 underline hover:no-underline dark:text-amber-300"
                 href={GHOST_PORTAL_URL}
-                target="_blank"
                 rel="noopener noreferrer"
+                target="_blank"
               >
                 Upgrade to Pro for 10,000/month
               </a>
@@ -70,7 +70,7 @@ const VARIANT_CONFIG: Record<
           );
         }
       }
-      
+
       // For anonymous users, show login prompt
       return isAtLimit ? (
         <span>
@@ -137,13 +137,18 @@ export function LimitDisplay({
   const { credits, isLoadingCredits } = useGetCredits();
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
-  const { entitled, reason, isLoading: isLoadingEntitlement } = useEntitlementStatus();
+  const {
+    entitled,
+    reason: _reason,
+    isLoading: isLoadingEntitlement,
+  } = useEntitlementStatus();
   const [dismissed, setDismissed] = useState(false);
 
   const variant = forceVariant ?? "credits";
-  
+
   // If authenticated but not entitled, show entitlement CTA instead
-  const needsSubscription = isAuthenticated && !entitled && !isLoadingEntitlement;
+  const needsSubscription =
+    isAuthenticated && !entitled && !isLoadingEntitlement;
   const config = VARIANT_CONFIG[variant];
 
   // Credits variant relies on credits API state
@@ -160,20 +165,20 @@ export function LimitDisplay({
 
   // Only show when approaching or at limit (credits variant)
   const isAtLimit = remaining <= 0;
-  
+
   // Show subscription CTA for entitled users who are logged in but not subscribed
   if (needsSubscription) {
     return (
       <AnimatePresence>
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
           className={cn(
             "flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm",
-            "bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-200",
+            "bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-200",
             className
           )}
+          exit={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -10 }}
         >
           <div className="flex items-center gap-2">
             <span>
@@ -181,8 +186,8 @@ export function LimitDisplay({
               <a
                 className="font-medium underline hover:no-underline"
                 href={GHOST_PORTAL_URL}
-                target="_blank"
                 rel="noopener noreferrer"
+                target="_blank"
               >
                 View plans
               </a>
@@ -192,9 +197,14 @@ export function LimitDisplay({
       </AnimatePresence>
     );
   }
-  
+
   // For anonymous users, hide when not approaching limit
-  if (!isAuthenticated && variant === "credits" && remaining > 10 && !isAtLimit) {
+  if (
+    !isAuthenticated &&
+    variant === "credits" &&
+    remaining > 10 &&
+    !isAtLimit
+  ) {
     return null;
   }
 

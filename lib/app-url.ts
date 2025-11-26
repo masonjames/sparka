@@ -4,6 +4,10 @@ const FALLBACK_LOCAL_ORIGIN = "http://localhost:3000";
 const HOSTNAME_REGEX = /^[a-z0-9.-]+$/i;
 const IPV4_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
 const ORIGIN_PROTOCOL_REGEX = /^https?:\/\//i;
+const PROTOCOL_REGEX = /^https?:\/\//;
+const PATH_REGEX = /\/.*$/;
+const LEADING_DOTS_REGEX = /^\.+/;
+const WILDCARD_ORIGIN_REGEX = /^https?:\/\/\*\.(.+)$/i;
 
 export type SharedCookieOptions = {
   domain?: string;
@@ -40,9 +44,11 @@ function normalizeHostname(value?: string | null): string | null {
   if (!trimmed) {
     return null;
   }
-  const withoutProtocol = trimmed.replace(/^https?:\/\//, "");
-  const host = withoutProtocol.replace(/\/.*$/, "").replace(/^\.+/, "");
-  if (!host || !HOSTNAME_REGEX.test(host)) {
+  const withoutProtocol = trimmed.replace(PROTOCOL_REGEX, "");
+  const host = withoutProtocol
+    .replace(PATH_REGEX, "")
+    .replace(LEADING_DOTS_REGEX, "");
+  if (!(host && HOSTNAME_REGEX.test(host))) {
     return null;
   }
   return host;
@@ -101,15 +107,14 @@ const cookieDomainHost = cookieDomainOverride
 
 const resolvedApexDomain =
   normalizeHostname(env.APEX_DOMAIN) ??
-  (cookieDomainHost && cookieDomainHost.includes(".")
-    ? cookieDomainHost
-    : null) ??
+  (cookieDomainHost?.includes(".") ? cookieDomainHost : null) ??
   stripFirstLabel(appOriginHost);
 
 export const apexDomain = resolvedApexDomain ?? null;
 
 const derivedSharedCookieDomain =
-  cookieDomainOverride ?? (resolvedApexDomain ? `.${resolvedApexDomain}` : undefined);
+  cookieDomainOverride ??
+  (resolvedApexDomain ? `.${resolvedApexDomain}` : undefined);
 
 export const sharedCookieDomain = derivedSharedCookieDomain;
 export const authCookieDomain = sharedCookieDomain;
@@ -152,6 +157,7 @@ if (wildcardCookieOrigin) {
 
 export const authTrustedOrigins = Array.from(trustedOriginsSet);
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: explicit checks keep origin validation readable
 export function isTrustedAppOrigin(value: string): boolean {
   const normalized = normalizeOrigin(value);
   if (!normalized) {
@@ -169,21 +175,21 @@ export function isTrustedAppOrigin(value: string): boolean {
   if (candidateHost === appOriginHost) {
     return true;
   }
-  if (apexDomain) {
-    if (candidateHost === apexDomain || candidateHost.endsWith(`.${apexDomain}`)) {
-      return true;
-    }
+  if (
+    apexDomain &&
+    (candidateHost === apexDomain || candidateHost.endsWith(`.${apexDomain}`))
+  ) {
+    return true;
   }
-  if (cookieDomainHost) {
-    if (
-      candidateHost === cookieDomainHost ||
-      candidateHost.endsWith(`.${cookieDomainHost}`)
-    ) {
-      return true;
-    }
+  if (
+    cookieDomainHost &&
+    (candidateHost === cookieDomainHost ||
+      candidateHost.endsWith(`.${cookieDomainHost}`))
+  ) {
+    return true;
   }
   for (const origin of trustedOriginsSet) {
-    const wildcardMatch = origin.match(/^https?:\/\/\*\.(.+)$/i);
+    const wildcardMatch = origin.match(WILDCARD_ORIGIN_REGEX);
     if (!wildcardMatch) {
       continue;
     }
@@ -197,9 +203,10 @@ export function isTrustedAppOrigin(value: string): boolean {
 
 export const sharedCookieOptions: SharedCookieOptions = {
   domain: sharedCookieDomain,
-  secure: typeof sharedCookieDomain === "string"
-    ? true
-    : appOrigin.startsWith("https://"),
+  secure:
+    typeof sharedCookieDomain === "string"
+      ? true
+      : appOrigin.startsWith("https://"),
   sameSite: typeof sharedCookieDomain === "string" ? "none" : "lax",
   path: "/",
 };

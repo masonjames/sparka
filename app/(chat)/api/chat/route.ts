@@ -52,7 +52,6 @@ import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
-import { isChatEntitled, syncFromGhostByEmail } from "@/lib/entitlements/provisioning";
 import { generateTitleFromUserMessage } from "../../actions";
 import { getCreditReservation } from "./get-credit-reservation";
 import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";

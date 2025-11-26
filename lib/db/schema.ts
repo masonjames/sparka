@@ -328,7 +328,9 @@ export const verification = pgTable("verification", {
 export const entitlement = pgTable(
   "Entitlement",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -348,7 +350,10 @@ export const entitlement = pgTable(
   },
   (table) => ({
     userIdIdx: index("entitlement_user_id_idx").on(table.userId),
-    sourceExternalIdIdx: index("entitlement_source_external_id_idx").on(table.source, table.externalId),
+    sourceExternalIdIdx: index("entitlement_source_external_id_idx").on(
+      table.source,
+      table.externalId
+    ),
     statusIdx: index("entitlement_status_idx").on(table.status),
   })
 );
@@ -356,7 +361,9 @@ export const entitlement = pgTable(
 export const webhookEvent = pgTable(
   "WebhookEvent",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     source: varchar("source", { length: 50 }).notNull(), // 'ghost' | 'stripe'
     eventId: varchar("eventId", { length: 255 }).notNull(), // Unique event ID from provider
     eventType: varchar("eventType", { length: 100 }).notNull(),
@@ -368,7 +375,10 @@ export const webhookEvent = pgTable(
     createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => ({
-    sourceEventIdIdx: index("webhook_event_source_event_id_idx").on(table.source, table.eventId),
+    sourceEventIdIdx: index("webhook_event_source_event_id_idx").on(
+      table.source,
+      table.eventId
+    ),
     processedIdx: index("webhook_event_processed_idx").on(table.processed),
     createdAtIdx: index("webhook_event_created_at_idx").on(table.createdAt),
   })
@@ -384,4 +394,4 @@ export const schema = {
   verification,
   entitlement,
   webhookEvent,
-}
+};
