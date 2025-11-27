@@ -37,9 +37,17 @@ export function processData({
 ### Bad - Separated interface:
 
 ```typescript
-interface ProcessDataParams {
+interface ProcessDataProps {
   id: string;
   name: string;
   options: ProcessingOptions;
+}
+
+export function processDAta({
+  id,
+  name,
+  options,
+}: ProcessDataProps): ProcessResult {
+  // Implementation
 }
 ```
