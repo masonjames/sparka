@@ -1112,8 +1112,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     log.error({ error }, "RESPONSE > POST /api/chat error");
-    return new Response("An error occurred while processing your request!", {
-      status: 404,
+    return new Response("Internal Server Error", {
+      status: 500,
     });
   }
 }
