@@ -22,7 +22,7 @@ const PureMessagesInternal = memo(
   ({ votes, isReadonly }: PureMessagesInternalProps) => {
     const chatId = useChatId();
     const status = useChatStatus();
-    const messageIds = useMessageIds() as string[];
+    const messageIds = useMessageIds();
 
     if (!chatId) {
       return null;
