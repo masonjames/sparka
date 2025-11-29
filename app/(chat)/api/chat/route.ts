@@ -212,11 +212,6 @@ async function handleChatValidation({
 
   const chat = await getChatById({ id: chatId });
 
-  if (chat && chat.userId !== userId) {
-    log.warn("Unauthorized - chat ownership mismatch");
-    return new Response("Unauthorized", { status: 401 });
-  }
-
   if (chat) {
     if (chat.userId !== userId) {
       log.warn("Unauthorized - chat ownership mismatch");
