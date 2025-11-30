@@ -155,12 +155,16 @@ https://www.sparka.ai/
    # Create a dev branch (one-time, copies production data)
    bun db:branch:create
 
-   # Start dev server using the branch (doesn't touch .env.local)
-   bun dev:branch
+   # Switch to the branch (like git checkout)
+   bun db:branch:use dev-local
 
-   # In another terminal, run migrations against the branch
+   # Now regular commands use the branch database
+   bun dev              # Uses branch DB
    bun db:generate
-   DATABASE_URL=$(npx neonctl connection-string dev-local) bun db:migrate
+   bun db:migrate       # Runs against branch DB
+
+   # Switch back to production
+   bun db:branch:use main
 
    # When done, delete the branch
    bun db:branch:delete
@@ -169,10 +173,10 @@ https://www.sparka.ai/
    **Available commands:**
    | Command | Description |
    |---------|-------------|
-   | `bun dev:branch` | Start dev server with branch `DATABASE_URL` (branch must exist) |
-   | `bun db:branch:create` | Create `dev-local` branch from production |
-   | `bun db:branch:delete` | Delete the `dev-local` branch |
-   | `bun db:branch:list` | List all branches in the project |
+   | `bun db:branch:use [name]` | Switch to branch (default: shows current) |
+   | `bun db:branch:create [name]` | Create branch (default: `dev-local`) |
+   | `bun db:branch:delete [name]` | Delete branch (default: `dev-local`) |
+   | `bun db:branch:list` | List all branches |
 
    > **Tip:** Neon branches are copy-on-write clones—instant and cheap. The branch has all your production data, making it ideal for testing migrations against real data. See [Neon Branching](https://neon.com/docs/introduction/branching) for more.
 
