@@ -49,3 +49,6 @@ packages/*/dist
 
 # Evalite DB
 evals/db/
+
+# Neon
+.neon
