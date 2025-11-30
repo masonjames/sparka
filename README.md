@@ -143,6 +143,35 @@ https://www.sparka.ai/
    bun run db:migrate
    ```
 
+   ### Development with Neon Branching (Recommended for Migrations)
+
+   When working on schema changes that require migrations, use Neon branching to avoid affecting production:
+
+   ```bash
+   # First time only: authenticate and set project context
+   bunx neonctl auth
+   bunx neonctl set-context --project-id <your-neon-project-id>
+
+   # Quick workflow (recommended)
+   bun db:branch:start    # Create + switch to dev-local branch
+   bun dev                # Uses branch DB
+   bun db:generate
+   bun db:migrate
+   bun db:branch:stop     # Delete branch + switch back to main
+   ```
+
+   **Available commands:**
+   | Command | Description |
+   |---------|-------------|
+   | `bun db:branch:start [name]` | Create and switch to branch (default: `dev-local`) |
+   | `bun db:branch:stop [name]` | Delete branch and switch to main (default: `dev-local`) |
+   | `bun db:branch:use [name]` | Switch to branch (default: shows current) |
+   | `bun db:branch:create [name]` | Create branch only |
+   | `bun db:branch:delete [name]` | Delete branch only |
+   | `bun db:branch:list` | List all branches |
+
+   > **Tip:** Neon branches are copy-on-write clones—instant and cheap. The branch has all your production data, making it ideal for testing migrations against real data. See [Neon Branching](https://neon.com/docs/introduction/branching) for more.
+
 4. **Development Server**
    ```bash
    bun dev
