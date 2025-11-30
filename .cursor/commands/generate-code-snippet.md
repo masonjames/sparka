@@ -26,7 +26,7 @@ Output format:
    https://code.franciscomoretti.com//#code={base64}&theme=sparka&darkMode=true&padding=64&language={language}
    ```
    - `language`: `tsx` (default), `shell`, or `json`
-4. Output the full URL
+4. Output the full URL (print it in the chat)
 
 **Note**: code.franciscomoretti.com uses localStorage which can override URL params. Open in incognito if the code doesn't load.
 
