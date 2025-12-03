@@ -1,10 +1,13 @@
+import type { GatewayModelId } from "@ai-sdk/gateway";
 import { unstable_cache as cache } from "next/cache";
 import {
   type AiGatewayModel,
   aiGatewayModelsResponseSchema,
 } from "./ai-gateway-models-schemas";
+import type { ModelData } from "./ModelData";
+import { toModelData } from "./toModelData";
 
-export async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
+async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
   const apiKey =
     process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
 
@@ -36,10 +39,15 @@ export async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
 }
 
 export const fetchModels = cache(
-  async () => await fetchModelsRaw(),
+  async (): Promise<ModelData[]> => {
+    const models = await fetchModelsRaw();
+    return models.map(toModelData);
+  },
   ["ai-gateway-models"],
   {
     revalidate: 3600,
     tags: ["ai-gateway-models"],
   }
 );
+
+export type ModelId = GatewayModelId;
