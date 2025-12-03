@@ -1,6 +1,5 @@
 "use client";
 
-import type { ModelId } from "@airegistry/vercel-gateway";
 import type { LanguageModelUsage } from "ai";
 import { useMemo } from "react";
 import type { ModelId as TokenLensModelId } from "tokenlens";
@@ -18,8 +17,9 @@ import {
   ContextTrigger,
 } from "@/components/ai-elements/context";
 import { Button } from "@/components/ui/button";
-import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
+import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { useLastUsageUntilMessageId } from "@/lib/stores/hooks-base";
+import { useChatModels } from "@/providers/chat-models-provider";
 
 const ICON_RADIUS = 10;
 const ICON_VIEWBOX = 24;
@@ -142,10 +142,11 @@ export function ContextUsageFromParent({
   className?: string;
 }) {
   const usage = useLastUsageUntilMessageId(parentMessageId);
-  const modelDefinition = getAppModelDefinition(selectedModelId);
+  const { getModelById } = useChatModels();
+  const modelDefinition = getModelById(selectedModelId);
 
   console.log("usage", { usage, parentMessageId, selectedModelId });
-  if (!usage) {
+  if (!(usage && modelDefinition)) {
     return null;
   }
 

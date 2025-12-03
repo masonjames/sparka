@@ -1,6 +1,6 @@
-import type { ModelId } from "@airegistry/vercel-gateway";
 import { tool } from "ai";
 import { z } from "zod";
+import type { ModelId } from "@/lib/ai/app-models";
 import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
 import type { Session } from "@/lib/auth";
 import { getDocumentById } from "@/lib/db/queries";

@@ -1,5 +1,4 @@
 "use client";
-import type { ProviderId } from "@airegistry/vercel-gateway";
 import {
   Alibaba,
   Anthropic,
@@ -19,10 +18,7 @@ import {
 } from "@lobehub/icons";
 import { HatGlasses } from "lucide-react";
 
-export function getProviderIcon(
-  provider: ProviderId,
-  size = 16
-): React.ReactNode {
+export function getProviderIcon(provider: string, size = 16): React.ReactNode {
   const iconProps = { size };
   switch (provider) {
     case "openai":

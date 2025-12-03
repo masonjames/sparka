@@ -1,6 +1,6 @@
-import type { ModelId } from "@airegistry/vercel-gateway";
 import { generateObject, generateText, type ModelMessage } from "ai";
 import { z } from "zod";
+import type { ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
 import { ReportDocumentWriter } from "@/lib/artifacts/text/report-server";
@@ -76,7 +76,7 @@ async function generateStatusUpdate(
   input: GenerateStatusUpdateInput
 ): Promise<{ title: string; message: string }> {
   const { actionType, messages, config, requestId, messageId, context } = input;
-  const model = getLanguageModel(config.research_model as ModelId);
+  const model = await getLanguageModel(config.research_model as ModelId);
 
   const messagesContent = messagesToString(messages);
   const contextInfo = context ? `\n\nAdditional context: ${context}` : "";
@@ -135,10 +135,10 @@ async function clarifyWithUser(
   }
 
   const messages = state.messages;
-  const model = getLanguageModel(config.research_model as ModelId);
+  const model = await getLanguageModel(config.research_model as ModelId);
 
   // Get model token limit and reserve space for output tokens
-  const clarifyModelContextWindow = getModelContextWindow(
+  const clarifyModelContextWindow = await getModelContextWindow(
     config.research_model as ModelId
   );
 
@@ -188,7 +188,7 @@ async function writeResearchBrief(
   dataStream: StreamWriter,
   messageId: string
 ): Promise<WriteResearchBriefOutput> {
-  const model = getLanguageModel(config.research_model as ModelId);
+  const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
   dataStream.write({
     id: dataPartId,
@@ -201,7 +201,7 @@ async function writeResearchBrief(
   });
 
   // Get model token limit and reserve space for output tokens
-  const briefModelContextWindow = getModelContextWindow(
+  const briefModelContextWindow = await getModelContextWindow(
     config.research_model as ModelId
   );
 
@@ -305,7 +305,7 @@ class ResearcherAgent extends Agent {
     });
 
     // Get model token limit and reserve space for output tokens
-    const researchModelContextWindow = getModelContextWindow(
+    const researchModelContextWindow = await getModelContextWindow(
       this.config.research_model as ModelId
     );
 
@@ -316,7 +316,7 @@ class ResearcherAgent extends Agent {
     );
 
     const result = await generateText({
-      model: getLanguageModel(this.config.research_model as ModelId),
+      model: await getLanguageModel(this.config.research_model as ModelId),
       messages: truncatedResearcherMessages,
       tools,
       maxOutputTokens: this.config.research_model_max_tokens,
@@ -360,7 +360,9 @@ class ResearcherAgent extends Agent {
   private async compressResearch(
     state: CompressResearchInput
   ): Promise<ResearcherOutputState> {
-    const model = getLanguageModel(this.config.compression_model as ModelId);
+    const model = await getLanguageModel(
+      this.config.compression_model as ModelId
+    );
 
     const researcherMessages = [...(state.researcher_messages || [])];
 
@@ -375,7 +377,7 @@ class ResearcherAgent extends Agent {
     });
 
     // Get model token limit and reserve space for output tokens
-    const compressionModelContextWindow = getModelContextWindow(
+    const compressionModelContextWindow = await getModelContextWindow(
       this.config.compression_model as ModelId
     );
 
@@ -470,10 +472,10 @@ class SupervisorAgent extends Agent {
       messages_count: state.supervisor_messages?.length || 0,
     });
 
-    const model = getLanguageModel(this.config.research_model as ModelId);
+    const model = await getLanguageModel(this.config.research_model as ModelId);
 
     // Get model token limit and reserve space for output tokens
-    const supervisorModelContextWindow = getModelContextWindow(
+    const supervisorModelContextWindow = await getModelContextWindow(
       this.config.research_model as ModelId
     );
 
@@ -754,7 +756,7 @@ async function finalReportGeneration(
   const { state, config, dataStream, session, messageId, reportTitle } = input;
   const notes = state.notes || [];
 
-  const model = getLanguageModel(config.final_report_model as ModelId);
+  const model = await getLanguageModel(config.final_report_model as ModelId);
   const findings = notes.join("\n");
 
   const finalReportPromptText = finalReportGenerationPrompt({
@@ -775,7 +777,7 @@ async function finalReportGeneration(
   });
 
   // Get model token limit and reserve space for output tokens
-  const finalReportModelContextWindow = getModelContextWindow(
+  const finalReportModelContextWindow = await getModelContextWindow(
     config.final_report_model as ModelId
   );
 

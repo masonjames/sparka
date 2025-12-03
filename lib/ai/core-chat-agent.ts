@@ -34,7 +34,7 @@ export async function createCoreChatAgent({
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
 }) {
-  const modelDefinition = getAppModelDefinition(selectedModelId);
+  const modelDefinition = await getAppModelDefinition(selectedModelId);
 
   // Build message thread
   const messages = [...previousMessages, userMessage].slice(-5);
@@ -71,7 +71,7 @@ export async function createCoreChatAgent({
 
   // Create the streamText result
   const result = streamText({
-    model: getLanguageModel(modelDefinition.apiModelId),
+    model: await getLanguageModel(modelDefinition.apiModelId),
     system,
     messages: contextForLLM,
     stopWhen: [
@@ -111,12 +111,7 @@ export async function createCoreChatAgent({
     }),
     onError,
     abortSignal,
-    ...(modelDefinition.fixedTemperature
-      ? {
-          temperature: modelDefinition.fixedTemperature,
-        }
-      : {}),
-    providerOptions: getModelProviderOptions(selectedModelId),
+    providerOptions: await getModelProviderOptions(selectedModelId),
   });
 
   return {

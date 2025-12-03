@@ -12,8 +12,8 @@ import React, {
 } from "react";
 import type { LexicalChatInputRef } from "@/components/lexical-chat-input";
 import type { AppModelId } from "@/lib/ai/app-models";
-import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { Attachment, UiToolName } from "@/lib/ai/types";
+import { useChatModels } from "./chat-models-provider";
 import { useDefaultModel, useModelChange } from "./default-model-provider";
 
 type ChatInputContextType = {
@@ -111,11 +111,13 @@ export function ChatInputProvider({
     return initialInput || getLocalStorageInput();
   }, [initialInput, getLocalStorageInput, localStorageEnabled]);
 
+  const { getModelById } = useChatModels();
+
   const handleModelChange = useCallback(
     async (modelId: AppModelId) => {
-      const modelDef = getAppModelDefinition(modelId);
-      const hasReasoning = modelDef.reasoning === true;
-      const hasUnspecifiedFeatures = !modelDef.input;
+      const modelDef = getModelById(modelId);
+      const hasReasoning = modelDef?.reasoning === true;
+      const hasUnspecifiedFeatures = !modelDef?.input;
 
       // If switching to a model with unspecified features, disable all tools
       if (hasUnspecifiedFeatures && selectedTool !== null) {
@@ -132,7 +134,7 @@ export function ChatInputProvider({
       // Update global default model (which handles cookie persistence)
       await changeModel(modelId);
     },
-    [selectedTool, changeModel]
+    [selectedTool, changeModel, getModelById]
   );
 
   const clearInput = useCallback(() => {

@@ -30,7 +30,6 @@ import {
   DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL,
   DEFAULT_CHAT_MODEL,
   DEFAULT_PDF_MODEL,
-  getAppModelDefinition,
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
@@ -38,6 +37,7 @@ import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
+import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { ImageModal } from "./image-modal";
 import { LexicalChatInput } from "./lexical-chat-input";
@@ -102,24 +102,31 @@ function PureMultimodalInput({
   const isAnonymous = !session?.user;
   const isModelDisallowedForAnonymous =
     isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
+  const { getModelById } = useChatModels();
 
   // Helper function to auto-switch to PDF-compatible model
   const switchToPdfCompatibleModel = useCallback(() => {
-    const defaultPdfModelDef = getAppModelDefinition(DEFAULT_PDF_MODEL);
-    toast.success(`Switched to ${defaultPdfModelDef.name} (supports PDF)`);
+    const defaultPdfModelDef = getModelById(DEFAULT_PDF_MODEL);
+    if (defaultPdfModelDef) {
+      toast.success(`Switched to ${defaultPdfModelDef.name} (supports PDF)`);
+    }
     handleModelChange(DEFAULT_PDF_MODEL);
     return defaultPdfModelDef;
-  }, [handleModelChange]);
+  }, [handleModelChange, getModelById]);
 
   // Helper function to auto-switch to image-compatible model
   const switchToImageCompatibleModel = useCallback(() => {
-    const defaultImageModelDef = getAppModelDefinition(
+    const defaultImageModelDef = getModelById(
       DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL
     );
-    toast.success(`Switched to ${defaultImageModelDef.name} (supports images)`);
+    if (defaultImageModelDef) {
+      toast.success(
+        `Switched to ${defaultImageModelDef.name} (supports images)`
+      );
+    }
     handleModelChange(DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL);
     return defaultImageModelDef;
-  }, [handleModelChange]);
+  }, [handleModelChange, getModelById]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
@@ -135,12 +142,8 @@ function PureMultimodalInput({
 
   // Centralized submission gating
 
-  let _selectedModelDef: AppModelDefinition | null = null;
-  try {
-    _selectedModelDef = getAppModelDefinition(selectedModelId);
-  } catch {
-    _selectedModelDef = getAppModelDefinition(DEFAULT_CHAT_MODEL);
-  }
+  const _selectedModelDef: AppModelDefinition | undefined =
+    getModelById(selectedModelId) ?? getModelById(DEFAULT_CHAT_MODEL);
   const submission: { enabled: false; message: string } | { enabled: true } =
     (() => {
       if (isModelDisallowedForAnonymous) {
@@ -186,12 +189,12 @@ function PureMultimodalInput({
 
       // Auto-switch model based on file types
       if (pdfFiles.length > 0 || processedImages.length > 0) {
-        let currentModelDef = getAppModelDefinition(selectedModelId);
+        let currentModelDef = getModelById(selectedModelId);
 
-        if (pdfFiles.length > 0 && !currentModelDef.input?.pdf) {
+        if (pdfFiles.length > 0 && !currentModelDef?.input?.pdf) {
           currentModelDef = switchToPdfCompatibleModel();
         }
-        if (processedImages.length > 0 && !currentModelDef.input?.image) {
+        if (processedImages.length > 0 && !currentModelDef?.input?.image) {
           currentModelDef = switchToImageCompatibleModel();
         }
       }

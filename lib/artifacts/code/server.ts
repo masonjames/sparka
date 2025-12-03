@@ -16,7 +16,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     let draftContent = "";
 
     const { fullStream } = streamObject({
-      model: getLanguageModel(selectedModel),
+      model: await getLanguageModel(selectedModel),
       system: codePrompt,
       prompt,
       experimental_telemetry: { isEnabled: true },
@@ -55,7 +55,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     let draftContent = "";
 
     const { fullStream } = streamObject({
-      model: getLanguageModel(selectedModel),
+      model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content || "", "code"),
       experimental_telemetry: { isEnabled: true },
       prompt: description,

@@ -15,7 +15,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     let draftContent = "";
 
     const { fullStream } = streamText({
-      model: getLanguageModel(selectedModel),
+      model: await getLanguageModel(selectedModel),
       providerOptions: {
         telemetry: { isEnabled: true },
       },
@@ -52,7 +52,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     let draftContent = "";
 
     const { fullStream } = streamText({
-      model: getLanguageModel(selectedModel),
+      model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content, "text"),
       experimental_transform: smoothStream({ chunking: "word" }),
       prompt: description,

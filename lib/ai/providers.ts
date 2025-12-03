@@ -2,11 +2,9 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { type OpenAIResponsesProviderOptions, openai } from "@ai-sdk/openai";
-import type { ModelId } from "@airegistry/vercel-gateway";
-import { getModelAndProvider } from "@airegistry/vercel-gateway";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
 import type { ImageModelId } from "../models/image-model-id";
-import type { AppModelId } from "./app-models";
+import type { AppModelId, ModelId } from "./app-models";
 import { getAppModelDefinition, getImageModelDefinition } from "./app-models";
 
 const _telemetryConfig = {
@@ -16,8 +14,8 @@ const _telemetryConfig = {
   },
 };
 
-export const getLanguageModel = (modelId: ModelId) => {
-  const model = getAppModelDefinition(modelId);
+export const getLanguageModel = async (modelId: ModelId) => {
+  const model = await getAppModelDefinition(modelId);
   const languageProvider = gateway(model.id);
 
   // Wrap with reasoning middleware if the model supports reasoning
@@ -34,7 +32,8 @@ export const getLanguageModel = (modelId: ModelId) => {
 
 export const getImageModel = (modelId: ImageModelId) => {
   const model = getImageModelDefinition(modelId);
-  const { model: modelIdShort } = getModelAndProvider(modelId as ModelId);
+  // Extract model part from "provider/model" format
+  const modelIdShort = modelId.split("/")[1];
 
   if (model.owned_by === "openai") {
     return openai.image(modelIdShort);
@@ -42,16 +41,11 @@ export const getImageModel = (modelId: ImageModelId) => {
   throw new Error(`Provider ${model.owned_by} not supported`);
 };
 
-const _MODEL_ALIASES = {
-  "chat-model": getLanguageModel("openai/gpt-4o-mini"),
-  "title-model": getLanguageModel("openai/gpt-4o-mini"),
-  "artifact-model": getLanguageModel("openai/gpt-4o-mini"),
-  "chat-model-reasoning": getLanguageModel("openai/o3-mini"),
-};
+// Model aliases removed - use getLanguageModel directly with specific model IDs
 
-export const getModelProviderOptions = (
+export const getModelProviderOptions = async (
   providerModelId: AppModelId
-):
+): Promise<
   | {
       openai: OpenAIResponsesProviderOptions;
     }
@@ -64,8 +58,9 @@ export const getModelProviderOptions = (
   | {
       google: GoogleGenerativeAIProviderOptions;
     }
-  | Record<string, never> => {
-  const model = getAppModelDefinition(providerModelId);
+  | Record<string, never>
+> => {
+  const model = await getAppModelDefinition(providerModelId);
   if (model.owned_by === "openai") {
     if (model.reasoning) {
       return {

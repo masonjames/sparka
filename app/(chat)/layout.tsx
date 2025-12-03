@@ -5,6 +5,7 @@ import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { type AppModelId, DEFAULT_CHAT_MODEL } from "@/lib/ai/app-models";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider } from "@/providers/session-provider";
 
@@ -65,11 +66,13 @@ export default async function ChatLayout({
                 } as React.CSSProperties
               }
             >
-              <DefaultModelProvider defaultModel={defaultModel}>
-                <KeyboardShortcuts />
+              <ChatModelsProvider>
+                <DefaultModelProvider defaultModel={defaultModel}>
+                  <KeyboardShortcuts />
 
-                {children}
-              </DefaultModelProvider>
+                  {children}
+                </DefaultModelProvider>
+              </ChatModelsProvider>
             </SidebarInset>
           </SidebarProvider>
         </ChatProviders>

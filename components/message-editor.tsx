@@ -1,7 +1,7 @@
 "use client";
 import { useChatStatus } from "@ai-sdk-tools/store";
-import type { ModelId } from "@airegistry/vercel-gateway";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
+import type { ModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   getAttachmentsFromMessage,

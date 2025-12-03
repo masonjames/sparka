@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   cacheComponents: true,
 
-  transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
     turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [

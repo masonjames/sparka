@@ -5,12 +5,14 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import type { StreamWriter } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
 
-export function generateFollowupSuggestions(modelMessages: ModelMessage[]) {
+export async function generateFollowupSuggestions(
+  modelMessages: ModelMessage[]
+) {
   const maxQuestionCount = 5;
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
   return streamObject({
-    model: getLanguageModel(DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL),
+    model: await getLanguageModel(DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL),
     messages: [
       ...modelMessages,
       {
@@ -35,8 +37,9 @@ export async function streamFollowupSuggestions({
   writer: StreamWriter;
 }) {
   const dataPartId = generateUUID();
+  const result = await followupSuggestionsResult;
 
-  for await (const chunk of followupSuggestionsResult.partialObjectStream) {
+  for await (const chunk of result.partialObjectStream) {
     writer.write({
       id: dataPartId,
       type: "data-followupSuggestions",

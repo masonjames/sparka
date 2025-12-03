@@ -778,7 +778,7 @@ async function validateAndSetupSession({
 
   let modelDefinition: AppModelDefinition;
   try {
-    modelDefinition = getAppModelDefinition(selectedModelId);
+    modelDefinition = await getAppModelDefinition(selectedModelId);
   } catch (_error) {
     log.warn("Model not found");
     return {
@@ -1068,7 +1068,7 @@ export async function POST(request: NextRequest) {
     const explicitlyRequestedTools =
       determineExplicitlyRequestedTools(selectedTool);
 
-    const baseModelCost = getBaseModelCostByModelId(selectedModelId);
+    const baseModelCost = await getBaseModelCostByModelId(selectedModelId);
 
     const creditResult = await handleCreditReservation({
       userId,

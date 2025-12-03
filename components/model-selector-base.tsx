@@ -1,10 +1,5 @@
 "use client";
 
-import type {
-  ModelDefinition,
-  ModelId,
-  ProviderId,
-} from "@airegistry/vercel-gateway";
 import { ChevronUpIcon, FilterIcon } from "lucide-react";
 import {
   type ComponentProps,
@@ -33,6 +28,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type {
+  AppModelDefinition as ModelDefinition,
+  ModelId,
+} from "@/lib/ai/app-models";
 import { getEnabledFeatures } from "@/lib/features-config";
 import { cn } from "@/lib/utils";
 import { getProviderIcon } from "./get-provider-icon";
@@ -122,7 +121,7 @@ function PureCommandItem<
   isSelected: boolean;
   onSelectModel: (id: TModelId) => void;
 }) {
-  const provider = definition.owned_by as ProviderId;
+  const provider = definition.owned_by;
   const featureIcons = useMemo(() => getFeatureIcons(definition), [definition]);
   const hasReasoning = useMemo(() => definition.reasoning, [definition]);
   const searchValue = useMemo(
@@ -433,7 +432,7 @@ export function PureModelSelectorBase<
     if (!selectedItem) {
       return null;
     }
-    const provider = selectedItem.definition.owned_by as ProviderId;
+    const provider = selectedItem.definition.owned_by;
     return getProviderIcon(provider);
   }, [selectedItem]);
 
