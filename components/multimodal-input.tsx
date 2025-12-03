@@ -202,24 +202,30 @@ function PureMultimodalInput({
   );
 
   // Update URL when sending message in new chat or project
-  const updateChatUrl = useCallback((chatIdToAdd: string) => {
-    const currentPath = window.location.pathname;
-    if (currentPath === "/") {
-      window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
-      return;
-    }
+  // Anonymous users stay on / - no URL redirect for them
+  const updateChatUrl = useCallback(
+    (chatIdToAdd: string) => {
+      if (!session?.user) return;
 
-    // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
-    const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
-    if (projectMatch) {
-      const [, projectId] = projectMatch;
-      window.history.pushState(
-        {},
-        "",
-        `/project/${projectId}/chat/${chatIdToAdd}`
-      );
-    }
-  }, []);
+      const currentPath = window.location.pathname;
+      if (currentPath === "/") {
+        window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
+        return;
+      }
+
+      // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
+      const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
+      if (projectMatch) {
+        const [, projectId] = projectMatch;
+        window.history.pushState(
+          {},
+          "",
+          `/project/${projectId}/chat/${chatIdToAdd}`
+        );
+      }
+    },
+    [session?.user]
+  );
 
   // Trim messages in edit mode
   const trimMessagesInEditMode = useCallback(

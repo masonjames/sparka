@@ -1,6 +1,6 @@
 "use client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { useMemo } from "react";
 import { ChatSystem } from "@/components/chat-system";
 import {
@@ -9,8 +9,16 @@ import {
 } from "@/hooks/chat-sync-hooks";
 import type { UiToolName } from "@/lib/ai/types";
 import { getDefaultThread } from "@/lib/thread-utils";
+import { useSession } from "@/providers/session-provider";
 
 export function ChatPage({ id }: { id: string }) {
+  const { data: session } = useSession();
+
+  // Anonymous users can't access specific chat pages
+  if (!session?.user) {
+    redirect("/");
+  }
+
   const getChatByIdQueryOptions = useGetChatByIdQueryOptions(id);
   const { data: chat } = useSuspenseQuery(getChatByIdQueryOptions);
   const getMessagesByChatIdQueryOptions = useGetChatMessagesQueryOptions();
