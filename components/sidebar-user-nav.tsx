@@ -37,6 +37,7 @@ export function SidebarUserNav() {
   const { setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
   const { isMobile, state } = useSidebar();
+  const isDesktopCollapsed = !isMobile && state === "collapsed";
 
   const user = session?.user;
 
@@ -65,7 +66,7 @@ export function SidebarUserNav() {
             <SidebarMenuButton
               className={cn(
                 "mx-auto data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
-                state === "collapsed" &&
+                isDesktopCollapsed &&
                   "flex flex-col items-center justify-center"
               )}
               size="lg"
@@ -73,7 +74,7 @@ export function SidebarUserNav() {
               <Avatar
                 className={cn(
                   "size-8 rounded-lg",
-                  state === "collapsed" && "size-6"
+                  isDesktopCollapsed && "size-6"
                 )}
               >
                 <AvatarImage alt={displayName} src={avatarImageSrc} />
@@ -84,7 +85,7 @@ export function SidebarUserNav() {
               <div
                 className={cn(
                   "grid flex-1 text-left text-sm leading-tight",
-                  state === "collapsed" && "hidden"
+                  state === "collapsed" && !isMobile && "hidden"
                 )}
               >
                 <span className="truncate font-medium">
@@ -98,7 +99,7 @@ export function SidebarUserNav() {
               <ChevronsUpDown
                 className={cn(
                   "ml-auto size-4",
-                  state === "collapsed" && "hidden"
+                  state === "collapsed" && !isMobile && "hidden"
                 )}
               />
             </SidebarMenuButton>
