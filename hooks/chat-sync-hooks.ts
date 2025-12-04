@@ -4,7 +4,7 @@
 // For authenticated users only - anonymous users don't persist data
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getAnonymousSession } from "@/lib/anonymous-session-client";
@@ -459,10 +459,22 @@ export function useGetCredits() {
     enabled: isAuthenticated,
   });
 
+  const [anonymousCredits, setAnonymousCredits] = useState<number>(
+    ANONYMOUS_LIMITS.CREDITS
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const anonymousSession = getAnonymousSession();
+      setAnonymousCredits(
+        anonymousSession?.remainingCredits ?? ANONYMOUS_LIMITS.CREDITS
+      );
+    }
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
-    const anonymousSession = getAnonymousSession();
     return {
-      credits: anonymousSession?.remainingCredits ?? ANONYMOUS_LIMITS.CREDITS,
+      credits: anonymousCredits,
       isLoadingCredits: false,
     };
   }
