@@ -9,7 +9,7 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
 import {
   SidebarGroup,
@@ -30,18 +30,19 @@ export function AppSidebarHistoryConditional() {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <Empty className="border-none p-4">
+          <Empty className="h-full">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <LogIn className="size-4" />
-              </EmptyMedia>
+              <EmptyTitle>Sign In</EmptyTitle>
               <EmptyDescription>
                 Sign in to save your chat history
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild size="sm" variant="outline">
-                <Link href="/login">Sign In</Link>
+                <Link href="/login">
+                  <LogIn />
+                  Sign In
+                </Link>
               </Button>
             </EmptyContent>
           </Empty>
