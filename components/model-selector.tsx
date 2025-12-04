@@ -288,6 +288,10 @@ export function PureModelSelector({
               <CommandInput
                 className="px-3"
                 containerClassName="w-full border-0 h-11"
+                onClick={(e) => {
+                  // Prevent closing when interacting with nested filter popover
+                  e.stopPropagation();
+                }}
                 placeholder="Search models..."
               />
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
