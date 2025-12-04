@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
       {
         hostname: "*.public.blob.vercel-storage.com",
       },
+      {
+        hostname: "models.dev",
+      },
     ],
   },
   redirects: async () => [
