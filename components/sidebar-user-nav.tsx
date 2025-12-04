@@ -85,7 +85,7 @@ export function SidebarUserNav() {
               <div
                 className={cn(
                   "grid flex-1 text-left text-sm leading-tight",
-                  state === "collapsed" && !isMobile && "hidden"
+                  isDesktopCollapsed && "hidden"
                 )}
               >
                 <span className="truncate font-medium">
@@ -97,10 +97,7 @@ export function SidebarUserNav() {
                 </span>
               </div>
               <ChevronsUpDown
-                className={cn(
-                  "ml-auto size-4",
-                  state === "collapsed" && !isMobile && "hidden"
-                )}
+                className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}
               />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
