@@ -29,7 +29,7 @@ fi
 
 # Validate branch exists by trying to get connection string
 echo "🔗 Validating branch '$BRANCH_NAME'..."
-BRANCH_URL=$(bunx neonctl connection-string "$BRANCH_NAME" 2>&1) || {
+BRANCH_URL=$(bunx neonctl connection-string "$BRANCH_NAME" 2>/dev/null | grep -E '^postgresql://') || {
   echo ""
   echo "❌ Branch '$BRANCH_NAME' not found"
   echo ""

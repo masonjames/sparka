@@ -36,7 +36,7 @@ import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-import { generateUUID } from "@/lib/utils";
+import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useSession } from "@/providers/session-provider";
 import { ImageModal } from "./image-modal";
@@ -202,24 +202,30 @@ function PureMultimodalInput({
   );
 
   // Update URL when sending message in new chat or project
-  const updateChatUrl = useCallback((chatIdToAdd: string) => {
-    const currentPath = window.location.pathname;
-    if (currentPath === "/") {
-      window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
-      return;
-    }
+  // Anonymous users stay on / - no URL redirect for them
+  const updateChatUrl = useCallback(
+    (chatIdToAdd: string) => {
+      if (!session?.user) return;
 
-    // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
-    const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
-    if (projectMatch) {
-      const [, projectId] = projectMatch;
-      window.history.pushState(
-        {},
-        "",
-        `/project/${projectId}/chat/${chatIdToAdd}`
-      );
-    }
-  }, []);
+      const currentPath = window.location.pathname;
+      if (currentPath === "/") {
+        window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
+        return;
+      }
+
+      // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
+      const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
+      if (projectMatch) {
+        const [, projectId] = projectMatch;
+        window.history.pushState(
+          {},
+          "",
+          `/project/${projectId}/chat/${chatIdToAdd}`
+        );
+      }
+    },
+    [session?.user]
+  );
 
   // Trim messages in edit mode
   const trimMessagesInEditMode = useCallback(
@@ -547,9 +553,12 @@ function PureMultimodalInput({
 
       <div className="relative">
         <PromptInput
-          className={`${className} @container relative transition-colors ${
-            isDragActive ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20" : ""
-          }`}
+          className={cn(
+            "@container relative transition-colors",
+            isDragActive && "border-blue-500 bg-blue-50 dark:bg-blue-950/20",
+            className
+          )}
+          inputGroupClassName="dark:bg-muted bg-muted"
           {...getRootProps({ onError: undefined, onSubmit: undefined })}
           onSubmit={(_message, event) => {
             event.preventDefault();

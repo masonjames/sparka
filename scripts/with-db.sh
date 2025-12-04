@@ -7,8 +7,8 @@ BRANCH_FILE=".neon-branch"
 if [ -f "$BRANCH_FILE" ]; then
   BRANCH_NAME=$(cat "$BRANCH_FILE")
   
-  # Get branch connection string
-  BRANCH_URL=$(bunx neonctl connection-string "$BRANCH_NAME" 2>&1) || {
+  # Get branch connection string (filter out bun's package resolution output)
+  BRANCH_URL=$(bunx neonctl connection-string "$BRANCH_NAME" 2>/dev/null | grep -E '^postgresql://') || {
     echo "❌ Failed to get connection string for branch '$BRANCH_NAME'"
     echo "$BRANCH_URL"
     echo ""
