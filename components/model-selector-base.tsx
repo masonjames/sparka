@@ -34,7 +34,7 @@ import type {
 } from "@/lib/ai/app-models";
 import { getEnabledFeatures } from "@/lib/features-config";
 import { cn } from "@/lib/utils";
-import { getProviderIcon } from "./get-provider-icon";
+import { ModelSelectorLogo } from "./model-selector-logo";
 
 type FeatureFilter = Record<string, boolean>;
 
@@ -121,7 +121,7 @@ function PureCommandItem<
   isSelected: boolean;
   onSelectModel: (id: TModelId) => void;
 }) {
-  const provider = definition.owned_by;
+  const [provider] = id.split("/");
   const featureIcons = useMemo(() => getFeatureIcons(definition), [definition]);
   const hasReasoning = useMemo(() => definition.reasoning, [definition]);
   const searchValue = useMemo(
@@ -146,7 +146,11 @@ function PureCommandItem<
       value={searchValue}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        <div className="shrink-0">{getProviderIcon(provider)}</div>
+        {provider && (
+          <div className="shrink-0">
+            <ModelSelectorLogo provider={provider} />
+          </div>
+        )}
         <span className="flex items-center gap-1.5 truncate font-medium text-sm">
           {definition.name}
           {hasReasoning
@@ -428,12 +432,12 @@ export function PureModelSelectorBase<
     [models, optimisticModelId]
   );
 
-  const selectedProviderIcon = useMemo(() => {
+  const selectedProvider = useMemo(() => {
     if (!selectedItem) {
       return null;
     }
-    const provider = selectedItem.definition.owned_by;
-    return getProviderIcon(provider);
+    const [provider] = selectedItem.id.split("/");
+    return provider || null;
   }, [selectedItem]);
 
   const reasoningFeatureConfig = useMemo(
@@ -470,8 +474,10 @@ export function PureModelSelectorBase<
           variant="ghost"
         >
           <div className="flex items-center gap-2">
-            {selectedProviderIcon && (
-              <div className="shrink-0">{selectedProviderIcon}</div>
+            {selectedProvider && (
+              <div className="shrink-0">
+                <ModelSelectorLogo provider={selectedProvider} />
+              </div>
             )}
             <p className="inline-flex items-center gap-1.5 truncate">
               {selectedItem?.definition.name || placeholder || "Select model"}
