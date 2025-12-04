@@ -281,7 +281,18 @@ export function PureModelSelector({
           />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[350px] p-0">
+      <PopoverContent
+        align="start"
+        className="w-[350px] p-0"
+        onInteractOutside={(e) => {
+          // Prevent closing when interacting with nested filter popover
+          if (
+            (e.target as HTMLElement).closest('[data-slot="command-input"]')
+          ) {
+            e.preventDefault();
+          }
+        }}
+      >
         {open && (
           <Command>
             <div className="flex items-center border-b">
