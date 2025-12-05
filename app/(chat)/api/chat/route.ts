@@ -469,25 +469,10 @@ async function createChatStream({
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
 
-  // Validate and narrow selectedTool type using type guard
-  function isValidToolName(value: string): value is ToolName {
-    const validTools: readonly string[] = [
-      "getWeather",
-      "createDocument",
-      "updateDocument",
-      "requestSuggestions",
-      "deepResearch",
-      "readDocument",
-      "generateImage",
-      "webSearch",
-      "codeInterpreter",
-      "retrieve",
-    ];
-    return validTools.includes(value);
-  }
-
   const narrowedSelectedTool: ToolName | null =
-    selectedTool && isValidToolName(selectedTool) ? selectedTool : null;
+    selectedTool && selectedTool in toolsDefinitions
+      ? (selectedTool as ToolName)
+      : null;
 
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
@@ -1127,8 +1112,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     log.error({ error }, "RESPONSE > POST /api/chat error");
-    return new Response("An error occurred while processing your request!", {
-      status: 404,
+    return new Response("Internal Server Error", {
+      status: 500,
     });
   }
 }
