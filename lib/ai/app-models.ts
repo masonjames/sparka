@@ -162,3 +162,22 @@ export const DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL: ModelId =
   "openai/gpt-5-mini";
 
 export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
+
+/**
+ * Models enabled by default when a user has no preferences set.
+ * This provides a curated list of models for new users.
+ */
+export const DEFAULT_ENABLED_MODELS: AppModelId[] = [
+  "openai/gpt-5-nano",
+  "openai/gpt-5-mini",
+  "openai/gpt-4.5-preview",
+  "openai/gpt-4.1",
+  "openai/o3-mini",
+  "openai/o3-mini-reasoning",
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-pro",
+  "anthropic/claude-sonnet-4",
+  "anthropic/claude-sonnet-4-reasoning",
+  "xai/grok-3-mini",
+  "xai/grok-3-mini-reasoning",
+];

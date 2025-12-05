@@ -4,7 +4,12 @@ import { getChatModels } from "@/app/actions/getChatModels";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { type AppModelId, DEFAULT_CHAT_MODEL } from "@/lib/ai/app-models";
+import {
+  type AppModelId,
+  DEFAULT_CHAT_MODEL,
+  DEFAULT_ENABLED_MODELS,
+} from "@/lib/ai/app-models";
+import { getUserModelPreferences } from "@/lib/db/queries";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
@@ -56,6 +61,28 @@ export default async function ChatLayout({
 
   const chatModels = await getChatModels();
 
+  // Compute enabled models based on user preferences
+  let enabledModelIds: string[] | undefined;
+  if (session?.user?.id) {
+    const preferences = await getUserModelPreferences({
+      userId: session.user.id,
+    });
+
+    // Start with defaults
+    const enabledSet = new Set<string>(DEFAULT_ENABLED_MODELS);
+
+    // Apply user preferences
+    for (const pref of preferences) {
+      if (pref.enabled) {
+        enabledSet.add(pref.modelId);
+      } else {
+        enabledSet.delete(pref.modelId);
+      }
+    }
+
+    enabledModelIds = Array.from(enabledSet);
+  }
+
   return (
     <TRPCReactProvider>
       <SessionProvider initialSession={session}>
@@ -69,7 +96,10 @@ export default async function ChatLayout({
                 } as React.CSSProperties
               }
             >
-              <ChatModelsProvider models={chatModels}>
+              <ChatModelsProvider
+                enabledModelIds={enabledModelIds}
+                models={chatModels}
+              >
                 <DefaultModelProvider defaultModel={defaultModel}>
                   <KeyboardShortcuts />
 

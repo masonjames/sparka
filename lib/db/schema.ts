@@ -28,6 +28,27 @@ export const userCredit = pgTable("UserCredit", {
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
 
+export const userModelPreference = pgTable(
+  "UserModelPreference",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    modelId: varchar("modelId", { length: 256 }).notNull(),
+    enabled: boolean("enabled").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.modelId] }),
+    UserModelPreference_user_id_idx: index(
+      "UserModelPreference_user_id_idx"
+    ).on(t.userId),
+  })
+);
+
+export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
+
 export const project = pgTable(
   "Project",
   {

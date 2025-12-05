@@ -7,10 +7,14 @@ import {
   useContext,
   useMemo,
 } from "react";
-import type { AppModelDefinition } from "@/lib/ai/app-models";
+import {
+  type AppModelDefinition,
+  DEFAULT_ENABLED_MODELS,
+} from "@/lib/ai/app-models";
 
 type ChatModelsContextType = {
   models: AppModelDefinition[];
+  allModels: AppModelDefinition[];
   getModelById: (modelId: string) => AppModelDefinition | undefined;
 };
 
@@ -21,11 +25,13 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
 export function ChatModelsProvider({
   children,
   models,
+  enabledModelIds,
 }: {
   children: ReactNode;
   models: AppModelDefinition[];
+  enabledModelIds?: string[];
 }) {
-  const modelsMap = useMemo(() => {
+  const allModelsMap = useMemo(() => {
     const map = new Map<string, AppModelDefinition>();
     for (const model of models) {
       map.set(model.id, model);
@@ -33,13 +39,28 @@ export function ChatModelsProvider({
     return map;
   }, [models]);
 
+  const enabledModelsSet = useMemo(() => {
+    // If no preferences provided, use defaults
+    if (!enabledModelIds) {
+      return new Set(DEFAULT_ENABLED_MODELS);
+    }
+    return new Set(enabledModelIds);
+  }, [enabledModelIds]);
+
+  const filteredModels = useMemo(
+    () => models.filter((model) => enabledModelsSet.has(model.id)),
+    [models, enabledModelsSet]
+  );
+
   const getModelById = useCallback(
-    (modelId: string) => modelsMap.get(modelId),
-    [modelsMap]
+    (modelId: string) => allModelsMap.get(modelId),
+    [allModelsMap]
   );
 
   return (
-    <ChatModelsContext.Provider value={{ models, getModelById }}>
+    <ChatModelsContext.Provider
+      value={{ models: filteredModels, allModels: models, getModelById }}
+    >
       {children}
     </ChatModelsContext.Provider>
   );

@@ -5,9 +5,11 @@ import {
   LogIn,
   LogOut,
   Moon,
+  Settings,
   Sparkles,
   Sun,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -125,6 +127,12 @@ export function SidebarUserNav() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2 size-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
                   setTheme(resolvedTheme === "light" ? "dark" : "light")
