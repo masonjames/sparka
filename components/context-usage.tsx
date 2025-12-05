@@ -145,7 +145,6 @@ export function ContextUsageFromParent({
   const { getModelById } = useChatModels();
   const modelDefinition = getModelById(selectedModelId);
 
-  console.log("usage", { usage, parentMessageId, selectedModelId });
   if (!(usage && modelDefinition)) {
     return null;
   }

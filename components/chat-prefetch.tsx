@@ -22,7 +22,6 @@ export function ChatPrefetch({ user }: ChatPrefetchProps) {
       return;
     }
 
-    console.log("Prefetching chat messages for authenticated user");
     hasPrefetched.current = true;
 
     // Prefetch messages for each chat in the background
