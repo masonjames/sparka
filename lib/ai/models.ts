@@ -1,5 +1,5 @@
 import type { GatewayModelId } from "@ai-sdk/gateway";
-import { unstable_cache as cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import {
   type AiGatewayModel,
   aiGatewayModelsResponseSchema,
@@ -38,7 +38,7 @@ async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
   }
 }
 
-export const fetchModels = cache(
+export const fetchModels = unstable_cache(
   async (): Promise<ModelData[]> => {
     const models = await fetchModelsRaw();
     return models.map(toModelData);
