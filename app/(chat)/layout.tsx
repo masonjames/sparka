@@ -1,5 +1,6 @@
 import { AIDevtools } from "@ai-sdk-tools/devtools";
 import { cookies, headers } from "next/headers";
+import { getChatModels } from "@/app/actions/getChatModels";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -53,6 +54,8 @@ export default async function ChatLayout({
     }
   }
 
+  const chatModels = await getChatModels();
+
   return (
     <TRPCReactProvider>
       <SessionProvider initialSession={session}>
@@ -66,7 +69,7 @@ export default async function ChatLayout({
                 } as React.CSSProperties
               }
             >
-              <ChatModelsProvider>
+              <ChatModelsProvider models={chatModels}>
                 <DefaultModelProvider defaultModel={defaultModel}>
                   <KeyboardShortcuts />
 

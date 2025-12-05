@@ -5,16 +5,12 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from "react";
-import { getChatModels } from "@/app/actions/getChatModels";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 
 type ChatModelsContextType = {
   models: AppModelDefinition[];
-  isLoading: boolean;
   getModelById: (modelId: string) => AppModelDefinition | undefined;
 };
 
@@ -22,16 +18,13 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
   undefined
 );
 
-export function ChatModelsProvider({ children }: { children: ReactNode }) {
-  const [models, setModels] = useState<AppModelDefinition[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    getChatModels()
-      .then(setModels)
-      .finally(() => setIsLoading(false));
-  }, []);
-
+export function ChatModelsProvider({
+  children,
+  models,
+}: {
+  children: ReactNode;
+  models: AppModelDefinition[];
+}) {
   const modelsMap = useMemo(() => {
     const map = new Map<string, AppModelDefinition>();
     for (const model of models) {
@@ -46,7 +39,7 @@ export function ChatModelsProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ChatModelsContext.Provider value={{ models, isLoading, getModelById }}>
+    <ChatModelsContext.Provider value={{ models, getModelById }}>
       {children}
     </ChatModelsContext.Provider>
   );

@@ -20,7 +20,7 @@ async function fetchAndSaveModels() {
   }
 
   const body = await response.json();
-  if (!body.data || !Array.isArray(body.data)) {
+  if (!(body.data && Array.isArray(body.data))) {
     throw new Error("Invalid response structure: expected data array");
   }
   const models = body.data;
