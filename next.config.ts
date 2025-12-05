@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   cacheComponents: true,
 
-  transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
     turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
@@ -35,6 +34,9 @@ const nextConfig: NextConfig = {
       },
       {
         hostname: "*.public.blob.vercel-storage.com",
+      },
+      {
+        hostname: "models.dev",
       },
     ],
   },

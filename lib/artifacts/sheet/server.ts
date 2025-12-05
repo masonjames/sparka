@@ -16,7 +16,7 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     let draftContent = "";
 
     const { fullStream } = streamObject({
-      model: getLanguageModel(selectedModel),
+      model: await getLanguageModel(selectedModel),
       system: sheetPrompt,
       experimental_telemetry: { isEnabled: true },
       prompt,
@@ -61,7 +61,7 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     let draftContent = "";
 
     const { fullStream } = streamObject({
-      model: getLanguageModel(selectedModel),
+      model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content, "sheet"),
       experimental_telemetry: { isEnabled: true },
       prompt: description,

@@ -5,8 +5,8 @@ import {
   type SetStateAction,
   useState,
 } from "react";
-import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { UiToolName } from "@/lib/ai/types";
+import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { enabledTools, toolDefinitions } from "./chat-features-definitions";
 import { Button } from "./ui/button";
@@ -34,19 +34,19 @@ export function ResponsiveTools({
   const isAnonymous = !session?.user;
   const [showLoginPopover, setShowLoginPopover] = useState(false);
 
+  const { getModelById } = useChatModels();
   const { hasReasoningModel, hasUnspecifiedFeatures } = (() => {
-    try {
-      const modelDef = getAppModelDefinition(selectedModelId as any);
-      return {
-        hasReasoningModel: modelDef.reasoning === true,
-        hasUnspecifiedFeatures: !modelDef.input,
-      };
-    } catch {
+    const modelDef = getModelById(selectedModelId);
+    if (!modelDef) {
       return {
         hasReasoningModel: false,
         hasUnspecifiedFeatures: false,
       };
     }
+    return {
+      hasReasoningModel: modelDef.reasoning === true,
+      hasUnspecifiedFeatures: !modelDef.input,
+    };
   })();
 
   const activeTool = tools;

@@ -55,7 +55,7 @@ Behavior:
       >[] = [];
 
       const { elementStream } = streamObject({
-        model: getLanguageModel(DEFAULT_ARTIFACT_SUGGESTION_MODEL),
+        model: await getLanguageModel(DEFAULT_ARTIFACT_SUGGESTION_MODEL),
         experimental_telemetry: { isEnabled: true },
 
         system:

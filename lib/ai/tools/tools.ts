@@ -1,5 +1,5 @@
-import type { ModelId } from "@airegistry/vercel-gateway";
 import type { FileUIPart, ModelMessage } from "ai";
+import type { ModelId } from "@/lib/ai/app-models";
 import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
 import { generateImage } from "@/lib/ai/tools/generate-image";

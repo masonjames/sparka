@@ -15,7 +15,6 @@
         "@ai-sdk/provider-utils": "4.0.0-beta.33",
         "@ai-sdk/react": "3.0.0-beta.99",
         "@ai-sdk/xai": "3.0.0-beta.37",
-        "@airegistry/vercel-gateway": "0.0.6",
         "@codemirror/lang-javascript": "^6.2.2",
         "@codemirror/lang-python": "^6.1.6",
         "@codemirror/state": "^6.5.0",
@@ -216,8 +215,6 @@
     "@ai-sdk/react": ["@ai-sdk/react@3.0.0-beta.99", "", { "dependencies": { "@ai-sdk/provider-utils": "4.0.0-beta.33", "ai": "6.0.0-beta.99", "swr": "^2.2.5", "throttleit": "2.1.0" }, "peerDependencies": { "react": "^18 || ^19 || ^19.0.0-rc" } }, "sha512-adFSYMZOE+vUmwlebfBVgQu87eOgNVayyD6sx8jRJwVnyMYJc+QRvfDZBsk1+5xyUfMeOlpJZTo3KhkMTZixGw=="],
 
     "@ai-sdk/xai": ["@ai-sdk/xai@3.0.0-beta.37", "", { "dependencies": { "@ai-sdk/openai-compatible": "2.0.0-beta.34", "@ai-sdk/provider": "3.0.0-beta.16", "@ai-sdk/provider-utils": "4.0.0-beta.33" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-n7Llj40lOuBggVHfRVe3N20LY5oQa9RxNnfO0sWH0+wfghm+t2b/rj/uKNvxs6Tg2FH/zpVUP97ozUNpeZ0USw=="],
-
-    "@airegistry/vercel-gateway": ["@airegistry/vercel-gateway@0.0.6", "", { "dependencies": { "zod": "^4.1.12" } }, "sha512-aSkGATdM4JXnH9Roqur12NEjGFSzR5gd7oUD6sCq9lhxlythhMahjz5Pf/CqdP1vqJPSqOwuCOgZXlELtAGaHQ=="],
 
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
