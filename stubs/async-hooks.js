@@ -1,19 +1,21 @@
 // Lightweight browser stub for async_hooks to satisfy client bundles.
 // No async context tracking; just surface compatibility.
 class AsyncLocalStorage {
-  disable() {}
+  disable() {
+    /* no-op in browser stub */
+  }
   getStore() {
-    return undefined;
+    return;
   }
   run(_store, callback) {
     return callback();
   }
-  enterWith(_store) {}
+  enterWith(_store) {
+    /* no-op in browser stub */
+  }
 }
 
-class AsyncResource {
-  constructor(..._args) {}
-}
+class AsyncResource {}
 
 module.exports = {
   AsyncLocalStorage,

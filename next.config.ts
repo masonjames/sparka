@@ -2,7 +2,10 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const MODEL_REGISTRY_URL = "airegistry.app";
-const ASYNC_HOOKS_STUB = path.resolve(import.meta.dirname, "stubs/async_hooks.js");
+const ASYNC_HOOKS_STUB = path.resolve(
+  import.meta.dirname,
+  "stubs/async-hooks.js"
+);
 
 const nextConfig: NextConfig = {
   typedRoutes: true,

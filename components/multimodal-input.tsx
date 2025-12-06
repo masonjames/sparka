@@ -201,14 +201,21 @@ function PureMultimodalInput({
 
       return [...processedImages, ...pdfFiles];
     },
-    [selectedModelId, switchToPdfCompatibleModel, switchToImageCompatibleModel]
+    [
+      selectedModelId,
+      switchToPdfCompatibleModel,
+      switchToImageCompatibleModel,
+      getModelById,
+    ]
   );
 
   // Update URL when sending message in new chat or project
   // Anonymous users stay on / - no URL redirect for them
   const updateChatUrl = useCallback(
     (chatIdToAdd: string) => {
-      if (!session?.user) return;
+      if (!session?.user) {
+        return;
+      }
 
       const currentPath = window.location.pathname;
       if (currentPath === "/") {

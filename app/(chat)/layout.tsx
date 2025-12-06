@@ -1,6 +1,6 @@
 import { AIDevtools } from "@ai-sdk-tools/devtools";
 import { cookies, headers } from "next/headers";
-import { getChatModels } from "@/app/actions/getChatModels";
+import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";

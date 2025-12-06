@@ -4,8 +4,8 @@ import {
   type AiGatewayModel,
   aiGatewayModelsResponseSchema,
 } from "./ai-gateway-models-schemas";
-import type { ModelData } from "./ModelData";
-import { toModelData } from "./toModelData";
+import type { ModelData } from "./model-data";
+import { toModelData } from "./to-model-data";
 
 async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
   const apiKey =

@@ -230,7 +230,7 @@
     "react-dom": "19.2.0"
   },
   "browser": {
-    "async_hooks": "./stubs/async_hooks.js",
-    "node:async_hooks": "./stubs/async_hooks.js"
+    "async_hooks": "./stubs/async-hooks.js",
+    "node:async_hooks": "./stubs/async-hooks.js"
   }
 }
