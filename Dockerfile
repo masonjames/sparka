@@ -46,6 +46,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Migrations should run at container startup or via separate job
 ENV SKIP_DB_MIGRATE=1
 
+# Provide placeholder values for build-time env validation
+# These are server-only and will be replaced at runtime by Dokploy
+# The @t3-oss/env-nextjs package validates at build time, requiring these
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ENV AUTH_SECRET="placeholder-auth-secret-will-be-replaced-at-runtime"
+ENV BLOB_READ_WRITE_TOKEN="vercel_blob_placeholder_token"
+
 # Build the application (skip migrations by modifying build command)
 RUN bun run next build
 
