@@ -10,6 +10,7 @@ import {
 } from "@/lib/stores/hooks-message-parts";
 import { isLastArtifact } from "./is-last-artifact";
 import { CodeInterpreterMessage } from "./part/code-interpreter";
+import { CreateDocument } from "./part/create-document";
 import { DocumentToolResult } from "./part/document-common";
 import { DocumentPreview } from "./part/document-preview";
 import { GeneratedImage } from "./part/generated-image";
@@ -174,56 +175,14 @@ function PureMessagePart({
   }
 
   if (type === "tool-createDocument") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
-      return (
-        <div key={toolCallId}>
-          <DocumentPreview
-            args={input}
-            isReadonly={isReadonly}
-            messageId={messageId}
-          />
-        </div>
-      );
-    }
-
-    if (state === "output-available") {
-      const { output, input } = part;
-      const shouldShowFullPreview = isLastArtifact(
-        chatStore.getState().getInternalMessages(),
-        toolCallId
-      );
-
-      if ("error" in output) {
-        return (
-          <div className="rounded border p-2 text-red-500" key={toolCallId}>
-            Error: {String(output.error)}
-          </div>
-        );
-      }
-
-      return (
-        <div key={toolCallId}>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          )}
-        </div>
-      );
-    }
+    return (
+      <CreateDocument
+        isReadonly={isReadonly}
+        key={part.toolCallId}
+        messageId={messageId}
+        tool={part}
+      />
+    );
   }
 
   if (part.type === "tool-updateDocument") {
