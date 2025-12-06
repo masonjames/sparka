@@ -17,10 +17,6 @@ export function addExplicitToolRequestToMessages(
 
   if (explicitlyRequestedTools) {
     // 1. Explicitly requested tools
-    console.log(
-      "Indicating explicitly requested tools",
-      explicitlyRequestedTools
-    );
     toolsToRequest = explicitlyRequestedTools;
   } else if (
     lastAssistantMessage?.parts &&

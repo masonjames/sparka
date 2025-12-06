@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   createContext,
   type ReactNode,
@@ -7,10 +8,16 @@ import {
   useContext,
   useMemo,
 } from "react";
-import type { AppModelDefinition } from "@/lib/ai/app-models";
+import {
+  type AppModelDefinition,
+  DEFAULT_ENABLED_MODELS,
+} from "@/lib/ai/app-models";
+import { useSession } from "@/providers/session-provider";
+import { useTRPC } from "@/trpc/react";
 
 type ChatModelsContextType = {
   models: AppModelDefinition[];
+  allModels: AppModelDefinition[];
   getModelById: (modelId: string) => AppModelDefinition | undefined;
 };
 
@@ -25,7 +32,16 @@ export function ChatModelsProvider({
   children: ReactNode;
   models: AppModelDefinition[];
 }) {
-  const modelsMap = useMemo(() => {
+  const trpc = useTRPC();
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+
+  const { data: preferences } = useQuery({
+    ...trpc.settings.getModelPreferences.queryOptions(),
+    enabled: isAuthenticated,
+  });
+
+  const allModelsMap = useMemo(() => {
     const map = new Map<string, AppModelDefinition>();
     for (const model of models) {
       map.set(model.id, model);
@@ -33,13 +49,32 @@ export function ChatModelsProvider({
     return map;
   }, [models]);
 
+  const enabledModelsSet = useMemo(() => {
+    const enabled = new Set<string>(DEFAULT_ENABLED_MODELS);
+    for (const pref of preferences ?? []) {
+      if (pref.enabled) {
+        enabled.add(pref.modelId);
+      } else {
+        enabled.delete(pref.modelId);
+      }
+    }
+    return enabled;
+  }, [preferences]);
+
+  const filteredModels = useMemo(
+    () => models.filter((model) => enabledModelsSet.has(model.id)),
+    [models, enabledModelsSet]
+  );
+
   const getModelById = useCallback(
-    (modelId: string) => modelsMap.get(modelId),
-    [modelsMap]
+    (modelId: string) => allModelsMap.get(modelId),
+    [allModelsMap]
   );
 
   return (
-    <ChatModelsContext.Provider value={{ models, getModelById }}>
+    <ChatModelsContext.Provider
+      value={{ models: filteredModels, allModels: models, getModelById }}
+    >
       {children}
     </ChatModelsContext.Provider>
   );

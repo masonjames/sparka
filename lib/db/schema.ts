@@ -28,12 +28,39 @@ export const userCredit = pgTable("UserCredit", {
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
 
+export const userModelPreference = pgTable(
+  "UserModelPreference",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    modelId: varchar("modelId", { length: 256 }).notNull(),
+    enabled: boolean("enabled").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.modelId] }),
+    UserModelPreference_user_id_idx: index(
+      "UserModelPreference_user_id_idx"
+    ).on(t.userId),
+  })
+);
+
+export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
+
 export const project = pgTable(
   "Project",
   {
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -50,7 +77,10 @@ export type Project = InferSelectModel<typeof project>;
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   title: text("title").notNull(),
   userId: text("userId")
     .notNull()

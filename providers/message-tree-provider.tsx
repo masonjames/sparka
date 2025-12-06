@@ -64,7 +64,6 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
     // Get initial data
     const initialData = queryClient.getQueryData<ChatMessage[]>(queryKey);
     if (initialData) {
-      console.log("initialData", initialData);
       setAllMessages(initialData);
     }
 
@@ -86,7 +85,6 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
           : trpc.chat.getChatMessages.queryKey({ chatId: id });
 
       if (JSON.stringify(eventQueryKey) === JSON.stringify(currentQueryKey)) {
-        console.log("event.query.state.data", event.query.state.data);
         const newData = event.query.state.data as ChatMessage[] | undefined;
         if (newData) {
           setAllMessages(newData);

@@ -9,7 +9,6 @@ import { SharedChatPage } from "./share/[id]/shared-chat-page";
 
 export function ChatPageRouter() {
   const { id, type } = useChatId();
-
   if (!id) {
     return notFound();
   }

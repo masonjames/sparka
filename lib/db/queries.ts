@@ -30,7 +30,9 @@ import {
   type Suggestion,
   suggestion,
   type User,
+  type UserModelPreference,
   user,
+  userModelPreference,
   vote,
 } from "./schema";
 
@@ -1005,5 +1007,53 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
     console.error("Failed to delete attachments from Vercel Blob:", error);
     // Don't throw here - we still want to proceed with message deletion
     // even if blob cleanup fails
+  }
+}
+
+export async function getUserModelPreferences({
+  userId,
+}: {
+  userId: string;
+}): Promise<UserModelPreference[]> {
+  try {
+    return await db
+      .select()
+      .from(userModelPreference)
+      .where(eq(userModelPreference.userId, userId));
+  } catch (error) {
+    console.error("Failed to get user model preferences from database", error);
+    throw error;
+  }
+}
+
+export async function upsertUserModelPreference({
+  userId,
+  modelId,
+  enabled,
+}: {
+  userId: string;
+  modelId: string;
+  enabled: boolean;
+}): Promise<void> {
+  try {
+    await db
+      .insert(userModelPreference)
+      .values({
+        userId,
+        modelId,
+        enabled,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [userModelPreference.userId, userModelPreference.modelId],
+        set: {
+          enabled,
+          updatedAt: new Date(),
+        },
+      });
+  } catch (error) {
+    console.error("Failed to upsert user model preference in database", error);
+    throw error;
   }
 }

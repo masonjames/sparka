@@ -225,6 +225,13 @@
       "when": 1762625804366,
       "tag": "0031_mature_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1764961288492,
+      "tag": "0032_glorious_human_torch",
+      "breakpoints": true
     }
   ]
 }

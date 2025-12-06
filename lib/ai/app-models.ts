@@ -162,3 +162,35 @@ export const DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL: ModelId =
   "openai/gpt-5-mini";
 
 export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
+
+/**
+ * Models enabled by default when a user has no preferences set.
+ * This provides a curated list of models for new users.
+ */
+export const DEFAULT_ENABLED_MODELS: AppModelId[] = [
+  // OpenAI - flagship models
+  "openai/gpt-5-nano",
+  "openai/gpt-5-mini",
+  "openai/gpt-5",
+  "openai/gpt-5-chat",
+  "openai/gpt-5-reasoning",
+  "openai/gpt-4o-mini",
+  // Google - best flash and pro
+  "google/gemini-2.5-flash-lite",
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-pro",
+  // Anthropic - latest sonnet
+  "anthropic/claude-sonnet-4.5",
+  "anthropic/claude-sonnet-4.5-reasoning",
+  "anthropic/claude-opus-4.1",
+  // xAI - grok 4
+  "xai/grok-4",
+  "xai/grok-4-reasoning",
+];
+
+export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
+  "google/gemini-2.5-flash",
+  "openai/gpt-5-mini",
+  "openai/gpt-5-nano",
+  "openai/gpt-4o-mini",
+];
