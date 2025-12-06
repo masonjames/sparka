@@ -7,6 +7,7 @@ import type { ImageModelId } from "../models/image-model-id";
 import type { ModelData } from "./ModelData";
 import type { ModelId } from "./models";
 import { fetchModels } from "./models";
+import { models as generatedModels } from "./models.generated";
 
 export type { ModelId } from "./models";
 
@@ -164,10 +165,9 @@ export const DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL: ModelId =
 export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
 
 /**
- * Models enabled by default when a user has no preferences set.
- * This provides a curated list of models for new users.
+ * Curated list of models enabled by default when a user has no preferences set.
  */
-export const DEFAULT_ENABLED_MODELS: AppModelId[] = [
+const CURATED_DEFAULT_MODELS: AppModelId[] = [
   // OpenAI - flagship models
   "openai/gpt-5-nano",
   "openai/gpt-5-mini",
@@ -187,6 +187,31 @@ export const DEFAULT_ENABLED_MODELS: AppModelId[] = [
   "xai/grok-4",
   "xai/grok-4-reasoning",
 ];
+
+/**
+ * Set of model IDs from the generated models file.
+ * Used to detect new models from the API that we haven't "decided" on yet.
+ */
+const KNOWN_MODEL_IDS = new Set<string>(generatedModels.map((m) => m.id));
+
+/**
+ * Returns the default enabled models for a given list of app models.
+ * Includes curated defaults + any new models from the API not in models.generated.ts
+ */
+export function getDefaultEnabledModels(
+  appModels: AppModelDefinition[]
+): Set<AppModelId> {
+  const enabled = new Set<AppModelId>(CURATED_DEFAULT_MODELS);
+
+  // Add any new models from the API that aren't in our generated snapshot
+  for (const model of appModels) {
+    if (!KNOWN_MODEL_IDS.has(model.apiModelId)) {
+      enabled.add(model.id);
+    }
+  }
+
+  return enabled;
+}
 
 export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
   "google/gemini-2.5-flash",
