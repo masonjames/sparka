@@ -55,11 +55,8 @@ export function AnonymousSessionInit() {
         });
         return;
       }
-
-      console.log("Valid anonymous session found");
     } else {
       // Create new session if none exists
-      console.log("No anonymous session found, creating new one");
       const newSession = createAnonymousSession();
       setAnonymousSession(newSession);
       // Ensure UI refetches credits after first-time session creation

@@ -7,7 +7,6 @@ const ASYNC_HOOKS_STUB = path.resolve(import.meta.dirname, "stubs/async_hooks.js
 const nextConfig: NextConfig = {
   typedRoutes: true,
 
-  transpilePackages: ["@airegistry/vercel-gateway"],
   experimental: {
     turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
@@ -39,6 +38,9 @@ const nextConfig: NextConfig = {
       },
       {
         hostname: "*.public.blob.vercel-storage.com",
+      },
+      {
+        hostname: "models.dev",
       },
     ],
   },

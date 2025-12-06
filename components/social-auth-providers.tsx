@@ -1,5 +1,6 @@
 "use client";
 
+import { Vercel } from "@lobehub/icons";
 import { GithubLogo } from "@phosphor-icons/react/dist/csr/GithubLogo";
 import { GoogleLogo } from "@phosphor-icons/react/dist/csr/GoogleLogo";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,17 @@ export function SocialAuthProviders() {
         >
           <GithubLogo className="mr-2 h-4 w-4" />
           Continue with GitHub
+        </Button>
+      ) : null}
+      {config.authentication.vercel ? (
+        <Button
+          className="w-full"
+          onClick={() => authClient.signIn.social({ provider: "vercel" })}
+          type="button"
+          variant="outline"
+        >
+          <Vercel className="mr-2 h-4 w-4" />
+          Continue with Vercel
         </Button>
       ) : null}
     </div>

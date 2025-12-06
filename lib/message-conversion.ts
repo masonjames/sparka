@@ -1,4 +1,4 @@
-import type { ModelId } from "@airegistry/vercel-gateway";
+import type { ModelId } from "@/lib/ai/app-models";
 import type { Chat, DBMessage } from "@/lib/db/schema";
 import type { UIChat } from "@/lib/types/ui-chat";
 import type { ChatMessage, UiToolName } from "./ai/types";

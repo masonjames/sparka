@@ -1,7 +1,7 @@
-import type { ModelId } from "@airegistry/vercel-gateway";
 import type { ModelMessage } from "ai";
 import { tool } from "ai";
 import { z } from "zod";
+import type { ModelId } from "@/lib/ai/app-models";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { artifactKinds } from "@/lib/artifacts/artifact-kind";
 import {

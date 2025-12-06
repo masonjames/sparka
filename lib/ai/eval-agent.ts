@@ -220,10 +220,13 @@ async function generateSuggestions(
   ]);
 
   const suggestions: string[] = [];
-  for await (const chunk of followupSuggestionsResult.partialObjectStream) {
+  const result = await followupSuggestionsResult;
+  for await (const chunk of result.partialObjectStream) {
     if (chunk.suggestions) {
       suggestions.push(
-        ...chunk.suggestions.filter((s): s is string => s !== undefined)
+        ...chunk.suggestions.filter(
+          (s: string | undefined): s is string => s !== undefined
+        )
       );
     }
   }

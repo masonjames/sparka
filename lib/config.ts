@@ -53,6 +53,7 @@ export type SiteConfig = {
   authentication: {
     google: boolean;
     github: boolean;
+    vercel: boolean;
   };
 };
 
@@ -113,5 +114,6 @@ export const siteConfig: SiteConfig = {
   authentication: {
     google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
     github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
+    vercel: Boolean(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET),
   },
 };

@@ -27,13 +27,12 @@ export function ChatSync({
 
   const isAuthenticated = !!session?.user;
 
-  const helpers = useChat<ChatMessage>({
+  useChat<ChatMessage>({
     experimental_throttle: 100,
     id,
     messages: initialMessages,
     generateId: generateUUID,
     onFinish: ({ message }) => {
-      console.log("onFinish", message);
       saveChatMessage({ message, chatId: id });
       setAutoResume(true);
     },
@@ -79,8 +78,6 @@ export function ChatSync({
       }
     },
   });
-
-  console.log("messages helpers", helpers.messages);
 
   // useAutoResume({
   //   autoResume,

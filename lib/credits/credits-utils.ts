@@ -54,8 +54,8 @@ export function getMaxToolCost(tools: ToolName[]): number {
   );
 }
 
-export function getBaseModelCostByModelId(modelId: AppModelId) {
-  const model = getAppModelDefinition(modelId);
+export async function getBaseModelCostByModelId(modelId: AppModelId) {
+  const model = await getAppModelDefinition(modelId);
   return getBaseModelCost(model);
 }
 
@@ -65,6 +65,10 @@ export function getBaseModelCost(model: AppModelDefinition) {
   }
 
   const { input, output } = model.pricing;
+
+  if (!(input && output)) {
+    return 10; // fallback for models without input/output pricing
+  }
 
   // Convert from string to number and scale to per million tokens
   const inputCostPerMTok = Number.parseFloat(input) * 1_000_000;

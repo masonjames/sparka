@@ -1,20 +1,21 @@
-import {
-  allModels as allModelsData,
-  type ModelDefinition,
-  type ModelId,
-} from "@airegistry/vercel-gateway";
+import { unstable_cache as cache } from "next/cache";
 import {
   type ImageModelData,
   imageModelsData,
 } from "@/lib/models/image-models";
 import type { ImageModelId } from "../models/image-model-id";
+import type { ModelData } from "./ModelData";
+import type { ModelId } from "./models";
+import { fetchModels } from "./models";
+
+export type { ModelId } from "./models";
 
 export type ImageModelDefinition = ImageModelData & {
   features?: never; // deprecated: use ModelExtra in base defs if needed later
 };
 
 export type AppModelId = ModelId | `${ModelId}-reasoning`;
-export type AppModelDefinition = Omit<ModelDefinition, "id"> & {
+export type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
   apiModelId: ModelId;
 };
@@ -26,84 +27,100 @@ const DISABLED_MODELS: Partial<Record<ModelId, true>> = {
   "morph/morph-v3-fast": true,
 };
 
-export const allAppModels = allModelsData
-  .flatMap((model) => {
-    // If the model supports reasoning, return two variants:
-    // - Non-reasoning (original id, reasoning=false)
-    // - Reasoning (id with -reasoning suffix, reasoning=true)
-    if (model.reasoning === true) {
-      const reasoningId: AppModelId = `${model.id}-reasoning`;
+const PROVIDER_ORDER = ["openai", "google", "anthropic", "xai"];
 
+function buildAppModels(models: ModelData[]): AppModelDefinition[] {
+  return models
+    .flatMap((model) => {
+      const modelId = model.id as ModelId;
+      // If the model supports reasoning, return two variants:
+      // - Non-reasoning (original id, reasoning=false)
+      // - Reasoning (id with -reasoning suffix, reasoning=true)
+      if (model.reasoning === true) {
+        const reasoningId: AppModelId = `${modelId}-reasoning`;
+
+        return [
+          {
+            ...model,
+            id: reasoningId,
+            apiModelId: modelId,
+            disabled: DISABLED_MODELS[modelId],
+          },
+          {
+            ...model,
+            reasoning: false,
+            apiModelId: modelId,
+            disabled: DISABLED_MODELS[modelId],
+          },
+        ];
+      }
+
+      // Models without reasoning stay as-is
       return [
         {
           ...model,
-          id: reasoningId,
-          apiModelId: model.id,
-          disabled: DISABLED_MODELS[model.id],
-        },
-        {
-          ...model,
-          reasoning: false,
-          apiModelId: model.id,
-          disabled: DISABLED_MODELS[model.id],
+          apiModelId: modelId,
+          disabled: DISABLED_MODELS[modelId],
         },
       ];
-    }
-
-    // Models without reasoning stay as-is
-    return [
-      {
-        ...model,
-        apiModelId: model.id,
-        disabled: DISABLED_MODELS[model.id],
-      },
-    ];
-  })
-  .filter((model) => model.type === "language" && !model.disabled);
-
-const allImageModels = imageModelsData;
-
-const PROVIDER_ORDER = ["openai", "google", "anthropic", "xai"];
-
-export const chatModels = allAppModels
-  .filter((model) => model.output.text === true)
-  .sort((a, b) => {
-    const aProviderIndex = PROVIDER_ORDER.indexOf(a.owned_by);
-    const bProviderIndex = PROVIDER_ORDER.indexOf(b.owned_by);
-
-    const aIndex =
-      aProviderIndex === -1 ? PROVIDER_ORDER.length : aProviderIndex;
-    const bIndex =
-      bProviderIndex === -1 ? PROVIDER_ORDER.length : bProviderIndex;
-
-    if (aIndex !== bIndex) {
-      return aIndex - bIndex;
-    }
-
-    return 0;
-  });
-
-// Memoized dictionary of models by ID for efficient lookups
-const _modelsByIdCache = new Map<string, AppModelDefinition>();
-
-function getModelsByIdDict(): Map<string, AppModelDefinition> {
-  if (_modelsByIdCache.size === 0) {
-    for (const model of allAppModels) {
-      _modelsByIdCache.set(model.id, model);
-    }
-  }
-  return _modelsByIdCache;
+    })
+    .filter(
+      (model) => model.type === "language" && !model.disabled
+    ) as AppModelDefinition[];
 }
 
-export function getAppModelDefinition(modelId: AppModelId): AppModelDefinition {
-  const modelsByIdDict = getModelsByIdDict();
+function buildChatModels(
+  appModels: AppModelDefinition[]
+): AppModelDefinition[] {
+  return appModels
+    .filter((model) => model.output.text === true)
+    .sort((a, b) => {
+      const aProviderIndex = PROVIDER_ORDER.indexOf(a.owned_by);
+      const bProviderIndex = PROVIDER_ORDER.indexOf(b.owned_by);
 
-  const model = modelsByIdDict.get(modelId);
+      const aIndex =
+        aProviderIndex === -1 ? PROVIDER_ORDER.length : aProviderIndex;
+      const bIndex =
+        bProviderIndex === -1 ? PROVIDER_ORDER.length : bProviderIndex;
+
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+
+      return 0;
+    });
+}
+
+export const fetchAllAppModels = cache(
+  async (): Promise<AppModelDefinition[]> => {
+    const models = await fetchModels();
+    return buildAppModels(models);
+  },
+  ["all-app-models"],
+  { revalidate: 3600, tags: ["ai-gateway-models"] }
+);
+
+export const fetchChatModels = cache(
+  async (): Promise<AppModelDefinition[]> => {
+    const appModels = await fetchAllAppModels();
+    return buildChatModels(appModels);
+  },
+  ["chat-models"],
+  { revalidate: 3600, tags: ["ai-gateway-models"] }
+);
+
+export async function getAppModelDefinition(
+  modelId: AppModelId
+): Promise<AppModelDefinition> {
+  const models = await fetchAllAppModels();
+  const model = models.find((m) => m.id === modelId);
   if (!model) {
     throw new Error(`Model ${modelId} not found`);
   }
   return model;
 }
+
+const allImageModels = imageModelsData;
 
 const _imageModelsByIdCache = new Map<string, ImageModelDefinition>();
 

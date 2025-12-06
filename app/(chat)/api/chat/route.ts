@@ -212,11 +212,6 @@ async function handleChatValidation({
 
   const chat = await getChatById({ id: chatId });
 
-  if (chat && chat.userId !== userId) {
-    log.warn("Unauthorized - chat ownership mismatch");
-    return new Response("Unauthorized", { status: 401 });
-  }
-
   if (chat) {
     if (chat.userId !== userId) {
       log.warn("Unauthorized - chat ownership mismatch");
@@ -474,25 +469,10 @@ async function createChatStream({
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
 
-  // Validate and narrow selectedTool type using type guard
-  function isValidToolName(value: string): value is ToolName {
-    const validTools: readonly string[] = [
-      "getWeather",
-      "createDocument",
-      "updateDocument",
-      "requestSuggestions",
-      "deepResearch",
-      "readDocument",
-      "generateImage",
-      "webSearch",
-      "codeInterpreter",
-      "retrieve",
-    ];
-    return validTools.includes(value);
-  }
-
   const narrowedSelectedTool: ToolName | null =
-    selectedTool && isValidToolName(selectedTool) ? selectedTool : null;
+    selectedTool && selectedTool in toolsDefinitions
+      ? (selectedTool as ToolName)
+      : null;
 
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
@@ -783,7 +763,7 @@ async function validateAndSetupSession({
 
   let modelDefinition: AppModelDefinition;
   try {
-    modelDefinition = getAppModelDefinition(selectedModelId);
+    modelDefinition = await getAppModelDefinition(selectedModelId);
   } catch (_error) {
     log.warn("Model not found");
     return {
@@ -1073,7 +1053,7 @@ export async function POST(request: NextRequest) {
     const explicitlyRequestedTools =
       determineExplicitlyRequestedTools(selectedTool);
 
-    const baseModelCost = getBaseModelCostByModelId(selectedModelId);
+    const baseModelCost = await getBaseModelCostByModelId(selectedModelId);
 
     const creditResult = await handleCreditReservation({
       userId,
@@ -1132,8 +1112,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     log.error({ error }, "RESPONSE > POST /api/chat error");
-    return new Response("An error occurred while processing your request!", {
-      status: 404,
+    return new Response("Internal Server Error", {
+      status: 500,
     });
   }
 }

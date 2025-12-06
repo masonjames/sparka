@@ -1,6 +1,6 @@
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
-import type { ModelId } from "@airegistry/vercel-gateway";
 import type { ModelMessage, ToolModelMessage } from "ai";
+import type { ModelId } from "@/lib/ai/app-models";
 import type { StreamWriter } from "@/lib/ai/types";
 import { getAppModelDefinition } from "../../app-models";
 import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
@@ -125,8 +125,9 @@ export function getNotesFromToolCalls(messages: ModelMessage[]): string[] {
   );
 }
 
-export function getModelContextWindow(modelId: ModelId): number {
-  return getAppModelDefinition(modelId).context_window;
+export async function getModelContextWindow(modelId: ModelId): Promise<number> {
+  const model = await getAppModelDefinition(modelId);
+  return model.context_window;
 }
 
 // Misc Utils
