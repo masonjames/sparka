@@ -12,7 +12,13 @@ import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
 
-export function ModelsTable({ search }: { search: string }) {
+export function ModelsTable({
+  search,
+  className,
+}: {
+  search: string;
+  className?: string;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { allModels } = useChatModels();
@@ -23,13 +29,49 @@ export function ModelsTable({ search }: { search: string }) {
 
   const mutation = useMutation(
     trpc.settings.setModelEnabled.mutationOptions({
-      onSuccess: () => {
+      onMutate: async (newData) => {
+        await queryClient.cancelQueries({
+          queryKey: trpc.settings.getModelPreferences.queryKey(),
+        });
+
+        const previousPrefs = queryClient.getQueryData(
+          trpc.settings.getModelPreferences.queryKey()
+        );
+
+        queryClient.setQueryData(
+          trpc.settings.getModelPreferences.queryKey(),
+          (old: typeof previousPrefs) => {
+            if (!old) {
+              return;
+            }
+            const exists = old.some((p) => p.modelId === newData.modelId);
+            if (exists) {
+              return old.map((p) =>
+                p.modelId === newData.modelId
+                  ? { ...p, enabled: newData.enabled }
+                  : p
+              );
+            }
+            // New preference - just return old, server will create it
+            return old;
+          }
+        );
+
+        return { previousPrefs };
+      },
+      onError: (_err, _newData, context) => {
+        if (context?.previousPrefs) {
+          queryClient.setQueryData(
+            trpc.settings.getModelPreferences.queryKey(),
+            context.previousPrefs
+          );
+        }
+        toast.error("Failed to update model preference");
+      },
+      onSettled: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.settings.getModelPreferences.queryKey(),
         });
-      },
-      onError: () => {
-        toast.error("Failed to update model preference");
       },
     })
   );
@@ -86,7 +128,7 @@ export function ModelsTable({ search }: { search: string }) {
 
   return (
     <>
-      <Table>
+      <Table className={className}>
         <TableBody>
           {filteredModels.map((model) => {
             const [provider] = model.id.split("/");

@@ -1,4 +1,10 @@
+import { ExternalLink } from "lucide-react";
 import { ModelsSettings } from "@/components/settings/models-settings";
+import {
+  SettingsPage,
+  SettingsPageHeader,
+} from "@/components/settings/settings-page";
+import { Button } from "@/components/ui/button";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
 export default async function ModelsSettingsPage() {
@@ -9,15 +15,32 @@ export default async function ModelsSettingsPage() {
 
   return (
     <HydrateClient>
-      <div className="flex min-h-0 flex-1 flex-col gap-6">
-        <div className="shrink-0">
-          <h2 className="font-semibold text-lg">Models</h2>
-          <p className="text-muted-foreground text-sm">
-            Configure your AI model preferences.
-          </p>
-        </div>
+      <SettingsPage>
+        <SettingsPageHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-semibold text-lg">Models</h2>
+            <p className="text-muted-foreground text-sm">
+              Configure your AI model preferences.
+            </p>
+          </div>
+          <Button
+            asChild
+            className="w-full sm:w-auto"
+            size="sm"
+            variant="outline"
+          >
+            <a
+              href="https://airegistry.app"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <ExternalLink className="size-4" />
+              <span>Models Registry</span>
+            </a>
+          </Button>
+        </SettingsPageHeader>
         <ModelsSettings />
-      </div>
+      </SettingsPage>
     </HydrateClient>
   );
 }

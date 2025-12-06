@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/react";
 import { ModelsTable } from "./models-table";
+import { SettingsPageContent, SettingsPageScrollArea } from "./settings-page";
 
 export function ModelsSettings() {
   const trpc = useTRPC();
@@ -15,7 +16,7 @@ export function ModelsSettings() {
   const deferredSearch = useDeferredValue(search);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <SettingsPageContent className="gap-4">
       <div className="relative flex shrink-0 gap-4">
         <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
         <Input
@@ -25,7 +26,6 @@ export function ModelsSettings() {
           value={search}
         />
         <Button
-          className=""
           onClick={() =>
             queryClient.invalidateQueries({
               queryKey: trpc.settings.getModelPreferences.queryKey(),
@@ -38,9 +38,9 @@ export function ModelsSettings() {
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2">
-        <ModelsTable search={deferredSearch} />
-      </div>
-    </div>
+      <SettingsPageScrollArea>
+        <ModelsTable className="block px-4" search={deferredSearch} />
+      </SettingsPageScrollArea>
+    </SettingsPageContent>
   );
 }
