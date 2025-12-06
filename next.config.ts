@@ -8,6 +8,7 @@ const ASYNC_HOOKS_STUB = path.resolve(
 );
 
 const nextConfig: NextConfig = {
+  output: "standalone", // Required for Docker/Dokploy deployment
   typedRoutes: true,
 
   experimental: {
