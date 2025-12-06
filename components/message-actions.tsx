@@ -12,7 +12,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Vote } from "@/lib/db/schema";
-import { useMessageRoleById } from "@/lib/stores/hooks";
+import { useMessageRoleById } from "@/lib/stores/hooks-base";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";

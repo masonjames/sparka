@@ -16,10 +16,10 @@ import { GeneratedImage } from "./part/generated-image";
 import { ResearchUpdates } from "./part/message-annotations";
 import { MessageReasoning } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
-import { RequestSuggestionsMessage } from "./part/request-suggestions-message";
+import { RequestSuggestions } from "./part/request-suggestions";
 import { Retrieve } from "./part/retrieve";
 import { TextMessagePart } from "./part/text-message-part";
-import { UpdateDocumentMessage } from "./part/update-document-message";
+import { UpdateDocument } from "./part/update-document";
 import { Weather } from "./part/weather";
 
 type MessagePartsProps = {
@@ -228,7 +228,7 @@ function PureMessagePart({
 
   if (part.type === "tool-updateDocument") {
     return (
-      <UpdateDocumentMessage
+      <UpdateDocument
         isReadonly={isReadonly}
         key={part.toolCallId}
         messageId={messageId}
@@ -239,7 +239,7 @@ function PureMessagePart({
 
   if (part.type === "tool-requestSuggestions") {
     return (
-      <RequestSuggestionsMessage
+      <RequestSuggestions
         isReadonly={isReadonly}
         key={part.toolCallId}
         messageId={messageId}

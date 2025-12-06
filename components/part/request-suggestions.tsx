@@ -6,7 +6,7 @@ import {
   type RequestSuggestionsTool,
 } from "./document-common";
 
-export function RequestSuggestionsMessage({
+export function RequestSuggestions({
   tool,
   isReadonly,
   messageId,

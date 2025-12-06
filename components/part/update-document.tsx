@@ -10,7 +10,7 @@ import {
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
 
-export function UpdateDocumentMessage({
+export function UpdateDocument({
   tool,
   isReadonly,
   messageId,

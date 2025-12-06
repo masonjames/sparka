@@ -8,7 +8,7 @@ import {
 } from "./document-common";
 import { DocumentPreview } from "./document-preview";
 
-export function CreateDocumentMessage({
+export function CreateDocument({
   tool,
   isReadonly,
   messageId,

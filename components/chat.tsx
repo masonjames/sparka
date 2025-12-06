@@ -14,7 +14,7 @@ import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Session } from "@/lib/auth";
 import type { Vote } from "@/lib/db/schema";
-import { useMessageIds } from "@/lib/stores/hooks";
+import { useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";

@@ -7,7 +7,7 @@ import {
 } from "@/components/ai-elements/conversation";
 // import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
 import type { Vote } from "@/lib/db/schema";
-import { useMessageIds } from "@/lib/stores/hooks";
+import { useMessageIds } from "@/lib/stores/hooks-base";
 import { Greeting } from "./greeting";
 import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
