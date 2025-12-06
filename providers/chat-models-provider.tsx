@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   createContext,
   type ReactNode,
@@ -11,6 +12,8 @@ import {
   type AppModelDefinition,
   DEFAULT_ENABLED_MODELS,
 } from "@/lib/ai/app-models";
+import { useSession } from "@/providers/session-provider";
+import { useTRPC } from "@/trpc/react";
 
 type ChatModelsContextType = {
   models: AppModelDefinition[];
@@ -25,12 +28,19 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
 export function ChatModelsProvider({
   children,
   models,
-  enabledModelIds,
 }: {
   children: ReactNode;
   models: AppModelDefinition[];
-  enabledModelIds?: string[];
 }) {
+  const trpc = useTRPC();
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+
+  const { data: preferences } = useQuery({
+    ...trpc.settings.getModelPreferences.queryOptions(),
+    enabled: isAuthenticated,
+  });
+
   const allModelsMap = useMemo(() => {
     const map = new Map<string, AppModelDefinition>();
     for (const model of models) {
@@ -40,12 +50,16 @@ export function ChatModelsProvider({
   }, [models]);
 
   const enabledModelsSet = useMemo(() => {
-    // If no preferences provided, use defaults
-    if (!enabledModelIds) {
-      return new Set(DEFAULT_ENABLED_MODELS);
+    const enabled = new Set<string>(DEFAULT_ENABLED_MODELS);
+    for (const pref of preferences ?? []) {
+      if (pref.enabled) {
+        enabled.add(pref.modelId);
+      } else {
+        enabled.delete(pref.modelId);
+      }
     }
-    return new Set(enabledModelIds);
-  }, [enabledModelIds]);
+    return enabled;
+  }, [preferences]);
 
   const filteredModels = useMemo(
     () => models.filter((model) => enabledModelsSet.has(model.id)),

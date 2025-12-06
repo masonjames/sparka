@@ -410,7 +410,7 @@ export function PureModelSelector({
                   size="sm"
                   variant="ghost"
                 >
-                  <Link href="/settings?tab=models">
+                  <Link aria-label="Add Models" href="/settings/models">
                     Add Models
                     <ChevronRightIcon className="h-4 w-4" />
                   </Link>

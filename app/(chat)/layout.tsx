@@ -4,18 +4,14 @@ import { getChatModels } from "@/app/actions/getChatModels";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import {
-  type AppModelId,
-  DEFAULT_CHAT_MODEL,
-  DEFAULT_ENABLED_MODELS,
-} from "@/lib/ai/app-models";
-import { getUserModelPreferences } from "@/lib/db/queries";
+import { type AppModelId, DEFAULT_CHAT_MODEL } from "@/lib/ai/app-models";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider } from "@/providers/session-provider";
 
 import { TRPCReactProvider } from "@/trpc/react";
+import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 import { auth } from "../../lib/auth";
 import { ChatProviders } from "./chat-providers";
 
@@ -61,56 +57,41 @@ export default async function ChatLayout({
 
   const chatModels = await getChatModels();
 
-  // Compute enabled models based on user preferences
-  let enabledModelIds: string[] | undefined;
+  // Prefetch model preferences for authenticated users
   if (session?.user?.id) {
-    const preferences = await getUserModelPreferences({
-      userId: session.user.id,
-    });
-
-    // Start with defaults
-    const enabledSet = new Set<string>(DEFAULT_ENABLED_MODELS);
-
-    // Apply user preferences
-    for (const pref of preferences) {
-      if (pref.enabled) {
-        enabledSet.add(pref.modelId);
-      } else {
-        enabledSet.delete(pref.modelId);
-      }
-    }
-
-    enabledModelIds = Array.from(enabledSet);
+    const queryClient = getQueryClient();
+    await queryClient.prefetchQuery(
+      trpc.settings.getModelPreferences.queryOptions()
+    );
   }
 
   return (
     <TRPCReactProvider>
-      <SessionProvider initialSession={session}>
-        <ChatProviders user={session?.user}>
-          <SidebarProvider defaultOpen={!isCollapsed}>
-            <AppSidebar />
-            <SidebarInset
-              style={
-                {
-                  "--header-height": "calc(var(--spacing) * 13)",
-                } as React.CSSProperties
-              }
-            >
-              <ChatModelsProvider
-                enabledModelIds={enabledModelIds}
-                models={chatModels}
+      <HydrateClient>
+        <SessionProvider initialSession={session}>
+          <ChatProviders user={session?.user}>
+            <SidebarProvider defaultOpen={!isCollapsed}>
+              <AppSidebar />
+              <SidebarInset
+                style={
+                  {
+                    "--header-height": "calc(var(--spacing) * 13)",
+                  } as React.CSSProperties
+                }
               >
-                <DefaultModelProvider defaultModel={defaultModel}>
-                  <KeyboardShortcuts />
+                <ChatModelsProvider models={chatModels}>
+                  <DefaultModelProvider defaultModel={defaultModel}>
+                    <KeyboardShortcuts />
 
-                  {children}
-                </DefaultModelProvider>
-              </ChatModelsProvider>
-            </SidebarInset>
-          </SidebarProvider>
-        </ChatProviders>
-      </SessionProvider>
-      {process.env.NODE_ENV === "development" && <AIDevtools />}
+                    {children}
+                  </DefaultModelProvider>
+                </ChatModelsProvider>
+              </SidebarInset>
+            </SidebarProvider>
+          </ChatProviders>
+        </SessionProvider>
+        {process.env.NODE_ENV === "development" && <AIDevtools />}
+      </HydrateClient>
     </TRPCReactProvider>
   );
 }

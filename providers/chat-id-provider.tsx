@@ -25,10 +25,11 @@ type ChatId = {
 };
 
 const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
-
+const CHAT_ID_PATTERN = /^\/chat\/(.+)$/;
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const provisionalChatIdRef = useRef<string>(generateUUID());
+  console.log("pathname", pathname);
 
   // Compute final id and type directly from pathname and state
   const { id, type } = useMemo<ChatId>(() => {
@@ -68,21 +69,25 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const urlChatId = pathname.replace("/chat/", "");
-    if (urlChatId === provisionalChatIdRef.current) {
-      // Id was provisional and now the url has been updated
-
-      // Generate a new provisional id for a potential new chat
-      provisionalChatIdRef.current = generateUUID();
-
+    // Handle /chat/:id route
+    const chatMatch = pathname?.match(CHAT_ID_PATTERN);
+    if (chatMatch) {
+      const urlChatId = chatMatch[1];
+      if (urlChatId === provisionalChatIdRef.current) {
+        // Id was provisional and now the url has been updated
+        // Generate a new provisional id for a potential new chat
+        provisionalChatIdRef.current = generateUUID();
+      }
       return {
         id: urlChatId,
-        type: "provisional",
+        type: "chat",
       };
     }
+
+    // Default: provisional
     return {
-      id: urlChatId,
-      type: "chat",
+      id: provisionalChatIdRef.current,
+      type: "provisional",
     };
   }, [pathname]);
 

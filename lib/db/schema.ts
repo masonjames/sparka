@@ -37,7 +37,10 @@ export const userModelPreference = pgTable(
     modelId: varchar("modelId", { length: 256 }).notNull(),
     enabled: boolean("enabled").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.userId, t.modelId] }),
@@ -54,7 +57,10 @@ export const project = pgTable(
   {
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -71,7 +77,10 @@ export type Project = InferSelectModel<typeof project>;
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   title: text("title").notNull(),
   userId: text("userId")
     .notNull()
