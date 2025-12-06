@@ -406,7 +406,6 @@ export function PureModelSelector({
                 <Button
                   asChild
                   className="w-full justify-between"
-                  disabled={true}
                   size="sm"
                   variant="ghost"
                 >

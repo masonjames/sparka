@@ -11,7 +11,11 @@ describe("resolveChatId", () => {
           pathname: "/share/abc-123",
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: "abc-123", type: "shared" });
+      ).toEqual({
+        id: "abc-123",
+        type: "shared",
+        shouldRefreshProvisionalId: false,
+      });
     });
 
     it("handles share with complex id", () => {
@@ -20,7 +24,11 @@ describe("resolveChatId", () => {
           pathname: "/share/abc-123-def-456",
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: "abc-123-def-456", type: "shared" });
+      ).toEqual({
+        id: "abc-123-def-456",
+        type: "shared",
+        shouldRefreshProvisionalId: false,
+      });
     });
   });
 
@@ -31,7 +39,11 @@ describe("resolveChatId", () => {
           pathname: "/project/proj-123",
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: PROVISIONAL_ID, type: "provisional" });
+      ).toEqual({
+        id: PROVISIONAL_ID,
+        type: "provisional",
+        shouldRefreshProvisionalId: false,
+      });
     });
 
     it("returns chat type for /project/:projectId/chat/:chatId", () => {
@@ -40,7 +52,24 @@ describe("resolveChatId", () => {
           pathname: "/project/proj-123/chat/chat-456",
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: "chat-456", type: "chat" });
+      ).toEqual({
+        id: "chat-456",
+        type: "chat",
+        shouldRefreshProvisionalId: false,
+      });
+    });
+
+    it("signals refresh when project chat id matches provisional id", () => {
+      expect(
+        resolveChatId({
+          pathname: `/project/proj-123/chat/${PROVISIONAL_ID}`,
+          provisionalId: PROVISIONAL_ID,
+        })
+      ).toEqual({
+        id: PROVISIONAL_ID,
+        type: "chat",
+        shouldRefreshProvisionalId: true,
+      });
     });
   });
 
@@ -51,16 +80,24 @@ describe("resolveChatId", () => {
           pathname: "/chat/chat-789",
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: "chat-789", type: "chat" });
+      ).toEqual({
+        id: "chat-789",
+        type: "chat",
+        shouldRefreshProvisionalId: false,
+      });
     });
 
-    it("returns provisional when chat id matches provisional id", () => {
+    it("signals refresh when chat id matches provisional id (chat was persisted)", () => {
       expect(
         resolveChatId({
           pathname: `/chat/${PROVISIONAL_ID}`,
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: PROVISIONAL_ID, type: "provisional" });
+      ).toEqual({
+        id: PROVISIONAL_ID,
+        type: "chat",
+        shouldRefreshProvisionalId: true,
+      });
     });
   });
 
@@ -68,13 +105,21 @@ describe("resolveChatId", () => {
     it("returns provisional for /", () => {
       expect(
         resolveChatId({ pathname: "/", provisionalId: PROVISIONAL_ID })
-      ).toEqual({ id: PROVISIONAL_ID, type: "provisional" });
+      ).toEqual({
+        id: PROVISIONAL_ID,
+        type: "provisional",
+        shouldRefreshProvisionalId: false,
+      });
     });
 
     it("returns provisional for null pathname", () => {
       expect(
         resolveChatId({ pathname: null, provisionalId: PROVISIONAL_ID })
-      ).toEqual({ id: PROVISIONAL_ID, type: "provisional" });
+      ).toEqual({
+        id: PROVISIONAL_ID,
+        type: "provisional",
+        shouldRefreshProvisionalId: false,
+      });
     });
 
     it("returns provisional for unknown routes", () => {
@@ -83,7 +128,11 @@ describe("resolveChatId", () => {
           pathname: "/settings",
           provisionalId: PROVISIONAL_ID,
         })
-      ).toEqual({ id: PROVISIONAL_ID, type: "provisional" });
+      ).toEqual({
+        id: PROVISIONAL_ID,
+        type: "provisional",
+        shouldRefreshProvisionalId: false,
+      });
     });
   });
 });

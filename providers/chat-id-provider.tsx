@@ -10,9 +10,11 @@ import {
   useRef,
 } from "react";
 import { generateUUID } from "@/lib/utils";
-import { type ChatId, resolveChatId } from "./resolve-chat-id";
+import { type ChatIdType, resolveChatId } from "./resolve-chat-id";
 
-type ChatIdContextType = ChatId & {
+type ChatIdContextType = {
+  id: string;
+  type: ChatIdType;
   refreshChatID: () => void;
 };
 
@@ -22,11 +24,19 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const provisionalChatIdRef = useRef<string>(generateUUID());
 
-  const { id, type } = useMemo<ChatId>(
-    () =>
-      resolveChatId({ pathname, provisionalId: provisionalChatIdRef.current }),
-    [pathname]
-  );
+  const { id, type } = useMemo(() => {
+    const result = resolveChatId({
+      pathname,
+      provisionalId: provisionalChatIdRef.current,
+    });
+
+    // When the provisional chat was persisted, regenerate the ID for future new chats
+    if (result.shouldRefreshProvisionalId) {
+      provisionalChatIdRef.current = generateUUID();
+    }
+
+    return result;
+  }, [pathname]);
 
   const refreshChatID = useCallback(() => {
     provisionalChatIdRef.current = generateUUID();

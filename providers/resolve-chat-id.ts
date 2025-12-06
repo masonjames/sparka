@@ -3,6 +3,8 @@ export type ChatIdType = "chat" | "provisional" | "shared";
 export type ChatId = {
   id: string;
   type: ChatIdType;
+  /** True when the provisional ID was just persisted and should be regenerated */
+  shouldRefreshProvisionalId: boolean;
 };
 
 const SHARE_ROUTE_PATTERN = /^\/share\/(.+)$/;
@@ -23,28 +25,50 @@ export function resolveChatId({
   // /share/:id → shared chat
   const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
   if (shareMatch) {
-    return { id: shareMatch[1], type: "shared" };
+    return {
+      id: shareMatch[1],
+      type: "shared",
+      shouldRefreshProvisionalId: false,
+    };
   }
 
-  // /project/:projectId/chat/:chatId → existing chat
+  // /project/:projectId/chat/:chatId → existing chat (refresh if matches provisional)
   // /project/:projectId → provisional
   const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
   if (projectMatch) {
     const chatId = projectMatch[2];
-    return chatId
-      ? { id: chatId, type: "chat" }
-      : { id: provisionalId, type: "provisional" };
+    if (chatId) {
+      // URL has a chat ID - check if it's the provisional one being persisted
+      const shouldRefresh = chatId === provisionalId;
+      return {
+        id: chatId,
+        type: "chat",
+        shouldRefreshProvisionalId: shouldRefresh,
+      };
+    }
+    return {
+      id: provisionalId,
+      type: "provisional",
+      shouldRefreshProvisionalId: false,
+    };
   }
 
-  // /chat/:id → chat (or provisional if id matches)
+  // /chat/:id → chat (refresh if matches provisional, meaning it was just persisted)
   const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
   if (chatMatch) {
     const urlChatId = chatMatch[1];
-    return urlChatId === provisionalId
-      ? { id: provisionalId, type: "provisional" }
-      : { id: urlChatId, type: "chat" };
+    const shouldRefresh = urlChatId === provisionalId;
+    return {
+      id: urlChatId,
+      type: "chat",
+      shouldRefreshProvisionalId: shouldRefresh,
+    };
   }
 
   // / or anything else → provisional
-  return { id: provisionalId, type: "provisional" };
+  return {
+    id: provisionalId,
+    type: "provisional",
+    shouldRefreshProvisionalId: false,
+  };
 }
