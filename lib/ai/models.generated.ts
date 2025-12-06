@@ -288,6 +288,23 @@ export const models = [
     },
   },
   {
+    id: "amazon/nova-2-lite",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "amazon",
+    name: "Nova 2 Lite",
+    description:
+      "Nova 2 Lite is a fast, cost-effective reasoning model for everyday workloads that can process text, images, and videos to generate text.",
+    context_window: 1_000_000,
+    max_tokens: 1_000_000,
+    type: "language",
+    tags: ["reasoning", "vision"],
+    pricing: {
+      input: "0.0000003",
+      output: "0.0000025",
+    },
+  },
+  {
     id: "amazon/nova-lite",
     object: "model",
     created: 1_755_815_280,
@@ -786,14 +803,14 @@ export const models = [
     owned_by: "deepseek",
     name: "DeepSeek V3.2",
     description: "DeepSeek-V3.2: Official successor to V3.2-Exp.",
-    context_window: 128_000,
+    context_window: 163_842,
     max_tokens: 8000,
     type: "language",
-    tags: ["tool-use", "implicit-caching"],
+    tags: [],
     pricing: {
-      input: "0.00000028",
-      output: "0.00000042",
-      input_cache_read: "0.000000028",
+      input: "0.00000027",
+      output: "0.0000004",
+      input_cache_read: "0.000000216",
     },
   },
   {
@@ -1443,6 +1460,23 @@ export const models = [
     },
   },
   {
+    id: "mistral/ministral-14b",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "mistral",
+    name: "Ministral 14B",
+    description:
+      "Ministral 3 14B is the largest model in the Ministral 3 family, offering state-of-the-art capabilities and performance comparable to its larger Mistral Small 3.2 24B counterpart. Optimized for local deployment, it delivers high performance across diverse hardware, including local setups.",
+    context_window: 256_000,
+    max_tokens: 256_000,
+    type: "language",
+    tags: ["vision", "file-input"],
+    pricing: {
+      input: "0.0000002",
+      output: "0.0000002",
+    },
+  },
+  {
     id: "mistral/ministral-3b",
     object: "model",
     created: 1_755_815_280,
@@ -1497,6 +1531,23 @@ export const models = [
     created: 1_755_815_280,
     owned_by: "mistral",
     name: "Mistral Large",
+    description:
+      "Mistral Large is ideal for complex tasks that require large reasoning capabilities or are highly specialized - like Synthetic Text Generation, Code Generation, RAG, or Agents.",
+    context_window: 32_000,
+    max_tokens: 4000,
+    type: "language",
+    tags: ["tool-use"],
+    pricing: {
+      input: "0.000002",
+      output: "0.000006",
+    },
+  },
+  {
+    id: "mistral/mistral-large-3",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "mistral",
+    name: "Mistral Large 3",
     description:
       "Mistral Large is ideal for complex tasks that require large reasoning capabilities or are highly specialized - like Synthetic Text Generation, Code Generation, RAG, or Agents.",
     context_window: 32_000,
@@ -1633,13 +1684,14 @@ export const models = [
     name: "Kimi K2 Thinking",
     description:
       "Kimi K2 Thinking is an advanced open-source thinking model by Moonshot AI. It can execute up to 200 – 300 sequential tool calls without human interference, reasoning coherently across hundreds of steps to solve complex problems. Built as a thinking agent, it reasons step by step while using tools, achieving state-of-the-art performance on Humanity's Last Exam (HLE), BrowseComp, and other benchmarks, with major gains in reasoning, agentic search, coding, writing, and general capabilities.",
-    context_window: 262_114,
-    max_tokens: 262_114,
+    context_window: 216_144,
+    max_tokens: 216_144,
     type: "language",
     tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
-      input: "0.0000006",
-      output: "0.0000025",
+      input: "0.00000047",
+      output: "0.000002",
+      input_cache_read: "0.000000141",
     },
   },
   {
@@ -1889,6 +1941,7 @@ export const models = [
       input: "0.00000125",
       output: "0.00001",
       input_cache_read: "0.000000125",
+      web_search: "10",
     },
   },
   {
@@ -1967,6 +2020,7 @@ export const models = [
     pricing: {
       input: "0.000015",
       output: "0.00012",
+      web_search: "10",
     },
   },
   {
@@ -1981,6 +2035,23 @@ export const models = [
     max_tokens: 128_000,
     type: "language",
     tags: ["file-input", "tool-use", "reasoning", "vision"],
+    pricing: {
+      input: "0.00000125",
+      output: "0.00001",
+      input_cache_read: "0.000000125",
+    },
+  },
+  {
+    id: "openai/gpt-5.1-codex-max",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "GPT 5.1 Codex Max",
+    description: "GPT‑5.1-Codex-Max is purpose-built for agentic coding.",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: ["reasoning", "file-input", "tool-use", "vision"],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
@@ -2003,6 +2074,7 @@ export const models = [
       input: "0.00000025",
       output: "0.000002",
       input_cache_read: "0.000000025",
+      web_search: "10",
     },
   },
   {
@@ -2159,6 +2231,7 @@ export const models = [
       input: "0.00001",
       output: "0.00004",
       input_cache_read: "0.0000025",
+      web_search: "10",
     },
   },
   {

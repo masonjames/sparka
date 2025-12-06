@@ -8,8 +8,7 @@
       "!components/ai-elements",
       "!components/streamdown",
       "!lib/utils.ts",
-      "!hooks/use-mobile.ts",
-      "!lib/ai/models.generated.ts"
+      "!hooks/use-mobile.ts"
     ]
   },
   "linter": {
