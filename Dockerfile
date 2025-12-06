@@ -5,20 +5,34 @@
 # =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
-FROM oven/bun:1 AS deps
+FROM oven/bun:1-debian AS deps
 WORKDIR /app
+
+# Install build dependencies for native modules (better-sqlite3)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package.json bun.lock* ./
 
-# Install dependencies
+# Install dependencies (including devDependencies for build)
 RUN bun install --frozen-lockfile
 
 # =============================================================================
 # Stage 2: Builder
 # =============================================================================
-FROM oven/bun:1 AS builder
+FROM oven/bun:1-debian AS builder
 WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -28,13 +42,12 @@ COPY . .
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Run database migrations and build
-# Note: DATABASE_URL must be provided as build arg for migrations
-ARG DATABASE_URL
-ENV DATABASE_URL=${DATABASE_URL}
+# Skip database migrations during Docker build
+# Migrations should run at container startup or via separate job
+ENV SKIP_DB_MIGRATE=1
 
-# Build the application
-RUN bun run build
+# Build the application (skip migrations by modifying build command)
+RUN bun run next build
 
 # =============================================================================
 # Stage 3: Production Runner
