@@ -81,16 +81,22 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   # Optional: Trigger Dokploy deployment via webhook
+  # To enable: add DOKPLOY_WEBHOOK_URL secret to the repository
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_to_dokploy != 'false' }}
+    if: github.event.inputs.deploy_to_dokploy != 'false'
     steps:
       - name: Trigger Dokploy Webhook
-        if: ${{ secrets.DOKPLOY_WEBHOOK_URL != '' }}
+        env:
+          DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{"image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"}' \
-            --fail --silent --show-error || echo "Webhook not configured or failed"
+          if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
+            curl -X POST "$DOKPLOY_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{"image": "ghcr.io/${{ github.repository }}:latest"}' \
+              --fail --silent --show-error || echo "Webhook failed"
+          else
+            echo "DOKPLOY_WEBHOOK_URL not configured - skipping deployment trigger"
+          fi
         continue-on-error: true
