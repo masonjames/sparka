@@ -168,18 +168,22 @@ export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
  * This provides a curated list of models for new users.
  */
 export const DEFAULT_ENABLED_MODELS: AppModelId[] = [
+  // OpenAI - flagship models
   "openai/gpt-5-nano",
   "openai/gpt-5-mini",
-  "openai/gpt-4.5-preview",
-  "openai/gpt-4.1",
-  "openai/o3-mini",
-  "openai/o3-mini-reasoning",
+  "openai/gpt-5",
+  "openai/gpt-5-chat",
+  "openai/gpt-5-reasoning",
+  "openai/o4-mini",
+  // Google - best flash and pro
   "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
+  // Anthropic - latest sonnet
   "anthropic/claude-sonnet-4",
   "anthropic/claude-sonnet-4-reasoning",
-  "xai/grok-3-mini",
-  "xai/grok-3-mini-reasoning",
+  // xAI - grok 4
+  "xai/grok-4",
+  "xai/grok-4-reasoning",
 ];
 
 export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
