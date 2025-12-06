@@ -1,16 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { ModelSelectorLogo } from "@/components/model-selector-logo";
-import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Table, TableBody } from "@/components/ui/table";
 import { DEFAULT_ENABLED_MODELS } from "@/lib/ai/app-models";
-import { AVAILABLE_FEATURES } from "@/lib/features-config";
-import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
+import { ModelRow } from "./model-row";
 
 export function ModelsTable({
   search,
@@ -21,100 +18,92 @@ export function ModelsTable({
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { allModels } = useChatModels();
+  const { allModels, models: enabledModels } = useChatModels();
 
   const { data: preferences, isLoading: prefsLoading } = useQuery(
     trpc.settings.getModelPreferences.queryOptions()
   );
 
-  const mutation = useMutation(
+  const queryKey = trpc.settings.getModelPreferences.queryKey();
+
+  const { mutate: setModelEnabled } = useMutation(
     trpc.settings.setModelEnabled.mutationOptions({
-      onMutate: async (newData) => {
-        await queryClient.cancelQueries({
-          queryKey: trpc.settings.getModelPreferences.queryKey(),
-        });
-
-        const previousPrefs = queryClient.getQueryData(
-          trpc.settings.getModelPreferences.queryKey()
-        );
-
-        queryClient.setQueryData(
-          trpc.settings.getModelPreferences.queryKey(),
-          (old: typeof previousPrefs) => {
-            if (!old) {
-              return;
-            }
-            const exists = old.some((p) => p.modelId === newData.modelId);
-            if (exists) {
-              return old.map((p) =>
-                p.modelId === newData.modelId
-                  ? { ...p, enabled: newData.enabled }
-                  : p
-              );
-            }
-            // New preference - just return old, server will create it
+      onMutate: (newData) => {
+        const prev = queryClient.getQueryData(queryKey);
+        queryClient.setQueryData(queryKey, (old: typeof preferences) => {
+          if (!old) {
             return old;
           }
-        );
-
-        return { previousPrefs };
+          const idx = old.findIndex((p) => p.modelId === newData.modelId);
+          if (idx >= 0) {
+            return old.with(idx, { ...old[idx], enabled: newData.enabled });
+          }
+          return [
+            ...old,
+            {
+              modelId: newData.modelId,
+              enabled: newData.enabled,
+              userId: "",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ];
+        });
+        return { prev };
       },
       onError: (_err, _newData, context) => {
-        if (context?.previousPrefs) {
-          queryClient.setQueryData(
-            trpc.settings.getModelPreferences.queryKey(),
-            context.previousPrefs
-          );
-        }
+        queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update model preference");
       },
-      onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.settings.getModelPreferences.queryKey(),
-        });
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey });
       },
     })
   );
 
   const enabledModelsSet = useMemo(() => {
-    if (!preferences) {
-      return new Set(DEFAULT_ENABLED_MODELS);
-    }
-
     const enabled = new Set(DEFAULT_ENABLED_MODELS);
-
-    for (const pref of preferences) {
+    for (const pref of preferences ?? []) {
       if (pref.enabled) {
         enabled.add(pref.modelId);
       } else {
         enabled.delete(pref.modelId);
       }
     }
-
     return enabled;
   }, [preferences]);
 
+  // Enabled models first, then the rest
+  const sortedModels = useMemo(() => {
+    const enabledSet = new Set(enabledModels.map((m) => m.id));
+    return [
+      ...enabledModels,
+      ...allModels.filter((m) => !enabledSet.has(m.id)),
+    ];
+  }, [allModels, enabledModels]);
+
   const filteredModels = useMemo(() => {
     if (!search.trim()) {
-      return allModels;
+      return sortedModels;
     }
-    const lower = search.toLowerCase();
-    return allModels.filter(
-      (model) =>
-        model.name.toLowerCase().includes(lower) ||
-        model.owned_by?.toLowerCase().includes(lower) ||
-        model.id.toLowerCase().includes(lower)
+    const q = search.toLowerCase();
+    return sortedModels.filter(
+      (m) =>
+        m.name.toLowerCase().includes(q) ||
+        m.owned_by?.toLowerCase().includes(q) ||
+        m.id.toLowerCase().includes(q)
     );
-  }, [allModels, search]);
+  }, [sortedModels, search]);
 
-  const handleToggle = (modelId: string, currentlyEnabled: boolean) => {
-    mutation.mutate({
-      modelId,
-      enabled: !currentlyEnabled,
-    });
-  };
-
-  const ReasoningIcon = AVAILABLE_FEATURES.reasoning.icon;
+  const handleToggle = useCallback(
+    (modelId: string, currentlyEnabled: boolean) => {
+      setModelEnabled({
+        modelId,
+        enabled: !currentlyEnabled,
+      });
+    },
+    [setModelEnabled]
+  );
 
   if (prefsLoading) {
     return (
@@ -130,37 +119,14 @@ export function ModelsTable({
     <>
       <Table className={className}>
         <TableBody>
-          {filteredModels.map((model) => {
-            const [provider] = model.id.split("/");
-            const isEnabled = enabledModelsSet.has(model.id);
-
-            return (
-              <TableRow className="" key={model.id}>
-                <TableCell className="w-full py-2.5 pl-0">
-                  <div className="flex items-center gap-2.5">
-                    {provider && <ModelSelectorLogo provider={provider} />}
-                    <span className="font-medium text-sm">{model.name}</span>
-                    {model.reasoning && (
-                      <ReasoningIcon
-                        aria-label={AVAILABLE_FEATURES.reasoning.description}
-                        className={cn(
-                          "size-3.5 text-muted-foreground",
-                          isEnabled && "text-foreground"
-                        )}
-                      />
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="py-2.5 pr-0">
-                  <Switch
-                    checked={isEnabled}
-                    disabled={mutation.isPending}
-                    onCheckedChange={() => handleToggle(model.id, isEnabled)}
-                  />
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {filteredModels.map((model) => (
+            <ModelRow
+              isEnabled={enabledModelsSet.has(model.id)}
+              key={model.id}
+              model={model}
+              onToggle={handleToggle}
+            />
+          ))}
         </TableBody>
       </Table>
 

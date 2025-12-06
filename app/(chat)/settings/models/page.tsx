@@ -25,7 +25,7 @@ export default async function ModelsSettingsPage() {
           </div>
           <Button
             asChild
-            className="w-full sm:w-auto"
+            className="w-full max-w-[300px] sm:w-auto"
             size="sm"
             variant="outline"
           >
