@@ -181,3 +181,10 @@ export const DEFAULT_ENABLED_MODELS: AppModelId[] = [
   "xai/grok-3-mini",
   "xai/grok-3-mini-reasoning",
 ];
+
+export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
+  "google/gemini-2.0-flash",
+  "openai/gpt-5-mini",
+  "openai/gpt-5-nano",
+  "openai/gpt-4o-mini",
+];
