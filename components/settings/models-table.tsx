@@ -117,6 +117,9 @@ export function ModelsTable({
 
   return (
     <>
+      <p className="mb-2 text-muted-foreground text-xs">
+        {filteredModels.length} model{filteredModels.length !== 1 && "s"}
+      </p>
       <Table className={className}>
         <TableBody>
           {filteredModels.map((model) => (
