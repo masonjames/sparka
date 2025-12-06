@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { Table, TableBody } from "@/components/ui/table";
 import { DEFAULT_ENABLED_MODELS } from "@/lib/ai/app-models";
@@ -73,13 +73,24 @@ export function ModelsTable({
     return enabled;
   }, [preferences]);
 
-  // Enabled models first, then the rest
+  // Stable sort order: computed once on initial load, never changes
+  const initialSortRef = useRef<string[] | null>(null);
   const sortedModels = useMemo(() => {
-    const enabledSet = new Set(enabledModels.map((m) => m.id));
-    return [
-      ...enabledModels,
-      ...allModels.filter((m) => !enabledSet.has(m.id)),
-    ];
+    if (initialSortRef.current === null) {
+      // First render: enabled models first, then the rest
+      const enabledSet = new Set(enabledModels.map((m) => m.id));
+      const sorted = [
+        ...enabledModels,
+        ...allModels.filter((m) => !enabledSet.has(m.id)),
+      ];
+      initialSortRef.current = sorted.map((m) => m.id);
+      return sorted;
+    }
+    // Subsequent renders: maintain original order
+    const modelMap = new Map(allModels.map((m) => [m.id, m]));
+    return initialSortRef.current
+      .map((id) => modelMap.get(id))
+      .filter((m) => m !== undefined);
   }, [allModels, enabledModels]);
 
   const filteredModels = useMemo(() => {

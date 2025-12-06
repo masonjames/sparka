@@ -69,14 +69,15 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    // Handle /chat/:id route
+    // Handle /chat/:id route (from server load or from client replace)
     const chatMatch = pathname?.match(CHAT_ID_PATTERN);
     if (chatMatch) {
       const urlChatId = chatMatch[1];
       if (urlChatId === provisionalChatIdRef.current) {
-        // Id was provisional and now the url has been updated
-        // Generate a new provisional id for a potential new chat
-        provisionalChatIdRef.current = generateUUID();
+        return {
+          id: provisionalChatIdRef.current,
+          type: "provisional",
+        };
       }
       return {
         id: urlChatId,
@@ -91,6 +92,7 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
     };
   }, [pathname]);
 
+  console.log("ChatIdProvider: id", id, "type", type);
   const refreshChatID = useCallback(() => {
     provisionalChatIdRef.current = generateUUID();
   }, []);
