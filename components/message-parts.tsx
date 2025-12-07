@@ -118,10 +118,9 @@ export function PureMessageParts({
   const types = useMessagePartTypesById(messageId);
 
   return types.map((t, i) => {
-    const isLastReasoning = t === "reasoning" && i === types.length - 1;
     return (
       <MessagePart
-        isLoading={isLoading && isLastReasoning}
+        isLoading={isLoading && i === types.length - 1}
         isReadonly={isReadonly}
         // biome-ignore lint/suspicious/noArrayIndexKey: we only have index at this point
         key={`message-${messageId}-${t}-${i}`}
