@@ -1,5 +1,5 @@
 import type { AiGatewayModel } from "./ai-gateway-models-schemas";
-import type { ModelData } from "./ModelData";
+import type { ModelData } from "./model-data";
 
 export function toModelData(model: AiGatewayModel): ModelData {
   const tags = model.tags ?? [];

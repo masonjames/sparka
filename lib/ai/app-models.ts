@@ -4,7 +4,7 @@ import {
   imageModelsData,
 } from "@/lib/models/image-models";
 import type { ImageModelId } from "../models/image-model-id";
-import type { ModelData } from "./ModelData";
+import type { ModelData } from "./model-data";
 import type { ModelId } from "./models";
 import { fetchModels } from "./models";
 import { models as generatedModels } from "./models.generated";
