@@ -32,7 +32,7 @@ Use for:
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
     inputSchema: z.object({}),
-    execute: async () => {
+    execute: async (_, { toolCallId }: { toolCallId: string }) => {
       const smallConfig: DeepResearchConfig = loadConfigFromEnv();
 
       try {
@@ -47,6 +47,7 @@ Use for:
           {
             requestId,
             messageId,
+            toolCallId,
             messages,
           },
           smallConfig,

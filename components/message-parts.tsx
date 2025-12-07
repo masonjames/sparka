@@ -5,8 +5,8 @@ import { memo } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   useMessagePartByPartIdx,
-  useMessagePartsByPartRange,
   useMessagePartTypesById,
+  useMessageResearchUpdatePartByToolCallId,
 } from "@/lib/stores/hooks-message-parts";
 import { isLastArtifact } from "./is-last-artifact";
 import { CodeInterpreterMessage } from "./part/code-interpreter";
@@ -29,70 +29,26 @@ type MessagePartsProps = {
   isReadonly: boolean;
 };
 
-// TODO: Transform this
-function useResearchUpdates(
-  messageId: string,
-  partIdx: number,
-  type: ChatMessage["parts"][number]["type"]
-) {
-  const types = useMessagePartTypesById(messageId);
-  const startIdx = partIdx;
-  const nextIdx = types.findIndex(
-    (t, i) =>
-      i > startIdx && (t === "tool-deepResearch" || t === "tool-webSearch")
-  );
-
-  // If not a research tool, constrain the range to empty to minimize work
-  let sliceEnd = nextIdx === -1 ? types.length - 1 : nextIdx - 1;
-  if (type !== "tool-deepResearch" && type !== "tool-webSearch") {
-    sliceEnd = startIdx;
-  }
-
-  const range = useMessagePartsByPartRange(messageId, startIdx + 1, sliceEnd);
-
-  if (type !== "tool-deepResearch" && type !== "tool-webSearch") {
-    return [] as Extract<
-      ChatMessage["parts"][number],
-      { type: "data-researchUpdate" }
-    >["data"][];
-  }
-
-  return range
-    .filter((p) => p.type === "data-researchUpdate")
-    .map(
-      (u) =>
-        (
-          u as Extract<
-            ChatMessage["parts"][number],
-            { type: "data-researchUpdate" }
-          >
-        ).data
-    );
-}
-
-// Handle deep research rendering
-function renderDeepResearchPart({
-  part,
-  researchUpdates,
-  chatStore,
+function DeepResearchPart({
   messageId,
+  part,
   isReadonly,
 }: {
-  part: Extract<ChatMessage["parts"][number], { type: "tool-deepResearch" }>;
-  researchUpdates: Extract<
-    ChatMessage["parts"][number],
-    { type: "data-researchUpdate" }
-  >["data"][];
-  chatStore: ReturnType<typeof useChatStoreApi<ChatMessage>>;
   messageId: string;
+  part: Extract<ChatMessage["parts"][number], { type: "tool-deepResearch" }>;
   isReadonly: boolean;
 }) {
   const { toolCallId, state } = part;
+  const researchUpdates = useMessageResearchUpdatePartByToolCallId(
+    messageId,
+    toolCallId
+  );
+  const chatStore = useChatStoreApi<ChatMessage>();
 
   if (state === "input-available") {
     return (
       <div className="flex w-full flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates} />
+        <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
       </div>
     );
   }
@@ -107,7 +63,7 @@ function renderDeepResearchPart({
       return (
         <div key={toolCallId}>
           <div className="mb-2">
-            <ResearchUpdates updates={researchUpdates} />
+            <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
           </div>
           {shouldShowFullPreview ? (
             <DocumentPreview
@@ -132,23 +88,23 @@ function renderDeepResearchPart({
   return null;
 }
 
-// Handle web search rendering
-function renderWebSearchPart({
+function WebSearchPart({
+  messageId,
   part,
-  researchUpdates,
 }: {
+  messageId: string;
   part: Extract<ChatMessage["parts"][number], { type: "tool-webSearch" }>;
-  researchUpdates: Extract<
-    ChatMessage["parts"][number],
-    { type: "data-researchUpdate" }
-  >["data"][];
 }) {
   const { toolCallId, state } = part;
+  const researchUpdates = useMessageResearchUpdatePartByToolCallId(
+    messageId,
+    toolCallId
+  );
 
   if (state === "input-available" || state === "output-available") {
     return (
       <div className="flex flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates} />
+        <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
       </div>
     );
   }
@@ -167,8 +123,6 @@ function PureMessagePart({
 }) {
   const part = useMessagePartByPartIdx(messageId, partIdx);
   const { type } = part;
-  const researchUpdates = useResearchUpdates(messageId, partIdx, type);
-  const chatStore = useChatStoreApi<ChatMessage>();
 
   if (part.type === "tool-getWeather") {
     return <Weather key={part.toolCallId} tool={part} />;
@@ -224,17 +178,17 @@ function PureMessagePart({
   }
 
   if (type === "tool-deepResearch") {
-    return renderDeepResearchPart({
-      part,
-      researchUpdates,
-      chatStore,
-      messageId,
-      isReadonly,
-    });
+    return (
+      <DeepResearchPart
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
   }
 
   if (type === "tool-webSearch") {
-    return renderWebSearchPart({ part, researchUpdates });
+    return <WebSearchPart messageId={messageId} part={part} />;
   }
 
   return null;

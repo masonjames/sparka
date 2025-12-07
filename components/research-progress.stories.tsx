@@ -30,11 +30,13 @@ const completedAt = now - 5000;
 const runningUpdates: ResearchUpdate[] = [
   {
     type: "started",
+    toolCallId: "mock-tool-call-id",
     title: "Started deep research",
     timestamp: startedAt,
   },
   {
     type: "web",
+    toolCallId: "mock-tool-call-id",
     status: "running",
     title: "Searching for recent performance benchmarks",
     queries: ["bun vs node benchmarks 2024", "drizzle orm performance"],
@@ -55,6 +57,7 @@ const runningUpdates: ResearchUpdate[] = [
   },
   {
     type: "thoughts",
+    toolCallId: "mock-tool-call-id",
     status: "running",
     title: "Analyzing trade-offs",
     message:
@@ -62,6 +65,7 @@ const runningUpdates: ResearchUpdate[] = [
   },
   {
     type: "writing",
+    toolCallId: "mock-tool-call-id",
     status: "running",
     title: "Drafting findings",
     message: "Summarizing key results and references...",
@@ -71,11 +75,13 @@ const runningUpdates: ResearchUpdate[] = [
 const completedUpdates: ResearchUpdate[] = [
   {
     type: "started",
+    toolCallId: "mock-tool-call-id",
     title: "Started deep research",
     timestamp: startedAt,
   },
   {
     type: "web",
+    toolCallId: "mock-tool-call-id",
     status: "completed",
     title: "Collected benchmark sources",
     queries: ["bun vs node benchmarks 2024"],
@@ -90,18 +96,21 @@ const completedUpdates: ResearchUpdate[] = [
   },
   {
     type: "thoughts",
+    toolCallId: "mock-tool-call-id",
     status: "completed",
     title: "Synthesized insights",
     message: "Bun excels at startup; Node still wins in ecosystem maturity.",
   },
   {
     type: "writing",
+    toolCallId: "mock-tool-call-id",
     status: "completed",
     title: "Wrote final summary",
     message: "Providing actionable guidance and references.",
   },
   {
     type: "completed",
+    toolCallId: "mock-tool-call-id",
     title: "Research complete",
     timestamp: completedAt,
   },
@@ -110,6 +119,7 @@ const completedUpdates: ResearchUpdate[] = [
 const manyWebUpdates: ResearchUpdate[] = [
   {
     type: "started",
+    toolCallId: "mock-tool-call-id",
     title: "Initiated research sprint",
     timestamp: startedAt,
   },
@@ -118,6 +128,7 @@ const manyWebUpdates: ResearchUpdate[] = [
     return [
       {
         type: "web",
+        toolCallId: "mock-tool-call-id",
         status: "running",
         title: `Search round ${idx}: collecting sources`,
         queries: [`query ${idx}a`, `query ${idx}b`],
@@ -140,6 +151,7 @@ const manyWebUpdates: ResearchUpdate[] = [
   }),
   {
     type: "writing",
+    toolCallId: "mock-tool-call-id",
     status: "running",
     title: "Aggregating and drafting",
     message: "Organizing citations and summarizing recurring themes.",

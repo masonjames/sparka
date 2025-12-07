@@ -186,7 +186,8 @@ async function writeResearchBrief(
   state: WriteResearchBriefInput,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  messageId: string
+  messageId: string,
+  toolCallId: string
 ): Promise<WriteResearchBriefOutput> {
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
@@ -194,6 +195,7 @@ async function writeResearchBrief(
     id: dataPartId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing research brief",
       type: "writing",
       status: "running",
@@ -240,6 +242,7 @@ async function writeResearchBrief(
     id: dataPartId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing research brief",
       message: result.object.research_brief,
       type: "writing",
@@ -257,16 +260,19 @@ async function writeResearchBrief(
 abstract class Agent {
   protected agentId: string;
   protected messageId: string;
+  protected toolCallId: string;
   protected config: DeepResearchConfig;
   protected dataStream: StreamWriter;
 
   constructor(
     config: DeepResearchConfig,
     dataStream: StreamWriter,
-    messageId: string
+    messageId: string,
+    toolCallId: string
   ) {
     this.agentId = generateUUID();
     this.messageId = messageId;
+    this.toolCallId = toolCallId;
     this.config = config;
     this.dataStream = dataStream;
   }
@@ -297,6 +303,7 @@ class ResearcherAgent extends Agent {
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: "Starting research on topic",
         message: state.research_topic,
         type: "thoughts",
@@ -344,6 +351,7 @@ class ResearcherAgent extends Agent {
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         type: "thoughts",
         message: completedUpdate.message,
@@ -416,6 +424,7 @@ class ResearcherAgent extends Agent {
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         type: "thoughts",
         message: completedUpdate.message,
@@ -459,10 +468,16 @@ class SupervisorAgent extends Agent {
   constructor(
     config: DeepResearchConfig,
     dataStream: StreamWriter,
-    messageId: string
+    messageId: string,
+    toolCallId: string
   ) {
-    super(config, dataStream, messageId);
-    this.researcherAgent = new ResearcherAgent(config, dataStream, messageId);
+    super(config, dataStream, messageId, toolCallId);
+    this.researcherAgent = new ResearcherAgent(
+      config,
+      dataStream,
+      messageId,
+      toolCallId
+    );
   }
 
   private async supervise(state: SupervisorInput): Promise<SupervisorOutput> {
@@ -524,6 +539,7 @@ class SupervisorAgent extends Agent {
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         message: completedUpdate.message,
         type: "thoughts",
@@ -665,6 +681,7 @@ class SupervisorAgent extends Agent {
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         message: completedUpdate.message,
         type: "thoughts",
@@ -748,12 +765,21 @@ type FinalReportGenerationInput = {
   session: Session;
   messageId: string;
   reportTitle: string;
+  toolCallId: string;
 };
 
 async function finalReportGeneration(
   input: FinalReportGenerationInput
 ): Promise<Pick<AgentState, "final_report" | "reportResult">> {
-  const { state, config, dataStream, session, messageId, reportTitle } = input;
+  const {
+    state,
+    config,
+    dataStream,
+    session,
+    messageId,
+    reportTitle,
+    toolCallId,
+  } = input;
   const notes = state.notes || [];
 
   const model = await getLanguageModel(config.final_report_model as ModelId);
@@ -770,6 +796,7 @@ async function finalReportGeneration(
     id: finalReportUpdateId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing final report",
       type: "writing",
       status: "running",
@@ -822,6 +849,7 @@ async function finalReportGeneration(
     id: finalReportUpdateId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing final report",
       type: "writing",
       status: "completed",
@@ -858,6 +886,7 @@ export async function runDeepResearcher(
       kind: "text",
       content: "",
     },
+    toolCallId: input.toolCallId,
   };
 
   // Step 1: Clarify with user
@@ -877,6 +906,7 @@ export async function runDeepResearcher(
   dataStream.write({
     type: "data-researchUpdate",
     data: {
+      toolCallId: input.toolCallId,
       title: "Starting research",
       type: "started",
       timestamp: Date.now(),
@@ -888,7 +918,8 @@ export async function runDeepResearcher(
     { requestId: currentState.requestId, messages: currentState.inputMessages },
     config,
     dataStream,
-    input.messageId
+    input.messageId,
+    input.toolCallId
   );
   currentState.research_brief = briefResult.research_brief;
   const reportTitle = briefResult.title;
@@ -897,7 +928,8 @@ export async function runDeepResearcher(
   const supervisorAgent = new SupervisorAgent(
     config,
     dataStream,
-    input.messageId
+    input.messageId,
+    input.toolCallId
   );
 
   const supervisorResult = await supervisorAgent.runSupervisorGraph({
@@ -935,11 +967,13 @@ export async function runDeepResearcher(
     session,
     messageId: input.messageId,
     reportTitle,
+    toolCallId: input.toolCallId,
   });
 
   dataStream.write({
     type: "data-researchUpdate",
     data: {
+      toolCallId: input.toolCallId,
       title: "Research complete",
       type: "completed",
       timestamp: Date.now(),

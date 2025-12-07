@@ -26,3 +26,4 @@ export const settingsRouter = createTRPCRouter({
       return { success: true };
     }),
 });
+
