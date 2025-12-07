@@ -39,11 +39,11 @@ export function resolveChatId({
     const chatId = projectMatch[2];
     if (chatId) {
       // URL has a chat ID - check if it's the provisional one being persisted
-      const shouldRefresh = chatId === provisionalId;
+      const matchesProvisional = chatId === provisionalId;
       return {
         id: chatId,
-        type: "chat",
-        shouldRefreshProvisionalId: shouldRefresh,
+        type: matchesProvisional ? "provisional" : "chat",
+        shouldRefreshProvisionalId: matchesProvisional,
       };
     }
     return {
@@ -57,11 +57,11 @@ export function resolveChatId({
   const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
   if (chatMatch) {
     const urlChatId = chatMatch[1];
-    const shouldRefresh = urlChatId === provisionalId;
+    const matchesProvisional = urlChatId === provisionalId;
     return {
       id: urlChatId,
-      type: "chat",
-      shouldRefreshProvisionalId: shouldRefresh,
+      type: matchesProvisional ? "provisional" : "chat",
+      shouldRefreshProvisionalId: matchesProvisional,
     };
   }
 
