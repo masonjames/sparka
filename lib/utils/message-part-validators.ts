@@ -177,6 +177,140 @@ export const toolPartSchema = z.union([
   toolPartOutputDeniedSchema,
 ]);
 
+// Dynamic tool part schemas
+export const dynamicToolPartInputStreamingSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("input-streaming"),
+  input: z.unknown().optional(),
+  output: z.never().optional(),
+  errorText: z.never().optional(),
+  approval: z.never().optional(),
+});
+
+export const dynamicToolPartInputAvailableSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("input-available"),
+  input: z.unknown(),
+  output: z.never().optional(),
+  errorText: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  approval: z.never().optional(),
+});
+
+export const dynamicToolPartApprovalRequestedSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("approval-requested"),
+  input: z.unknown(),
+  output: z.never().optional(),
+  errorText: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  approval: z.object({
+    id: z.string(),
+    approved: z.never().optional(),
+    reason: z.never().optional(),
+  }),
+});
+
+export const dynamicToolPartApprovalRespondedSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("approval-responded"),
+  input: z.unknown(),
+  output: z.never().optional(),
+  errorText: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  approval: z.object({
+    id: z.string(),
+    approved: z.boolean(),
+    reason: z.string().optional(),
+  }),
+});
+
+export const dynamicToolPartOutputAvailableSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-available"),
+  input: z.unknown(),
+  output: z.unknown(),
+  errorText: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  preliminary: z.boolean().optional(),
+  approval: z
+    .object({
+      id: z.string(),
+      approved: z.literal(true),
+      reason: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const dynamicToolPartOutputErrorSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-error"),
+  input: z.unknown(),
+  output: z.never().optional(),
+  errorText: z.string(),
+  callProviderMetadata: providerMetadataSchema,
+  approval: z
+    .object({
+      id: z.string(),
+      approved: z.literal(true),
+      reason: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const dynamicToolPartOutputDeniedSchema = z.object({
+  type: z.literal("dynamic-tool"),
+  toolName: z.string(),
+  toolCallId: z.string(),
+  title: z.string().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-denied"),
+  input: z.unknown(),
+  output: z.never().optional(),
+  errorText: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  approval: z.object({
+    id: z.string(),
+    approved: z.literal(false),
+    reason: z.string().optional(),
+  }),
+});
+
+// Union schema for all dynamic tool part states
+export const dynamicToolPartSchema = z.union([
+  dynamicToolPartInputStreamingSchema,
+  dynamicToolPartInputAvailableSchema,
+  dynamicToolPartApprovalRequestedSchema,
+  dynamicToolPartApprovalRespondedSchema,
+  dynamicToolPartOutputAvailableSchema,
+  dynamicToolPartOutputErrorSchema,
+  dynamicToolPartOutputDeniedSchema,
+]);
+
 // Union schema for all part types
 export const messagePartSchema = z.union([
   textPartSchema,
@@ -195,4 +329,12 @@ export const messagePartSchema = z.union([
  */
 export function validateToolPart(part: unknown) {
   return toolPartSchema.safeParse(part);
+}
+
+/**
+ * Validates a dynamic tool part and returns the result
+ * Returns result with success flag - if validation fails, the part should be skipped
+ */
+export function validateDynamicToolPart(part: unknown) {
+  return dynamicToolPartSchema.safeParse(part);
 }

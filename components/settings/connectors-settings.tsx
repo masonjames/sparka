@@ -70,7 +70,9 @@ export function ConnectorsSettings() {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
         queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {return old;}
+          if (!old) {
+            return old;
+          }
           return old.filter((c) => c.id !== data.id);
         });
         return { prev };
