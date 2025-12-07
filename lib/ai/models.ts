@@ -5,6 +5,7 @@ import {
   aiGatewayModelsResponseSchema,
 } from "./ai-gateway-models-schemas";
 import type { ModelData } from "./model-data";
+import { models as fallbackModels } from "./models.generated";
 import { toModelData } from "./to-model-data";
 
 async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
@@ -12,8 +13,8 @@ async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
     process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
 
   if (!apiKey) {
-    console.warn("No AI gateway API key found, returning empty models");
-    return [];
+    console.warn("No AI gateway API key found, using fallback models");
+    return fallbackModels as unknown as AiGatewayModel[];
   }
 
   try {
@@ -34,7 +35,7 @@ async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
     return body.data || [];
   } catch (error) {
     console.error("Error fetching models from gateway:", error);
-    return [];
+    return fallbackModels as unknown as AiGatewayModel[];
   }
 }
 

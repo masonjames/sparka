@@ -35,7 +35,8 @@
     "test:types": "next typegen . && tsc --noEmit",
     "update:ai-sdk-beta": "bun scripts/update-ai-sdk-to-beta.ts",
     "hooks:enable": "husky",
-    "hooks:disable": "git config core.hooksPath .git/hooks"
+    "hooks:disable": "git config core.hooksPath .git/hooks",
+    "fetch:models": "bun scripts/fetch-models.ts"
   },
   "dependencies": {
     "@ai-sdk-tools/devtools": "1.2.0",
