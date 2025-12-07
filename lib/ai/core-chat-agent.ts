@@ -5,10 +5,10 @@ import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-genera
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
-import { getTools } from "@/lib/ai/tools/tools";
+import { getMcpTools, getTools } from "@/lib/ai/tools/tools";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
+import type { McpConnector } from "@/lib/db/schema";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
-
 export async function createCoreChatAgent({
   system,
   userMessage,
@@ -21,6 +21,7 @@ export async function createCoreChatAgent({
   messageId,
   dataStream,
   onError,
+  mcpConnectors = [],
 }: {
   system: string;
   userMessage: ChatMessage;
@@ -33,6 +34,7 @@ export async function createCoreChatAgent({
   messageId: string;
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
+  mcpConnectors?: McpConnector[];
 }) {
   const modelDefinition = await getAppModelDefinition(selectedModelId);
 
@@ -69,6 +71,33 @@ export async function createCoreChatAgent({
   const contextForLLM =
     await replaceFilePartUrlByBinaryDataInMessages(modelMessages);
 
+  // Get MCP tools if connectors are configured
+  const { tools: mcpTools, cleanup: mcpCleanup } = await getMcpTools({
+    connectors: mcpConnectors,
+  });
+
+  // Get base tools
+  const baseTools = getTools({
+    dataStream,
+    session: {
+      user: {
+        id: userId || undefined,
+      },
+      expires: "noop",
+    },
+    contextForLLM,
+    messageId,
+    selectedModel: modelDefinition.apiModelId,
+    attachments: userMessage.parts.filter((part) => part.type === "file"),
+    lastGeneratedImage,
+  });
+
+  // Merge base tools with MCP tools
+  const allTools = {
+    ...baseTools,
+    ...mcpTools,
+  };
+
   // Create the streamText result
   const result = streamText({
     model: await getLanguageModel(modelDefinition.apiModelId),
@@ -89,34 +118,27 @@ export async function createCoreChatAgent({
         });
       },
     ],
-    activeTools,
+    // TODO: Solve active tools. Do we keep and add the mcp tools to it, or do we remove?
+    // activeTools,
     experimental_transform: markdownJoinerTransform(),
     experimental_telemetry: {
       isEnabled: true,
       functionId: "chat-response",
     },
-    tools: getTools({
-      dataStream,
-      session: {
-        user: {
-          id: userId || undefined,
-        },
-        expires: "noop",
-      },
-      contextForLLM,
-      messageId,
-      selectedModel: modelDefinition.apiModelId,
-      attachments: userMessage.parts.filter((part) => part.type === "file"),
-      lastGeneratedImage,
-    }),
+    tools: allTools,
     onError,
     abortSignal,
     providerOptions: await getModelProviderOptions(selectedModelId),
+    onFinish: async () => {
+      // Clean up MCP clients when streaming is done
+      await mcpCleanup();
+    },
   });
 
   return {
     result,
     contextForLLM,
     modelDefinition,
+    mcpCleanup,
   };
 }

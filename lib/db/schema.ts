@@ -355,4 +355,30 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
+export const mcpConnector = pgTable(
+  "McpConnector",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: text("userId").references(() => user.id, { onDelete: "cascade" }), // null = global
+    name: varchar("name", { length: 256 }).notNull(),
+    url: text("url").notNull(),
+    type: varchar("type", { enum: ["http", "sse"] })
+      .notNull()
+      .default("http"),
+    oauthClientId: text("oauthClientId"),
+    oauthClientSecret: text("oauthClientSecret"),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => ({
+    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(t.userId),
+  })
+);
+
+export type McpConnector = InferSelectModel<typeof mcpConnector>;
+
 export const schema = { user, session, account, verification };

@@ -9,6 +9,7 @@ import {
   gte,
   inArray,
   isNull,
+  or,
   type SQL,
 } from "drizzle-orm";
 import type { Attachment, ChatMessage } from "@/lib/ai/types";
@@ -23,6 +24,8 @@ import {
   chat,
   type DBMessage,
   document,
+  type McpConnector,
+  mcpConnector,
   message,
   type Part,
   part,
@@ -1054,6 +1057,117 @@ export async function upsertUserModelPreference({
       });
   } catch (error) {
     console.error("Failed to upsert user model preference in database", error);
+    throw error;
+  }
+}
+
+// MCP Connector queries
+
+export async function getMcpConnectorsByUserId({
+  userId,
+}: {
+  userId: string;
+}): Promise<McpConnector[]> {
+  try {
+    return await db
+      .select()
+      .from(mcpConnector)
+      .where(or(eq(mcpConnector.userId, userId), isNull(mcpConnector.userId)))
+      .orderBy(desc(mcpConnector.createdAt));
+  } catch (error) {
+    console.error("Failed to get MCP connectors from database", error);
+    throw error;
+  }
+}
+
+export async function getMcpConnectorById({
+  id,
+}: {
+  id: string;
+}): Promise<McpConnector | undefined> {
+  try {
+    const [connector] = await db
+      .select()
+      .from(mcpConnector)
+      .where(eq(mcpConnector.id, id));
+    return connector;
+  } catch (error) {
+    console.error("Failed to get MCP connector by id from database", error);
+    throw error;
+  }
+}
+
+export async function createMcpConnector({
+  userId,
+  name,
+  url,
+  type,
+  oauthClientId,
+  oauthClientSecret,
+}: {
+  userId: string | null;
+  name: string;
+  url: string;
+  type: "http" | "sse";
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+}): Promise<McpConnector> {
+  try {
+    const [connector] = await db
+      .insert(mcpConnector)
+      .values({
+        userId,
+        name,
+        url,
+        type,
+        oauthClientId: oauthClientId ?? null,
+        oauthClientSecret: oauthClientSecret ?? null,
+      })
+      .returning();
+    return connector;
+  } catch (error) {
+    console.error("Failed to create MCP connector in database", error);
+    throw error;
+  }
+}
+
+export async function updateMcpConnector({
+  id,
+  updates,
+}: {
+  id: string;
+  updates: Partial<{
+    name: string;
+    url: string;
+    type: "http" | "sse";
+    oauthClientId: string | null;
+    oauthClientSecret: string | null;
+    enabled: boolean;
+  }>;
+}): Promise<void> {
+  try {
+    await db
+      .update(mcpConnector)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(mcpConnector.id, id));
+  } catch (error) {
+    console.error("Failed to update MCP connector in database", error);
+    throw error;
+  }
+}
+
+export async function deleteMcpConnector({
+  id,
+}: {
+  id: string;
+}): Promise<void> {
+  try {
+    await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
+  } catch (error) {
+    console.error("Failed to delete MCP connector from database", error);
     throw error;
   }
 }

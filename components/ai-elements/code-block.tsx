@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Element } from "hast";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import {
   type ComponentProps,
@@ -31,7 +30,7 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
 
 const lineNumberTransformer: ShikiTransformer = {
   name: "line-numbers",
-  line(node: Element, line: number) {
+  line(node, line) {
     node.children.unshift({
       type: "element",
       tagName: "span",
@@ -131,14 +130,12 @@ export const CodeBlock = ({
 };
 
 export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
-  code?: string;
   onCopy?: () => void;
   onError?: (error: Error) => void;
   timeout?: number;
 };
 
 export const CodeBlockCopyButton = ({
-  code: codeProp,
   onCopy,
   onError,
   timeout = 2000,
@@ -147,8 +144,7 @@ export const CodeBlockCopyButton = ({
   ...props
 }: CodeBlockCopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
-  const context = useContext(CodeBlockContext);
-  const code = codeProp ?? context.code;
+  const { code } = useContext(CodeBlockContext);
 
   const copyToClipboard = async () => {
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {

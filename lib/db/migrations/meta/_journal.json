@@ -232,6 +232,13 @@
       "when": 1764961288492,
       "tag": "0032_glorious_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1765048165163,
+      "tag": "0033_tidy_the_executioner",
+      "breakpoints": true
     }
   ]
 }

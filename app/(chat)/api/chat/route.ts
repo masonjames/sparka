@@ -38,6 +38,7 @@ import {
 } from "@/lib/credits/credits-utils";
 import {
   getChatById,
+  getMcpConnectorsByUserId,
   getMessageById,
   getProjectById,
   getUserById,
@@ -45,6 +46,7 @@ import {
   saveMessage,
   updateMessage,
 } from "@/lib/db/queries";
+import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
@@ -451,6 +453,7 @@ async function createChatStream({
   baseModelCost,
   reservation,
   timeoutId,
+  mcpConnectors,
 }: {
   messageId: string;
   chatId: string;
@@ -465,6 +468,7 @@ async function createChatStream({
   baseModelCost: number;
   reservation: CreditReservation | null;
   timeoutId: NodeJS.Timeout;
+  mcpConnectors: McpConnector[];
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
@@ -477,7 +481,7 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      const { result, contextForLLM } = await createCoreChatAgent({
+      const { result, contextForLLM, mcpCleanup } = await createCoreChatAgent({
         system,
         userMessage,
         previousMessages,
@@ -488,9 +492,12 @@ async function createChatStream({
         abortSignal: abortController.signal,
         messageId,
         dataStream,
-        onError: (error) => {
+        onError: async (error) => {
           log.error({ error }, "streamText error");
+          // Clean up MCP clients on error
+          await mcpCleanup?.();
         },
+        mcpConnectors,
       });
 
       const initialMetadata = {
@@ -580,6 +587,7 @@ async function executeChatRequest({
   reservation,
   abortController,
   timeoutId,
+  mcpConnectors,
 }: {
   chatId: string;
   userMessage: ChatMessage;
@@ -593,6 +601,7 @@ async function executeChatRequest({
   reservation: CreditReservation | null;
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
+  mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute");
   const messageId = generateUUID();
@@ -640,6 +649,7 @@ async function executeChatRequest({
     baseModelCost,
     reservation,
     timeoutId,
+    mcpConnectors,
   });
 
   after(async () => {
@@ -941,6 +951,7 @@ async function handleRequestExecution({
   reservation,
   abortController,
   timeoutId,
+  mcpConnectors,
 }: {
   chatId: string;
   userMessage: ChatMessage;
@@ -955,6 +966,7 @@ async function handleRequestExecution({
   reservation: CreditReservation | null;
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
+  mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute-wrapper");
   try {
@@ -971,6 +983,7 @@ async function handleRequestExecution({
       reservation,
       abortController,
       timeoutId,
+      mcpConnectors,
     });
   } catch (error) {
     clearTimeout(timeoutId);
@@ -1085,6 +1098,10 @@ export async function POST(request: NextRequest) {
 
     const { previousMessages, activeTools } = contextResult;
 
+    // Fetch MCP connectors for authenticated users
+    const mcpConnectors: McpConnector[] =
+      userId && !isAnonymous ? await getMcpConnectorsByUserId({ userId }) : [];
+
     // Create AbortController with 55s timeout for credit cleanup
     const abortController = new AbortController();
     const timeoutId = setTimeout(async () => {
@@ -1109,6 +1126,7 @@ export async function POST(request: NextRequest) {
       reservation,
       abortController,
       timeoutId,
+      mcpConnectors,
     });
   } catch (error) {
     log.error({ error }, "RESPONSE > POST /api/chat error");

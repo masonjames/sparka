@@ -1,6 +1,15 @@
 "use client";
 
+import type { ToolUIPart } from "ai";
+import {
+  isDataUIPart,
+  isReasoningUIPart,
+  isTextUIPart,
+  isToolOrDynamicToolUIPart,
+  isToolUIPart,
+} from "ai";
 import { memo } from "react";
+import type { ChatTools } from "@/lib/ai/types";
 import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
@@ -8,8 +17,9 @@ import {
 import { CodeInterpreter } from "./part/code-interpreter";
 import { CreateDocument } from "./part/create-document";
 import { DeepResearch } from "./part/deep-research";
+import { DynamicToolPart } from "./part/dynamic-tool";
 import { GeneratedImage } from "./part/generated-image";
-import { MessageReasoning } from "./part/message-reasoning";
+import { ReasoningPart } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
 import { RequestSuggestions } from "./part/request-suggestions";
 import { Retrieve } from "./part/retrieve";
@@ -24,28 +34,16 @@ type MessagePartsProps = {
   isReadonly: boolean;
 };
 
-// Render a single part by index with minimal subscriptions
-function PureMessagePart({
+function ToolPart({
+  part,
   messageId,
-  partIdx,
   isReadonly,
-  isLoading,
 }: {
+  part: ToolUIPart<ChatTools>;
   messageId: string;
-  partIdx: number;
   isReadonly: boolean;
-  isLoading: boolean;
 }) {
-  const part = useMessagePartByPartIdx(messageId, partIdx);
-  const { type } = part;
-
-  if (type === "text") {
-    return <TextMessagePart messageId={messageId} partIdx={partIdx} />;
-  }
-
-  if (type === "reasoning") {
-    return <MessageReasoning content={part.text} isLoading={isLoading} />;
-  }
+  const type = part.type;
 
   if (type === "tool-getWeather") {
     return <Weather tool={part} />;
@@ -105,6 +103,50 @@ function PureMessagePart({
 
   if (type === "tool-webSearch") {
     return <WebSearch messageId={messageId} part={part} />;
+  }
+  return null;
+}
+
+// Render a single part by index with minimal subscriptions
+function PureMessagePart({
+  messageId,
+  partIdx,
+  isReadonly,
+  isLoading,
+}: {
+  messageId: string;
+  partIdx: number;
+  isReadonly: boolean;
+  isLoading: boolean;
+}) {
+  const part = useMessagePartByPartIdx(messageId, partIdx);
+
+  if (isTextUIPart(part)) {
+    return <TextMessagePart messageId={messageId} partIdx={partIdx} />;
+  }
+
+  if (isReasoningUIPart(part)) {
+    return <ReasoningPart content={part.text} isLoading={isLoading} />;
+  }
+
+  if (isDataUIPart(part)) {
+    return null;
+  }
+
+  if (isToolUIPart(part)) {
+    return (
+      <ToolPart isReadonly={isReadonly} messageId={messageId} part={part} />
+    );
+  }
+  if (isToolOrDynamicToolUIPart(part)) {
+    // Non-dynamic tools are handled beforehand by the ToolPart component
+    return (
+      <DynamicToolPart
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
   }
 }
 
