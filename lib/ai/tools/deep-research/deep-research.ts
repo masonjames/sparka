@@ -74,6 +74,16 @@ Use for:
         }
       } catch (error) {
         console.error("Deep research error:", error);
+        dataStream.write({
+          id: generateUUID(),
+          type: "data-researchUpdate",
+          data: {
+            toolCallId,
+            timestamp: Date.now(),
+            title: "Deep research failed",
+            type: "completed",
+          },
+        });
         return {
           answer: `Deep research failed with error: ${error instanceof Error ? error.message : String(error)}`,
           format: "problem" as const,

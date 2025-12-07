@@ -38,28 +38,29 @@ export function DeepResearch({
       toolCallId
     );
 
-    if (output.format === "report") {
+    if (output.format === "report" || output.format === "problem") {
       return (
         <div key={toolCallId}>
           <div className="mb-2">
             <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
           </div>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          )}
+          {output.format === "report" &&
+            (shouldShowFullPreview ? (
+              <DocumentPreview
+                args={input}
+                isReadonly={isReadonly}
+                messageId={messageId}
+                result={output}
+                type="create"
+              />
+            ) : (
+              <DocumentToolResult
+                isReadonly={isReadonly}
+                messageId={messageId}
+                result={output}
+                type="create"
+              />
+            ))}
         </div>
       );
     }

@@ -29,65 +29,72 @@ function PureMessagePart({
   messageId,
   partIdx,
   isReadonly,
+  isLoading,
 }: {
   messageId: string;
   partIdx: number;
   isReadonly: boolean;
+  isLoading: boolean;
 }) {
   const part = useMessagePartByPartIdx(messageId, partIdx);
   const { type } = part;
 
-  if (part.type === "tool-getWeather") {
-    return <Weather key={part.toolCallId} tool={part} />;
+  if (type === "text") {
+    return <TextMessagePart messageId={messageId} partIdx={partIdx} />;
+  }
+
+  if (type === "reasoning") {
+    return <MessageReasoning content={part.text} isLoading={isLoading} />;
+  }
+
+  if (type === "tool-getWeather") {
+    return <Weather tool={part} />;
   }
 
   if (type === "tool-createDocument") {
     return (
       <CreateDocument
         isReadonly={isReadonly}
-        key={part.toolCallId}
         messageId={messageId}
         tool={part}
       />
     );
   }
 
-  if (part.type === "tool-updateDocument") {
+  if (type === "tool-updateDocument") {
     return (
       <UpdateDocument
         isReadonly={isReadonly}
-        key={part.toolCallId}
         messageId={messageId}
         tool={part}
       />
     );
   }
 
-  if (part.type === "tool-requestSuggestions") {
+  if (type === "tool-requestSuggestions") {
     return (
       <RequestSuggestions
         isReadonly={isReadonly}
-        key={part.toolCallId}
         messageId={messageId}
         tool={part}
       />
     );
   }
 
-  if (part.type === "tool-retrieve") {
-    return <Retrieve key={part.toolCallId} tool={part} />;
+  if (type === "tool-retrieve") {
+    return <Retrieve tool={part} />;
   }
 
-  if (part.type === "tool-readDocument") {
-    return <ReadDocument key={part.toolCallId} tool={part} />;
+  if (type === "tool-readDocument") {
+    return <ReadDocument tool={part} />;
   }
 
-  if (part.type === "tool-codeInterpreter") {
-    return <CodeInterpreter key={part.toolCallId} tool={part} />;
+  if (type === "tool-codeInterpreter") {
+    return <CodeInterpreter tool={part} />;
   }
 
-  if (part.type === "tool-generateImage") {
-    return <GeneratedImage key={part.toolCallId} tool={part} />;
+  if (type === "tool-generateImage") {
+    return <GeneratedImage tool={part} />;
   }
 
   if (type === "tool-deepResearch") {
@@ -99,31 +106,9 @@ function PureMessagePart({
   if (type === "tool-webSearch") {
     return <WebSearch messageId={messageId} part={part} />;
   }
-
-  return null;
 }
 
 const MessagePart = memo(PureMessagePart);
-
-// Render a single reasoning part by index
-function PureReasoningPart({
-  messageId,
-  isLoading,
-  partIdx,
-}: {
-  messageId: string;
-  isLoading: boolean;
-  partIdx: number;
-}) {
-  const part = useMessagePartByPartIdx(messageId, partIdx);
-  if (part.type !== "reasoning") {
-    return null;
-  }
-
-  return <MessageReasoning content={part.text} isLoading={isLoading} />;
-}
-
-const ReasoningPart = memo(PureReasoningPart);
 
 export function PureMessageParts({
   messageId,
@@ -133,29 +118,13 @@ export function PureMessageParts({
   const types = useMessagePartTypesById(messageId);
 
   return types.map((t, i) => {
-    if (t === "reasoning") {
-      const key = `message-${messageId}-reasoning-${i}`;
-      const isLast = i === types.length - 1;
-      return (
-        <ReasoningPart
-          isLoading={isLoading && isLast}
-          key={key}
-          messageId={messageId}
-          partIdx={i}
-        />
-      );
-    }
-
-    if (t === "text") {
-      const key = `message-${messageId}-text-${i}`;
-      return <TextMessagePart key={key} messageId={messageId} partIdx={i} />;
-    }
-
-    const key = `message-${messageId}-part-${i}-${t}`;
+    const isLastReasoning = t === "reasoning" && i === types.length - 1;
     return (
       <MessagePart
+        isLoading={isLoading && isLastReasoning}
         isReadonly={isReadonly}
-        key={key}
+        // biome-ignore lint/suspicious/noArrayIndexKey: we only have index at this point
+        key={`message-${messageId}-${t}-${i}`}
         messageId={messageId}
         partIdx={i}
       />
