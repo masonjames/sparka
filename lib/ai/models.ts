@@ -1,5 +1,6 @@
 import type { GatewayModelId } from "@ai-sdk/gateway";
 import { unstable_cache } from "next/cache";
+import { createModuleLogger } from "@/lib/logger";
 import {
   type AiGatewayModel,
   aiGatewayModelsResponseSchema,
@@ -8,17 +9,22 @@ import type { ModelData } from "./model-data";
 import { models as fallbackModels } from "./models.generated";
 import { toModelData } from "./to-model-data";
 
+const log = createModuleLogger("ai/models");
+
 async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
   const apiKey =
     process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
 
   if (!apiKey) {
-    console.warn("No AI gateway API key found, using fallback models");
+    log.warn("No AI gateway API key found, using fallback models");
     return fallbackModels as unknown as AiGatewayModel[];
   }
 
+  const url = "https://ai-gateway.vercel.sh/v1/models";
+  log.debug({ url }, "Fetching models from AI gateway");
+
   try {
-    const response = await fetch("https://ai-gateway.vercel.sh/v1/models", {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -27,14 +33,31 @@ async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
     });
 
     if (!response.ok) {
+      log.error(
+        {
+          status: response.status,
+          statusText: response.statusText,
+          url,
+        },
+        "AI gateway returned non-OK response"
+      );
       throw new Error(`Failed to fetch models: ${response.statusText}`);
     }
 
     const bodyRaw = await response.json();
     const body = aiGatewayModelsResponseSchema.parse(bodyRaw);
+    const modelCount = body.data?.length ?? 0;
+
+    log.info({ modelCount }, "Successfully fetched models from AI gateway");
     return body.data || [];
   } catch (error) {
-    console.error("Error fetching models from gateway:", error);
+    log.error(
+      {
+        err: error,
+        url,
+      },
+      "Error fetching models from gateway, falling back to generated models"
+    );
     return fallbackModels as unknown as AiGatewayModel[];
   }
 }
