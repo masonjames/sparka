@@ -1,20 +1,14 @@
 "use client";
 
-import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { memo } from "react";
-import type { ChatMessage } from "@/lib/ai/types";
 import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
-  useMessageResearchUpdatePartByToolCallId,
 } from "@/lib/stores/hooks-message-parts";
-import { isLastArtifact } from "./is-last-artifact";
-import { CodeInterpreterMessage } from "./part/code-interpreter";
+import { CodeInterpreter } from "./part/code-interpreter";
 import { CreateDocument } from "./part/create-document";
-import { DocumentToolResult } from "./part/document-common";
-import { DocumentPreview } from "./part/document-preview";
+import { DeepResearch } from "./part/deep-research";
 import { GeneratedImage } from "./part/generated-image";
-import { ResearchUpdates } from "./part/message-annotations";
 import { MessageReasoning } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
 import { RequestSuggestions } from "./part/request-suggestions";
@@ -22,94 +16,13 @@ import { Retrieve } from "./part/retrieve";
 import { TextMessagePart } from "./part/text-message-part";
 import { UpdateDocument } from "./part/update-document";
 import { Weather } from "./part/weather";
+import { WebSearch } from "./part/web-search";
 
 type MessagePartsProps = {
   messageId: string;
   isLoading: boolean;
   isReadonly: boolean;
 };
-
-function DeepResearchPart({
-  messageId,
-  part,
-  isReadonly,
-}: {
-  messageId: string;
-  part: Extract<ChatMessage["parts"][number], { type: "tool-deepResearch" }>;
-  isReadonly: boolean;
-}) {
-  const { toolCallId, state } = part;
-  const researchUpdates = useMessageResearchUpdatePartByToolCallId(
-    messageId,
-    toolCallId
-  );
-  const chatStore = useChatStoreApi<ChatMessage>();
-
-  if (state === "input-available") {
-    return (
-      <div className="flex w-full flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
-      </div>
-    );
-  }
-  if (state === "output-available") {
-    const { output, input } = part;
-    const shouldShowFullPreview = isLastArtifact(
-      chatStore.getState().messages,
-      toolCallId
-    );
-
-    if (output.format === "report") {
-      return (
-        <div key={toolCallId}>
-          <div className="mb-2">
-            <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
-          </div>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          )}
-        </div>
-      );
-    }
-  }
-  return null;
-}
-
-function WebSearchPart({
-  messageId,
-  part,
-}: {
-  messageId: string;
-  part: Extract<ChatMessage["parts"][number], { type: "tool-webSearch" }>;
-}) {
-  const { toolCallId, state } = part;
-  const researchUpdates = useMessageResearchUpdatePartByToolCallId(
-    messageId,
-    toolCallId
-  );
-
-  if (state === "input-available" || state === "output-available") {
-    return (
-      <div className="flex flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
-      </div>
-    );
-  }
-  return null;
-}
 
 // Render a single part by index with minimal subscriptions
 function PureMessagePart({
@@ -170,7 +83,7 @@ function PureMessagePart({
   }
 
   if (part.type === "tool-codeInterpreter") {
-    return <CodeInterpreterMessage key={part.toolCallId} tool={part} />;
+    return <CodeInterpreter key={part.toolCallId} tool={part} />;
   }
 
   if (part.type === "tool-generateImage") {
@@ -179,16 +92,12 @@ function PureMessagePart({
 
   if (type === "tool-deepResearch") {
     return (
-      <DeepResearchPart
-        isReadonly={isReadonly}
-        messageId={messageId}
-        part={part}
-      />
+      <DeepResearch isReadonly={isReadonly} messageId={messageId} part={part} />
     );
   }
 
   if (type === "tool-webSearch") {
-    return <WebSearchPart messageId={messageId} part={part} />;
+    return <WebSearch messageId={messageId} part={part} />;
   }
 
   return null;

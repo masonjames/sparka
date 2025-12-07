@@ -88,12 +88,12 @@ export function useMessageResearchUpdatePartByToolCallId(
   messageId: string,
   toolCallId: string
 ): Extract<ChatMessage["parts"][number], { type: "data-researchUpdate" }>[] {
-  return (
-    usePartsStore((state) =>
+  return usePartsStore(
+    (state) =>
       state
         .getMessageById(messageId)
         ?.parts.filter((part) => part.type === "data-researchUpdate")
-        .filter((part) => part.data.toolCallId === toolCallId)
-    ) ?? []
+        .filter((part) => part.data.toolCallId === toolCallId) ?? [],
+    equal
   );
 }

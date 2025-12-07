@@ -19,11 +19,7 @@ function isBaseChart(input: unknown): input is BaseChart {
   return hasType && hasTitle && hasElements;
 }
 
-export function CodeInterpreterMessage({
-  tool,
-}: {
-  tool: CodeInterpreterTool;
-}) {
+export function CodeInterpreter({ tool }: { tool: CodeInterpreterTool }) {
   const args = tool.input ?? { code: "", title: "", icon: "default" };
   const result = tool.state === "output-available" ? tool.output : null;
   const chart: BaseChart | null =
