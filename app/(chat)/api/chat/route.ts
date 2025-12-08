@@ -909,7 +909,6 @@ async function finalizeMessageAndCredits({
       }, 0);
 
   try {
-    // TODO: Validate if this is correct ai sdk v5
     const assistantMessage = messages.at(-1);
 
     if (!assistantMessage) {
