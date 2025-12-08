@@ -12,7 +12,7 @@ jobs:
       with:
         bun-version: latest
     - name: Cache Bun and node_modules
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.bun
