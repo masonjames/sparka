@@ -126,7 +126,10 @@ export async function createCoreChatAgent({
       functionId: "chat-response",
     },
     tools: allTools,
-    onError,
+    onError: async (error) => {
+      await mcpCleanup();
+      onError?.(error);
+    },
     abortSignal,
     providerOptions: await getModelProviderOptions(selectedModelId),
     onFinish: async () => {

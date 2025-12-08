@@ -146,7 +146,6 @@ export async function getMcpTools({
         allTools[`${prefix}_${toolName}`] = tool as Tool;
       }
 
-      console.log("ALLTOOLS", allTools);
       log.info(
         { connector: connector.name, toolCount: Object.keys(tools).length },
         "MCP client connected"
