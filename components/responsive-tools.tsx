@@ -5,19 +5,19 @@ import {
   type SetStateAction,
   useState,
 } from "react";
-import type { UiToolName } from "@/lib/ai/types";
-import { useChatModels } from "@/providers/chat-models-provider";
-import { useSession } from "@/providers/session-provider";
-import { enabledTools, toolDefinitions } from "./chat-features-definitions";
-import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import type { UiToolName } from "@/lib/ai/types";
+import { useChatModels } from "@/providers/chat-models-provider";
+import { useSession } from "@/providers/session-provider";
+import { enabledTools, toolDefinitions } from "./chat-features-definitions";
+import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Separator } from "./ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
