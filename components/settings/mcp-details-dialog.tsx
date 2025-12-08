@@ -44,8 +44,8 @@ export function McpDetailsDialog({
   return (
     <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
+        <DialogHeader className="overflow-hidden">
+          <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
               {faviconUrl ? (
                 <>
@@ -56,7 +56,7 @@ export function McpDetailsDialog({
                 <Globe className="size-5 text-muted-foreground" />
               )}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <DialogTitle className="truncate">
                 {connector?.name ?? "MCP"}
               </DialogTitle>

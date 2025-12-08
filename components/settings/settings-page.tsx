@@ -11,7 +11,12 @@ export function SettingsPage({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col gap-6", className)}>
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-6 overflow-hidden",
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -35,7 +40,9 @@ export function SettingsPageContent({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
+    <div
+      className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}
+    >
       {children}
     </div>
   );

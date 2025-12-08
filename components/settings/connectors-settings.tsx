@@ -28,7 +28,7 @@ import {
 import { Switch } from "../ui/switch";
 import { McpConfigDialog } from "./mcp-config-dialog";
 import { McpDetailsDialog } from "./mcp-details-dialog";
-import { SettingsPageContent, SettingsPageScrollArea } from "./settings-page";
+import { SettingsPageContent } from "./settings-page";
 
 export function ConnectorsSettings() {
   const trpc = useTRPC();
@@ -140,7 +140,7 @@ export function ConnectorsSettings() {
         </Button>
       </div>
 
-      <SettingsPageScrollArea>
+      <>
         {connectors && connectors.length > 0 ? (
           <div className="space-y-3 px-1">
             {connectors.map((connector) => (
@@ -168,7 +168,7 @@ export function ConnectorsSettings() {
             </p>
           </div>
         )}
-      </SettingsPageScrollArea>
+      </>
 
       <McpConfigDialog
         connector={editingConnector}
@@ -203,7 +203,7 @@ function ConnectorRow({
     connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
 
   return (
-    <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
+    <div className="flex items-center gap-4 overflow-hidden rounded-lg border bg-card p-4">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
         {faviconUrl ? (
           <>
@@ -215,8 +215,8 @@ function ConnectorRow({
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex items-center gap-2 overflow-hidden">
           <span className="truncate font-medium text-sm">{connector.name}</span>
           <Badge
             className="shrink-0 text-[10px]"

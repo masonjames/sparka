@@ -25,7 +25,7 @@ export function SettingsNav({
   return (
     <nav
       className={cn(
-        "flex gap-1",
+        "flex gap-1 sm:overflow-auto sm:pb-2",
         orientation === "vertical" ? "w-56 flex-col" : "flex-row"
       )}
     >
