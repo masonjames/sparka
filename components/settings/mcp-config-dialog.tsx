@@ -59,7 +59,7 @@ const mcpConnectorFormSchema = z.object({
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
-export function McpConnectorDialog({
+export function McpConfigDialog({
   open,
   onClose,
   connector,

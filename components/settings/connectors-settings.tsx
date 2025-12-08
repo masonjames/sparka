@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Eye,
   Globe,
   MoreHorizontal,
   Pencil,
@@ -24,14 +25,19 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Switch } from "../ui/switch";
-import { McpConnectorDialog } from "./mcp-connector-dialog";
+import { McpConfigDialog } from "./mcp-config-dialog";
+import { McpDetailsDialog } from "./mcp-details-dialog";
 import { SettingsPageContent, SettingsPageScrollArea } from "./settings-page";
 
 export function ConnectorsSettings() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editingConnector, setEditingConnector] = useState<McpConnector | null>(
+    null
+  );
+  const [detailsConnector, setDetailsConnector] = useState<McpConnector | null>(
     null
   );
 
@@ -102,6 +108,16 @@ export function ConnectorsSettings() {
     setEditingConnector(null);
   };
 
+  const handleViewDetails = (connector: McpConnector) => {
+    setDetailsConnector(connector);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleDetailsDialogClose = () => {
+    setDetailsDialogOpen(false);
+    setDetailsConnector(null);
+  };
+
   if (isLoading) {
     return (
       <SettingsPageContent className="gap-4">
@@ -135,6 +151,7 @@ export function ConnectorsSettings() {
                 onToggle={(enabled) =>
                   toggleEnabled({ id: connector.id, enabled })
                 }
+                onViewDetails={() => handleViewDetails(connector)}
               />
             ))}
           </div>
@@ -152,10 +169,16 @@ export function ConnectorsSettings() {
         )}
       </SettingsPageScrollArea>
 
-      <McpConnectorDialog
+      <McpConfigDialog
         connector={editingConnector}
         onClose={handleDialogClose}
         open={dialogOpen}
+      />
+
+      <McpDetailsDialog
+        connector={detailsConnector}
+        onClose={handleDetailsDialogClose}
+        open={detailsDialogOpen}
       />
     </SettingsPageContent>
   );
@@ -166,11 +189,13 @@ function ConnectorRow({
   onToggle,
   onEdit,
   onDelete,
+  onViewDetails,
 }: {
   connector: McpConnector;
   onToggle: (enabled: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onViewDetails: () => void;
 }) {
   const isGlobal = connector.userId === null;
   const faviconUrl =
@@ -218,6 +243,10 @@ function ConnectorRow({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onViewDetails}>
+              <Eye className="size-4" />
+              Details
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="size-4" />
               Configure

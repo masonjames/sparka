@@ -1,3 +1,4 @@
+import { experimental_createMCPClient as createMCPClient } from "@ai-sdk/mcp";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
@@ -176,5 +177,85 @@ export const mcpRouter = createTRPCRouter({
         updates: { enabled: input.enabled },
       });
       return { success: true };
+    }),
+
+  discover: protectedProcedure
+    .input(z.object({ id: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const connector = await getMcpConnectorById({ id: input.id });
+      if (!connector) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connector not found",
+        });
+      }
+      // Only allow discovering own connectors or global ones
+      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access this connector",
+        });
+      }
+
+      const client = await createMCPClient({
+        transport: {
+          type: connector.type,
+          url: connector.url,
+          ...(connector.oauthClientId && connector.oauthClientSecret
+            ? {
+                headers: {
+                  Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
+                },
+              }
+            : {}),
+        },
+      });
+
+      try {
+        const [toolsResult, resourcesResult, promptsResult] = await Promise.all(
+          [
+            client.tools().then((tools) =>
+              Object.entries(tools).map(([name, tool]) => ({
+                name,
+                description: tool.description ?? null,
+              }))
+            ),
+            client
+              .listResources()
+              .then((r) =>
+                r.resources.map((res) => ({
+                  name: res.name,
+                  uri: res.uri,
+                  description: res.description ?? null,
+                  mimeType: res.mimeType ?? null,
+                }))
+              )
+              .catch(() => []),
+            client
+              .listPrompts()
+              .then((r) =>
+                r.prompts.map((p) => ({
+                  name: p.name,
+                  description: p.description ?? null,
+                  arguments:
+                    p.arguments?.map((arg) => ({
+                      name: arg.name,
+                      description: arg.description ?? null,
+                      required: arg.required ?? false,
+                    })) ?? [],
+                }))
+              )
+              .catch(() => []),
+          ]
+        );
+
+        return {
+          tools: toolsResult,
+          resources: resourcesResult,
+          prompts: promptsResult,
+        };
+      } finally {
+        await client.close();
+      }
     }),
 });
