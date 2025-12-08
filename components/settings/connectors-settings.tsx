@@ -13,6 +13,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
+import { Favicon } from "../favicon";
+import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import {
@@ -171,11 +173,20 @@ function ConnectorRow({
   onDelete: () => void;
 }) {
   const isGlobal = connector.userId === null;
+  const faviconUrl =
+    connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
 
   return (
     <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
-        <Globe className="size-5 text-muted-foreground" />
+        {faviconUrl ? (
+          <>
+            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
+            <Globe className="hidden size-5 text-muted-foreground" />
+          </>
+        ) : (
+          <Globe className="size-5 text-muted-foreground" />
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -193,7 +204,7 @@ function ConnectorRow({
             </Badge>
           )}
         </div>
-        <p className="truncate text-muted-foreground text-xs">
+        <p className="mt-1 truncate text-muted-foreground text-xs">
           {connector.url}
         </p>
       </div>
