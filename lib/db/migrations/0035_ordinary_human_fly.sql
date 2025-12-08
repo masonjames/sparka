@@ -1,0 +1,2 @@
+ALTER TABLE "McpConnector" ADD COLUMN "nameId" varchar(256) NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "McpConnector_user_name_id_idx" ON "McpConnector" USING btree ("userId","nameId");

@@ -11,6 +11,7 @@ import {
   isNull,
   or,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import type { Attachment, ChatMessage } from "@/lib/ai/types";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
@@ -1097,9 +1098,39 @@ export async function getMcpConnectorById({
   }
 }
 
+export async function getMcpConnectorByNameId({
+  userId,
+  nameId,
+  excludeId,
+}: {
+  userId: string | null;
+  nameId: string;
+  excludeId?: string;
+}): Promise<McpConnector | undefined> {
+  try {
+    const conditions = [
+      eq(mcpConnector.nameId, nameId),
+      userId === null
+        ? isNull(mcpConnector.userId)
+        : eq(mcpConnector.userId, userId),
+    ];
+
+    const whereClause = excludeId
+      ? and(...conditions, sql`${mcpConnector.id} != ${excludeId}::uuid`)
+      : and(...conditions);
+
+    const [connector] = await db.select().from(mcpConnector).where(whereClause);
+    return connector;
+  } catch (error) {
+    console.error("Failed to get MCP connector by nameId from database", error);
+    throw error;
+  }
+}
+
 export async function createMcpConnector({
   userId,
   name,
+  nameId,
   url,
   type,
   oauthClientId,
@@ -1107,6 +1138,7 @@ export async function createMcpConnector({
 }: {
   userId: string | null;
   name: string;
+  nameId: string;
   url: string;
   type: "http" | "sse";
   oauthClientId?: string;
@@ -1118,6 +1150,7 @@ export async function createMcpConnector({
       .values({
         userId,
         name,
+        nameId,
         url,
         type,
         oauthClientId: oauthClientId ?? null,
@@ -1138,6 +1171,7 @@ export async function updateMcpConnector({
   id: string;
   updates: Partial<{
     name: string;
+    nameId: string;
     url: string;
     type: "http" | "sse";
     oauthClientId: string | null;

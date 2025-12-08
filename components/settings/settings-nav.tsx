@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/settings" as const, label: "General", icon: Settings },
   { href: "/settings/models" as const, label: "Models", icon: Cpu },
-  { href: "/settings/mcp" as const, label: "MCP", icon: Plug },
+  {
+    href: "/settings/connectors" as const,
+    label: "Connectors",
+    icon: Plug,
+  },
 ];
 
 export function SettingsNav({

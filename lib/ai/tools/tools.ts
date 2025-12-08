@@ -4,6 +4,7 @@ import {
 } from "@ai-sdk/mcp";
 import type { FileUIPart, ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
+import { createToolId } from "@/lib/ai/mcp-name-id";
 import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
 import { generateImage } from "@/lib/ai/tools/generate-image";
@@ -139,11 +140,12 @@ export async function getMcpTools({
       const tools = await client.tools();
       console.log("MCP Client tools", tools);
 
-      // TODO: Decide if we should prefix or not
-      // Prefix tool names with connector name to avoid collisions
-      const prefix = connector.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      // Namespace tool names with connector nameId to avoid collisions
+      // Format: {namespace}.{toolName} or global.{namespace}.{toolName}
+      const isGlobal = connector.userId === null;
       for (const [toolName, tool] of Object.entries(tools)) {
-        allTools[`${prefix}_${toolName}`] = tool as Tool;
+        const toolId = createToolId(connector.nameId, toolName, isGlobal);
+        allTools[toolId] = tool as Tool;
       }
 
       log.info(
