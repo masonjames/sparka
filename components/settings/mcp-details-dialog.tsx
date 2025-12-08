@@ -4,26 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   BookText,
-  ChevronDown,
   FileText,
+  Globe,
   Loader2,
   Wrench,
 } from "lucide-react";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
+import { Favicon } from "../favicon";
+import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 
 export function McpDetailsDialog({
   open,
@@ -41,14 +37,33 @@ export function McpDetailsDialog({
     enabled: open && connector !== null,
   });
 
+  const faviconUrl =
+    connector?.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+
   return (
     <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{connector?.name ?? "MCP"} — Details</DialogTitle>
-          <DialogDescription className="truncate">
-            {connector?.url}
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+              {faviconUrl ? (
+                <>
+                  <Favicon className="size-5 rounded-sm" url={faviconUrl} />
+                  <Globe className="hidden size-5 text-muted-foreground" />
+                </>
+              ) : (
+                <Globe className="size-5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="truncate">
+                {connector?.name ?? "MCP"}
+              </DialogTitle>
+              <p className="mt-0.5 truncate text-muted-foreground text-xs">
+                {connector?.url}
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
@@ -71,35 +86,20 @@ export function McpDetailsDialog({
           )}
 
           {data && (
-            <div className="space-y-2 pr-4">
+            <div className="space-y-6 pr-4">
               <DetailsSection
-                defaultOpen
                 icon={<Wrench className="size-4" />}
-                items={data.tools.map((t) => ({
-                  name: t.name,
-                  description: t.description,
-                }))}
+                items={data.tools.map((t) => t.name)}
                 title="Tools"
               />
               <DetailsSection
                 icon={<FileText className="size-4" />}
-                items={data.resources.map((r) => ({
-                  name: r.name,
-                  description: r.description,
-                  extra: r.uri,
-                }))}
+                items={data.resources.map((r) => r.name)}
                 title="Resources"
               />
               <DetailsSection
                 icon={<BookText className="size-4" />}
-                items={data.prompts.map((p) => ({
-                  name: p.name,
-                  description: p.description,
-                  extra:
-                    p.arguments.length > 0
-                      ? `Args: ${p.arguments.map((a) => a.name).join(", ")}`
-                      : undefined,
-                }))}
+                items={data.prompts.map((p) => p.name)}
                 title="Prompts"
               />
             </div>
@@ -114,53 +114,36 @@ function DetailsSection({
   title,
   icon,
   items,
-  defaultOpen = false,
 }: {
   title: string;
   icon: React.ReactNode;
-  items: { name: string; description: string | null; extra?: string }[];
-  defaultOpen?: boolean;
+  items: string[];
 }) {
   const count = items.length;
 
   return (
-    <Collapsible defaultOpen={defaultOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left hover:bg-muted/50">
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="font-medium text-sm">{title}</span>
-          <span className="text-muted-foreground text-xs">({count})</span>
+    <div>
+      <div className="flex items-center gap-2 px-1">
+        {icon}
+        <span className="font-medium text-sm">{title}</span>
+        <span className="text-muted-foreground text-xs">({count})</span>
+      </div>
+      {count === 0 ? (
+        <p className="mt-2 px-1 text-muted-foreground text-xs italic">
+          None available
+        </p>
+      ) : (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {items.map((name) => (
+            <span
+              className="rounded-md bg-muted px-2 py-1 font-mono text-xs"
+              key={name}
+            >
+              {name}
+            </span>
+          ))}
         </div>
-        <ChevronDown className="size-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        {count === 0 ? (
-          <p className="px-3 py-2 text-muted-foreground text-xs italic">
-            None available
-          </p>
-        ) : (
-          <div className="space-y-1 py-1">
-            {items.map((item) => (
-              <div
-                className="rounded-md px-3 py-2 hover:bg-muted/30"
-                key={item.name}
-              >
-                <p className="font-mono text-sm">{item.name}</p>
-                {item.description && (
-                  <p className="mt-0.5 text-muted-foreground text-xs">
-                    {item.description}
-                  </p>
-                )}
-                {item.extra && (
-                  <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
-                    {item.extra}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
+      )}
+    </div>
   );
 }
