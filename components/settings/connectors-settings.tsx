@@ -16,6 +16,7 @@ import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
+import { getUrlWithoutParams } from "../get-url-without-params";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import {
@@ -230,7 +231,7 @@ function ConnectorRow({
           )}
         </div>
         <p className="mt-1 truncate text-muted-foreground text-xs">
-          {connector.url}
+          {getUrlWithoutParams(connector.url)}
         </p>
       </div>
 

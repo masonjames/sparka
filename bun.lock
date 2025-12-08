@@ -122,6 +122,7 @@
         "papaparse": "^5.5.2",
         "pino": "^9.9.0",
         "postgres": "^3.4.4",
+        "psl": "^1.15.0",
         "react": "^19.2.1",
         "react-data-grid": "7.0.0-beta.47",
         "react-day-picker": "^9.9.0",
@@ -3019,6 +3020,8 @@
     "property-information": ["property-information@7.1.0", "", {}, "sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ=="],
 
     "proxy-from-env": ["proxy-from-env@1.1.0", "", {}, "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg=="],
+
+    "psl": ["psl@1.15.0", "", { "dependencies": { "punycode": "^2.3.1" } }, "sha512-JZd3gMVBAVQkSs6HdNZo9Sdo0LNcQeMNP3CozBJb3JYC/QUYZTnKxP+f8oWRX4rHP5EurWxqAHTSwUCjlNKa1w=="],
 
     "public-encrypt": ["public-encrypt@4.0.3", "", { "dependencies": { "bn.js": "^4.1.0", "browserify-rsa": "^4.0.0", "create-hash": "^1.1.0", "parse-asn1": "^5.0.0", "randombytes": "^2.0.1", "safe-buffer": "^5.1.2" } }, "sha512-zVpa8oKZSz5bTMTFClc1fQOnyyEzpl5ozpi1B5YcvBrdohMjH2rfsBtyXcuNuwjsDIXmBYlF2N5FlJYhR29t8Q=="],
 

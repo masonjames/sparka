@@ -20,6 +20,7 @@ import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
+import { getUrlWithoutParams } from "../get-url-without-params";
 
 export function McpDetailsDialog({
   open,
@@ -60,7 +61,7 @@ export function McpDetailsDialog({
                 {connector?.name ?? "MCP"}
               </DialogTitle>
               <p className="mt-0.5 truncate text-muted-foreground text-xs">
-                {connector?.url}
+                {connector?.url ? getUrlWithoutParams(connector.url) : null}
               </p>
             </div>
           </div>

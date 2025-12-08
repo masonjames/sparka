@@ -10,7 +10,10 @@ import {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 } from "@/lib/db/queries";
+import { createModuleLogger } from "@/lib/logger";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+
+const log = createModuleLogger("mcp.router");
 
 /**
  * Validates and generates a nameId from a connector name.
@@ -197,6 +200,11 @@ export const mcpRouter = createTRPCRouter({
         });
       }
 
+      log.debug(
+        { connectorId: connector.id, url: connector.url },
+        "creating MCP client"
+      );
+
       const client = await createMCPClient({
         transport: {
           type: connector.type,
@@ -210,6 +218,11 @@ export const mcpRouter = createTRPCRouter({
             : {}),
         },
       });
+
+      log.debug(
+        { connectorId: connector.id },
+        "MCP client created, discovering capabilities"
+      );
 
       try {
         const [toolsResult, resourcesResult, promptsResult] = await Promise.all(
@@ -230,7 +243,13 @@ export const mcpRouter = createTRPCRouter({
                   mimeType: res.mimeType ?? null,
                 }))
               )
-              .catch(() => []),
+              .catch((err) => {
+                log.warn(
+                  { connectorId: connector.id, err },
+                  "failed to list resources"
+                );
+                return [];
+              }),
             client
               .listPrompts()
               .then((r) =>
@@ -245,8 +264,24 @@ export const mcpRouter = createTRPCRouter({
                     })) ?? [],
                 }))
               )
-              .catch(() => []),
+              .catch((err) => {
+                log.warn(
+                  { connectorId: connector.id, err },
+                  "failed to list prompts"
+                );
+                return [];
+              }),
           ]
+        );
+
+        log.info(
+          {
+            connectorId: connector.id,
+            toolsCount: toolsResult.length,
+            resourcesCount: resourcesResult.length,
+            promptsCount: promptsResult.length,
+          },
+          "MCP discovery completed"
         );
 
         return {
@@ -256,6 +291,7 @@ export const mcpRouter = createTRPCRouter({
         };
       } finally {
         await client.close();
+        log.debug({ connectorId: connector.id }, "MCP client closed");
       }
     }),
 });
