@@ -39,6 +39,7 @@ import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+import { ConnectorsDropdown } from "./connectors-dropdown";
 import { ImageModal } from "./image-modal";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
@@ -689,7 +690,7 @@ function PureAttachmentsButton({
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <PromptInputButton
-              className="@[400px]:size-10 size-8"
+              className="@[500px]:size-10 size-8"
               data-testid="attachments-button"
               disabled={status !== "ready"}
               onClick={handleClick}
@@ -740,14 +741,15 @@ function PureChatInputBottomControls({
 }) {
   const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
-    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[400px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
-      <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">
+    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
+      <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
         <ModelSelector
-          className="@[400px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[400px]:px-3 px-2 @[400px]:text-sm text-xs"
+          className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
           onModelChangeAction={onModelChange}
           selectedModelId={selectedModelId}
         />
+        <ConnectorsDropdown />
         <ResponsiveTools
           selectedModelId={selectedModelId}
           setTools={setSelectedTool}
@@ -756,13 +758,13 @@ function PureChatInputBottomControls({
       </PromptInputTools>
       <div className="flex items-center gap-1">
         <ContextUsageFromParent
-          className="@[400px]:block hidden"
+          className="@[500px]:block hidden"
           iconOnly
           parentMessageId={parentMessageId}
           selectedModelId={selectedModelId}
         />
         <PromptInputSubmit
-          className={"@[400px]:size-10 size-8 shrink-0"}
+          className={"@[500px]:size-10 size-8 shrink-0"}
           disabled={status === "ready" && !submission.enabled}
           onClick={(e) => {
             e.preventDefault();
