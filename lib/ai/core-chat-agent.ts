@@ -9,6 +9,8 @@ import { getMcpTools, getTools } from "@/lib/ai/tools/tools";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import type { McpConnector } from "@/lib/db/schema";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
+import { determineExplicitlyRequestedTools } from "./determine-explicitly-requested-tools";
+
 export async function createCoreChatAgent({
   system,
   userMessage,
@@ -16,7 +18,7 @@ export async function createCoreChatAgent({
   selectedModelId,
   selectedTool,
   userId,
-  activeTools,
+  budgetAllowedTools,
   abortSignal,
   messageId,
   dataStream,
@@ -29,7 +31,8 @@ export async function createCoreChatAgent({
   selectedModelId: AppModelId;
   selectedTool: ToolName | null;
   userId: string | null;
-  activeTools: ToolName[];
+  /** Budget-allowed base tools from route.ts (static ToolNames only) */
+  budgetAllowedTools: ToolName[];
   abortSignal?: AbortSignal;
   messageId: string;
   dataStream: StreamWriter;
@@ -44,22 +47,10 @@ export async function createCoreChatAgent({
   // Process conversation history
   const lastGeneratedImage = getRecentGeneratedImage(messages);
 
-  let explicitlyRequestedTools: ToolName[] | null = null;
-  if (selectedTool === "deepResearch") {
-    explicitlyRequestedTools = ["deepResearch"];
-  } else if (selectedTool === "webSearch") {
-    explicitlyRequestedTools = ["webSearch"];
-  } else if (selectedTool === "generateImage") {
-    explicitlyRequestedTools = ["generateImage"];
-  } else if (selectedTool === "createDocument") {
-    explicitlyRequestedTools = ["createDocument", "updateDocument"];
-  }
+  const explicitlyRequestedTools =
+    determineExplicitlyRequestedTools(selectedTool);
 
-  addExplicitToolRequestToMessages(
-    messages,
-    activeTools,
-    explicitlyRequestedTools
-  );
+  addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
 
   // Filter out reasoning parts to ensure compatibility between different models
   const messagesWithoutReasoning = filterReasoningParts(messages.slice(-5));
@@ -98,6 +89,18 @@ export async function createCoreChatAgent({
     ...mcpTools,
   };
 
+  // Compute final activeTools for streamText:
+  // 1. Filter budget-allowed base tools to only those that actually exist in baseTools
+  const existingBaseActiveTools = budgetAllowedTools.filter(
+    (toolName) => toolName in baseTools
+  );
+  // 2. Always allow all MCP tools that exist at runtime
+  const mcpToolNames = Object.keys(mcpTools);
+  // 3. Build the final activeTools list (cast needed because MCP tools are dynamic)
+  const activeTools = [
+    ...new Set([...existingBaseActiveTools, ...mcpToolNames]),
+  ] as (keyof typeof allTools)[];
+
   // Create the streamText result
   const result = streamText({
     model: await getLanguageModel(modelDefinition.apiModelId),
@@ -118,8 +121,7 @@ export async function createCoreChatAgent({
         });
       },
     ],
-    // TODO: Solve active tools. Do we keep and add the mcp tools to it, or do we remove?
-    // activeTools,
+    activeTools,
     experimental_transform: markdownJoinerTransform(),
     experimental_telemetry: {
       isEnabled: true,
