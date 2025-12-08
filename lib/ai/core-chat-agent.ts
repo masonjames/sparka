@@ -128,14 +128,13 @@ export async function createCoreChatAgent({
       functionId: "chat-response",
     },
     tools: allTools,
-    onError: async (error) => {
-      await mcpCleanup();
+    onError: (error) => {
       onError?.(error);
     },
     abortSignal,
     providerOptions: await getModelProviderOptions(selectedModelId),
     onFinish: async () => {
-      // Clean up MCP clients when streaming is done
+      // Clean up MCP clients when streaming is done (onFinish runs for both success and error)
       await mcpCleanup();
     },
   });

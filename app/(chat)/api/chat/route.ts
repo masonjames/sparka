@@ -469,7 +469,7 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      const { result, contextForLLM, mcpCleanup } = await createCoreChatAgent({
+      const { result, contextForLLM } = await createCoreChatAgent({
         system,
         userMessage,
         previousMessages,
@@ -480,10 +480,8 @@ async function createChatStream({
         abortSignal: abortController.signal,
         messageId,
         dataStream,
-        onError: async (error) => {
+        onError: (error) => {
           log.error({ error }, "streamText error");
-          // Clean up MCP clients on error
-          await mcpCleanup?.();
         },
         mcpConnectors,
       });
