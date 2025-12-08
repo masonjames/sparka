@@ -26,8 +26,9 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
   const trpc = useTRPC();
   const { data: connectors } = useQuery(trpc.mcp.list.queryOptions());
 
+  const parsed = useMemo(() => parseToolId(part.toolName), [part.toolName]);
+
   const iconUrl = useMemo(() => {
-    const parsed = parseToolId(part.toolName);
     if (!(parsed && connectors)) {
       return;
     }
@@ -38,7 +39,7 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
     }
 
     return getGoogleFaviconUrl(connector.url);
-  }, [part.toolName, connectors]);
+  }, [parsed, connectors]);
 
   const icon = iconUrl ? (
     <Favicon className="size-4 rounded-sm" url={iconUrl} />
@@ -51,7 +52,7 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
       <McpToolHeader
         icon={icon}
         state={part.state}
-        title={part.title ?? part.toolName}
+        title={part.title ?? parsed?.toolName ?? part.toolName}
         type={`tool-${part.toolName}`}
       />
       <ToolContent>
