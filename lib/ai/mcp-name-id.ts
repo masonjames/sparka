@@ -8,6 +8,9 @@ export const MCP_NAME_MAX_LENGTH = 20;
 /** Reserved namespace prefix for global connectors (userId = null) */
 export const GLOBAL_NAMESPACE_PREFIX = "global";
 
+/** Separator between namespace and tool name (OpenAI requires ^[a-zA-Z0-9_-]+$) */
+export const TOOL_ID_SEPARATOR = "__";
+
 export type GenerateMcpNameIdResult =
   | { ok: true; nameId: string }
   | { ok: false; error: "empty" | "reserved" };
@@ -40,8 +43,9 @@ export function generateMcpNameId(name: string): GenerateMcpNameIdResult {
 
 /**
  * Creates a fully qualified tool ID from namespace and tool name.
- * Format: `{namespace}.{toolName}`
- * For global connectors: `global.{nameId}.{toolName}`
+ * Format: `{namespace}__{toolName}`
+ * For global connectors: `global__{nameId}__{toolName}`
+ * Uses `__` separator for OpenAI compatibility (requires ^[a-zA-Z0-9_-]+$)
  */
 export function createToolId(
   namespace: string,
@@ -49,14 +53,14 @@ export function createToolId(
   isGlobal: boolean
 ): string {
   if (isGlobal) {
-    return `${GLOBAL_NAMESPACE_PREFIX}.${namespace}.${toolName}`;
+    return `${GLOBAL_NAMESPACE_PREFIX}${TOOL_ID_SEPARATOR}${namespace}${TOOL_ID_SEPARATOR}${toolName}`;
   }
-  return `${namespace}.${toolName}`;
+  return `${namespace}${TOOL_ID_SEPARATOR}${toolName}`;
 }
 
 /**
  * Parses a tool ID back into its components.
- * Splits on the first `.` to get namespace, rest is tool name.
+ * Splits on `__` separator to get namespace and tool name.
  * For global tools, returns { isGlobal: true, namespace, toolName }
  */
 export function parseToolId(toolId: string): {
@@ -64,28 +68,28 @@ export function parseToolId(toolId: string): {
   namespace: string;
   toolName: string;
 } | null {
-  const firstDot = toolId.indexOf(".");
-  if (firstDot === -1) {
+  const firstSep = toolId.indexOf(TOOL_ID_SEPARATOR);
+  if (firstSep === -1) {
     return null; // No namespace, not an MCP tool
   }
 
-  const firstPart = toolId.slice(0, firstDot);
-  const rest = toolId.slice(firstDot + 1);
+  const firstPart = toolId.slice(0, firstSep);
+  const rest = toolId.slice(firstSep + TOOL_ID_SEPARATOR.length);
 
   if (firstPart === GLOBAL_NAMESPACE_PREFIX) {
-    // Global tool: global.{namespace}.{toolName}
-    const secondDot = rest.indexOf(".");
-    if (secondDot === -1) {
+    // Global tool: global__{namespace}__{toolName}
+    const secondSep = rest.indexOf(TOOL_ID_SEPARATOR);
+    if (secondSep === -1) {
       return null; // Malformed
     }
     return {
       isGlobal: true,
-      namespace: rest.slice(0, secondDot),
-      toolName: rest.slice(secondDot + 1),
+      namespace: rest.slice(0, secondSep),
+      toolName: rest.slice(secondSep + TOOL_ID_SEPARATOR.length),
     };
   }
 
-  // User tool: {namespace}.{toolName}
+  // User tool: {namespace}__{toolName}
   return {
     isGlobal: false,
     namespace: firstPart,
