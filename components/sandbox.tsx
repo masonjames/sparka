@@ -8,9 +8,9 @@ import {
   Sandbox,
   SandboxCode,
   SandboxContent,
-  SandboxCopyButton,
   SandboxHeader,
   SandboxOutput,
+  SandboxTabContent,
   SandboxTabs,
   SandboxTabsList,
   SandboxTabsTrigger,
@@ -33,8 +33,6 @@ export function SandboxComposed({
 }: SandboxComposedProps) {
   const [activeTab, setActiveTab] = React.useState("code");
 
-  const textToCopy = activeTab === "code" ? code : output || "";
-
   return (
     <Sandbox>
       <SandboxHeader state={state} title={title} />
@@ -47,15 +45,15 @@ export function SandboxComposed({
                 <SandboxTabsTrigger value="output">Output</SandboxTabsTrigger>
               )}
             </SandboxTabsList>
-            <SandboxCopyButton />
           </div>
-          <SandboxCode code={code} language={language} />
-          {output && <SandboxOutput code={output} />}
+          <SandboxTabContent value="code">
+            <SandboxCode code={code} language={language} />
+          </SandboxTabContent>
+          <SandboxTabContent value="output">
+            <SandboxOutput code={output ?? ""} />
+          </SandboxTabContent>
         </SandboxTabs>
       </SandboxContent>
     </Sandbox>
   );
 }
-
-// Export SandboxComposed as Sandbox for backward compatibility
-export { SandboxComposed as Sandbox };

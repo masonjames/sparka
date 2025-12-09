@@ -123,7 +123,6 @@ export async function getMcpTools({
       const client = await createMCPClient({
         transport: {
           type: connector.type,
-          authProvider: new OAuthClientProvider(),
           url: connector.url,
           // Include OAuth headers if configured
           ...(connector.oauthClientId && connector.oauthClientSecret
