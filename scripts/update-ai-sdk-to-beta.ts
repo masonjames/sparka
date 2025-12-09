@@ -6,7 +6,7 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
 const allDeps = { ...packageJson.dependencies, ...packageJson.devDependencies };
 
 const aiSdkPackages = Object.keys(allDeps).filter((pkg) =>
-  pkg.startsWith("@ai-sdk")
+  pkg.startsWith("@ai-sdk/")
 );
 
 const aiPackage = Object.keys(allDeps).find((pkg) => pkg === "ai");
