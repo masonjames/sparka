@@ -47,10 +47,10 @@ export function SandboxComposed({
                 <SandboxTabsTrigger value="output">Output</SandboxTabsTrigger>
               )}
             </SandboxTabsList>
-            <SandboxCopyButton code={textToCopy} />
+            <SandboxCopyButton />
           </div>
           <SandboxCode code={code} language={language} />
-          {output && <SandboxOutput output={output} />}
+          {output && <SandboxOutput code={output} />}
         </SandboxTabs>
       </SandboxContent>
     </Sandbox>

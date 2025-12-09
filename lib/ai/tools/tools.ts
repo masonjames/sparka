@@ -123,12 +123,14 @@ export async function getMcpTools({
       const client = await createMCPClient({
         transport: {
           type: connector.type,
+          authProvider: new OAuthClientProvider(),
           url: connector.url,
           // Include OAuth headers if configured
           ...(connector.oauthClientId && connector.oauthClientSecret
             ? {
                 headers: {
                   // TODO: Check if this is how to pass auth according to mcp spec
+                  // TODO: Replace Basic auth with OAuth 2.1 bearer token authentication per MCP specification.
                   Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
                 },
               }

@@ -321,6 +321,7 @@ export const messagePartSchema = z.union([
   stepStartPartSchema,
   dataPartSchema,
   toolPartSchema,
+  dynamicToolPartSchema,
 ]);
 
 /**

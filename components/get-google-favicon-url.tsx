@@ -1,3 +1,4 @@
+// @ts-expect-error - psl types not properly exported
 import psl from "psl";
 
 /**

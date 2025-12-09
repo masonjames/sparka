@@ -14,7 +14,7 @@ alwaysApply: false
 
 - **Hook ordering**: Follow the standard rules of hooks; no conditional or looped hooks.
 - **Derived state**: Prefer deriving values from props/form state instead of duplicating them in `useState`.
-- **Effects**: Keep `useEffect` minimal and side-effect focused; avoid using it for basic data derivation.
+- **Effects**: Keep `useEffect` minimal and side effect focused; avoid using it for basic data derivation.
 
 ## Forms
 
