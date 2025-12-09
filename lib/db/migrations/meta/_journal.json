@@ -250,13 +250,6 @@
     {
       "idx": 35,
       "version": "7",
-      "when": 1765188177784,
-      "tag": "0035_ordinary_human_fly",
-      "breakpoints": true
-    },
-    {
-      "idx": 36,
-      "version": "7",
       "when": 1765272571239,
       "tag": "0036_thankful_jean_grey",
       "breakpoints": true
