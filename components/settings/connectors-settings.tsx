@@ -140,35 +140,33 @@ export function ConnectorsSettings() {
         </Button>
       </div>
 
-      <>
-        {connectors && connectors.length > 0 ? (
-          <div className="space-y-3 px-1">
-            {connectors.map((connector) => (
-              <ConnectorRow
-                connector={connector}
-                key={connector.id}
-                onDelete={() => deleteConnector({ id: connector.id })}
-                onEdit={() => handleEdit(connector)}
-                onToggle={(enabled) =>
-                  toggleEnabled({ id: connector.id, enabled })
-                }
-                onViewDetails={() => handleViewDetails(connector)}
-              />
-            ))}
+      {connectors && connectors.length > 0 ? (
+        <div className="space-y-3 px-1">
+          {connectors.map((connector) => (
+            <ConnectorRow
+              connector={connector}
+              key={connector.id}
+              onDelete={() => deleteConnector({ id: connector.id })}
+              onEdit={() => handleEdit(connector)}
+              onToggle={(enabled) =>
+                toggleEnabled({ id: connector.id, enabled })
+              }
+              onViewDetails={() => handleViewDetails(connector)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="mb-4 rounded-full bg-muted p-3">
+            <Radio className="size-6 text-muted-foreground" />
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 rounded-full bg-muted p-3">
-              <Radio className="size-6 text-muted-foreground" />
-            </div>
-            <p className="font-medium text-sm">No connectors configured</p>
-            <p className="mt-1 max-w-sm text-muted-foreground text-xs">
-              Add an MCP connector to extend your AI with external tools and
-              capabilities.
-            </p>
-          </div>
-        )}
-      </>
+          <p className="font-medium text-sm">No connectors configured</p>
+          <p className="mt-1 max-w-sm text-muted-foreground text-xs">
+            Add an MCP connector to extend your AI with external tools and
+            capabilities.
+          </p>
+        </div>
+      )}
 
       <McpConfigDialog
         connector={editingConnector}

@@ -59,6 +59,8 @@ const mcpConnectorFormSchema = z.object({
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
+const HIDE_ADVANCED_SETTINGS = true;
+
 export function McpConfigDialog({
   open,
   onClose,
@@ -246,53 +248,55 @@ export function McpConfigDialog({
               )}
             />
 
-            <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  className="w-full justify-between"
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  Advanced settings
-                  <ChevronDown
-                    className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+            {!HIDE_ADVANCED_SETTINGS && (
+              <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    className="w-full justify-between"
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Advanced settings
+                    <ChevronDown
+                      className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+                    />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-2">
+                  <FormField
+                    control={form.control}
+                    name="oauthClientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>OAuth Client ID (optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter client ID" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-2">
-                <FormField
-                  control={form.control}
-                  name="oauthClientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>OAuth Client ID (optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter client ID" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="oauthClientSecret"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>OAuth Client Secret (optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Enter client secret"
-                          type="password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CollapsibleContent>
-            </Collapsible>
+                  <FormField
+                    control={form.control}
+                    name="oauthClientSecret"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>OAuth Client Secret (optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Enter client secret"
+                            type="password"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
 
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
               <div className="flex gap-2">
