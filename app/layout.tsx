@@ -5,6 +5,7 @@ import Script from "next/script";
 
 import "./globals.css";
 import { Toaster } from "sonner";
+import { getAuthConfig } from "@/app/actions/get-auth-config";
 import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/config";
@@ -66,6 +67,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Evaluate auth config at runtime (not build time) to ensure env vars are available
+  const authConfig = await getAuthConfig();
+  const runtimeConfig = { ...siteConfig, authentication: authConfig };
+
   return (
     <html
       className={`${geist.variable} ${geistMono.variable}`}
@@ -92,7 +97,7 @@ export default async function RootLayout({
           src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
           strategy="beforeInteractive"
         />
-        <ConfigProvider value={siteConfig}>
+        <ConfigProvider value={runtimeConfig}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
