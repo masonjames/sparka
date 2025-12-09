@@ -101,9 +101,22 @@ export async function createCoreChatAgent({
     ...new Set([...existingBaseActiveTools, ...mcpToolNames]),
   ] as (keyof typeof allTools)[];
 
+  // Resolve async model config before streamText to ensure cleanup on failure
+  let model: Awaited<ReturnType<typeof getLanguageModel>>;
+  let providerOptions: Awaited<ReturnType<typeof getModelProviderOptions>>;
+  try {
+    [model, providerOptions] = await Promise.all([
+      getLanguageModel(modelDefinition.apiModelId),
+      getModelProviderOptions(selectedModelId),
+    ]);
+  } catch (error) {
+    await mcpCleanup();
+    throw error;
+  }
+
   // Create the streamText result
   const result = streamText({
-    model: await getLanguageModel(modelDefinition.apiModelId),
+    model,
     system,
     messages: contextForLLM,
     stopWhen: [
@@ -132,7 +145,7 @@ export async function createCoreChatAgent({
       onError?.(error);
     },
     abortSignal,
-    providerOptions: await getModelProviderOptions(selectedModelId),
+    providerOptions,
     onFinish: async () => {
       // Clean up MCP clients when streaming is done (onFinish runs for both success and error)
       await mcpCleanup();

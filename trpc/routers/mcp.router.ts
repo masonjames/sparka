@@ -109,8 +109,8 @@ export const mcpRouter = createTRPCRouter({
           message: "Connector not found",
         });
       }
-      // Only allow editing own connectors (not global ones unless you're the owner)
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+      // Only allow editing own connectors (not global ones)
+      if (connector.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Cannot edit this connector",
@@ -168,8 +168,8 @@ export const mcpRouter = createTRPCRouter({
           message: "Connector not found",
         });
       }
-      // Only allow toggling own connectors
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+      // Only allow toggling own connectors (not global ones)
+      if (connector.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Cannot modify this connector",
