@@ -41,9 +41,7 @@ export function SandboxComposed({
           <div className="flex items-center border-neutral-200 border-b dark:border-neutral-800">
             <SandboxTabsList>
               <SandboxTabsTrigger value="code">Code</SandboxTabsTrigger>
-              {output && (
-                <SandboxTabsTrigger value="output">Output</SandboxTabsTrigger>
-              )}
+              <SandboxTabsTrigger value="output">Output</SandboxTabsTrigger>
             </SandboxTabsList>
           </div>
           <SandboxTabContent value="code">
