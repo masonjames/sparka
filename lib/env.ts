@@ -41,7 +41,13 @@ export const env = createEnv({
     // Required core
     DATABASE_URL: z.string().min(1),
     AUTH_SECRET: z.string().min(1),
-    BLOB_READ_WRITE_TOKEN: z.string().min(1),
+
+    // R2 Object Storage (Cloudflare R2 / S3-compatible)
+    R2_ACCESS_KEY_ID: z.string().min(1),
+    R2_SECRET_ACCESS_KEY: z.string().min(1),
+    R2_BUCKET: z.string().min(1),
+    R2_ENDPOINT: z.string().url(), // e.g., https://<account-id>.r2.cloudflarestorage.com
+    R2_PUBLIC_URL: z.string().url(), // e.g., https://assets.chat.masonjames.com
 
     // Authentication providers (all optional - at least one social or email must work)
     AUTH_GOOGLE_ID: z.string().optional(),

@@ -1,11 +1,15 @@
 # Dockerfile for Sparka AI Chat
-# Multi-stage build optimized for Next.js with Bun
+# Multi-stage build optimized for Next.js standalone output
 # Used by GitHub Actions to build and push to GHCR
+#
+# NOTE: Uses node:22-slim (Debian/glibc) throughout, NOT Alpine (musl).
+# This ensures native modules like better-sqlite3 work correctly.
+# Bun is not used because better-sqlite3 prebuild-install is unsupported.
 
 # =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
-FROM oven/bun:1-debian AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 
 # Install build dependencies for native modules (better-sqlite3)
@@ -15,24 +19,19 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
-COPY package.json bun.lock* ./
+# Copy package files (use package-lock.json for npm)
+COPY package.json package-lock.json* ./
 
-# Install dependencies (including devDependencies for build)
-RUN bun install --frozen-lockfile
+# Install dependencies with npm (includes devDependencies for build)
+# --legacy-peer-deps required due to @ai-sdk beta version peer conflicts
+# --ignore-scripts is NOT used since better-sqlite3 needs postinstall
+RUN npm ci --legacy-peer-deps
 
 # =============================================================================
 # Stage 2: Builder
 # =============================================================================
-FROM oven/bun:1-debian AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -51,23 +50,29 @@ ENV SKIP_DB_MIGRATE=1
 # The @t3-oss/env-nextjs package validates at build time, requiring these
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV AUTH_SECRET="placeholder-auth-secret-will-be-replaced-at-runtime"
-ENV BLOB_READ_WRITE_TOKEN="vercel_blob_placeholder_token"
+ENV R2_ACCESS_KEY_ID="placeholder-r2-access-key"
+ENV R2_SECRET_ACCESS_KEY="placeholder-r2-secret-key"
+ENV R2_BUCKET="placeholder-bucket"
+ENV R2_ENDPOINT="https://placeholder.r2.cloudflarestorage.com"
+ENV R2_PUBLIC_URL="https://placeholder.example.com"
 
-# Build the application (skip migrations by modifying build command)
-RUN bun run next build
+# Build the application using npm (not bun - see header note)
+RUN npm run build
 
 # =============================================================================
 # Stage 3: Production Runner
 # =============================================================================
-FROM node:22-alpine AS runner
+# Use Debian slim, NOT Alpine - native modules (better-sqlite3) compiled on
+# Debian (glibc) are incompatible with Alpine (musl)
+FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user for security (Debian syntax)
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy standalone build output
 COPY --from=builder /app/public ./public

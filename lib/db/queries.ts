@@ -1,5 +1,5 @@
 import "server-only";
-import { del } from "@vercel/blob";
+import { deleteFilesByUrls } from "@/lib/blob";
 import {
   and,
   asc,
@@ -999,10 +999,10 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
     }
 
     if (attachmentUrls.length > 0) {
-      await del(attachmentUrls);
+      await deleteFilesByUrls(attachmentUrls);
     }
   } catch (error) {
-    console.error("Failed to delete attachments from Vercel Blob:", error);
+    console.error("Failed to delete attachments from R2:", error);
     // Don't throw here - we still want to proceed with message deletion
     // even if blob cleanup fails
   }

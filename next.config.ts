@@ -41,7 +41,8 @@ const nextConfig: NextConfig = {
         hostname: "avatars.githubusercontent.com",
       },
       {
-        hostname: "*.public.blob.vercel-storage.com",
+        // R2 assets domain
+        hostname: "assets.chat.masonjames.com",
       },
       {
         hostname: "models.dev",
