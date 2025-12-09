@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import Script from "next/script";
 
 import "./globals.css";
@@ -67,6 +68,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Force dynamic rendering by accessing cookies - ensures env vars are read at request time
+  await cookies();
+
   // Evaluate auth config at runtime (not build time) to ensure env vars are available
   const authConfig = await getAuthConfig();
   const runtimeConfig = { ...siteConfig, authentication: authConfig };
