@@ -5,6 +5,7 @@ import { Globe, Plug, Settings } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useTRPC } from "@/trpc/react";
+import { useConfig } from "./config-provider";
 import { Favicon } from "./favicon";
 import { getGoogleFaviconUrl } from "./get-google-favicon-url";
 import { Button } from "./ui/button";
@@ -22,7 +23,12 @@ export function ConnectorsDropdown({ compact }: { compact?: boolean }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const { data: connectors } = useQuery(trpc.mcp.list.queryOptions());
+  const config = useConfig();
+
+  const { data: connectors } = useQuery({
+    ...trpc.mcp.list.queryOptions(),
+    enabled: config.integrations.mcp,
+  });
 
   const queryKey = trpc.mcp.list.queryKey();
 
@@ -50,7 +56,9 @@ export function ConnectorsDropdown({ compact }: { compact?: boolean }) {
       },
     })
   );
-
+  if (!config.integrations.mcp) {
+    return null;
+  }
   if (!connectors || connectors.length === 0) {
     return null;
   }

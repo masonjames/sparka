@@ -26,3 +26,8 @@ alwaysApply: false
 
 - **Class merging**: Use the shared `cn` utility for conditional classes.
 - **Composition**: Prefer smaller composed components over deeply nested JSX in a single component.
+
+## Configuration Access
+
+- **Client components**: Always use `useConfig()` from `@/components/config-provider` to access site configuration in client components (`"use client"`).
+- **Never import `siteConfig` directly** in client components—it derives values from server-only environment variables. The `ConfigProvider` receives a serialized version that decouples client code from server secrets.

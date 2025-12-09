@@ -131,6 +131,7 @@ https://www.sparka.ai/
    - `FIRECRAWL_API_KEY` - Web scraping
    - `SANDBOX_TEMPLATE_ID` - Code execution
    - `E2B_API_KEY` - E2B Code Interpreter
+   - `MCP_ENCRYPTION_KEY` - MCP connectors (generate with `openssl rand -base64 44`)
    - `LANGFUSE_PUBLIC_KEY` - Observability (Langfuse)
    - `LANGFUSE_SECRET_KEY` - Observability (Langfuse)
    - `LANGFUSE_BASE_URL` - Langfuse base URL (optional)

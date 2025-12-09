@@ -15,6 +15,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { encryptedText } from "./encrypted-text";
 
 export type User = InferSelectModel<typeof user>;
 
@@ -363,7 +364,7 @@ export const mcpConnector = pgTable(
     userId: text("userId").references(() => user.id, { onDelete: "cascade" }), // null = global
     name: varchar("name", { length: 256 }).notNull(),
     nameId: varchar("nameId", { length: 256 }).notNull(), // unique per user, used as namespace for tool IDs
-    url: text("url").notNull(),
+    url: encryptedText("url").notNull(),
     type: varchar("type", { enum: ["http", "sse"] })
       .notNull()
       .default("http"),

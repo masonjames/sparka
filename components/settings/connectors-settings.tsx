@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
+import { useConfig } from "../config-provider";
 import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
@@ -32,6 +33,7 @@ import { SettingsPageContent } from "./settings-page";
 
 export function ConnectorsSettings() {
   const trpc = useTRPC();
+  const config = useConfig();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -119,6 +121,15 @@ export function ConnectorsSettings() {
     setDetailsConnector(null);
   };
 
+  if (!config.integrations.mcp) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="font-medium text-sm">MCP is not enabled</p>
+        </div>
+      </SettingsPageContent>
+    );
+  }
   if (isLoading) {
     return (
       <SettingsPageContent className="gap-4">
