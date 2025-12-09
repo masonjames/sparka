@@ -182,13 +182,19 @@ async function clarifyWithUser(
   return { needsClarification: false };
 }
 
-async function writeResearchBrief(
-  state: WriteResearchBriefInput,
-  config: DeepResearchConfig,
-  dataStream: StreamWriter,
-  messageId: string,
-  toolCallId: string
-): Promise<WriteResearchBriefOutput> {
+async function writeResearchBrief({
+  state,
+  config,
+  dataStream,
+  messageId,
+  toolCallId,
+}: {
+  state: WriteResearchBriefInput;
+  config: DeepResearchConfig;
+  dataStream: StreamWriter;
+  messageId: string;
+  toolCallId: string;
+}): Promise<WriteResearchBriefOutput> {
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
   dataStream.write({
@@ -914,13 +920,16 @@ export async function runDeepResearcher(
   });
 
   // Step 2: Write research brief
-  const briefResult = await writeResearchBrief(
-    { requestId: currentState.requestId, messages: currentState.inputMessages },
+  const briefResult = await writeResearchBrief({
+    state: {
+      requestId: currentState.requestId,
+      messages: currentState.inputMessages,
+    },
     config,
     dataStream,
-    input.messageId,
-    input.toolCallId
-  );
+    messageId: input.messageId,
+    toolCallId: input.toolCallId,
+  });
   currentState.research_brief = briefResult.research_brief;
   const reportTitle = briefResult.title;
 
