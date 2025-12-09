@@ -227,12 +227,21 @@ export const mcpRouter = createTRPCRouter({
       try {
         const [toolsResult, resourcesResult, promptsResult] = await Promise.all(
           [
-            client.tools().then((tools) =>
-              Object.entries(tools).map(([name, tool]) => ({
-                name,
-                description: tool.description ?? null,
-              }))
-            ),
+            client
+              .tools()
+              .then((tools) =>
+                Object.entries(tools).map(([name, tool]) => ({
+                  name,
+                  description: tool.description ?? null,
+                }))
+              )
+              .catch((err) => {
+                log.warn(
+                  { connectorId: connector.id, err },
+                  "failed to list tools"
+                );
+                return [];
+              }),
             client
               .listResources()
               .then((r) =>

@@ -11,6 +11,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -381,6 +382,9 @@ export const mcpConnector = pgTable(
       t.userId,
       t.nameId
     ),
+    McpConnector_user_name_id_unique: uniqueIndex(
+      "McpConnector_user_name_id_unique"
+    ).on(t.userId, t.nameId),
   })
 );
 

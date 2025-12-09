@@ -140,7 +140,6 @@ export async function getMcpTools({
 
       clients.push(client);
       const tools = await client.tools();
-      console.log("MCP Client tools", tools);
 
       // Namespace tool names with connector nameId to avoid collisions
       // Format: {namespace}.{toolName} or global.{namespace}.{toolName}
