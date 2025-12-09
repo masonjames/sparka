@@ -8,6 +8,12 @@ config({
 });
 
 const runMigrate = async () => {
+  // Skip migrations during Docker build (no DB available)
+  if (process.env.SKIP_DB_MIGRATE === "1") {
+    console.log("⏭️  Skipping migrations (SKIP_DB_MIGRATE=1)");
+    process.exit(0);
+  }
+
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is not defined");
   }
