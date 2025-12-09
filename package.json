@@ -115,7 +115,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/kv": "^3.0.0",
     "@vercel/og": "^0.8.5",
-    "@vercel/otel": "^1.10.4",
+    "@vercel/otel": "^2.1.0",
     "@vercel/postgres": "^0.10.0",
     "@vercel/sandbox": "^1.0.2",
     "ai": "6.0.0-beta.99",
