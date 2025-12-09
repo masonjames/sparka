@@ -11,9 +11,11 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { encryptedText } from "./encrypted-text";
 
 export type User = InferSelectModel<typeof user>;
 
@@ -354,5 +356,39 @@ export const verification = pgTable("verification", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
+
+export const mcpConnector = pgTable(
+  "McpConnector",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: text("userId").references(() => user.id, { onDelete: "cascade" }), // null = global
+    name: varchar("name", { length: 256 }).notNull(),
+    nameId: varchar("nameId", { length: 256 }).notNull(), // unique per user, used as namespace for tool IDs
+    url: encryptedText("url").notNull(),
+    type: varchar("type", { enum: ["http", "sse"] })
+      .notNull()
+      .default("http"),
+    oauthClientId: text("oauthClientId"),
+    oauthClientSecret: text("oauthClientSecret"),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => ({
+    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(t.userId),
+    McpConnector_user_name_id_idx: index("McpConnector_user_name_id_idx").on(
+      t.userId,
+      t.nameId
+    ),
+    McpConnector_user_name_id_unique: uniqueIndex(
+      "McpConnector_user_name_id_unique"
+    ).on(t.userId, t.nameId),
+  })
+);
+
+export type McpConnector = InferSelectModel<typeof mcpConnector>;
 
 export const schema = { user, session, account, verification };

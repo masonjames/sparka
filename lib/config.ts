@@ -33,6 +33,7 @@ export type SiteConfig = {
     sandbox: boolean;
     webSearch: boolean;
     openai: boolean;
+    mcp: boolean;
   };
   pricing?: PricingConfig;
   legal: {
@@ -95,6 +96,7 @@ export const siteConfig: SiteConfig = {
     sandbox: true,
     webSearch: Boolean(env.TAVILY_API_KEY),
     openai: Boolean(env.OPENAI_API_KEY),
+    mcp: Boolean(env.MCP_ENCRYPTION_KEY),
   },
   legal: {
     minimumAge: 13,

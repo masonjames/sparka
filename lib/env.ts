@@ -29,6 +29,7 @@ export const env = createEnv({
     TAVILY_API_KEY: z.string().optional(),
     EXA_API_KEY: z.string().optional(),
     FIRECRAWL_API_KEY: z.string().optional(),
+    MCP_ENCRYPTION_KEY: z.string().length(44).optional(), // 44 bytes base64
 
     // Misc / platform
     VERCEL_URL: z.string().optional(),

@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { auth } from "@/lib/auth";
 
@@ -15,13 +16,8 @@ export default async function SettingsLayout({
   }
 
   return (
-    <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-4xl flex-1 flex-col px-4 py-8">
-      <div className="mb-8">
-        <h1 className="font-semibold text-2xl">Settings</h1>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Manage your chat preferences and configurations.
-        </p>
-      </div>
+    <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-4xl flex-1 flex-col px-2 py-2 md:px-4">
+      <SettingsHeader />
       {/* Mobile: horizontal tabs on top */}
       <div className="mb-4 md:hidden">
         <SettingsNav orientation="horizontal" />
@@ -31,7 +27,9 @@ export default async function SettingsLayout({
         <div className="hidden md:block">
           <SettingsNav orientation="vertical" />
         </div>
-        <div className="flex min-h-0 flex-1 flex-col px-4">{children}</div>
+        <div className="flex min-h-0 w-full flex-1 flex-col px-4">
+          {children}
+        </div>
       </div>
     </div>
   );

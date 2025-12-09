@@ -22,7 +22,7 @@ if (aiPackage) {
 }
 
 if (packagesToUpdate.length === 0) {
-  console.log("No @ai-sdk packages or ai package found");
+  console.log("No @ai-sdk packages or ai packag@e found");
   process.exit(0);
 }
 

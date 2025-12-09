@@ -43,7 +43,7 @@ function PureMessagesPane({
         {isReadonly ? (
           <CloneChatButton chatId={chatId} className="w-full" />
         ) : (
-          <div className="mx-auto w-full p-2 @[400px]:px-4 @[400px]:pb-4 md:max-w-3xl @[400px]:md:pb-6">
+          <div className="mx-auto w-full p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6">
             <MultimodalInput
               chatId={chatId}
               disableSuggestedActions={disableSuggestedActions}

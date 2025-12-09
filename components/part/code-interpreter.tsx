@@ -1,6 +1,6 @@
 import type { ChatMessage } from "@/lib/ai/types";
 import InteractiveChart, { type BaseChart } from "../interactive-charts";
-import { Sandbox } from "../sandbox";
+import { SandboxComposed } from "../sandbox";
 
 export type CodeInterpreterTool = Extract<
   ChatMessage["parts"][number],
@@ -28,7 +28,7 @@ export function CodeInterpreter({ tool }: { tool: CodeInterpreterTool }) {
   const title = typeof args.title === "string" ? args.title : "";
   return (
     <div className="space-y-6">
-      <Sandbox
+      <SandboxComposed
         code={code}
         language="python"
         output={result?.message}

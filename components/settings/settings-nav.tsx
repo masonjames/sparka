@@ -3,13 +3,9 @@
 import { Cpu, Plug, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
+import { useConfig } from "@/components/config-provider";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/settings" as const, label: "General", icon: Settings },
-  { href: "/settings/models" as const, label: "Models", icon: Cpu },
-  { href: "/settings/mcp" as const, label: "MCP", icon: Plug },
-];
 
 export function SettingsNav({
   orientation = "vertical",
@@ -17,11 +13,30 @@ export function SettingsNav({
   orientation?: "horizontal" | "vertical";
 }) {
   const pathname = usePathname();
+  const config = useConfig();
+
+  const navItems = useMemo(
+    () =>
+      [
+        { href: "/settings" as const, label: "General", icon: Settings },
+        { href: "/settings/models" as const, label: "Models", icon: Cpu },
+        ...(config.integrations.mcp
+          ? [
+              {
+                href: "/settings/connectors" as const,
+                label: "Connectors",
+                icon: Plug,
+              },
+            ]
+          : []),
+      ] as const,
+    [config.integrations.mcp]
+  );
 
   return (
     <nav
       className={cn(
-        "flex gap-1",
+        "flex gap-1 sm:overflow-auto sm:pb-2",
         orientation === "vertical" ? "w-56 flex-col" : "flex-row"
       )}
     >

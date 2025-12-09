@@ -16,6 +16,7 @@ import {
   getAppModelDefinition,
 } from "@/lib/ai/app-models";
 import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
+import { determineExplicitlyRequestedTools } from "@/lib/ai/determine-explicitly-requested-tools";
 import { ChatSDKError } from "@/lib/ai/errors";
 import {
   generateFollowupSuggestions,
@@ -38,6 +39,7 @@ import {
 } from "@/lib/credits/credits-utils";
 import {
   getChatById,
+  getMcpConnectorsByUserId,
   getMessageById,
   getProjectById,
   getUserById,
@@ -45,6 +47,7 @@ import {
   saveMessage,
   updateMessage,
 } from "@/lib/db/queries";
+import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
@@ -244,24 +247,6 @@ async function handleChatValidation({
   return null;
 }
 
-function determineExplicitlyRequestedTools(
-  selectedTool: string | null
-): ToolName[] | null {
-  if (selectedTool === "deepResearch") {
-    return ["deepResearch"];
-  }
-  if (selectedTool === "webSearch") {
-    return ["webSearch"];
-  }
-  if (selectedTool === "generateImage") {
-    return ["generateImage"];
-  }
-  if (selectedTool === "createDocument") {
-    return ["createDocument", "updateDocument"];
-  }
-  return null;
-}
-
 async function handleCreditReservation({
   userId,
   isAnonymous,
@@ -316,7 +301,12 @@ async function handleCreditReservation({
   return { reservation: null, error: null };
 }
 
-function determineActiveTools({
+/**
+ * Determines which built-in tools are allowed based on budget and model capabilities.
+ * This is purely about pricing & model gating for static ToolNames.
+ * MCP tools are handled separately in core-chat-agent.
+ */
+function determineBudgetAllowedTools({
   isAnonymous,
   reservation,
   baseModelCost,
@@ -329,7 +319,7 @@ function determineActiveTools({
   modelDefinition: AppModelDefinition;
   explicitlyRequestedTools: ToolName[] | null;
 }): {
-  activeTools: ToolName[];
+  budgetAllowedTools: ToolName[];
   error: Response | null;
 } {
   const log = createModuleLogger("api:chat:tools");
@@ -339,7 +329,7 @@ function determineActiveTools({
     : (reservation?.budget ?? baseModelCost);
   const remainingBudget = availableBudget - baseModelCost;
 
-  let activeTools: ToolName[] = filterAffordableTools(
+  let budgetAllowedTools: ToolName[] = filterAffordableTools(
     isAnonymous ? ANONYMOUS_LIMITS.AVAILABLE_TOOLS : allTools,
     remainingBudget
   );
@@ -349,20 +339,20 @@ function determineActiveTools({
     // Let's not allow deepResearch if the model support reasoning (it's expensive and slow)
     if (
       modelDefinition.reasoning &&
-      activeTools.some((tool: ToolName) => tool === "deepResearch")
+      budgetAllowedTools.some((tool: ToolName) => tool === "deepResearch")
     ) {
-      activeTools = activeTools.filter(
+      budgetAllowedTools = budgetAllowedTools.filter(
         (tool: ToolName) => tool !== "deepResearch"
       );
     }
   } else {
-    activeTools = [];
+    budgetAllowedTools = [];
   }
 
   if (
     explicitlyRequestedTools &&
     explicitlyRequestedTools.length > 0 &&
-    !activeTools.some((tool: ToolName) =>
+    !budgetAllowedTools.some((tool: ToolName) =>
       explicitlyRequestedTools.includes(tool)
     )
   ) {
@@ -371,7 +361,7 @@ function determineActiveTools({
       "Insufficient budget for requested tool"
     );
     return {
-      activeTools: [],
+      budgetAllowedTools: [],
       error: new Response(
         `Insufficient budget for requested tool: ${explicitlyRequestedTools}.`,
         {
@@ -386,10 +376,10 @@ function determineActiveTools({
       { explicitlyRequestedTools },
       "Setting explicitly requested tools"
     );
-    activeTools = explicitlyRequestedTools;
+    budgetAllowedTools = explicitlyRequestedTools;
   }
 
-  return { activeTools, error: null };
+  return { budgetAllowedTools, error: null };
 }
 
 async function setupStreamContext({
@@ -445,12 +435,13 @@ async function createChatStream({
   selectedModelId,
   selectedTool,
   userId,
-  activeTools,
+  budgetAllowedTools,
   abortController,
   isAnonymous,
   baseModelCost,
   reservation,
   timeoutId,
+  mcpConnectors,
 }: {
   messageId: string;
   chatId: string;
@@ -459,12 +450,13 @@ async function createChatStream({
   selectedModelId: AppModelId;
   selectedTool: string | null;
   userId: string | null;
-  activeTools: ToolName[];
+  budgetAllowedTools: ToolName[];
   abortController: AbortController;
   isAnonymous: boolean;
   baseModelCost: number;
   reservation: CreditReservation | null;
   timeoutId: NodeJS.Timeout;
+  mcpConnectors: McpConnector[];
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
@@ -484,13 +476,14 @@ async function createChatStream({
         selectedModelId,
         selectedTool: narrowedSelectedTool,
         userId,
-        activeTools,
+        budgetAllowedTools,
         abortSignal: abortController.signal,
         messageId,
         dataStream,
         onError: (error) => {
           log.error({ error }, "streamText error");
         },
+        mcpConnectors,
       });
 
       const initialMetadata = {
@@ -576,10 +569,11 @@ async function executeChatRequest({
   userId,
   isAnonymous,
   baseModelCost,
-  activeTools,
+  budgetAllowedTools,
   reservation,
   abortController,
   timeoutId,
+  mcpConnectors,
 }: {
   chatId: string;
   userMessage: ChatMessage;
@@ -589,10 +583,11 @@ async function executeChatRequest({
   userId: string | null;
   isAnonymous: boolean;
   baseModelCost: number;
-  activeTools: ToolName[];
+  budgetAllowedTools: ToolName[];
   reservation: CreditReservation | null;
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
+  mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute");
   const messageId = generateUUID();
@@ -634,12 +629,13 @@ async function executeChatRequest({
     selectedModelId,
     selectedTool,
     userId,
-    activeTools,
+    budgetAllowedTools,
     abortController,
     isAnonymous,
     baseModelCost,
     reservation,
     timeoutId,
+    mcpConnectors,
   });
 
   after(async () => {
@@ -804,12 +800,12 @@ async function prepareRequestContext({
   explicitlyRequestedTools: ToolName[] | null;
 }): Promise<{
   previousMessages: ChatMessage[];
-  activeTools: ToolName[];
+  budgetAllowedTools: ToolName[];
   error: Response | null;
 }> {
   const log = createModuleLogger("api:chat:prepare");
 
-  const toolsResult = determineActiveTools({
+  const toolsResult = determineBudgetAllowedTools({
     isAnonymous,
     reservation,
     baseModelCost,
@@ -820,12 +816,12 @@ async function prepareRequestContext({
   if (toolsResult.error) {
     return {
       previousMessages: [],
-      activeTools: [],
+      budgetAllowedTools: [],
       error: toolsResult.error,
     };
   }
 
-  const activeTools = toolsResult.activeTools;
+  const budgetAllowedTools = toolsResult.budgetAllowedTools;
 
   // Validate input token limit (50k tokens for user message)
   const totalTokens = calculateMessagesTokens(
@@ -840,7 +836,7 @@ async function prepareRequestContext({
     );
     return {
       previousMessages: [],
-      activeTools: [],
+      budgetAllowedTools: [],
       error: error.toResponse(),
     };
   }
@@ -853,9 +849,9 @@ async function prepareRequestContext({
       );
 
   const previousMessages = messageThreadToParent.slice(-5);
-  log.debug({ activeTools }, "active tools");
+  log.debug({ budgetAllowedTools }, "budget allowed tools");
 
-  return { previousMessages, activeTools, error: null };
+  return { previousMessages, budgetAllowedTools, error: null };
 }
 
 async function finalizeMessageAndCredits({
@@ -899,7 +895,6 @@ async function finalizeMessageAndCredits({
       }, 0);
 
   try {
-    // TODO: Validate if this is correct ai sdk v5
     const assistantMessage = messages.at(-1);
 
     if (!assistantMessage) {
@@ -937,10 +932,11 @@ async function handleRequestExecution({
   isAnonymous,
   anonymousSession,
   baseModelCost,
-  activeTools,
+  budgetAllowedTools,
   reservation,
   abortController,
   timeoutId,
+  mcpConnectors,
 }: {
   chatId: string;
   userMessage: ChatMessage;
@@ -951,10 +947,11 @@ async function handleRequestExecution({
   isAnonymous: boolean;
   anonymousSession: AnonymousSession | null;
   baseModelCost: number;
-  activeTools: ToolName[];
+  budgetAllowedTools: ToolName[];
   reservation: CreditReservation | null;
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
+  mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute-wrapper");
   try {
@@ -967,10 +964,11 @@ async function handleRequestExecution({
       userId,
       isAnonymous,
       baseModelCost,
-      activeTools,
+      budgetAllowedTools,
       reservation,
       abortController,
       timeoutId,
+      mcpConnectors,
     });
   } catch (error) {
     clearTimeout(timeoutId);
@@ -1083,7 +1081,11 @@ export async function POST(request: NextRequest) {
       return contextResult.error;
     }
 
-    const { previousMessages, activeTools } = contextResult;
+    const { previousMessages, budgetAllowedTools } = contextResult;
+
+    // Fetch MCP connectors for authenticated users
+    const mcpConnectors: McpConnector[] =
+      userId && !isAnonymous ? await getMcpConnectorsByUserId({ userId }) : [];
 
     // Create AbortController with 55s timeout for credit cleanup
     const abortController = new AbortController();
@@ -1105,10 +1107,11 @@ export async function POST(request: NextRequest) {
       isAnonymous,
       anonymousSession,
       baseModelCost,
-      activeTools,
+      budgetAllowedTools,
       reservation,
       abortController,
       timeoutId,
+      mcpConnectors,
     });
   } catch (error) {
     log.error({ error }, "RESPONSE > POST /api/chat error");
