@@ -15,7 +15,7 @@ const logger = createModuleLogger("auth-validate");
  * CORS headers for cross-subdomain requests
  * Allows *.masonjames.com to validate sessions
  */
-function getCorsHeaders(origin: string | null) {
+function getCorsHeaders(origin: string | null): Record<string, string> {
   // Check if origin is trusted
   if (origin && isTrustedAppOrigin(origin)) {
     return {
