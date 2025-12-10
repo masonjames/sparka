@@ -1,13 +1,7 @@
 "use client";
 import { useMessageIds } from "@ai-sdk-tools/store";
 import { ChevronDown } from "lucide-react";
-import {
-  type KeyboardEvent,
-  memo,
-  type ReactNode,
-  useEffect,
-  useState,
-} from "react";
+import { type KeyboardEvent, memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { DeleteChatDialog } from "@/components/delete-chat-dialog";
@@ -76,7 +70,6 @@ export function HeaderBreadcrumb({
   const projectLabel = resolvedProjectId
     ? (project?.name ?? (isProjectLoading ? "Loading project…" : undefined))
     : undefined;
-
   const [isChatEditing, setIsChatEditing] = useState(false);
   const [chatTitleDraft, setChatTitleDraft] = useState("");
   const [chatDeleteId, setChatDeleteId] = useState<string | null>(null);
@@ -91,7 +84,7 @@ export function HeaderBreadcrumb({
     value: chat?.title,
   });
 
-  if (!provisionalChatSaved) {
+  if (!chat) {
     return null;
   }
 
@@ -137,16 +130,14 @@ export function HeaderBreadcrumb({
     return null;
   }
 
-  const projectBreadcrumb = renderProjectBreadcrumb({
-    projectLabel,
-    projectId: resolvedProjectId,
-  });
-
   return (
     <>
       <Breadcrumb className={cn("flex-1", className)}>
         <BreadcrumbList>
-          {projectBreadcrumb}
+          <ProjectBreadcrumb
+            projectId={resolvedProjectId}
+            projectLabel={projectLabel}
+          />
           <BreadcrumbItem>
             {
               <PureChatBreadcrumb
@@ -318,13 +309,13 @@ function useSyncDraftValue({
   }, [isEditing, setDraft, value]);
 }
 
-function renderProjectBreadcrumb({
+function ProjectBreadcrumb({
   projectLabel,
   projectId,
 }: {
   projectLabel?: string;
   projectId: string | null;
-}): ReactNode {
+}) {
   if (!(projectLabel && projectId)) {
     return null;
   }
