@@ -6,7 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { useTRPC } from "@/trpc/react";
 
 const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)/;
@@ -16,6 +20,7 @@ export function SidebarProjects() {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { setOpenMobile } = useSidebar();
   const { data: projects, isLoading } = useQuery(
     trpc.project.list.queryOptions()
   );
@@ -34,6 +39,7 @@ export function SidebarProjects() {
           queryKey: trpc.project.list.queryKey(),
         });
         setNewProjectDialogOpen(false);
+        setOpenMobile(false);
         router.push(`/project/${data.id}`);
       },
     })
@@ -62,6 +68,7 @@ export function SidebarProjects() {
               isActive={isActive}
               key={project.id}
               project={project}
+              setOpenMobile={setOpenMobile}
             />
           );
         })}

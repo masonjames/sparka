@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { MoreHorizontalIcon } from "@/components/icons";
@@ -23,13 +24,16 @@ import type { Project } from "@/lib/db/schema";
 export function SidebarProjectItem({
   project,
   isActive,
+  setOpenMobile,
 }: {
   project: Project;
   isActive: boolean;
+  setOpenMobile: (open: boolean) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(project.name);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const router = useRouter();
 
   const { mutateAsync: renameProject } = useRenameProject();
 
@@ -83,7 +87,18 @@ export function SidebarProjectItem({
           className="cursor-pointer"
           isActive={isActive}
         >
-          <Link href={projectHref} prefetch={false}>
+          <Link
+            href={projectHref}
+            onClick={(e) => {
+              if (e.button === 1 || e.ctrlKey || e.metaKey) {
+                return;
+              }
+              e.preventDefault();
+              router.push(projectHref);
+              setOpenMobile(false);
+            }}
+            prefetch={false}
+          >
             <span>{project.name}</span>
           </Link>
         </SidebarMenuButton>

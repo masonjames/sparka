@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { memo, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
@@ -37,6 +38,8 @@ const PureSidebarChatItem = ({
     chat.projectId
       ? `/project/${chat.projectId}/chat/${chat.id}`
       : `/chat/${chat.id}`;
+  const pathname = usePathname();
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -91,11 +94,20 @@ const PureSidebarChatItem = ({
                 return;
               }
 
-              // Prevent default Link navigation for normal clicks
-              e.preventDefault();
+              // Check if we're on a chat route (/ or /chat/*)
+              const isChatRoute =
+                pathname === "/" || pathname.startsWith("/chat/");
 
-              // Use History API for client-side navigation
-              window.history.pushState(null, "", chatHref);
+              if (isChatRoute) {
+                // Prevent default Link navigation for normal clicks
+                e.preventDefault();
+                // Use History API for client-side navigation
+                window.history.pushState(null, "", chatHref);
+              } else {
+                // Use router.push for other routes (e.g., /project/*)
+                e.preventDefault();
+                router.push(chatHref);
+              }
               setOpenMobile(false);
             }} // TODO: Restore the prefetching after solving conflict with ppr
             prefetch={false}
