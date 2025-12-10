@@ -1,4 +1,9 @@
-import "server-only";
+"use server";
+import type {
+  OAuthClientInformation,
+  OAuthClientMetadata,
+  OAuthTokens,
+} from "@ai-sdk/mcp";
 import { del } from "@vercel/blob";
 import {
   and,
@@ -8,7 +13,9 @@ import {
   gt,
   gte,
   inArray,
+  isNotNull,
   isNull,
+  ne,
   or,
   type SQL,
   sql,
@@ -26,7 +33,9 @@ import {
   type DBMessage,
   document,
   type McpConnector,
+  type McpOAuthSession,
   mcpConnector,
+  mcpOAuthSession,
   message,
   type Part,
   part,
@@ -39,6 +48,10 @@ import {
   userModelPreference,
   vote,
 } from "./schema";
+
+// Full client information includes both metadata and registration response
+export type OAuthClientInformationFull = OAuthClientMetadata &
+  OAuthClientInformation;
 
 export async function getUserByEmail(email: string): Promise<User[]> {
   try {
@@ -1204,4 +1217,140 @@ export async function deleteMcpConnector({
     console.error("Failed to delete MCP connector from database", error);
     throw error;
   }
+}
+
+// MCP OAuth Session queries
+
+export async function getAuthenticatedSession({
+  mcpConnectorId,
+}: {
+  mcpConnectorId: string;
+}): Promise<McpOAuthSession | undefined> {
+  const [session] = await db
+    .select()
+    .from(mcpOAuthSession)
+    .where(
+      and(
+        eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
+        isNotNull(mcpOAuthSession.tokens)
+      )
+    )
+    .orderBy(desc(mcpOAuthSession.updatedAt))
+    .limit(1);
+  return session;
+}
+
+export async function getSessionByState({
+  state,
+}: {
+  state: string;
+}): Promise<McpOAuthSession | undefined> {
+  if (!state) {
+    return;
+  }
+  const [session] = await db
+    .select()
+    .from(mcpOAuthSession)
+    .where(eq(mcpOAuthSession.state, state));
+  return session;
+}
+
+export async function createOAuthSession({
+  mcpConnectorId,
+  serverUrl,
+  state,
+  codeVerifier,
+  clientInfo,
+}: {
+  mcpConnectorId: string;
+  serverUrl: string;
+  state: string;
+  codeVerifier?: string;
+  clientInfo?: OAuthClientInformationFull;
+}): Promise<McpOAuthSession> {
+  const [session] = await db
+    .insert(mcpOAuthSession)
+    .values({
+      mcpConnectorId,
+      serverUrl,
+      state,
+      codeVerifier,
+      clientInfo,
+    })
+    .returning();
+  return session;
+}
+
+export async function updateSessionByState({
+  state,
+  updates,
+}: {
+  state: string;
+  updates: {
+    codeVerifier?: string;
+    clientInfo?: OAuthClientInformationFull;
+    tokens?: OAuthTokens;
+  };
+}): Promise<McpOAuthSession> {
+  const [session] = await db
+    .update(mcpOAuthSession)
+    .set(updates)
+    .where(eq(mcpOAuthSession.state, state))
+    .returning();
+  if (!session) {
+    throw new Error(`Session with state ${state} not found`);
+  }
+  return session;
+}
+
+export async function saveTokensAndCleanup({
+  state,
+  mcpConnectorId,
+  tokens,
+}: {
+  state: string;
+  mcpConnectorId: string;
+  tokens: OAuthTokens;
+}): Promise<McpOAuthSession> {
+  // Save tokens to the session
+  const [session] = await db
+    .update(mcpOAuthSession)
+    .set({ tokens })
+    .where(eq(mcpOAuthSession.state, state))
+    .returning();
+
+  if (!session) {
+    throw new Error(`Session with state ${state} not found`);
+  }
+
+  // Cleanup: delete incomplete sessions (no tokens) for this connector except current
+  await db
+    .delete(mcpOAuthSession)
+    .where(
+      and(
+        eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
+        isNull(mcpOAuthSession.tokens),
+        ne(mcpOAuthSession.state, state)
+      )
+    );
+
+  return session;
+}
+
+export async function deleteSessionByState({
+  state,
+}: {
+  state: string;
+}): Promise<void> {
+  await db.delete(mcpOAuthSession).where(eq(mcpOAuthSession.state, state));
+}
+
+export async function deleteSessionsByConnectorId({
+  mcpConnectorId,
+}: {
+  mcpConnectorId: string;
+}): Promise<void> {
+  await db
+    .delete(mcpOAuthSession)
+    .where(eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId));
 }

@@ -391,4 +391,32 @@ export const mcpConnector = pgTable(
 
 export type McpConnector = InferSelectModel<typeof mcpConnector>;
 
+export const mcpOAuthSession = pgTable(
+  "McpOAuthSession",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    mcpConnectorId: uuid("mcpConnectorId")
+      .notNull()
+      .references(() => mcpConnector.id, { onDelete: "cascade" }),
+    serverUrl: text("serverUrl").notNull(),
+    clientInfo: json("clientInfo"), // OAuthClientInformationFull from MCP SDK
+    tokens: json("tokens"), // OAuthTokens from MCP SDK
+    codeVerifier: text("codeVerifier"), // PKCE verifier
+    state: text("state").unique(), // OAuth state param (unique for security)
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => ({
+    McpOAuthSession_connector_idx: index("McpOAuthSession_connector_idx").on(
+      t.mcpConnectorId
+    ),
+    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(t.state),
+  })
+);
+
+export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
+
 export const schema = { user, session, account, verification };

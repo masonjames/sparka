@@ -1,10 +1,11 @@
-import { experimental_createMCPClient as createMCPClient } from "@ai-sdk/mcp";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import {
   createMcpConnector,
   deleteMcpConnector,
+  getAuthenticatedSession,
   getMcpConnectorById,
   getMcpConnectorByNameId,
   getMcpConnectorsByUserId,
@@ -202,32 +203,43 @@ export const mcpRouter = createTRPCRouter({
 
       log.debug(
         { connectorId: connector.id, url: connector.url },
-        "creating MCP client"
+        "creating MCP client for discovery"
       );
 
-      const client = await createMCPClient({
-        transport: {
-          type: connector.type,
-          url: connector.url,
-          ...(connector.oauthClientId && connector.oauthClientSecret
-            ? {
-                headers: {
-                  Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
-                },
-              }
-            : {}),
-        },
+      // Use OAuth-aware client
+      const mcpClient = await getOrCreateMcpClient({
+        id: connector.id,
+        name: connector.name,
+        url: connector.url,
+        type: connector.type,
       });
+
+      await mcpClient.connect();
+
+      // Check if authorization is needed
+      if (mcpClient.status === "authorizing") {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Connector requires OAuth authorization",
+        });
+      }
+
+      if (mcpClient.status !== "connected") {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to connect to MCP server (status: ${mcpClient.status})`,
+        });
+      }
 
       log.debug(
         { connectorId: connector.id },
-        "MCP client created, discovering capabilities"
+        "MCP client connected, discovering capabilities"
       );
 
       try {
         const [toolsResult, resourcesResult, promptsResult] = await Promise.all(
           [
-            client
+            mcpClient
               .tools()
               .then((tools) =>
                 Object.entries(tools).map(([name, tool]) => ({
@@ -242,7 +254,7 @@ export const mcpRouter = createTRPCRouter({
                 );
                 return [];
               }),
-            client
+            mcpClient
               .listResources()
               .then((r) =>
                 r.resources.map((res) => ({
@@ -259,7 +271,7 @@ export const mcpRouter = createTRPCRouter({
                 );
                 return [];
               }),
-            client
+            mcpClient
               .listPrompts()
               .then((r) =>
                 r.prompts.map((p) => ({
@@ -299,8 +311,137 @@ export const mcpRouter = createTRPCRouter({
           prompts: promptsResult,
         };
       } finally {
-        await client.close();
-        log.debug({ connectorId: connector.id }, "MCP client closed");
+        // Don't close the client - keep it cached for reuse
+        log.debug({ connectorId: connector.id }, "MCP discovery finished");
       }
+    }),
+
+  /**
+   * Initiate OAuth authorization for an MCP connector.
+   * Returns the authorization URL that the client should open in a popup.
+   */
+  authorize: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const connector = await getMcpConnectorById({ id: input.id });
+      if (!connector) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connector not found",
+        });
+      }
+      // Only allow authorizing own connectors or global ones
+      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot authorize this connector",
+        });
+      }
+
+      log.info({ connectorId: connector.id }, "Initiating OAuth authorization");
+
+      // Remove any existing client to force a fresh connection
+      await removeMcpClient(connector.id);
+
+      // Create a new client and attempt to connect
+      const mcpClient = await getOrCreateMcpClient({
+        id: connector.id,
+        name: connector.name,
+        url: connector.url,
+        type: connector.type,
+      });
+
+      await mcpClient.connect();
+
+      if (mcpClient.status !== "authorizing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Connector does not require OAuth authorization",
+        });
+      }
+
+      const authUrl = mcpClient.getAuthorizationUrl();
+      if (!authUrl) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get authorization URL",
+        });
+      }
+
+      log.info(
+        { connectorId: connector.id, authUrl: authUrl.toString() },
+        "OAuth authorization URL generated"
+      );
+
+      return { authorizationUrl: authUrl.toString() };
+    }),
+
+  /**
+   * Check if a connector has valid OAuth tokens.
+   */
+  checkAuth: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const connector = await getMcpConnectorById({ id: input.id });
+      if (!connector) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connector not found",
+        });
+      }
+      // Only allow checking own connectors or global ones
+      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access this connector",
+        });
+      }
+
+      const session = await getAuthenticatedSession({
+        mcpConnectorId: connector.id,
+      });
+
+      return {
+        isAuthenticated: !!session?.tokens,
+        hasSession: !!session,
+      };
+    }),
+
+  /**
+   * Refresh/reconnect an MCP client after OAuth completion.
+   */
+  refreshClient: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const connector = await getMcpConnectorById({ id: input.id });
+      if (!connector) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connector not found",
+        });
+      }
+      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access this connector",
+        });
+      }
+
+      // Remove existing client and reconnect
+      await removeMcpClient(connector.id);
+
+      const mcpClient = await getOrCreateMcpClient({
+        id: connector.id,
+        name: connector.name,
+        url: connector.url,
+        type: connector.type,
+      });
+
+      await mcpClient.connect();
+
+      return {
+        status: mcpClient.status,
+        needsAuth: mcpClient.status === "authorizing",
+      };
     }),
 });

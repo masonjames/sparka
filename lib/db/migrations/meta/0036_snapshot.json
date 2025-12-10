@@ -1,6 +1,6 @@
 {
-  "id": "d4d44ac0-138f-4bbd-aa5b-67c68ea3e9ab",
-  "prevId": "211b3824-0388-42c4-a84a-8e6c74208a6a",
+  "id": "43bfa173-91dd-4f13-ad53-26666517ae09",
+  "prevId": "d4d44ac0-138f-4bbd-aa5b-67c68ea3e9ab",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -426,6 +426,120 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
+    },
+    "public.McpOAuthSession": {
+      "name": "McpOAuthSession",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "mcpConnectorId": {
+          "name": "mcpConnectorId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "serverUrl": {
+          "name": "serverUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clientInfo": {
+          "name": "clientInfo",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tokens": {
+          "name": "tokens",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "codeVerifier": {
+          "name": "codeVerifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "McpOAuthSession_connector_idx": {
+          "name": "McpOAuthSession_connector_idx",
+          "columns": [
+            {
+              "expression": "mcpConnectorId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "McpOAuthSession_state_idx": {
+          "name": "McpOAuthSession_state_idx",
+          "columns": [
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "McpOAuthSession_mcpConnectorId_McpConnector_id_fk": {
+          "name": "McpOAuthSession_mcpConnectorId_McpConnector_id_fk",
+          "tableFrom": "McpOAuthSession",
+          "tableTo": "McpConnector",
+          "columnsFrom": ["mcpConnectorId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "McpOAuthSession_state_unique": {
+          "name": "McpOAuthSession_state_unique",
+          "nullsNotDistinct": false,
+          "columns": ["state"]
+        }
+      }
     },
     "public.Message": {
       "name": "Message",

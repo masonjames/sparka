@@ -48,7 +48,7 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
   );
 
   return (
-    <Tool defaultOpen={true}>
+    <Tool defaultOpen={false}>
       <McpToolHeader
         icon={icon}
         state={part.state}

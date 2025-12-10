@@ -2,16 +2,23 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
   Eye,
   Globe,
+  Key,
+  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
   Radio,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import {
+  openOAuthPopup,
+  waitForOAuthComplete,
+} from "@/lib/ai/mcp/oauth-redirect";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 import { useConfig } from "../config-provider";
@@ -24,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Switch } from "../ui/switch";
@@ -207,9 +215,70 @@ function ConnectorRow({
   onDelete: () => void;
   onViewDetails: () => void;
 }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const isGlobal = connector.userId === null;
   const faviconUrl =
     connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
+
+  // Query to check OAuth status
+  const { data: authStatus } = useQuery({
+    ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
+    staleTime: 30_000, // Cache for 30 seconds
+  });
+
+  // Mutation to initiate OAuth
+  const { mutateAsync: authorize } = useMutation(
+    trpc.mcp.authorize.mutationOptions({
+      onError: (err) => {
+        toast.error(err.message || "Failed to initiate authorization");
+      },
+    })
+  );
+
+  const handleAuthorize = useCallback(async () => {
+    // Open popup immediately to avoid popup blocker
+    const popup = openOAuthPopup();
+    if (!popup) {
+      toast.error("Failed to open popup. Please allow popups for this site.");
+      return;
+    }
+
+    setIsAuthorizing(true);
+    try {
+      const result = await authorize({ id: connector.id });
+
+      // Navigate popup to auth URL
+      popup.setUrl(result.authorizationUrl);
+
+      // Wait for OAuth to complete
+      await waitForOAuthComplete({
+        authWindow: popup.window,
+        onSuccess: () => {
+          toast.success("Successfully authorized!");
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.checkAuth.queryKey({ id: connector.id }),
+          });
+        },
+        onError: (error) => {
+          toast.error(error.message || "Authorization failed");
+        },
+      });
+    } catch (error) {
+      popup.close();
+      if (
+        error instanceof Error &&
+        !error.message.includes("does not require OAuth") &&
+        !error.message.includes("cancelled")
+      ) {
+        console.error("Authorization error:", error);
+      }
+    } finally {
+      setIsAuthorizing(false);
+    }
+  }, [authorize, connector.id, queryClient, trpc.mcp.checkAuth]);
 
   return (
     <div className="flex items-center gap-4 overflow-hidden rounded-lg border bg-card p-4">
@@ -238,6 +307,12 @@ function ConnectorRow({
               Global
             </Badge>
           )}
+          {authStatus?.isAuthenticated && (
+            <Badge className="shrink-0 gap-1 text-[10px]" variant="outline">
+              <Check className="size-3" />
+              Authorized
+            </Badge>
+          )}
         </div>
         <p className="mt-1 truncate text-muted-foreground text-xs">
           {getUrlWithoutParams(connector.url)}
@@ -261,14 +336,29 @@ function ConnectorRow({
               <Pencil className="size-4" />
               Configure
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={isAuthorizing}
+              onClick={handleAuthorize}
+            >
+              {isAuthorizing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Key className="size-4" />
+              )}
+              {authStatus?.isAuthenticated ? "Re-authorize" : "Authorize"}
+            </DropdownMenuItem>
             {!isGlobal && (
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={onDelete}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={onDelete}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
