@@ -1289,12 +1289,29 @@ export async function updateSessionByState({
   updates: {
     codeVerifier?: string;
     clientInfo?: OAuthClientInformationFull;
-    tokens?: OAuthTokens;
+    tokens?: OAuthTokens | null;
   };
 }): Promise<McpOAuthSession> {
+  // Filter out undefined values - only include explicit values (including null)
+  const setValues = Object.fromEntries(
+    Object.entries(updates).filter(([_, v]) => v !== undefined)
+  );
+
+  if (Object.keys(setValues).length === 0) {
+    // Nothing to update, just return the current session
+    const [session] = await db
+      .select()
+      .from(mcpOAuthSession)
+      .where(eq(mcpOAuthSession.state, state));
+    if (!session) {
+      throw new Error(`Session with state ${state} not found`);
+    }
+    return session;
+  }
+
   const [session] = await db
     .update(mcpOAuthSession)
-    .set(updates)
+    .set(setValues)
     .where(eq(mcpOAuthSession.state, state))
     .returning();
   if (!session) {

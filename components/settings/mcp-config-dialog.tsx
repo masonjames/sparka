@@ -64,10 +64,12 @@ const HIDE_ADVANCED_SETTINGS = true;
 export function McpConfigDialog({
   open,
   onClose,
+  onCreated,
   connector,
 }: {
   open: boolean;
   onClose: () => void;
+  onCreated?: (connector: McpConnector) => void;
   connector: McpConnector | null;
 }) {
   const trpc = useTRPC();
@@ -109,10 +111,14 @@ export function McpConfigDialog({
 
   const { mutate: createConnector, isPending: isCreating } = useMutation(
     trpc.mcp.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (newConnector) => {
         toast.success("Connector added");
         queryClient.invalidateQueries({ queryKey });
-        onClose();
+        if (onCreated) {
+          onCreated(newConnector);
+        } else {
+          onClose();
+        }
       },
       onError: (err) => {
         toast.error(err.message || "Failed to add connector");

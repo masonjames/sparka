@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getOrCreateMcpClient } from "@/lib/ai/mcp/mcp-client";
+import { createMcpClientForCallback } from "@/lib/ai/mcp/mcp-client";
 import { getMcpConnectorById, getSessionByState } from "@/lib/db/queries";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -139,8 +139,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get or create the MCP client
-    const mcpClient = await getOrCreateMcpClient({
+    // Create a fresh MCP client for callback handling
+    // Don't use cached client - it might have stale/different state
+    const mcpClient = createMcpClientForCallback({
       id: connector.id,
       name: connector.name,
       url: connector.url,

@@ -13,7 +13,8 @@ import {
   Radio,
   Trash2,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   openOAuthPopup,
@@ -43,18 +44,32 @@ export function ConnectorsSettings() {
   const trpc = useTRPC();
   const config = useConfig();
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [editingConnector, setEditingConnector] = useState<McpConnector | null>(
-    null
-  );
-  const [detailsConnector, setDetailsConnector] = useState<McpConnector | null>(
-    null
-  );
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL state for dialogs
+  const urlDialog = searchParams.get("dialog");
+  const urlConnectorId = searchParams.get("connectorId");
 
   const { data: connectors, isLoading } = useQuery(
     trpc.mcp.list.queryOptions()
   );
+
+  // Derive dialog state from URL
+  const dialogOpen = urlDialog === "config";
+  const detailsDialogOpen = urlDialog === "details";
+  const editingConnector = useMemo(() => {
+    if (!(dialogOpen && urlConnectorId && connectors)) {
+      return null;
+    }
+    return connectors.find((c) => c.id === urlConnectorId) ?? null;
+  }, [dialogOpen, urlConnectorId, connectors]);
+  const detailsConnector = useMemo(() => {
+    if (!(detailsDialogOpen && urlConnectorId && connectors)) {
+      return null;
+    }
+    return connectors.find((c) => c.id === urlConnectorId) ?? null;
+  }, [detailsDialogOpen, urlConnectorId, connectors]);
 
   const queryKey = trpc.mcp.list.queryKey();
 
@@ -109,25 +124,59 @@ export function ConnectorsSettings() {
     })
   );
 
+  // URL manipulation helpers
+  const setUrlState = useCallback(
+    (dialog: string | null, connectorId?: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (dialog) {
+        params.set("dialog", dialog);
+      } else {
+        params.delete("dialog");
+      }
+      if (connectorId) {
+        params.set("connectorId", connectorId);
+      } else {
+        params.delete("connectorId");
+      }
+      const qs = params.toString();
+      const newPath = qs
+        ? `${window.location.pathname}?${qs}`
+        : window.location.pathname;
+      router.replace(newPath as never, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  const handleOpenConfigDialog = useCallback(
+    (connectorId?: string) => {
+      setUrlState("config", connectorId ?? null);
+    },
+    [setUrlState]
+  );
+
   const handleEdit = (connector: McpConnector) => {
-    setEditingConnector(connector);
-    setDialogOpen(true);
+    handleOpenConfigDialog(connector.id);
   };
 
   const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingConnector(null);
+    setUrlState(null);
   };
 
   const handleViewDetails = (connector: McpConnector) => {
-    setDetailsConnector(connector);
-    setDetailsDialogOpen(true);
+    setUrlState("details", connector.id);
   };
 
   const handleDetailsDialogClose = () => {
-    setDetailsDialogOpen(false);
-    setDetailsConnector(null);
+    setUrlState(null);
   };
+
+  // Callback when a new connector is created - transition to details
+  const handleConnectorCreated = useCallback(
+    (connector: McpConnector) => {
+      setUrlState("details", connector.id);
+    },
+    [setUrlState]
+  );
 
   if (!config.integrations.mcp) {
     return (
@@ -153,7 +202,11 @@ export function ConnectorsSettings() {
   return (
     <SettingsPageContent className="gap-4">
       <div className="flex shrink-0 gap-2">
-        <Button onClick={() => setDialogOpen(true)} size="sm" variant="outline">
+        <Button
+          onClick={() => handleOpenConfigDialog()}
+          size="sm"
+          variant="outline"
+        >
           <Plus className="size-4" />
           Add custom connector
         </Button>
@@ -190,6 +243,7 @@ export function ConnectorsSettings() {
       <McpConfigDialog
         connector={editingConnector}
         onClose={handleDialogClose}
+        onCreated={handleConnectorCreated}
         open={dialogOpen}
       />
 

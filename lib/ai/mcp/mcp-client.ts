@@ -233,3 +233,23 @@ export async function removeMcpClient(id: string): Promise<void> {
 export function getMcpClient(id: string): MCPClient | undefined {
   return clientsMap.get(id);
 }
+
+/**
+ * Create a fresh MCP client for OAuth callback handling.
+ * Does NOT use the cache - creates a new instance to avoid state conflicts.
+ */
+export function createMcpClientForCallback({
+  id,
+  name,
+  url,
+  type,
+  headers,
+}: {
+  id: string;
+  name: string;
+  url: string;
+  type: "http" | "sse";
+  headers?: Record<string, string>;
+}): MCPClient {
+  return new MCPClient(id, name, { url, type, headers });
+}

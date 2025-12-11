@@ -14,6 +14,9 @@ import {
   updateSessionByState,
 } from "@/lib/db/queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
+import { createModuleLogger } from "@/lib/logger";
+
+const log = createModuleLogger("mcp-oauth-provider");
 
 /**
  * Custom error thrown when OAuth authorization is required.
@@ -46,11 +49,27 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
   ) {}
 
+  private initializationPromise: Promise<void> | null = null;
+
   private async initializeOAuth() {
+    // Prevent concurrent initialization - return existing promise if in progress
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
     if (this.initialized) {
       return;
     }
 
+    this.initializationPromise = this.doInitializeOAuth();
+    try {
+      await this.initializationPromise;
+    } finally {
+      this.initializationPromise = null;
+    }
+  }
+
+  private async doInitializeOAuth() {
     // If state was provided (e.g., from callback), adopt it
     if (this.config.state) {
       const session = await getSessionByState({ state: this.config.state });
@@ -91,7 +110,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private async updateAuthData(data: {
     codeVerifier?: string;
     clientInfo?: OAuthClientInformationFull;
-    tokens?: OAuthTokens;
+    tokens?: OAuthTokens | null;
   }) {
     if (!this.currentOAuthState) {
       throw new Error("OAuth not initialized");
@@ -124,6 +143,14 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         !authData.tokens &&
         clientInfo.redirect_uris[0] !== this.redirectUrl
       ) {
+        log.warn(
+          {
+            state: authData.state,
+            savedRedirectUri: clientInfo.redirect_uris[0],
+            currentRedirectUri: this.redirectUrl,
+          },
+          "clientInformation: redirect URI mismatch, invalidating session"
+        );
         if (authData.state) {
           await deleteSessionByState({ state: authData.state });
         }
@@ -161,11 +188,43 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
 
   async saveCodeVerifier(pkceVerifier: string): Promise<void> {
+    // Only save verifier ONCE - the AI SDK calls this multiple times
+    // but the code_challenge is generated from the FIRST verifier.
+    // If we already have a verifier for this session, keep it.
+    const existingVerifier = this.cachedAuthData?.codeVerifier;
+
+    if (existingVerifier) {
+      log.info(
+        {
+          state: this.currentOAuthState,
+          existingVerifierPrefix: existingVerifier.slice(0, 10),
+          newVerifierPrefix: pkceVerifier.slice(0, 10),
+        },
+        "saveCodeVerifier: SKIPPING - verifier already exists"
+      );
+      return;
+    }
+
+    log.info(
+      {
+        state: this.currentOAuthState,
+        codeVerifierPrefix: pkceVerifier.slice(0, 10),
+      },
+      "saveCodeVerifier: saving first verifier"
+    );
     await this.updateAuthData({ codeVerifier: pkceVerifier });
   }
 
   async codeVerifier(): Promise<string> {
     const authData = await this.getAuthData();
+    log.info(
+      {
+        state: this.currentOAuthState,
+        hasCodeVerifier: !!authData?.codeVerifier,
+        codeVerifierPrefix: authData?.codeVerifier?.slice(0, 10),
+      },
+      "codeVerifier called"
+    );
     if (!authData?.codeVerifier) {
       throw new Error("OAuth code verifier not found");
     }
@@ -178,12 +237,43 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
    */
   async adoptState(state: string): Promise<void> {
     if (!state) {
+      log.warn("adoptState called with empty state");
       return;
     }
+
+    // If already initialized with this exact state, skip DB lookup
+    if (this.initialized && this.currentOAuthState === state) {
+      log.info({ state }, "adoptState: already initialized with this state");
+      return;
+    }
+
     const session = await getSessionByState({ state });
-    if (!session || session.mcpConnectorId !== this.config.mcpConnectorId) {
+    if (!session) {
+      log.warn({ state }, "adoptState: session not found");
       return;
     }
+    if (session.mcpConnectorId !== this.config.mcpConnectorId) {
+      log.warn(
+        {
+          state,
+          sessionConnectorId: session.mcpConnectorId,
+          expectedConnectorId: this.config.mcpConnectorId,
+        },
+        "adoptState: connector ID mismatch"
+      );
+      return;
+    }
+    log.info(
+      {
+        state,
+        previousState: this.currentOAuthState,
+        wasInitialized: this.initialized,
+        hasCodeVerifier: !!session.codeVerifier,
+        hasClientInfo: !!session.clientInfo,
+        hasTokens: !!session.tokens,
+      },
+      "adoptState: adopting session (overriding previous state if any)"
+    );
     this.currentOAuthState = state;
     this.cachedAuthData = session;
     this.initialized = true;
@@ -198,7 +288,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.initialized = false;
       this.currentOAuthState = "";
     } else if (scope === "tokens") {
-      await this.updateAuthData({ tokens: undefined });
+      await this.updateAuthData({ tokens: null });
     }
   }
 }
