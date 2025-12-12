@@ -249,7 +249,7 @@ export function ConnectorsSettings() {
 
       <McpDetailsDialog
         connector={detailsConnector}
-        onClose={handleDetailsDialogClose}
+        onCloseAction={handleDetailsDialogClose}
         open={detailsDialogOpen}
       />
     </SettingsPageContent>

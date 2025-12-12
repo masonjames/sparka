@@ -106,6 +106,7 @@ export async function GET(request: NextRequest) {
 
   // Look up the session by state
   const session = await getSessionByState({ state });
+
   if (!session) {
     log.error({ state }, "Session not found for state");
     return createOAuthResponsePage({

@@ -10,7 +10,7 @@ import {
   getMcpConnectorByNameId,
   getMcpConnectorsByUserId,
   updateMcpConnector,
-} from "@/lib/db/queries";
+} from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 

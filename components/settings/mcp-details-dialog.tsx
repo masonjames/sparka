@@ -32,11 +32,11 @@ import { getUrlWithoutParams } from "../get-url-without-params";
 
 export function McpDetailsDialog({
   open,
-  onClose,
+  onCloseAction,
   connector,
 }: {
   open: boolean;
-  onClose: () => void;
+  onCloseAction: () => void;
   connector: McpConnector | null;
 }) {
   const trpc = useTRPC();
@@ -135,7 +135,7 @@ export function McpDetailsDialog({
     connector?.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
 
   return (
-    <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
+    <Dialog onOpenChange={(o) => !o && onCloseAction()} open={open}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="overflow-hidden">
           <div className="flex items-center gap-3 overflow-hidden">

@@ -11,8 +11,10 @@ import {
   getSessionByState,
   type OAuthClientInformationFull,
   saveTokensAndCleanup,
+  setOAuthClientInfoOnceByState,
+  setOAuthCodeVerifierOnceByState,
   updateSessionByState,
-} from "@/lib/db/queries";
+} from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -23,9 +25,12 @@ const log = createModuleLogger("mcp-oauth-provider");
  * The client should catch this and redirect the user to the authorization URL.
  */
 export class OAuthAuthorizationRequiredError extends Error {
-  constructor(public authorizationUrl: URL) {
+  authorizationUrl: URL;
+
+  constructor(authorizationUrl: URL) {
     super("OAuth user authorization required");
     this.name = "OAuthAuthorizationRequiredError";
+    this.authorizationUrl = authorizationUrl;
   }
 }
 
@@ -38,16 +43,26 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private currentOAuthState = "";
   private cachedAuthData: McpOAuthSession | undefined;
   private initialized = false;
+  private saveCodeVerifierPromise: Promise<void> | null = null;
+  private cachedAuthorizationUrl: URL | null = null;
+  private readonly config: {
+    mcpConnectorId: string;
+    serverUrl: string;
+    clientMetadata: OAuthClientMetadata;
+    onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
+    state?: string; // Optional: adopt existing state (for callback reconciliation)
+  };
+  private saveClientInformationPromise: Promise<void> | null = null;
 
-  constructor(
-    private config: {
-      mcpConnectorId: string;
-      serverUrl: string;
-      clientMetadata: OAuthClientMetadata;
-      onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
-      state?: string; // Optional: adopt existing state (for callback reconciliation)
-    }
-  ) {}
+  constructor(config: {
+    mcpConnectorId: string;
+    serverUrl: string;
+    clientMetadata: OAuthClientMetadata;
+    onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
+    state?: string; // Optional: adopt existing state (for callback reconciliation)
+  }) {
+    this.config = config;
+  }
 
   private initializationPromise: Promise<void> | null = null;
 
@@ -107,18 +122,16 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return this.cachedAuthData;
   }
 
-  private async updateAuthData(data: {
-    codeVerifier?: string;
-    clientInfo?: OAuthClientInformationFull;
-    tokens?: OAuthTokens | null;
-  }) {
+  private async updateAuthData(data: { tokens?: OAuthTokens | null }) {
     if (!this.currentOAuthState) {
       throw new Error("OAuth not initialized");
     }
+
     this.cachedAuthData = await updateSessionByState({
       state: this.currentOAuthState,
       updates: data,
     });
+
     return this.cachedAuthData;
   }
 
@@ -166,7 +179,36 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   async saveClientInformation(
     clientCredentials: OAuthClientInformationFull
   ): Promise<void> {
-    await this.updateAuthData({ clientInfo: clientCredentials });
+    if (this.saveClientInformationPromise) {
+      await this.saveClientInformationPromise;
+      return;
+    }
+
+    // If we already have a client registered for this state, keep it stable.
+    // Some OAuth servers treat authorization codes as bound to client_id.
+    if (this.cachedAuthData?.clientInfo) {
+      return;
+    }
+
+    // Optimistic set so subsequent calls in this instance skip.
+    if (this.cachedAuthData) {
+      this.cachedAuthData = {
+        ...this.cachedAuthData,
+        clientInfo: clientCredentials,
+      };
+    }
+
+    this.saveClientInformationPromise = setOAuthClientInfoOnceByState({
+      state: this.currentOAuthState,
+      clientInfo: clientCredentials,
+    })
+      .then((session) => {
+        this.cachedAuthData = session;
+      })
+      .finally(() => {
+        this.saveClientInformationPromise = null;
+      });
+    await this.saveClientInformationPromise;
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {
@@ -184,10 +226,24 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
     authorizationUrl.searchParams.set("state", this.state());
+
+    // If the SDK calls redirect twice, keep the first URL stable.
+    // Otherwise the UI might open URL #1 while the DB ended up with verifier #2.
+    if (this.cachedAuthorizationUrl) {
+      await this.config.onRedirectToAuthorization(this.cachedAuthorizationUrl);
+      return;
+    }
+    this.cachedAuthorizationUrl = new URL(authorizationUrl.toString());
+
     await this.config.onRedirectToAuthorization(authorizationUrl);
   }
 
   async saveCodeVerifier(pkceVerifier: string): Promise<void> {
+    if (this.saveCodeVerifierPromise) {
+      await this.saveCodeVerifierPromise;
+      return;
+    }
+
     // Only save verifier ONCE - the AI SDK calls this multiple times
     // but the code_challenge is generated from the FIRST verifier.
     // If we already have a verifier for this session, keep it.
@@ -202,6 +258,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         },
         "saveCodeVerifier: SKIPPING - verifier already exists"
       );
+
       return;
     }
 
@@ -212,7 +269,27 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       },
       "saveCodeVerifier: saving first verifier"
     );
-    await this.updateAuthData({ codeVerifier: pkceVerifier });
+
+    // Optimistic in-memory set so a concurrent call in this instance will skip.
+    if (this.cachedAuthData) {
+      this.cachedAuthData = {
+        ...this.cachedAuthData,
+        codeVerifier: pkceVerifier,
+      };
+    }
+
+    // Serialize and make the DB write immutable (DB-side also guards against overwrite).
+    this.saveCodeVerifierPromise = setOAuthCodeVerifierOnceByState({
+      state: this.currentOAuthState,
+      codeVerifier: pkceVerifier,
+    })
+      .then((session) => {
+        this.cachedAuthData = session;
+      })
+      .finally(() => {
+        this.saveCodeVerifierPromise = null;
+      });
+    await this.saveCodeVerifierPromise;
   }
 
   async codeVerifier(): Promise<string> {
