@@ -6,7 +6,7 @@ import { ChatSystem } from "@/components/chat-system";
 import { useChatId } from "@/providers/chat-id-provider";
 import { useTRPC } from "@/trpc/react";
 
-export function ProjectPageRouter() {
+export function ProjectPage() {
   const params = useParams<{ projectId?: string }>();
   const { id } = useChatId();
   const trpc = useTRPC();

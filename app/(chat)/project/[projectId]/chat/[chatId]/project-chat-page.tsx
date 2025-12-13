@@ -11,7 +11,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import { getDefaultThread } from "@/lib/thread-utils";
 import { useChatId } from "@/providers/chat-id-provider";
 
-export function ProjectChatPageRouter() {
+export function ProjectChatPage() {
   const { id } = useChatId();
   const params = useParams<{ projectId?: string }>();
 
