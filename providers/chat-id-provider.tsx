@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { generateUUID } from "@/lib/utils";
+import { resolveChatId } from "./resolve-chat-id";
 
 type ChatIdContextType = {
   id: string;
@@ -25,57 +26,45 @@ type ChatIdContextType = {
 
 const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
-const SHARE_ROUTE_PATTERN = /^\/share\/(.+)$/;
-const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
-const CHAT_ROUTE_PATTERN = /^\/chat\/(.+)$/;
-
-function getPersistedChatIdFromPathname(pathname: string | null) {
-  const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
-  if (shareMatch) {
-    return shareMatch[1];
-  }
-
-  const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
-  if (projectMatch) {
-    const chatId = projectMatch[2];
-    return chatId || null;
-  }
-
-  const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
-  if (chatMatch) {
-    return chatMatch[1];
-  }
-
-  return null;
-}
-
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [provisionalId, setProvisionalId] = useState<string>(() =>
+  const [provisionalChatId, setProvisionalChatId] = useState<string>(() =>
     generateUUID()
   );
   const [confirmedChatId, setConfirmedChatId] = useState<string | null>(null);
 
   const { id, isPersisted } = useMemo(() => {
-    const urlChatId = getPersistedChatIdFromPathname(pathname);
-    if (urlChatId) {
-      return { id: urlChatId, isPersisted: true };
+    const fromPathname = resolveChatId({
+      pathname,
+      provisionalId: provisionalChatId,
+    });
+
+    /**
+     * Precedence (no navigation, no router writes):
+     * 1) If the URL already points at a chat (/chat/:id, /project/:p/chat/:id, /share/:id),
+     *    that ID wins and is always persisted.
+     * 2) Otherwise, if the server confirms a persisted chat id during the current interaction,
+     *    use that as the active id (still without navigating).
+     * 3) Otherwise, fall back to the provisional id (not persisted).
+     */
+    if (fromPathname.isPersisted) {
+      return { id: fromPathname.id, isPersisted: true };
     }
     if (confirmedChatId) {
       return { id: confirmedChatId, isPersisted: true };
     }
     return {
-      id: provisionalId,
+      id: fromPathname.id,
       isPersisted: false,
     };
-  }, [pathname, provisionalId, confirmedChatId]);
+  }, [pathname, provisionalChatId, confirmedChatId]);
 
   const confirmChatId = useCallback((chatId: string) => {
     setConfirmedChatId(chatId);
   }, []);
 
   const refreshChatID = useCallback(() => {
-    setProvisionalId(generateUUID());
+    setProvisionalChatId(generateUUID());
     setConfirmedChatId(null);
   }, []);
 
