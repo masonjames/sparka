@@ -10,11 +10,9 @@ import {
   useState,
 } from "react";
 import { generateUUID } from "@/lib/utils";
-import type { ChatIdType } from "./resolve-chat-id";
 
 type ChatIdContextType = {
   id: string;
-  type: ChatIdType;
   /**
    * True when the current chatId is known to be persisted server-side (i.e. safe to query).
    * For existing chats, this is true immediately. For provisional chats, this flips when the
@@ -58,17 +56,16 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
   );
   const [confirmedChatId, setConfirmedChatId] = useState<string | null>(null);
 
-  const { id, type, isPersisted } = useMemo(() => {
+  const { id, isPersisted } = useMemo(() => {
     const urlChatId = getPersistedChatIdFromPathname(pathname);
     if (urlChatId) {
-      return { id: urlChatId, type: "chat" as const, isPersisted: true };
+      return { id: urlChatId, isPersisted: true };
     }
     if (confirmedChatId) {
-      return { id: confirmedChatId, type: "chat" as const, isPersisted: true };
+      return { id: confirmedChatId, isPersisted: true };
     }
     return {
       id: provisionalId,
-      type: "provisional" as const,
       isPersisted: false,
     };
   }, [pathname, provisionalId, confirmedChatId]);
@@ -85,12 +82,11 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       id,
-      type,
       isPersisted,
       confirmChatId,
       refreshChatID,
     }),
-    [id, type, isPersisted, confirmChatId, refreshChatID]
+    [id, isPersisted, confirmChatId, refreshChatID]
   );
 
   return (
