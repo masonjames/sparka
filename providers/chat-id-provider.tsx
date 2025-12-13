@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { generateUUID } from "@/lib/utils";
-import { type ChatIdType, resolveChatId } from "./resolve-chat-id";
+import type { ChatIdType } from "./resolve-chat-id";
 
 type ChatIdContextType = {
   id: string;
@@ -21,56 +21,65 @@ type ChatIdContextType = {
    * server confirms it saved the first user message.
    */
   isPersisted: boolean;
-  markPendingChatId: (chatId: string) => void;
   confirmChatId: (chatId: string) => void;
   refreshChatID: () => void;
 };
 
 const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
+const SHARE_ROUTE_PATTERN = /^\/share\/(.+)$/;
+const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
+const CHAT_ROUTE_PATTERN = /^\/chat\/(.+)$/;
+
+function getPersistedChatIdFromPathname(pathname: string | null) {
+  const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
+  if (shareMatch) {
+    return shareMatch[1];
+  }
+
+  const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
+  if (projectMatch) {
+    const chatId = projectMatch[2];
+    return chatId || null;
+  }
+
+  const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
+  if (chatMatch) {
+    return chatMatch[1];
+  }
+
+  return null;
+}
+
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [provisionalId, setProvisionalId] = useState<string>(() =>
     generateUUID()
   );
-  const [pendingChatId, setPendingChatId] = useState<string | null>(null);
+  const [confirmedChatId, setConfirmedChatId] = useState<string | null>(null);
 
   const { id, type, isPersisted } = useMemo(() => {
-    const resolved = resolveChatId({
-      pathname,
-      provisionalId,
-    });
-    // If we pushed a provisional chatId into the URL, keep treating it as provisional
-    // until the backend confirms persistence.
-    if (
-      resolved.type === "chat" &&
-      pendingChatId &&
-      pendingChatId === resolved.id
-    ) {
-      return { ...resolved, type: "provisional" as const, isPersisted: false };
+    const urlChatId = getPersistedChatIdFromPathname(pathname);
+    if (urlChatId) {
+      return { id: urlChatId, type: "chat" as const, isPersisted: true };
     }
-    return resolved;
-  }, [pathname, provisionalId, pendingChatId]);
+    if (confirmedChatId) {
+      return { id: confirmedChatId, type: "chat" as const, isPersisted: true };
+    }
+    return {
+      id: provisionalId,
+      type: "provisional" as const,
+      isPersisted: false,
+    };
+  }, [pathname, provisionalId, confirmedChatId]);
 
-  const markPendingChatId = useCallback((chatId: string) => {
-    setPendingChatId(chatId);
+  const confirmChatId = useCallback((chatId: string) => {
+    setConfirmedChatId(chatId);
   }, []);
-
-  const confirmChatId = useCallback(
-    (chatId: string) => {
-      if (pendingChatId !== chatId) {
-        return;
-      }
-      setPendingChatId(null);
-      // Regenerate provisional ID for future new chats (next time user goes to / or /project/:id)
-      setProvisionalId(generateUUID());
-    },
-    [pendingChatId]
-  );
 
   const refreshChatID = useCallback(() => {
     setProvisionalId(generateUUID());
-    setPendingChatId(null);
+    setConfirmedChatId(null);
   }, []);
 
   const value = useMemo(
@@ -78,11 +87,10 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
       id,
       type,
       isPersisted,
-      markPendingChatId,
       confirmChatId,
       refreshChatID,
     }),
-    [id, type, isPersisted, markPendingChatId, confirmChatId, refreshChatID]
+    [id, type, isPersisted, confirmChatId, refreshChatID]
   );
 
   return (

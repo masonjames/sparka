@@ -83,7 +83,7 @@ function PureMultimodalInput({
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
-  const { markPendingChatId } = useChatId();
+  useChatId();
   const messageIds = useMessageIds();
   const { setMessages, sendMessage } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
@@ -222,7 +222,6 @@ function PureMultimodalInput({
 
       const currentPath = window.location.pathname;
       if (currentPath === "/") {
-        markPendingChatId(chatIdToAdd);
         window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
         return;
       }
@@ -231,7 +230,6 @@ function PureMultimodalInput({
       const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
       if (projectMatch) {
         const [, projectId] = projectMatch;
-        markPendingChatId(chatIdToAdd);
         window.history.pushState(
           {},
           "",
@@ -239,7 +237,7 @@ function PureMultimodalInput({
         );
       }
     },
-    [session?.user, markPendingChatId]
+    [session?.user]
   );
 
   // Trim messages in edit mode
