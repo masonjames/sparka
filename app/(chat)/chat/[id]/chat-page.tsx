@@ -9,17 +9,11 @@ import {
 } from "@/hooks/chat-sync-hooks";
 import type { UiToolName } from "@/lib/ai/types";
 import { getDefaultThread } from "@/lib/thread-utils";
+import { useChatId } from "@/providers/chat-id-provider";
 import { useSession } from "@/providers/session-provider";
 
-export function ChatPage({ id }: { id: string }) {
-  const { data: session } = useSession();
-
-  // Anonymous users can't access specific chat pages
-  if (!session?.user) {
-    redirect("/");
-  }
-
-  const getChatByIdQueryOptions = useGetChatByIdQueryOptions(id);
+function ChatPageContent({ chatId }: { chatId: string }) {
+  const getChatByIdQueryOptions = useGetChatByIdQueryOptions(chatId);
   const { data: chat } = useSuspenseQuery(getChatByIdQueryOptions);
   const getMessagesByChatIdQueryOptions = useGetChatMessagesQueryOptions();
   const { data: messages } = useSuspenseQuery(getMessagesByChatIdQueryOptions);
@@ -52,10 +46,6 @@ export function ChatPage({ id }: { id: string }) {
     return null;
   }, [messages]);
 
-  if (!id) {
-    return notFound();
-  }
-
   if (!chat) {
     return notFound();
   }
@@ -68,4 +58,21 @@ export function ChatPage({ id }: { id: string }) {
       isReadonly={false}
     />
   );
+}
+
+export function ChatPage() {
+  const { id, isPersisted } = useChatId();
+  const { data: session, isPending } = useSession();
+
+  // Anonymous users can't access persisted chat pages
+  if (isPersisted && !isPending && !session?.user) {
+    redirect("/");
+  }
+
+  if (!(id && isPersisted)) {
+    return notFound();
+  }
+
+  // Let the route's <Suspense> boundary handle the fetch.
+  return <ChatPageContent chatId={id} />;
 }

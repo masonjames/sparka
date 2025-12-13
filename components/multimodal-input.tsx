@@ -36,6 +36,7 @@ import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn, generateUUID } from "@/lib/utils";
+import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
@@ -82,6 +83,7 @@ function PureMultimodalInput({
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
+  const { markPendingChatId } = useChatId();
   const messageIds = useMessageIds();
   const { setMessages, sendMessage } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
@@ -220,6 +222,7 @@ function PureMultimodalInput({
 
       const currentPath = window.location.pathname;
       if (currentPath === "/") {
+        markPendingChatId(chatIdToAdd);
         window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
         return;
       }
@@ -228,6 +231,7 @@ function PureMultimodalInput({
       const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
       if (projectMatch) {
         const [, projectId] = projectMatch;
+        markPendingChatId(chatIdToAdd);
         window.history.pushState(
           {},
           "",
@@ -235,7 +239,7 @@ function PureMultimodalInput({
         );
       }
     },
-    [session?.user]
+    [session?.user, markPendingChatId]
   );
 
   // Trim messages in edit mode

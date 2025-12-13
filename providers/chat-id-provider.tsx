@@ -7,7 +7,7 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useRef,
+  useState,
 } from "react";
 import { generateUUID } from "@/lib/utils";
 import { type ChatIdType, resolveChatId } from "./resolve-chat-id";
@@ -15,6 +15,14 @@ import { type ChatIdType, resolveChatId } from "./resolve-chat-id";
 type ChatIdContextType = {
   id: string;
   type: ChatIdType;
+  /**
+   * True when the current chatId is known to be persisted server-side (i.e. safe to query).
+   * For existing chats, this is true immediately. For provisional chats, this flips when the
+   * server confirms it saved the first user message.
+   */
+  isPersisted: boolean;
+  markPendingChatId: (chatId: string) => void;
+  confirmChatId: (chatId: string) => void;
   refreshChatID: () => void;
 };
 
@@ -22,33 +30,59 @@ const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const provisionalChatIdRef = useRef<string>(generateUUID());
+  const [provisionalId, setProvisionalId] = useState<string>(() =>
+    generateUUID()
+  );
+  const [pendingChatId, setPendingChatId] = useState<string | null>(null);
 
-  const { id, type } = useMemo(() => {
-    const result = resolveChatId({
+  const { id, type, isPersisted } = useMemo(() => {
+    const resolved = resolveChatId({
       pathname,
-      provisionalId: provisionalChatIdRef.current,
+      provisionalId,
     });
-
-    // When the provisional chat was persisted, regenerate the ID for future new chats
-    if (result.shouldRefreshProvisionalId) {
-      provisionalChatIdRef.current = generateUUID();
+    // If we pushed a provisional chatId into the URL, keep treating it as provisional
+    // until the backend confirms persistence.
+    if (
+      resolved.type === "chat" &&
+      pendingChatId &&
+      pendingChatId === resolved.id
+    ) {
+      return { ...resolved, type: "provisional" as const, isPersisted: false };
     }
+    return resolved;
+  }, [pathname, provisionalId, pendingChatId]);
 
-    return result;
-  }, [pathname]);
+  const markPendingChatId = useCallback((chatId: string) => {
+    setPendingChatId(chatId);
+  }, []);
+
+  const confirmChatId = useCallback(
+    (chatId: string) => {
+      if (pendingChatId !== chatId) {
+        return;
+      }
+      setPendingChatId(null);
+      // Regenerate provisional ID for future new chats (next time user goes to / or /project/:id)
+      setProvisionalId(generateUUID());
+    },
+    [pendingChatId]
+  );
 
   const refreshChatID = useCallback(() => {
-    provisionalChatIdRef.current = generateUUID();
+    setProvisionalId(generateUUID());
+    setPendingChatId(null);
   }, []);
 
   const value = useMemo(
     () => ({
       id,
       type,
+      isPersisted,
+      markPendingChatId,
+      confirmChatId,
       refreshChatID,
     }),
-    [id, type, refreshChatID]
+    [id, type, isPersisted, markPendingChatId, confirmChatId, refreshChatID]
   );
 
   return (
