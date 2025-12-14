@@ -69,7 +69,7 @@ export default async function ChatLayout({
     <TRPCReactProvider>
       <HydrateClient>
         <SessionProvider initialSession={session}>
-          <ChatProviders user={session?.user}>
+          <ChatProviders>
             <SidebarProvider defaultOpen={!isCollapsed}>
               <AppSidebar />
               <SidebarInset
