@@ -6,21 +6,20 @@ import {
   Eye,
   Globe,
   Key,
-  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
   Radio,
   Trash2,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useQueryStates } from "nuqs";
+import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import {
-  openOAuthPopup,
-  waitForOAuthComplete,
-} from "@/lib/ai/mcp/oauth-redirect";
 import type { McpConnector } from "@/lib/db/schema";
+import {
+  type McpConnectorsDialog,
+  mcpConnectorsSettingsSearchParams,
+} from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 import { useConfig } from "../config-provider";
 import { Favicon } from "../favicon";
@@ -37,6 +36,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Switch } from "../ui/switch";
 import { McpConfigDialog } from "./mcp-config-dialog";
+import { McpConnectDialog } from "./mcp-connect-dialog";
 import { McpDetailsDialog } from "./mcp-details-dialog";
 import { SettingsPageContent } from "./settings-page";
 
@@ -44,32 +44,38 @@ export function ConnectorsSettings() {
   const trpc = useTRPC();
   const config = useConfig();
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // URL state for dialogs
-  const urlDialog = searchParams.get("dialog");
-  const urlConnectorId = searchParams.get("connectorId");
+  const [qs, setQs] = useQueryStates(mcpConnectorsSettingsSearchParams, {
+    history: "replace",
+    shallow: true,
+  });
 
   const { data: connectors, isLoading } = useQuery(
     trpc.mcp.list.queryOptions()
   );
 
   // Derive dialog state from URL
-  const dialogOpen = urlDialog === "config";
-  const detailsDialogOpen = urlDialog === "details";
+  const dialogOpen = qs.dialog === "config";
+  const detailsDialogOpen = qs.dialog === "details";
+  const connectDialogOpen = qs.dialog === "connect";
   const editingConnector = useMemo(() => {
-    if (!(dialogOpen && urlConnectorId && connectors)) {
+    if (!(dialogOpen && qs.connectorId && connectors)) {
       return null;
     }
-    return connectors.find((c) => c.id === urlConnectorId) ?? null;
-  }, [dialogOpen, urlConnectorId, connectors]);
+    return connectors.find((c) => c.id === qs.connectorId) ?? null;
+  }, [dialogOpen, qs.connectorId, connectors]);
   const detailsConnector = useMemo(() => {
-    if (!(detailsDialogOpen && urlConnectorId && connectors)) {
+    if (!(detailsDialogOpen && qs.connectorId && connectors)) {
       return null;
     }
-    return connectors.find((c) => c.id === urlConnectorId) ?? null;
-  }, [detailsDialogOpen, urlConnectorId, connectors]);
+    return connectors.find((c) => c.id === qs.connectorId) ?? null;
+  }, [detailsDialogOpen, qs.connectorId, connectors]);
+  const connectConnector = useMemo(() => {
+    if (!(connectDialogOpen && qs.connectorId && connectors)) {
+      return null;
+    }
+    return connectors.find((c) => c.id === qs.connectorId) ?? null;
+  }, [connectDialogOpen, qs.connectorId, connectors]);
 
   const queryKey = trpc.mcp.list.queryKey();
 
@@ -124,34 +130,27 @@ export function ConnectorsSettings() {
     })
   );
 
-  // URL manipulation helpers
-  const setUrlState = useCallback(
-    (dialog: string | null, connectorId?: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (dialog) {
-        params.set("dialog", dialog);
-      } else {
-        params.delete("dialog");
-      }
-      if (connectorId) {
-        params.set("connectorId", connectorId);
-      } else {
-        params.delete("connectorId");
-      }
-      const qs = params.toString();
-      const newPath = qs
-        ? `${window.location.pathname}?${qs}`
-        : window.location.pathname;
-      router.replace(newPath as never, { scroll: false });
+  const setDialogState = useCallback(
+    ({
+      dialog,
+      connectorId,
+    }: {
+      dialog: McpConnectorsDialog | null;
+      connectorId?: string | null;
+    }) => {
+      setQs({
+        dialog,
+        connectorId: connectorId ?? null,
+      });
     },
-    [router, searchParams]
+    [setQs]
   );
 
   const handleOpenConfigDialog = useCallback(
     (connectorId?: string) => {
-      setUrlState("config", connectorId ?? null);
+      setDialogState({ dialog: "config", connectorId: connectorId ?? null });
     },
-    [setUrlState]
+    [setDialogState]
   );
 
   const handleEdit = (connector: McpConnector) => {
@@ -159,23 +158,90 @@ export function ConnectorsSettings() {
   };
 
   const handleDialogClose = () => {
-    setUrlState(null);
+    setDialogState({ dialog: null });
   };
 
   const handleViewDetails = (connector: McpConnector) => {
-    setUrlState("details", connector.id);
+    setDialogState({ dialog: "details", connectorId: connector.id });
   };
 
   const handleDetailsDialogClose = () => {
-    setUrlState(null);
+    setDialogState({ dialog: null });
   };
 
-  // Callback when a new connector is created - transition to details
-  const handleConnectorCreated = useCallback(
+  const handleOpenConnectDialog = useCallback(
     (connector: McpConnector) => {
-      setUrlState("details", connector.id);
+      setDialogState({ dialog: "connect", connectorId: connector.id });
     },
-    [setUrlState]
+    [setDialogState]
+  );
+
+  const handleConnectDialogClose = useCallback(() => {
+    if (qs.connectorId) {
+      setDialogState({ dialog: "details", connectorId: qs.connectorId });
+      return;
+    }
+    setDialogState({ dialog: null });
+  }, [qs.connectorId, setDialogState]);
+
+  useEffect(() => {
+    if (qs.connected) {
+      toast.success("Authorization successful");
+      setQs({ connected: null });
+    }
+    if (qs.error) {
+      toast.error(qs.error);
+      setQs({ error: null });
+    }
+  }, [qs.connected, qs.error, setQs]);
+
+  const handleDetailsConnect = useCallback(() => {
+    if (!detailsConnector) {
+      return;
+    }
+    handleOpenConnectDialog(detailsConnector);
+  }, [detailsConnector, handleOpenConnectDialog]);
+
+  const handleDetailsConfigure = useCallback(() => {
+    if (!detailsConnector) {
+      return;
+    }
+    setDialogState({ dialog: "config", connectorId: detailsConnector.id });
+  }, [detailsConnector, setDialogState]);
+
+  const handleDetailsToggleEnabled = useCallback(
+    (enabled: boolean) => {
+      if (!detailsConnector) {
+        return;
+      }
+      toggleEnabled({ id: detailsConnector.id, enabled });
+    },
+    [detailsConnector, toggleEnabled]
+  );
+
+  // Callback when a new connector is created - check auth and transition accordingly
+  const handleConnectorCreated = useCallback(
+    async (connector: McpConnector) => {
+      // Check if connector needs OAuth authorization
+      try {
+        const authStatus = await queryClient.fetchQuery({
+          ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
+          staleTime: 0,
+        });
+
+        if (authStatus.isAuthenticated) {
+          // Already authenticated, go to details
+          setDialogState({ dialog: "details", connectorId: connector.id });
+        } else {
+          // Needs auth, show connect dialog first
+          setDialogState({ dialog: "connect", connectorId: connector.id });
+        }
+      } catch {
+        // If check fails, default to connect dialog (likely needs auth)
+        setDialogState({ dialog: "connect", connectorId: connector.id });
+      }
+    },
+    [setDialogState, queryClient, trpc.mcp.checkAuth]
   );
 
   if (!config.integrations.mcp) {
@@ -218,6 +284,7 @@ export function ConnectorsSettings() {
             <ConnectorRow
               connector={connector}
               key={connector.id}
+              onConnect={() => handleOpenConnectDialog(connector)}
               onDelete={() => deleteConnector({ id: connector.id })}
               onEdit={() => handleEdit(connector)}
               onToggle={(enabled) =>
@@ -250,7 +317,16 @@ export function ConnectorsSettings() {
       <McpDetailsDialog
         connector={detailsConnector}
         onCloseAction={handleDetailsDialogClose}
+        onConfigureAction={handleDetailsConfigure}
+        onConnectAction={handleDetailsConnect}
+        onToggleEnabledAction={handleDetailsToggleEnabled}
         open={detailsDialogOpen}
+      />
+
+      <McpConnectDialog
+        connector={connectConnector}
+        onClose={handleConnectDialogClose}
+        open={connectDialogOpen}
       />
     </SettingsPageContent>
   );
@@ -262,20 +338,19 @@ function ConnectorRow({
   onEdit,
   onDelete,
   onViewDetails,
+  onConnect,
 }: {
   connector: McpConnector;
   onToggle: (enabled: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
   onViewDetails: () => void;
+  onConnect: () => void;
 }) {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const isGlobal = connector.userId === null;
   const faviconUrl =
     connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
-
-  const [isAuthorizing, setIsAuthorizing] = useState(false);
 
   // Query to check OAuth status
   const { data: authStatus } = useQuery({
@@ -283,95 +358,58 @@ function ConnectorRow({
     staleTime: 30_000, // Cache for 30 seconds
   });
 
-  // Mutation to initiate OAuth
-  const { mutateAsync: authorize } = useMutation(
-    trpc.mcp.authorize.mutationOptions({
-      onError: (err) => {
-        toast.error(err.message || "Failed to initiate authorization");
-      },
-    })
-  );
-
-  const handleAuthorize = useCallback(async () => {
-    // Open popup immediately to avoid popup blocker
-    const popup = openOAuthPopup();
-    if (!popup) {
-      toast.error("Failed to open popup. Please allow popups for this site.");
-      return;
-    }
-
-    setIsAuthorizing(true);
-    try {
-      const result = await authorize({ id: connector.id });
-
-      // Navigate popup to auth URL
-      popup.setUrl(result.authorizationUrl);
-
-      // Wait for OAuth to complete
-      await waitForOAuthComplete({
-        authWindow: popup.window,
-        onSuccess: () => {
-          toast.success("Successfully authorized!");
-          queryClient.invalidateQueries({
-            queryKey: trpc.mcp.checkAuth.queryKey({ id: connector.id }),
-          });
-        },
-        onError: (error) => {
-          toast.error(error.message || "Authorization failed");
-        },
-      });
-    } catch (error) {
-      popup.close();
-      if (
-        error instanceof Error &&
-        !error.message.includes("does not require OAuth") &&
-        !error.message.includes("cancelled")
-      ) {
-        console.error("Authorization error:", error);
-      }
-    } finally {
-      setIsAuthorizing(false);
-    }
-  }, [authorize, connector.id, queryClient, trpc.mcp.checkAuth]);
-
   return (
     <div className="flex items-center gap-4 overflow-hidden rounded-lg border bg-card p-4">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
-        {faviconUrl ? (
-          <>
-            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-            <Globe className="hidden size-5 text-muted-foreground" />
-          </>
-        ) : (
-          <Globe className="size-5 text-muted-foreground" />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="truncate font-medium text-sm">{connector.name}</span>
-          <Badge
-            className="shrink-0 text-[10px]"
-            variant={connector.type === "http" ? "default" : "secondary"}
-          >
-            {connector.type.toUpperCase()}
-          </Badge>
-          {isGlobal && (
-            <Badge className="shrink-0 text-[10px]" variant="outline">
-              Global
-            </Badge>
-          )}
-          {authStatus?.isAuthenticated && (
-            <Badge className="shrink-0 gap-1 text-[10px]" variant="outline">
-              <Check className="size-3" />
-              Authorized
-            </Badge>
+      <button
+        className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden text-left"
+        onClick={onViewDetails}
+        type="button"
+      >
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+          {faviconUrl ? (
+            <>
+              <Favicon className="size-5 rounded-sm" url={faviconUrl} />
+              <Globe className="hidden size-5 text-muted-foreground" />
+            </>
+          ) : (
+            <Globe className="size-5 text-muted-foreground" />
           )}
         </div>
-        <p className="mt-1 truncate text-muted-foreground text-xs">
-          {getUrlWithoutParams(connector.url)}
-        </p>
-      </div>
+
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="truncate font-medium text-sm">
+              {connector.name}
+            </span>
+            <Badge
+              className="h-5 shrink-0 px-2 text-[10px]"
+              variant={connector.type === "http" ? "default" : "secondary"}
+            >
+              {connector.type.toUpperCase()}
+            </Badge>
+            {isGlobal && (
+              <Badge
+                className="h-5 shrink-0 px-2 text-[10px]"
+                variant="outline"
+              >
+                Global
+              </Badge>
+            )}
+            {authStatus?.isAuthenticated && (
+              <Badge
+                className="h-5 shrink-0 gap-1 px-2 text-[10px]"
+                variant="outline"
+              >
+                <Check className="size-3" />
+                Authorized
+              </Badge>
+            )}
+          </div>
+          <p className="mt-1 truncate text-muted-foreground text-xs">
+            {getUrlWithoutParams(connector.url)}
+          </p>
+        </div>
+      </button>
 
       <div className="flex shrink-0 items-center gap-2">
         <Switch checked={connector.enabled} onCheckedChange={onToggle} />
@@ -391,16 +429,9 @@ function ConnectorRow({
               Configure
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              disabled={isAuthorizing}
-              onClick={handleAuthorize}
-            >
-              {isAuthorizing ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Key className="size-4" />
-              )}
-              {authStatus?.isAuthenticated ? "Re-authorize" : "Authorize"}
+            <DropdownMenuItem onClick={onConnect}>
+              <Key className="size-4" />
+              {authStatus?.isAuthenticated ? "Reconnect" : "Connect"}
             </DropdownMenuItem>
             {!isGlobal && (
               <>

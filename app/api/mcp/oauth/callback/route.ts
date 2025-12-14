@@ -1,76 +1,46 @@
-import type { NextRequest } from "next/server";
-import { createMcpClientForCallback } from "@/lib/ai/mcp/mcp-client";
-import { getMcpConnectorById, getSessionByState } from "@/lib/db/queries";
+import { type NextRequest, NextResponse } from "next/server";
+import {
+  createMcpClientForCallback,
+  removeMcpClient,
+} from "@/lib/ai/mcp/mcp-client";
+import { getMcpConnectorById, getSessionByState } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
+import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
+import {
+  loadMcpOAuthCallbackSearchParams,
+  serializeMcpConnectorsSettingsSearchParams,
+} from "@/lib/nuqs/mcp-search-params.server";
 
 const log = createModuleLogger("mcp-oauth-callback");
 
-function createOAuthResponsePage({
-  type,
-  title,
-  heading,
-  message,
-  postMessageType,
-  postMessageData,
-}: {
-  type: "success" | "error";
-  title: string;
-  heading: string;
-  message: string;
-  postMessageType: string;
-  postMessageData: Record<string, string>;
-}): Response {
-  const color = type === "success" ? "#22c55e" : "#ef4444";
-  const dataEntries = Object.entries(postMessageData)
-    .map(([k, v]) => `${k}: '${v.replace(/'/g, "\\'")}'`)
-    .join(", ");
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>${title}</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 2rem; background: #0a0a0a; color: #fafafa;">
-  <script>
-    try {
-      window.opener?.postMessage({
-        type: '${postMessageType}',
-        ${dataEntries}
-      }, window.location.origin);
-    } catch (e) { console.error('postMessage error:', e); }
-    setTimeout(() => window.close(), 1500);
-  </script>
-  <div style="max-width: 400px; margin: 0 auto; padding: 2rem; border-radius: 12px; background: #171717;">
-    <div style="color: ${color}; margin-bottom: 1rem;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        ${
-          type === "success"
-            ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
-            : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'
-        }
-      </svg>
-    </div>
-    <h2 style="margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 600;">${heading}</h2>
-    <p style="margin: 0 0 1rem; color: #a1a1aa; font-size: 0.875rem;">${message}</p>
-    <p style="margin: 0; color: #71717a; font-size: 0.75rem;">This window will close automatically.</p>
-  </div>
-</body>
-</html>`;
-
-  return new Response(html, {
-    headers: { "Content-Type": "text/html; charset=utf-8" },
-  });
-}
-
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
-  const state = searchParams.get("state");
-  const error = searchParams.get("error");
-  const errorDesc = searchParams.get("error_description");
+  const {
+    code,
+    state,
+    error,
+    error_description: errorDesc,
+  } = await loadMcpOAuthCallbackSearchParams(request);
+
+  const redirectToSettings = ({
+    connectorId,
+    dialog,
+    connected,
+    errorMessage,
+  }: {
+    connectorId?: string;
+    dialog?: McpConnectorsDialog;
+    connected?: boolean;
+    errorMessage?: string;
+  }) => {
+    const url = new URL("/settings/connectors", request.nextUrl.origin);
+    url.search = serializeMcpConnectorsSettingsSearchParams({
+      dialog: dialog ?? null,
+      connectorId: connectorId ?? null,
+      connected: connected ? true : null,
+      error: errorMessage ?? null,
+    });
+    return NextResponse.redirect(url);
+  };
 
   log.info(
     { hasCode: !!code, hasState: !!state, error },
@@ -79,28 +49,14 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     log.error({ error, errorDesc }, "OAuth error from provider");
-    return createOAuthResponsePage({
-      type: "error",
-      title: "OAuth Error",
-      heading: "Authentication Failed",
-      message: `${error}: ${errorDesc ?? "Unknown error"}`,
-      postMessageType: "MCP_OAUTH_ERROR",
-      postMessageData: { error, error_description: errorDesc ?? "" },
-    });
+    const message = `${error}: ${errorDesc ?? "Unknown error"}`;
+    return redirectToSettings({ dialog: "details", errorMessage: message });
   }
 
   if (!(code && state)) {
     log.error({ code: !!code, state: !!state }, "Missing code or state");
-    return createOAuthResponsePage({
-      type: "error",
-      title: "OAuth Error",
-      heading: "Authentication Failed",
-      message: "Missing authorization code or state parameter",
-      postMessageType: "MCP_OAUTH_ERROR",
-      postMessageData: {
-        error: "invalid_request",
-        error_description: "Missing parameters",
-      },
+    return redirectToSettings({
+      errorMessage: "Missing authorization code or state parameter",
     });
   }
 
@@ -109,16 +65,8 @@ export async function GET(request: NextRequest) {
 
   if (!session) {
     log.error({ state }, "Session not found for state");
-    return createOAuthResponsePage({
-      type: "error",
-      title: "OAuth Error",
-      heading: "Authentication Failed",
-      message: "Invalid or expired session. Please try again.",
-      postMessageType: "MCP_OAUTH_ERROR",
-      postMessageData: {
-        error: "invalid_state",
-        error_description: "Session not found",
-      },
+    return redirectToSettings({
+      errorMessage: "Invalid or expired session. Please try again.",
     });
   }
 
@@ -126,17 +74,7 @@ export async function GET(request: NextRequest) {
   const connector = await getMcpConnectorById({ id: session.mcpConnectorId });
   if (!connector) {
     log.error({ connectorId: session.mcpConnectorId }, "Connector not found");
-    return createOAuthResponsePage({
-      type: "error",
-      title: "OAuth Error",
-      heading: "Authentication Failed",
-      message: "MCP connector not found",
-      postMessageType: "MCP_OAUTH_ERROR",
-      postMessageData: {
-        error: "not_found",
-        error_description: "Connector not found",
-      },
-    });
+    return redirectToSettings({ errorMessage: "MCP connector not found" });
   }
 
   try {
@@ -157,13 +95,15 @@ export async function GET(request: NextRequest) {
       "OAuth flow completed successfully"
     );
 
-    return createOAuthResponsePage({
-      type: "success",
-      title: "OAuth Success",
-      heading: "Authentication Successful!",
-      message: "You can now use this MCP connector.",
-      postMessageType: "MCP_OAUTH_SUCCESS",
-      postMessageData: { success: "true", connectorId: connector.id },
+    // Important: clear any cached MCP client that might be stuck in `authorizing`
+    // from a pre-auth discovery attempt. Tokens are saved by finishAuth, but
+    // cached clients may still keep an authorization URL in memory.
+    await removeMcpClient(connector.id);
+
+    return redirectToSettings({
+      dialog: "details",
+      connectorId: connector.id,
+      connected: true,
     });
   } catch (err) {
     const errorMessage =
@@ -178,16 +118,10 @@ export async function GET(request: NextRequest) {
       "OAuth token exchange failed"
     );
 
-    return createOAuthResponsePage({
-      type: "error",
-      title: "OAuth Error",
-      heading: "Authentication Failed",
-      message: errorMessage,
-      postMessageType: "MCP_OAUTH_ERROR",
-      postMessageData: {
-        error: "auth_failed",
-        error_description: errorMessage,
-      },
+    return redirectToSettings({
+      dialog: "details",
+      connectorId: connector.id,
+      errorMessage,
     });
   }
 }

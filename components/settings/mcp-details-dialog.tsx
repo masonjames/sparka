@@ -1,48 +1,53 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   BookText,
+  Check,
   FileText,
   Globe,
-  Key,
   Loader2,
+  Settings2,
   Wrench,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  openOAuthPopup,
-  waitForOAuthComplete,
-} from "@/lib/ai/mcp/oauth-redirect";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
+import { Badge } from "../ui/badge";
 
 export function McpDetailsDialog({
   open,
   onCloseAction,
   connector,
+  onConnectAction,
+  onConfigureAction,
+  onToggleEnabledAction,
 }: {
   open: boolean;
   onCloseAction: () => void;
   connector: McpConnector | null;
+  onConnectAction: () => void;
+  onConfigureAction: () => void;
+  onToggleEnabledAction: (enabled: boolean) => void;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const [isAuthorizing, setIsAuthorizing] = useState(false);
-  const autoAuthTriggeredRef = useRef<string | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery({
     ...trpc.mcp.discover.queryOptions({ id: connector?.id ?? "" }),
@@ -50,96 +55,61 @@ export function McpDetailsDialog({
     retry: false,
   });
 
-  const { mutateAsync: authorize } = useMutation(
-    trpc.mcp.authorize.mutationOptions({
-      onError: (err) => {
-        toast.error(err.message || "Failed to initiate authorization");
-      },
-    })
-  );
+  const { data: authStatus } = useQuery({
+    ...trpc.mcp.checkAuth.queryOptions({ id: connector?.id ?? "" }),
+    enabled: open && connector !== null,
+    staleTime: 30_000,
+  });
 
-  // Check if error is an OAuth requirement
+  const isAuthenticated = authStatus?.isAuthenticated ?? false;
+
   const needsOAuth =
     error?.data?.code === "UNAUTHORIZED" &&
-    error?.message?.includes("OAuth authorization");
+    error.message.includes("OAuth authorization");
 
-  const handleAuthorize = useCallback(async () => {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
     if (!connector) {
       return;
     }
+    // When we come back from OAuth redirect, refresh auth + discovery.
+    queryClient.invalidateQueries({
+      queryKey: trpc.mcp.checkAuth.queryKey({ id: connector.id }),
+    });
+    refetch();
+  }, [open, connector, queryClient, refetch, trpc.mcp.checkAuth]);
 
-    // Open popup immediately to avoid popup blocker
-    const popup = openOAuthPopup();
-    if (!popup) {
-      toast.error("Failed to open popup. Please allow popups for this site.");
+  useEffect(() => {
+    if (!(open && connector && isAuthenticated)) {
       return;
     }
-
-    setIsAuthorizing(true);
-    try {
-      const result = await authorize({ id: connector.id });
-
-      // Navigate popup to auth URL
-      popup.setUrl(result.authorizationUrl);
-
-      // Wait for OAuth to complete
-      await waitForOAuthComplete({
-        authWindow: popup.window,
-        onSuccess: () => {
-          toast.success("Successfully authorized!");
-          queryClient.invalidateQueries({
-            queryKey: trpc.mcp.checkAuth.queryKey({ id: connector.id }),
-          });
-          // Refetch discover to get tools/resources
-          refetch();
-        },
-        onError: (oauthError) => {
-          toast.error(oauthError.message || "Authorization failed");
-        },
-      });
-    } catch (err) {
-      popup.close();
-      if (
-        err instanceof Error &&
-        !err.message.includes("does not require OAuth") &&
-        !err.message.includes("cancelled")
-      ) {
-        console.error("Authorization error:", err);
-      }
-    } finally {
-      setIsAuthorizing(false);
-    }
-  }, [authorize, connector, queryClient, refetch, trpc.mcp.checkAuth]);
-
-  // Auto-trigger OAuth when connector requires it (only once per connector)
-  useEffect(() => {
-    if (
-      needsOAuth &&
-      connector &&
-      !isAuthorizing &&
-      autoAuthTriggeredRef.current !== connector.id
-    ) {
-      autoAuthTriggeredRef.current = connector.id;
-      handleAuthorize();
-    }
-  }, [needsOAuth, connector, isAuthorizing, handleAuthorize]);
-
-  // Reset auto-auth tracking when dialog closes
-  useEffect(() => {
-    if (!open) {
-      autoAuthTriggeredRef.current = null;
-    }
-  }, [open]);
+    // If we were previously unauthorized, refetch discovery after auth flips.
+    queryClient.invalidateQueries({
+      queryKey: trpc.mcp.discover.queryKey({ id: connector.id }),
+    });
+    refetch();
+  }, [
+    open,
+    connector,
+    isAuthenticated,
+    queryClient,
+    refetch,
+    trpc.mcp.discover,
+  ]);
 
   const faviconUrl =
     connector?.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+
+  const isGlobal = connector?.userId === null;
 
   return (
     <Dialog onOpenChange={(o) => !o && onCloseAction()} open={open}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="overflow-hidden">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+          <div className="flex items-start gap-3 overflow-hidden pr-8">
+            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
               {faviconUrl ? (
                 <>
                   <Favicon className="size-5 rounded-sm" url={faviconUrl} />
@@ -149,71 +119,90 @@ export function McpDetailsDialog({
                 <Globe className="size-5 text-muted-foreground" />
               )}
             </div>
+
             <div className="min-w-0 flex-1">
               <DialogTitle className="truncate">
                 {connector?.name ?? "MCP"}
               </DialogTitle>
-              <p className="mt-0.5 truncate text-muted-foreground text-xs">
+              <DialogDescription className="mt-0.5 truncate">
                 {connector?.url ? getUrlWithoutParams(connector.url) : null}
-              </p>
+              </DialogDescription>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {connector ? (
+                  <Badge
+                    className="h-5 px-2 text-[10px]"
+                    variant={
+                      connector.type === "http" ? "default" : "secondary"
+                    }
+                  >
+                    {connector.type.toUpperCase()}
+                  </Badge>
+                ) : null}
+                {isGlobal ? (
+                  <Badge className="h-5 px-2 text-[10px]" variant="outline">
+                    Global
+                  </Badge>
+                ) : null}
+                <Badge
+                  className="h-5 gap-1 px-2 text-[10px]"
+                  variant={isAuthenticated ? "outline" : "secondary"}
+                >
+                  {isAuthenticated ? <Check className="size-3" /> : null}
+                  {isAuthenticated ? "Authorized" : "Not authorized"}
+                </Badge>
+                {connector ? (
+                  <div className="ml-1 flex items-center gap-2 rounded-md border bg-card px-2 py-1">
+                    <span className="text-muted-foreground text-xs">
+                      Enabled
+                    </span>
+                    <Switch
+                      checked={connector.enabled}
+                      onCheckedChange={onToggleEnabledAction}
+                    />
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
+          {needsOAuth && isAuthenticated ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : null}
+
           {isLoading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="size-6 animate-spin text-muted-foreground" />
             </div>
           )}
 
-          {error && (
+          {needsOAuth && !isAuthenticated ? (
             <div className="flex flex-col items-center gap-2 py-12 text-center">
-              {needsOAuth ? (
-                <>
-                  <Key className="size-6 text-muted-foreground" />
-                  <p className="text-muted-foreground text-sm">
-                    Authorization required
-                  </p>
-                  <p className="max-w-xs text-muted-foreground text-xs">
-                    This connector requires OAuth authorization to access its
-                    tools and resources.
-                  </p>
-                  <Button
-                    className="mt-2"
-                    disabled={isAuthorizing}
-                    onClick={handleAuthorize}
-                    size="sm"
-                  >
-                    {isAuthorizing ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        Authorizing...
-                      </>
-                    ) : (
-                      <>
-                        <Key className="size-4" />
-                        Authorize
-                      </>
-                    )}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="size-6 text-destructive" />
-                  <p className="text-muted-foreground text-sm">
-                    Failed to connect to MCP server
-                  </p>
-                  <p className="max-w-xs text-muted-foreground text-xs">
-                    {error.message}
-                  </p>
-                </>
-              )}
+              <p className="font-medium text-sm">Authorization required</p>
+              <p className="max-w-xs text-muted-foreground text-xs">
+                Connect this connector to access its tools and resources.
+              </p>
+            </div>
+          ) : null}
+
+          {error && !needsOAuth && (
+            <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <AlertCircle className="size-6 text-destructive" />
+              <p className="text-muted-foreground text-sm">
+                Failed to connect to MCP server
+              </p>
+              <p className="max-w-xs text-muted-foreground text-xs">
+                {error.message}
+              </p>
             </div>
           )}
 
           {data && (
-            <div className="space-y-6 pr-4">
+            <div className="space-y-4 pr-4">
               <DetailsSection
                 icon={<Wrench className="size-4" />}
                 items={data.tools.map((t) => t.name)}
@@ -232,6 +221,22 @@ export function McpDetailsDialog({
             </div>
           )}
         </ScrollArea>
+
+        <DialogFooter>
+          <div className="flex w-full flex-col-reverse justify-end gap-2 sm:flex-row sm:items-center">
+            <Button
+              disabled={!connector}
+              onClick={onConfigureAction}
+              variant="outline"
+            >
+              <Settings2 className="size-4" />
+              Configure
+            </Button>
+            <Button disabled={!connector} onClick={onConnectAction}>
+              {isAuthenticated ? "Reconnect" : "Connect"}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -249,22 +254,22 @@ function DetailsSection({
   const count = items.length;
 
   return (
-    <div>
-      <div className="flex items-center gap-2 px-1">
-        {icon}
+    <div className="rounded-lg border bg-card p-3">
+      <div className="flex items-center gap-2">
+        <div className="text-muted-foreground">{icon}</div>
         <span className="font-medium text-sm">{title}</span>
         <span className="text-muted-foreground text-xs">({count})</span>
       </div>
+      <Separator className="my-3" />
       {count === 0 ? (
-        <p className="mt-2 px-1 text-muted-foreground text-xs italic">
-          None available
-        </p>
+        <p className="text-muted-foreground text-xs italic">None available</p>
       ) : (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {items.map((name) => (
             <span
               className="rounded-md bg-muted px-2 py-1 font-mono text-xs"
               key={name}
+              title={name}
             >
               {name}
             </span>
