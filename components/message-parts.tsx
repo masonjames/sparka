@@ -148,6 +148,8 @@ function PureMessagePart({
       />
     );
   }
+
+  return null;
 }
 
 const MessagePart = memo(PureMessagePart);

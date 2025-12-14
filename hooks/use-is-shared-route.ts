@@ -8,3 +8,4 @@ export function useIsSharedRoute(): boolean {
   const pathname = usePathname();
   return Boolean(pathname && SHARE_ROUTE_PREFIX.test(pathname));
 }
+
