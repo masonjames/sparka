@@ -1178,6 +1178,20 @@ export const models = [
     },
   },
   {
+    id: "kwaikat/kat-coder-pro-v1",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "kwaikat",
+    name: "KAT-Coder-Pro V1",
+    description:
+      "KAT-Coder-Pro V1 is KwaiKAT's most advanced agentic coding model in the KwaiKAT series. Designed specifically for agentic coding tasks, it excels in real-world software engineering scenarios, achieving a remarkable 73.4% solve rate on the SWE-Bench Verified benchmark. KAT-Coder-Pro V1 delivers top-tier coding performance and has been rigorously tested by thousands of in-house engineers. The model has been optimized for tool-use capability, multi-turn interaction, instruction following, generalization and comprehensive capabilities through a multi-stage training process, including mid-training, supervised fine-tuning (SFT), reinforcement fine-tuning (RFT), and scalable agentic RL.",
+    context_window: 256_000,
+    max_tokens: 32_000,
+    type: "language",
+    tags: ["reasoning"],
+    pricing: {},
+  },
+  {
     id: "meituan/longcat-flash-chat",
     object: "model",
     created: 1_755_815_280,
@@ -1216,13 +1230,13 @@ export const models = [
     name: "Llama 3.1 70B Instruct",
     description:
       "An update to Meta Llama 3 70B Instruct that includes an expanded 128K context length, multilinguality and improved reasoning capabilities.",
-    context_window: 128_000,
-    max_tokens: 8192,
+    context_window: 131_072,
+    max_tokens: 16_384,
     type: "language",
     tags: ["tool-use"],
     pricing: {
-      input: "0.00000072",
-      output: "0.00000072",
+      input: "0.0000004",
+      output: "0.0000004",
     },
   },
   {
@@ -1232,14 +1246,14 @@ export const models = [
     owned_by: "meta",
     name: "Llama 3.1 8B Instruct",
     description:
-      "Llama 3.1 8B with 128K context window support, making it ideal for real-time conversational interfaces and data analysis while offering significant cost savings compared to larger models. Served by Groq with their custom Language Processing Units (LPUs) hardware to provide fast and efficient inference.",
-    context_window: 131_000,
-    max_tokens: 131_072,
+      "An update to Meta Llama 3 8B Instruct that includes an expanded 128K context length, multilinguality and improved reasoning capabilities.",
+    context_window: 131_072,
+    max_tokens: 16_384,
     type: "language",
     tags: ["tool-use"],
     pricing: {
-      input: "0.00000005",
-      output: "0.00000008",
+      input: "0.00000003",
+      output: "0.00000005",
     },
   },
   {
@@ -1409,11 +1423,25 @@ export const models = [
     },
   },
   {
+    id: "mistral/devstral-2",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "mistral",
+    name: "Devstral 2",
+    description:
+      "An enterprise-grade text model that excels at using tools to explore codebases, editing multiple files, and powering software engineering agents.",
+    context_window: 256_000,
+    max_tokens: 256_000,
+    type: "language",
+    tags: ["tool-use"],
+    pricing: {},
+  },
+  {
     id: "mistral/devstral-small",
     object: "model",
     created: 1_755_815_280,
     owned_by: "mistral",
-    name: "Devstral Small",
+    name: "Devstral Small 1.1",
     description:
       "Devstral is an agentic LLM for software engineering tasks built under a collaboration between Mistral AI and All Hands AI 🙌. Devstral excels at using tools to explore codebases, editing multiple files and power software engineering agents.",
     context_window: 128_000,
@@ -1424,6 +1452,20 @@ export const models = [
       input: "0.0000001",
       output: "0.0000003",
     },
+  },
+  {
+    id: "mistral/devstral-small-2",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "mistral",
+    name: "Devstral Small 2",
+    description:
+      "Our open source model that excels at using tools to explore codebases, editing multiple files, and powering software engineering agents.",
+    context_window: 256_000,
+    max_tokens: 256_000,
+    type: "language",
+    tags: ["tool-use"],
+    pricing: {},
   },
   {
     id: "mistral/magistral-medium",
@@ -2128,6 +2170,80 @@ export const models = [
     },
   },
   {
+    id: "openai/gpt-5.2",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "GPT-5.2",
+    description:
+      "GPT-5.2 is OpenAI's best general-purpose model, part of the GPT-5 flagship model family. It's their most intelligent model yet for both general and agentic tasks.",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: [
+      "tool-use",
+      "vision",
+      "file-input",
+      "reasoning",
+      "image-generation",
+      "implicit-caching",
+    ],
+    pricing: {
+      input: "0.00000175",
+      output: "0.000014",
+      input_cache_read: "0.000000175",
+    },
+  },
+  {
+    id: "openai/gpt-5.2-chat",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "GPT-5.2 Chat",
+    description:
+      "The model powering ChatGPT is gpt-5.2-chat-latest: this is OpenAI's best general-purpose model, part of the GPT-5 flagship model family.",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: [
+      "vision",
+      "file-input",
+      "tool-use",
+      "image-generation",
+      "reasoning",
+      "implicit-caching",
+    ],
+    pricing: {
+      input: "0.00000175",
+      output: "0.000014",
+      input_cache_read: "0.000000175",
+    },
+  },
+  {
+    id: "openai/gpt-5.2-pro",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "GPT 5.2 ",
+    description:
+      "Version of GPT-5.2 that produces smarter and more precise responses.",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: [
+      "tool-use",
+      "vision",
+      "implicit-caching",
+      "image-generation",
+      "reasoning",
+      "file-input",
+    ],
+    pricing: {
+      input: "0.000021",
+      output: "0.000168",
+    },
+  },
+  {
     id: "openai/gpt-oss-120b",
     object: "model",
     created: 1_755_815_280,
@@ -2736,7 +2852,7 @@ export const models = [
     description:
       "Grok 4.1 Fast is xAI's best tool-calling model with a 2M context window. It reasons and completes agentic tasks accurately and rapidly, excelling at complex real-world use cases such as customer support and finance. To optimize for speed use this variant. Otherwise, use the reasoning version.",
     context_window: 2_000_000,
-    max_tokens: 2_000_000,
+    max_tokens: 30_000,
     type: "language",
     tags: [],
     pricing: {
@@ -2754,7 +2870,7 @@ export const models = [
     description:
       "Grok 4.1 Fast is xAI's best tool-calling model with a 2M context window. It reasons and completes agentic tasks accurately and rapidly, excelling at complex real-world use cases such as customer support and finance. To optimize for maximal intelligence use this variant. Otherwise, use the non-reasoning version.",
     context_window: 2_000_000,
-    max_tokens: 2_000_000,
+    max_tokens: 30_000,
     type: "language",
     tags: ["reasoning"],
     pricing: {
@@ -2849,5 +2965,37 @@ export const models = [
       output: "0.0000018",
       input_cache_read: "0.00000011",
     },
+  },
+  {
+    id: "zai/glm-4.6v",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "zai",
+    name: "GLM-4.6V",
+    description:
+      "GLM-4.6V series are Z.ai’s iterations in a multimodal large language model. GLM-4.6V scales its context window to 128k tokens in training, and achieves SoTA performance in visual understanding among models of similar parameter scales.",
+    context_window: 128_000,
+    max_tokens: 24_000,
+    type: "language",
+    tags: ["vision", "file-input", "reasoning", "tool-use"],
+    pricing: {
+      input: "0.0000003",
+      output: "0.0000009",
+      input_cache_read: "0.00000005",
+    },
+  },
+  {
+    id: "zai/glm-4.6v-flash",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "zai",
+    name: "GLM-4.6V-Flash",
+    description:
+      "For local deployment and low-latency applications. GLM-4.6V series are Z.ai’s iterations in a multimodal large language model. GLM-4.6V scales its context window to 128k tokens in training, and achieves SoTA performance in visual understanding among models of similar parameter scales.",
+    context_window: 128_000,
+    max_tokens: 24_000,
+    type: "language",
+    tags: ["vision", "reasoning", "file-input", "tool-use"],
+    pricing: {},
   },
 ] as const satisfies readonly AiGatewayModel[];

@@ -171,9 +171,9 @@ const CURATED_DEFAULT_MODELS: AppModelId[] = [
   // OpenAI - flagship models
   "openai/gpt-5-nano",
   "openai/gpt-5-mini",
-  "openai/gpt-5",
-  "openai/gpt-5-chat",
-  "openai/gpt-5-reasoning",
+  "openai/gpt-5.2",
+  "openai/gpt-5.2-chat",
+  "openai/gpt-5.2-reasoning",
   "openai/gpt-4o-mini",
   // Google - best flash and pro
   "google/gemini-2.5-flash-lite",

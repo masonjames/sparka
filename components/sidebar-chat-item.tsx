@@ -26,6 +26,7 @@ const PureSidebarChatItem = ({
   onRename,
   onPin,
   setOpenMobile,
+  prefetch = false,
 }: {
   chat: UIChat;
   isActive: boolean;
@@ -33,6 +34,7 @@ const PureSidebarChatItem = ({
   onRename: (chatId: string, title: string) => void;
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
+  prefetch?: boolean;
 }) => {
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     chat.projectId
@@ -93,24 +95,11 @@ const PureSidebarChatItem = ({
               if (e.button === 1 || e.ctrlKey || e.metaKey) {
                 return;
               }
-
-              // Check if we're on a chat route (/ or /chat/*)
-              const isChatRoute =
-                pathname === "/" || pathname.startsWith("/chat/");
-
-              if (isChatRoute) {
-                // Prevent default Link navigation for normal clicks
-                e.preventDefault();
-                // Use History API for client-side navigation
-                window.history.pushState(null, "", chatHref);
-              } else {
-                // Use router.push for other routes (e.g., /project/*)
-                e.preventDefault();
-                router.push(chatHref);
-              }
+              e.preventDefault();
+              router.push(chatHref);
               setOpenMobile(false);
-            }} // TODO: Restore the prefetching after solving conflict with ppr
-            prefetch={false}
+            }}
+            prefetch={prefetch}
           >
             <span>{chat.title}</span>
           </Link>
@@ -158,6 +147,9 @@ export const SidebarChatItem = memo(
   PureSidebarChatItem,
   (prevProps, nextProps) => {
     if (prevProps.isActive !== nextProps.isActive) {
+      return false;
+    }
+    if (prevProps.prefetch !== nextProps.prefetch) {
       return false;
     }
     if (prevProps.chat.id !== nextProps.chat.id) {
