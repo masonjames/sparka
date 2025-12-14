@@ -1,7 +1,8 @@
 "use client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { notFound, usePathname } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
+import type { ParamsOf } from "@/.next/types/routes";
 import { ChatSystem } from "@/components/chat-system";
 import {
   useGetChatByIdQueryOptions,
@@ -11,15 +12,11 @@ import type { UiToolName } from "@/lib/ai/types";
 import { getDefaultThread } from "@/lib/thread-utils";
 import { useChatId } from "@/providers/chat-id-provider";
 
-const PROJECT_ID_PATTERN = /^\/project\/([^/]+)/;
-
-export function ProjectChatPageRouter() {
+export function ProjectChatPage() {
   const { id } = useChatId();
-  const pathname = usePathname();
+  const params = useParams<ParamsOf<"/project/[projectId]/chat/[chatId]">>();
 
-  // Extract projectId from pathname
-  const projectMatch = pathname?.match(PROJECT_ID_PATTERN);
-  const projectId = projectMatch ? projectMatch[1] : undefined;
+  const projectId = params.projectId;
   const getChatByIdQueryOptions = useGetChatByIdQueryOptions(id);
   const { data: chat } = useSuspenseQuery(getChatByIdQueryOptions);
   const getMessagesByChatIdQueryOptions = useGetChatMessagesQueryOptions();
