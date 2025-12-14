@@ -34,6 +34,7 @@
     "test:playwright": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
     "test:types": "next typegen . && tsc --noEmit",
+    "ai:devtools": "bunx @ai-sdk/devtools",
     "update:ai-sdk-beta": "bun scripts/update-ai-sdk-to-beta.ts",
     "hooks:enable": "husky",
     "hooks:disable": "git config core.hooksPath .git/hooks",
