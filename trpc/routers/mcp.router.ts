@@ -5,6 +5,7 @@ import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import {
   createMcpConnector,
   deleteMcpConnector,
+  deleteSessionsByConnectorId,
   getAuthenticatedSession,
   getMcpConnectorById,
   getMcpConnectorByNameId,
@@ -151,6 +152,33 @@ export const mcpRouter = createTRPCRouter({
         });
       }
       await deleteMcpConnector({ id: input.id });
+      await removeMcpClient(input.id);
+      return { success: true };
+    }),
+
+  /**
+   * Disconnect an MCP connector by removing OAuth session data only.
+   */
+  disconnect: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const connector = await getMcpConnectorById({ id: input.id });
+      if (!connector) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connector not found",
+        });
+      }
+      // Only allow disconnecting own connectors or global ones
+      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot disconnect this connector",
+        });
+      }
+
+      await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
+      await removeMcpClient(input.id);
       return { success: true };
     }),
 

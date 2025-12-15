@@ -2,12 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Check,
-  Eye,
   Globe,
-  Key,
+  Loader2,
   MoreHorizontal,
-  Pencil,
   Plus,
   Radio,
   Trash2,
@@ -34,7 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Switch } from "../ui/switch";
 import { McpConfigDialog } from "./mcp-config-dialog";
 import { McpConnectDialog } from "./mcp-connect-dialog";
 import { McpDetailsDialog } from "./mcp-details-dialog";
@@ -122,13 +118,34 @@ export function ConnectorsSettings() {
         toast.error("Failed to delete connector");
       },
       onSuccess: () => {
-        toast.success("Connector deleted");
+        toast.success("Connector removed");
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
       },
     })
   );
+
+  const { mutate: disconnectConnector, isPending: isDisconnecting } =
+    useMutation(
+      trpc.mcp.disconnect.mutationOptions({
+        onSuccess: () => {
+          toast.success("Disconnected");
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to disconnect");
+        },
+        onSettled: (_data, _err, vars) => {
+          queryClient.invalidateQueries({ queryKey });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.checkAuth.queryKey({ id: vars.id }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
+          });
+        },
+      })
+    );
 
   const setDialogState = useCallback(
     ({
@@ -153,17 +170,53 @@ export function ConnectorsSettings() {
     [setDialogState]
   );
 
-  const handleEdit = (connector: McpConnector) => {
-    handleOpenConfigDialog(connector.id);
-  };
+  const handleConnectorCreated = useCallback(
+    async (connector: McpConnector) => {
+      // Ensure the newly-created connector is immediately available for dialogs
+      // even before the list query refetch completes.
+      queryClient.setQueryData(
+        queryKey,
+        (old: typeof connectors): typeof connectors => {
+          if (!old) {
+            return [connector];
+          }
+          if (old.some((c) => c.id === connector.id)) {
+            return old;
+          }
+          return [connector, ...old];
+        }
+      );
+
+      // Auto-open connect dialog if the server requires OAuth.
+      try {
+        await queryClient.fetchQuery({
+          ...trpc.mcp.discover.queryOptions({ id: connector.id }),
+          retry: false,
+          staleTime: 0,
+        });
+      } catch (err) {
+        if (isOAuthRequiredDiscoverError(err)) {
+          setDialogState({ dialog: "connect", connectorId: connector.id });
+          return;
+        }
+      }
+
+      // Preserve previous behavior (just close) when OAuth isn't required.
+      setDialogState({ dialog: null });
+    },
+    [connectors, queryClient, queryKey, setDialogState, trpc.mcp.discover]
+  );
 
   const handleDialogClose = () => {
     setDialogState({ dialog: null });
   };
 
-  const handleViewDetails = (connector: McpConnector) => {
-    setDialogState({ dialog: "details", connectorId: connector.id });
-  };
+  const handleViewDetails = useCallback(
+    (connector: McpConnector) => {
+      setDialogState({ dialog: "details", connectorId: connector.id });
+    },
+    [setDialogState]
+  );
 
   const handleDetailsDialogClose = () => {
     setDialogState({ dialog: null });
@@ -219,31 +272,6 @@ export function ConnectorsSettings() {
     [detailsConnector, toggleEnabled]
   );
 
-  // Callback when a new connector is created - check auth and transition accordingly
-  const handleConnectorCreated = useCallback(
-    async (connector: McpConnector) => {
-      // Check if connector needs OAuth authorization
-      try {
-        const authStatus = await queryClient.fetchQuery({
-          ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
-          staleTime: 0,
-        });
-
-        if (authStatus.isAuthenticated) {
-          // Already authenticated, go to details
-          setDialogState({ dialog: "details", connectorId: connector.id });
-        } else {
-          // Needs auth, show connect dialog first
-          setDialogState({ dialog: "connect", connectorId: connector.id });
-        }
-      } catch {
-        // If check fails, default to connect dialog (likely needs auth)
-        setDialogState({ dialog: "connect", connectorId: connector.id });
-      }
-    },
-    [setDialogState, queryClient, trpc.mcp.checkAuth]
-  );
-
   if (!config.integrations.mcp) {
     return (
       <SettingsPageContent className="gap-4">
@@ -265,47 +293,64 @@ export function ConnectorsSettings() {
     );
   }
 
+  const customConnectors = (connectors ?? []).filter((c) => c.userId !== null);
+  const globalConnectors = (connectors ?? []).filter((c) => c.userId === null);
+
   return (
-    <SettingsPageContent className="gap-4">
-      <div className="flex shrink-0 gap-2">
-        <Button
-          onClick={() => handleOpenConfigDialog()}
-          size="sm"
-          variant="outline"
-        >
+    <SettingsPageContent className="gap-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="font-medium text-sm">Custom connectors</p>
+          <p className="mt-0.5 text-muted-foreground text-xs">
+            Connect MCP servers you trust to extend your AI with tools.
+          </p>
+        </div>
+        <Button onClick={() => handleOpenConfigDialog()} size="sm">
           <Plus className="size-4" />
           Add custom connector
         </Button>
       </div>
 
-      {connectors && connectors.length > 0 ? (
-        <div className="space-y-3 px-1">
-          {connectors.map((connector) => (
-            <ConnectorRow
+      {customConnectors.length > 0 ? (
+        <div className="space-y-2">
+          {customConnectors.map((connector) => (
+            <CustomConnectorRow
               connector={connector}
+              isDisconnecting={isDisconnecting}
               key={connector.id}
               onConnect={() => handleOpenConnectDialog(connector)}
-              onDelete={() => deleteConnector({ id: connector.id })}
-              onEdit={() => handleEdit(connector)}
-              onToggle={(enabled) =>
-                toggleEnabled({ id: connector.id, enabled })
-              }
+              onDisconnect={() => disconnectConnector({ id: connector.id })}
+              onRemove={() => deleteConnector({ id: connector.id })}
               onViewDetails={() => handleViewDetails(connector)}
             />
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="flex flex-col items-center justify-center py-10 text-center">
           <div className="mb-4 rounded-full bg-muted p-3">
             <Radio className="size-6 text-muted-foreground" />
           </div>
-          <p className="font-medium text-sm">No connectors configured</p>
+          <p className="font-medium text-sm">No custom connectors</p>
           <p className="mt-1 max-w-sm text-muted-foreground text-xs">
-            Add an MCP connector to extend your AI with external tools and
-            capabilities.
+            Add a custom MCP connector to access tools from your services.
           </p>
         </div>
       )}
+
+      {globalConnectors.length > 0 ? (
+        <div className="space-y-2">
+          <p className="font-medium text-sm">Built-in connectors</p>
+          <div className="space-y-2">
+            {globalConnectors.map((connector) => (
+              <BuiltInConnectorRow
+                connector={connector}
+                key={connector.id}
+                onViewDetails={() => handleViewDetails(connector)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <McpConfigDialog
         connector={editingConnector}
@@ -332,40 +377,67 @@ export function ConnectorsSettings() {
   );
 }
 
-function ConnectorRow({
+function isOAuthRequiredDiscoverError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const anyErr = error as {
+    data?: { code?: string };
+    message?: string;
+  };
+  return (
+    anyErr.data?.code === "UNAUTHORIZED" &&
+    typeof anyErr.message === "string" &&
+    anyErr.message.includes("OAuth authorization")
+  );
+}
+
+function CustomConnectorRow({
   connector,
-  onToggle,
-  onEdit,
-  onDelete,
+  onRemove,
   onViewDetails,
   onConnect,
+  onDisconnect,
+  isDisconnecting,
 }: {
   connector: McpConnector;
-  onToggle: (enabled: boolean) => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onRemove: () => void;
   onViewDetails: () => void;
   onConnect: () => void;
+  onDisconnect: () => void;
+  isDisconnecting: boolean;
 }) {
   const trpc = useTRPC();
-  const isGlobal = connector.userId === null;
   const faviconUrl =
     connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
 
-  // Query to check OAuth status
   const { data: authStatus } = useQuery({
     ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
-    staleTime: 30_000, // Cache for 30 seconds
+    staleTime: 30_000,
   });
 
+  const {
+    isLoading: isDiscovering,
+    error: discoverError,
+    data: discovery,
+  } = useQuery({
+    ...trpc.mcp.discover.queryOptions({ id: connector.id }),
+    staleTime: 15_000,
+    retry: false,
+  });
+
+  const needsOAuth = isOAuthRequiredDiscoverError(discoverError);
+  const isConfigured = Boolean(discovery) && !needsOAuth;
+  const toolsCount = discovery?.tools.length ?? 0;
+
   return (
-    <div className="flex items-center gap-4 overflow-hidden rounded-lg border bg-card p-4">
+    <div className="flex items-center gap-4 overflow-hidden rounded-xl border bg-card px-4 py-3">
       <button
-        className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden text-left"
+        className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left"
         onClick={onViewDetails}
         type="button"
       >
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
           {faviconUrl ? (
             <>
               <Favicon className="size-5 rounded-sm" url={faviconUrl} />
@@ -383,36 +455,44 @@ function ConnectorRow({
             </span>
             <Badge
               className="h-5 shrink-0 px-2 text-[10px]"
-              variant={connector.type === "http" ? "default" : "secondary"}
+              variant="secondary"
             >
-              {connector.type.toUpperCase()}
+              CUSTOM
             </Badge>
-            {isGlobal && (
-              <Badge
-                className="h-5 shrink-0 px-2 text-[10px]"
-                variant="outline"
-              >
-                Global
-              </Badge>
-            )}
-            {authStatus?.isAuthenticated && (
-              <Badge
-                className="h-5 shrink-0 gap-1 px-2 text-[10px]"
-                variant="outline"
-              >
-                <Check className="size-3" />
-                Authorized
-              </Badge>
-            )}
           </div>
           <p className="mt-1 truncate text-muted-foreground text-xs">
             {getUrlWithoutParams(connector.url)}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {isDiscovering
+              ? "Checking tools…"
+              : needsOAuth
+                ? "Authorization required"
+                : isConfigured
+                  ? `${toolsCount} tool${toolsCount === 1 ? "" : "s"} available`
+                  : "Unable to reach server"}
           </p>
         </div>
       </button>
 
       <div className="flex shrink-0 items-center gap-2">
-        <Switch checked={connector.enabled} onCheckedChange={onToggle} />
+        <Button
+          disabled={isDiscovering}
+          onClick={needsOAuth ? onConnect : onViewDetails}
+          size="sm"
+          variant={needsOAuth ? "outline" : "default"}
+        >
+          {isDiscovering ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Loading
+            </>
+          ) : needsOAuth ? (
+            "Connect"
+          ) : (
+            "Configure"
+          )}
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost">
@@ -420,34 +500,68 @@ function ConnectorRow({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onViewDetails}>
-              <Eye className="size-4" />
-              Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="size-4" />
-              Configure
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onConnect}>
-              <Key className="size-4" />
-              {authStatus?.isAuthenticated ? "Reconnect" : "Connect"}
-            </DropdownMenuItem>
-            {!isGlobal && (
+            {authStatus?.isAuthenticated ? (
               <>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={onDelete}
+                  disabled={isDisconnecting}
+                  onClick={onDisconnect}
                 >
-                  <Trash2 className="size-4" />
-                  Delete
+                  Disconnect
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
               </>
-            )}
+            ) : null}
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={onRemove}
+            >
+              <Trash2 className="size-4" />
+              Remove
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </div>
+  );
+}
+
+function BuiltInConnectorRow({
+  connector,
+  onViewDetails,
+}: {
+  connector: McpConnector;
+  onViewDetails: () => void;
+}) {
+  const faviconUrl =
+    connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+  return (
+    <button
+      className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left"
+      onClick={onViewDetails}
+      type="button"
+    >
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+        {faviconUrl ? (
+          <>
+            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
+            <Globe className="hidden size-5 text-muted-foreground" />
+          </>
+        ) : (
+          <Globe className="size-5 text-muted-foreground" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="truncate font-medium text-sm">{connector.name}</span>
+          <Badge className="h-5 shrink-0 px-2 text-[10px]" variant="outline">
+            Built-in
+          </Badge>
+        </div>
+        <p className="mt-1 truncate text-muted-foreground text-xs">
+          {getUrlWithoutParams(connector.url)}
+        </p>
+      </div>
+      <span className="text-muted-foreground text-xs">View</span>
+    </button>
   );
 }

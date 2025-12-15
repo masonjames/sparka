@@ -1,13 +1,35 @@
-import { createLoader, createSerializer } from "nuqs/server";
 import {
-  mcpConnectorsSettingsSearchParams,
-  mcpOAuthCallbackSearchParams,
-} from "./mcp-search-params";
+  createLoader,
+  createSerializer,
+  parseAsBoolean,
+  parseAsString,
+} from "nuqs/server";
+
+/**
+ * IMPORTANT:
+ * This file must only use parsers imported from `nuqs/server`.
+ * Importing parsers from `nuqs` here can produce parser objects without
+ * `serialize()` at runtime (route handlers), which breaks `createSerializer`.
+ */
+
+const mcpConnectorsSettingsSearchParamsServer = {
+  dialog: parseAsString,
+  connectorId: parseAsString,
+  connected: parseAsBoolean,
+  error: parseAsString,
+};
+
+const mcpOAuthCallbackSearchParamsServer = {
+  code: parseAsString,
+  state: parseAsString,
+  error: parseAsString,
+  error_description: parseAsString,
+};
 
 export const serializeMcpConnectorsSettingsSearchParams = createSerializer(
-  mcpConnectorsSettingsSearchParams
+  mcpConnectorsSettingsSearchParamsServer
 );
 
 export const loadMcpOAuthCallbackSearchParams = createLoader(
-  mcpOAuthCallbackSearchParams
+  mcpOAuthCallbackSearchParamsServer
 );

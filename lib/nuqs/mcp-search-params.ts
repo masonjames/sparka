@@ -1,4 +1,4 @@
-import { parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
+import { parseAsBoolean, parseAsString } from "nuqs";
 
 export const mcpConnectorsDialogValues = [
   "config",
@@ -13,7 +13,9 @@ export type McpConnectorsDialog = (typeof mcpConnectorsDialogValues)[number];
  * Shared between the UI (nuqs hooks) and server redirects.
  */
 export const mcpConnectorsSettingsSearchParams = {
-  dialog: parseAsStringLiteral(mcpConnectorsDialogValues),
+  dialog: parseAsString,
+  // TODO: Re-enable after nuqs fix non importable from server code.
+  // dialog: parseAsStringLiteral(mcpConnectorsDialogValues),
   connectorId: parseAsString,
   connected: parseAsBoolean,
   error: parseAsString,
