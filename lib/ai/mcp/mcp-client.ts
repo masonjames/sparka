@@ -150,7 +150,10 @@ export class MCPClient {
       if (this.authorizationUrl) {
         return { status: "authorizing", needsAuth: true };
       }
-      return { status: this.client ? "connected" : "disconnected", needsAuth: false };
+      return {
+        status: this.client ? "connected" : "disconnected",
+        needsAuth: false,
+      };
     } catch (error) {
       log.error({ error, connectorId: this.id }, "attemptConnection failed");
       return { status: "disconnected", needsAuth: false };

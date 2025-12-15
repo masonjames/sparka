@@ -8,7 +8,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Collapsible,
   CollapsibleContent,
@@ -38,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
@@ -62,7 +62,7 @@ type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
 const HIDE_ADVANCED_SETTINGS = true;
 
-export function McpConfigDialog({
+export function McpCreateDialog({
   open,
   onClose,
   connector,

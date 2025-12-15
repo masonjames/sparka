@@ -5,11 +5,7 @@ import {
 } from "@/lib/ai/mcp/mcp-client";
 import { getMcpConnectorById, getSessionByState } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
-import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
-import {
-  loadMcpOAuthCallbackSearchParams,
-  serializeMcpConnectorsSettingsSearchParams,
-} from "@/lib/nuqs/mcp-search-params.server";
+import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
 
 const log = createModuleLogger("mcp-oauth-callback");
 
@@ -21,24 +17,25 @@ export async function GET(request: NextRequest) {
     error_description: errorDesc,
   } = await loadMcpOAuthCallbackSearchParams(request);
 
-  const redirectToSettings = ({
+  const redirectToConnector = ({
     connectorId,
-    dialog,
     connected,
     errorMessage,
   }: {
     connectorId?: string;
-    dialog?: McpConnectorsDialog;
     connected?: boolean;
     errorMessage?: string;
   }) => {
-    const url = new URL("/settings/connectors", request.nextUrl.origin);
-    url.search = serializeMcpConnectorsSettingsSearchParams({
-      dialog: dialog ?? null,
-      connectorId: connectorId ?? null,
-      connected: connected ? true : null,
-      error: errorMessage ?? null,
-    });
+    const path = connectorId
+      ? `/settings/connectors/${connectorId}`
+      : "/settings/connectors";
+    const url = new URL(path, request.nextUrl.origin);
+    if (connected) {
+      url.searchParams.set("connected", "1");
+    }
+    if (errorMessage) {
+      url.searchParams.set("error", errorMessage);
+    }
     return NextResponse.redirect(url);
   };
 
@@ -50,12 +47,12 @@ export async function GET(request: NextRequest) {
   if (error) {
     log.error({ error, errorDesc }, "OAuth error from provider");
     const message = `${error}: ${errorDesc ?? "Unknown error"}`;
-    return redirectToSettings({ dialog: "details", errorMessage: message });
+    return redirectToConnector({ errorMessage: message });
   }
 
   if (!(code && state)) {
     log.error({ code: !!code, state: !!state }, "Missing code or state");
-    return redirectToSettings({
+    return redirectToConnector({
       errorMessage: "Missing authorization code or state parameter",
     });
   }
@@ -65,7 +62,7 @@ export async function GET(request: NextRequest) {
 
   if (!session) {
     log.error({ state }, "Session not found for state");
-    return redirectToSettings({
+    return redirectToConnector({
       errorMessage: "Invalid or expired session. Please try again.",
     });
   }
@@ -74,7 +71,7 @@ export async function GET(request: NextRequest) {
   const connector = await getMcpConnectorById({ id: session.mcpConnectorId });
   if (!connector) {
     log.error({ connectorId: session.mcpConnectorId }, "Connector not found");
-    return redirectToSettings({ errorMessage: "MCP connector not found" });
+    return redirectToConnector({ errorMessage: "MCP connector not found" });
   }
 
   try {
@@ -100,8 +97,7 @@ export async function GET(request: NextRequest) {
     // cached clients may still keep an authorization URL in memory.
     await removeMcpClient(connector.id);
 
-    return redirectToSettings({
-      dialog: "details",
+    return redirectToConnector({
       connectorId: connector.id,
       connected: true,
     });
@@ -118,8 +114,7 @@ export async function GET(request: NextRequest) {
       "OAuth token exchange failed"
     );
 
-    return redirectToSettings({
-      dialog: "details",
+    return redirectToConnector({
       connectorId: connector.id,
       errorMessage,
     });

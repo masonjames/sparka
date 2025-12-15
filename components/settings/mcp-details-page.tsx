@@ -1,0 +1,383 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  BookText,
+  Check,
+  ChevronLeft,
+  FileText,
+  Globe,
+  Loader2,
+  Settings2,
+  Wrench,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useTRPC } from "@/trpc/react";
+import { Favicon } from "../favicon";
+import { getGoogleFaviconUrl } from "../get-google-favicon-url";
+import { getUrlWithoutParams } from "../get-url-without-params";
+import { Badge } from "../ui/badge";
+import { McpConnectDialog } from "./mcp-connect-dialog";
+import { McpCreateDialog } from "./mcp-create-dialog";
+import { SettingsPageContent } from "./settings-page";
+
+export function McpDetailsPage({ connectorId }: { connectorId: string }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
+
+  const queryKey = trpc.mcp.list.queryKey();
+
+  const { data: connectors, isLoading: isLoadingConnectors } = useQuery(
+    trpc.mcp.list.queryOptions()
+  );
+
+  const connector = useMemo(
+    () => connectors?.find((c) => c.id === connectorId) ?? null,
+    [connectors, connectorId]
+  );
+
+  const canEdit = connector?.userId !== null;
+
+  const { mutate: toggleEnabled } = useMutation(
+    trpc.mcp.toggleEnabled.mutationOptions({
+      onMutate: async (newData) => {
+        await queryClient.cancelQueries({ queryKey });
+        const prev = queryClient.getQueryData(queryKey);
+        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
+          if (!old) {
+            return old;
+          }
+          return old.map((c) =>
+            c.id === newData.id ? { ...c, enabled: newData.enabled } : c
+          );
+        });
+        return { prev };
+      },
+      onError: (_err, _newData, context) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to update connector");
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey });
+      },
+    })
+  );
+
+  const {
+    data: discovery,
+    isLoading: isLoadingDiscovery,
+    error: discoveryError,
+    refetch: refetchDiscovery,
+  } = useQuery({
+    ...trpc.mcp.discover.queryOptions({ id: connectorId }),
+    enabled: connector !== null,
+    retry: false,
+  });
+
+  const { data: authStatus } = useQuery({
+    ...trpc.mcp.checkAuth.queryOptions({ id: connectorId }),
+    enabled: connector !== null,
+    staleTime: 30_000,
+  });
+
+  const isAuthenticated = authStatus?.isAuthenticated ?? false;
+
+  const needsOAuth =
+    discoveryError?.data?.code === "UNAUTHORIZED" &&
+    discoveryError.message.includes("OAuth authorization");
+
+  const faviconUrl =
+    connector?.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+
+  useEffect(() => {
+    const connected = searchParams.get("connected");
+    const err = searchParams.get("error");
+
+    if (connected) {
+      toast.success("Authorization successful");
+    }
+    if (err) {
+      toast.error(err);
+    }
+
+    if (connected || err) {
+      router.replace(`/settings/connectors/${connectorId}`);
+      queryClient.invalidateQueries({
+        queryKey: trpc.mcp.checkAuth.queryKey({ id: connectorId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.mcp.discover.queryKey({ id: connectorId }),
+      });
+      refetchDiscovery();
+    }
+  }, [
+    connectorId,
+    queryClient,
+    refetchDiscovery,
+    router,
+    searchParams,
+    trpc.mcp.checkAuth,
+    trpc.mcp.discover,
+  ]);
+
+  useEffect(() => {
+    if (!(connector && isAuthenticated)) {
+      return;
+    }
+    queryClient.invalidateQueries({
+      queryKey: trpc.mcp.discover.queryKey({ id: connector.id }),
+    });
+    refetchDiscovery();
+  }, [
+    connector,
+    isAuthenticated,
+    queryClient,
+    refetchDiscovery,
+    trpc.mcp.discover,
+  ]);
+
+  const handleToggleEnabled = useCallback(
+    (enabled: boolean) => {
+      if (!connector) {
+        return;
+      }
+      toggleEnabled({ id: connector.id, enabled });
+    },
+    [connector, toggleEnabled]
+  );
+
+  if (isLoadingConnectors) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <div className="animate-pulse space-y-3">
+          {[1, 2].map((i) => (
+            <div className="h-20 rounded-lg bg-muted/50" key={i} />
+          ))}
+        </div>
+      </SettingsPageContent>
+    );
+  }
+
+  if (!connector) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <Button asChild className="w-fit" size="sm" variant="ghost">
+          <Link href="/settings/connectors">
+            <ChevronLeft className="size-4" />
+            Back
+          </Link>
+        </Button>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <AlertCircle className="size-6 text-destructive" />
+          <p className="mt-2 font-medium text-sm">Connector not found</p>
+          <p className="mt-1 text-muted-foreground text-xs">
+            It may have been deleted or you don’t have access.
+          </p>
+        </div>
+      </SettingsPageContent>
+    );
+  }
+
+  return (
+    <SettingsPageContent className="gap-4">
+      <Button asChild className="w-fit" size="sm" variant="ghost">
+        <Link href="/settings/connectors">
+          <ChevronLeft className="size-4" />
+          Back
+        </Link>
+      </Button>
+
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3 overflow-hidden">
+            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+              {faviconUrl ? (
+                <>
+                  <Favicon className="size-5 rounded-sm" url={faviconUrl} />
+                  <Globe className="hidden size-5 text-muted-foreground" />
+                </>
+              ) : (
+                <Globe className="size-5 text-muted-foreground" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <h2 className="truncate font-semibold text-lg">
+                  {connector.name}
+                </h2>
+              </div>
+              <p className="mt-0.5 truncate text-muted-foreground text-sm">
+                {getUrlWithoutParams(connector.url)}
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <Badge
+                  className="h-5 px-2 text-[10px]"
+                  variant={connector.type === "http" ? "default" : "secondary"}
+                >
+                  {connector.type.toUpperCase()}
+                </Badge>
+                {connector.userId === null ? (
+                  <Badge className="h-5 px-2 text-[10px]" variant="outline">
+                    Global
+                  </Badge>
+                ) : null}
+                <Badge
+                  className="h-5 gap-1 px-2 text-[10px]"
+                  variant={isAuthenticated ? "outline" : "secondary"}
+                >
+                  {isAuthenticated ? <Check className="size-3" /> : null}
+                  {isAuthenticated ? "Authorized" : "Not authorized"}
+                </Badge>
+
+                <div className="ml-1 flex items-center gap-2 rounded-md border bg-card px-2 py-1">
+                  <span className="text-muted-foreground text-xs">Enabled</span>
+                  <Switch
+                    checked={connector.enabled}
+                    disabled={!canEdit}
+                    onCheckedChange={handleToggleEnabled}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+            <Button
+              disabled={!canEdit}
+              onClick={() => setConfigOpen(true)}
+              variant="outline"
+            >
+              <Settings2 className="size-4" />
+              Configure
+            </Button>
+            <Button onClick={() => setConnectOpen(true)}>
+              {isAuthenticated ? "Reconnect" : "Connect"}
+            </Button>
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+
+        <ScrollArea className="max-h-[60vh]">
+          {needsOAuth && isAuthenticated ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : null}
+
+          {isLoadingDiscovery ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : null}
+
+          {needsOAuth && !isAuthenticated ? (
+            <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <p className="font-medium text-sm">Authorization required</p>
+              <p className="max-w-xs text-muted-foreground text-xs">
+                Connect this connector to access its tools and resources.
+              </p>
+            </div>
+          ) : null}
+
+          {discoveryError && !needsOAuth ? (
+            <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <AlertCircle className="size-6 text-destructive" />
+              <p className="text-muted-foreground text-sm">
+                Failed to connect to MCP server
+              </p>
+              <p className="max-w-xs text-muted-foreground text-xs">
+                {discoveryError.message}
+              </p>
+            </div>
+          ) : null}
+
+          {discovery ? (
+            <div className="space-y-4 pr-4">
+              <DetailsSection
+                icon={<Wrench className="size-4" />}
+                items={discovery.tools.map((t) => t.name)}
+                title="Tools"
+              />
+              <DetailsSection
+                icon={<FileText className="size-4" />}
+                items={discovery.resources.map((r) => r.name)}
+                title="Resources"
+              />
+              <DetailsSection
+                icon={<BookText className="size-4" />}
+                items={discovery.prompts.map((p) => p.name)}
+                title="Prompts"
+              />
+            </div>
+          ) : null}
+        </ScrollArea>
+      </div>
+
+      <McpCreateDialog
+        connector={connector}
+        onClose={() => setConfigOpen(false)}
+        open={configOpen}
+      />
+
+      <McpConnectDialog
+        connector={connector}
+        onClose={() => setConnectOpen(false)}
+        open={connectOpen}
+      />
+    </SettingsPageContent>
+  );
+}
+
+function DetailsSection({
+  title,
+  icon,
+  items,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  items: string[];
+}) {
+  const count = items.length;
+
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <div className="flex items-center gap-2">
+        <div className="text-muted-foreground">{icon}</div>
+        <span className="font-medium text-sm">{title}</span>
+        <span className="text-muted-foreground text-xs">({count})</span>
+      </div>
+      <Separator className="my-3" />
+      {count === 0 ? (
+        <p className="text-muted-foreground text-xs italic">None available</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((name) => (
+            <span
+              className="rounded-md bg-muted px-2 py-1 font-mono text-xs"
+              key={name}
+              title={name}
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
