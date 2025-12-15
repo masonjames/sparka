@@ -127,6 +127,37 @@ export class MCPClient {
   }
 
   /**
+   * Lightweight connection test - just checks if we can connect without full discovery.
+   * Returns connection status without fetching tools/resources/prompts.
+   */
+  async attemptConnection(): Promise<{
+    status: McpClientStatus;
+    needsAuth: boolean;
+  }> {
+    // If already connected, return current status
+    if (this.status === "connected" && this.client) {
+      return { status: "connected", needsAuth: false };
+    }
+
+    // If already in authorizing state, return that
+    if (this.authorizationUrl) {
+      return { status: "authorizing", needsAuth: true };
+    }
+
+    try {
+      await this.connect();
+      // Check if OAuth is required (authorizationUrl gets set during connect)
+      if (this.authorizationUrl) {
+        return { status: "authorizing", needsAuth: true };
+      }
+      return { status: this.client ? "connected" : "disconnected", needsAuth: false };
+    } catch (error) {
+      log.error({ error, connectorId: this.id }, "attemptConnection failed");
+      return { status: "disconnected", needsAuth: false };
+    }
+  }
+
+  /**
    * Called after callback receives code to complete the OAuth flow.
    */
   async finishAuth(code: string, state: string): Promise<void> {

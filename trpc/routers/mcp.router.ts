@@ -211,6 +211,53 @@ export const mcpRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  /**
+   * Lightweight connection test - just checks if we can connect without full discovery.
+   * Much faster than discover since it doesn't fetch tools/resources/prompts.
+   */
+  testConnection: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const connector = await getMcpConnectorById({ id: input.id });
+      if (!connector) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connector not found",
+        });
+      }
+      if (connector.userId !== null && connector.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access this connector",
+        });
+      }
+
+      log.debug(
+        { connectorId: connector.id, url: connector.url },
+        "testing MCP connection"
+      );
+
+      const mcpClient = await getOrCreateMcpClient({
+        id: connector.id,
+        name: connector.name,
+        url: connector.url,
+        type: connector.type,
+      });
+
+      const result = await mcpClient.attemptConnection();
+
+      log.debug(
+        {
+          connectorId: connector.id,
+          status: result.status,
+          needsAuth: result.needsAuth,
+        },
+        "MCP connection test completed"
+      );
+
+      return result;
+    }),
+
   discover: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {

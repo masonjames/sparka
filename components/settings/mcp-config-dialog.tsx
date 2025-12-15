@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Collapsible,
   CollapsibleContent,
@@ -64,12 +65,10 @@ const HIDE_ADVANCED_SETTINGS = true;
 export function McpConfigDialog({
   open,
   onClose,
-  onCreated,
   connector,
 }: {
   open: boolean;
   onClose: () => void;
-  onCreated?: (connector: McpConnector) => void;
   connector: McpConnector | null;
 }) {
   const trpc = useTRPC();
@@ -109,17 +108,8 @@ export function McpConfigDialog({
     );
   }, [open, connector, form]);
 
-  const { mutate: createConnector, isPending: isCreating } = useMutation(
+  const { mutateAsync: createConnector, isPending: isCreating } = useMutation(
     trpc.mcp.create.mutationOptions({
-      onSuccess: (newConnector) => {
-        toast.success("Connector added");
-        queryClient.invalidateQueries({ queryKey });
-        if (onCreated) {
-          onCreated(newConnector);
-        } else {
-          onClose();
-        }
-      },
       onError: (err) => {
         toast.error(err.message || "Failed to add connector");
       },
@@ -141,7 +131,7 @@ export function McpConfigDialog({
 
   const isPending = isCreating || isUpdating;
 
-  const handleSubmit = (values: McpConnectorFormValues) => {
+  const handleSubmit = async (values: McpConnectorFormValues) => {
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
@@ -162,13 +152,16 @@ export function McpConfigDialog({
         },
       });
     } else {
-      createConnector({
+      await createConnector({
         name: trimmed.name,
         url: trimmed.url,
         type: trimmed.type,
         oauthClientId: trimmed.oauthClientId,
         oauthClientSecret: trimmed.oauthClientSecret,
       });
+      toast.success("Connector added");
+      queryClient.invalidateQueries({ queryKey });
+      onClose();
     }
   };
 
@@ -329,8 +322,8 @@ export function McpConfigDialog({
                 Cancel
               </Button>
               <Button disabled={isPending} type="submit">
-                {isPending && "Saving..."}
-                {!isPending && (isEditing ? "Save" : "Add")}
+                {isPending && <Spinner />}
+                {isEditing ? "Save" : "Add"}
               </Button>
             </DialogFooter>
           </form>

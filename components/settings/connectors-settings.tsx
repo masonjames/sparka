@@ -170,43 +170,6 @@ export function ConnectorsSettings() {
     [setDialogState]
   );
 
-  const handleConnectorCreated = useCallback(
-    async (connector: McpConnector) => {
-      // Ensure the newly-created connector is immediately available for dialogs
-      // even before the list query refetch completes.
-      queryClient.setQueryData(
-        queryKey,
-        (old: typeof connectors): typeof connectors => {
-          if (!old) {
-            return [connector];
-          }
-          if (old.some((c) => c.id === connector.id)) {
-            return old;
-          }
-          return [connector, ...old];
-        }
-      );
-
-      // Auto-open connect dialog if the server requires OAuth.
-      try {
-        await queryClient.fetchQuery({
-          ...trpc.mcp.discover.queryOptions({ id: connector.id }),
-          retry: false,
-          staleTime: 0,
-        });
-      } catch (err) {
-        if (isOAuthRequiredDiscoverError(err)) {
-          setDialogState({ dialog: "connect", connectorId: connector.id });
-          return;
-        }
-      }
-
-      // Preserve previous behavior (just close) when OAuth isn't required.
-      setDialogState({ dialog: null });
-    },
-    [connectors, queryClient, queryKey, setDialogState, trpc.mcp.discover]
-  );
-
   const handleDialogClose = () => {
     setDialogState({ dialog: null });
   };
@@ -355,7 +318,6 @@ export function ConnectorsSettings() {
       <McpConfigDialog
         connector={editingConnector}
         onClose={handleDialogClose}
-        onCreated={handleConnectorCreated}
         open={dialogOpen}
       />
 
@@ -374,21 +336,6 @@ export function ConnectorsSettings() {
         open={connectDialogOpen}
       />
     </SettingsPageContent>
-  );
-}
-
-function isOAuthRequiredDiscoverError(error: unknown): boolean {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-  const anyErr = error as {
-    data?: { code?: string };
-    message?: string;
-  };
-  return (
-    anyErr.data?.code === "UNAUTHORIZED" &&
-    typeof anyErr.message === "string" &&
-    anyErr.message.includes("OAuth authorization")
   );
 }
 
@@ -417,18 +364,16 @@ function CustomConnectorRow({
   });
 
   const {
-    isLoading: isDiscovering,
-    error: discoverError,
-    data: discovery,
+    isLoading: isTestingConnection,
+    data: connectionStatus,
   } = useQuery({
-    ...trpc.mcp.discover.queryOptions({ id: connector.id }),
-    staleTime: 15_000,
+    ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
+    staleTime: 30_000,
     retry: false,
   });
 
-  const needsOAuth = isOAuthRequiredDiscoverError(discoverError);
-  const isConfigured = Boolean(discovery) && !needsOAuth;
-  const toolsCount = discovery?.tools.length ?? 0;
+  const needsOAuth = connectionStatus?.needsAuth ?? false;
+  const isConnected = connectionStatus?.status === "connected";
 
   return (
     <div className="flex items-center gap-4 overflow-hidden rounded-xl border bg-card px-4 py-3">
@@ -464,12 +409,12 @@ function CustomConnectorRow({
             {getUrlWithoutParams(connector.url)}
           </p>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {isDiscovering
-              ? "Checking tools…"
+            {isTestingConnection
+              ? "Checking connection…"
               : needsOAuth
                 ? "Authorization required"
-                : isConfigured
-                  ? `${toolsCount} tool${toolsCount === 1 ? "" : "s"} available`
+                : isConnected
+                  ? "Connected"
                   : "Unable to reach server"}
           </p>
         </div>
@@ -477,12 +422,12 @@ function CustomConnectorRow({
 
       <div className="flex shrink-0 items-center gap-2">
         <Button
-          disabled={isDiscovering}
+          disabled={isTestingConnection}
           onClick={needsOAuth ? onConnect : onViewDetails}
           size="sm"
           variant={needsOAuth ? "outline" : "default"}
         >
-          {isDiscovering ? (
+          {isTestingConnection ? (
             <>
               <Loader2 className="size-4 animate-spin" />
               Loading
