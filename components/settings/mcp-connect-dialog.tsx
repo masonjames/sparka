@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { ExternalLink, Globe, Loader2 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,7 @@ export function McpConnectDialog({
   connector: McpConnector | null;
 }) {
   const trpc = useTRPC();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const faviconUrl = useMemo(() => {
     if (!connector) {
@@ -50,7 +51,8 @@ export function McpConnectDialog({
       return;
     }
     const { authorizationUrl } = await authorize({ id: connector.id });
-    // Full-page navigation (no popup). Provider will redirect back to our callback.
+    // Keep spinner visible until browser navigates away
+    setIsRedirecting(true);
     window.location.href = authorizationUrl;
   }, [authorize, connector]);
 
@@ -86,11 +88,11 @@ export function McpConnectDialog({
         </p>
 
         <DialogFooter>
-          <Button disabled={isPending} onClick={onClose} variant="outline">
+          <Button disabled={isPending || isRedirecting} onClick={onClose} variant="outline">
             Cancel
           </Button>
-          <Button disabled={isPending || !connector} onClick={handleContinue}>
-            {isPending ? (
+          <Button disabled={isPending || isRedirecting || !connector} onClick={handleContinue}>
+            {isPending || isRedirecting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 Redirecting...

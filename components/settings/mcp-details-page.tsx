@@ -21,13 +21,42 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useTRPC } from "@/trpc/react";
+import { Badge } from "../ui/badge";
 import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
-import { Badge } from "../ui/badge";
 import { McpConnectDialog } from "./mcp-connect-dialog";
 import { McpCreateDialog } from "./mcp-create-dialog";
 import { SettingsPageContent } from "./settings-page";
+
+const HTTP_STATUS_REGEX = /HTTP (\d{3})/;
+
+function formatMcpError(message: string): string {
+  const httpMatch = message.match(HTTP_STATUS_REGEX);
+  if (httpMatch) {
+    const status = httpMatch[1];
+    if (status === "502") {
+      return "MCP server is temporarily unavailable (502 Bad Gateway)";
+    }
+    if (status === "503") {
+      return "MCP server is temporarily unavailable (503 Service Unavailable)";
+    }
+    if (status === "504") {
+      return "MCP server timed out (504 Gateway Timeout)";
+    }
+    if (status === "500") {
+      return "MCP server encountered an internal error (500)";
+    }
+    if (status === "401" || status === "403") {
+      return "Authentication failed. Try reconnecting.";
+    }
+    return `MCP server returned HTTP ${status}`;
+  }
+  if (message.length > 200) {
+    return `${message.slice(0, 200)}...`;
+  }
+  return message;
+}
 
 export function McpDetailsPage({ connectorId }: { connectorId: string }) {
   const trpc = useTRPC();
@@ -93,7 +122,15 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
     staleTime: 30_000,
   });
 
+  const { data: connectionStatus } = useQuery({
+    ...trpc.mcp.testConnection.queryOptions({ id: connectorId }),
+    enabled: connector !== null,
+    staleTime: 30_000,
+    retry: false,
+  });
+
   const isAuthenticated = authStatus?.isAuthenticated ?? false;
+  const isIncompatible = connectionStatus?.status === "incompatible";
 
   const needsOAuth =
     discoveryError?.data?.code === "UNAUTHORIZED" &&
@@ -265,7 +302,7 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
               <Settings2 className="size-4" />
               Configure
             </Button>
-            <Button onClick={() => setConnectOpen(true)}>
+            <Button disabled={isIncompatible} onClick={() => setConnectOpen(true)}>
               {isAuthenticated ? "Reconnect" : "Connect"}
             </Button>
           </div>
@@ -295,14 +332,25 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
             </div>
           ) : null}
 
-          {discoveryError && !needsOAuth ? (
+          {isIncompatible ? (
+            <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <AlertCircle className="size-6 text-destructive" />
+              <p className="font-medium text-sm">Incompatible server</p>
+              <p className="max-w-xs text-muted-foreground text-xs">
+                {connectionStatus?.error ??
+                  "This server requires pre-configured OAuth credentials."}
+              </p>
+            </div>
+          ) : null}
+
+          {discoveryError && !needsOAuth && !isIncompatible ? (
             <div className="flex flex-col items-center gap-2 py-12 text-center">
               <AlertCircle className="size-6 text-destructive" />
               <p className="text-muted-foreground text-sm">
                 Failed to connect to MCP server
               </p>
               <p className="max-w-xs text-muted-foreground text-xs">
-                {discoveryError.message}
+                {formatMcpError(discoveryError.message)}
               </p>
             </div>
           ) : null}

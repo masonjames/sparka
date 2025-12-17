@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   Globe,
   Loader2,
   MoreHorizontal,
@@ -277,10 +278,14 @@ function CustomConnectorRow({
 
   const needsOAuth = connectionStatus?.needsAuth ?? false;
   const isConnected = connectionStatus?.status === "connected";
+  const isIncompatible = connectionStatus?.status === "incompatible";
 
   const statusText = (() => {
     if (isTestingConnection) {
       return "Checking connection…";
+    }
+    if (isIncompatible) {
+      return "Incompatible server";
     }
     if (needsOAuth) {
       return "Authorization required";
@@ -288,7 +293,7 @@ function CustomConnectorRow({
     if (isConnected) {
       return "Connected";
     }
-    return "Unable to reach server";
+    return connectionStatus?.error ?? "Unable to reach server";
   })();
 
   const actionLabel = (() => {
@@ -302,6 +307,9 @@ function CustomConnectorRow({
   })();
 
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
+
+  const showOAuthButton = needsOAuth && !isIncompatible;
+  const showDetailsButton = !needsOAuth && !isIncompatible;
 
   return (
     <div className="flex items-center gap-4 overflow-hidden rounded-xl border bg-card px-4 py-3">
@@ -340,7 +348,14 @@ function CustomConnectorRow({
       </Link>
 
       <div className="flex shrink-0 items-center gap-2">
-        {needsOAuth ? (
+        {isIncompatible ? (
+          <Badge className="gap-1" variant="destructive">
+            <AlertTriangle className="size-3" />
+            Error
+          </Badge>
+        ) : null}
+
+        {showOAuthButton ? (
           <Button
             disabled={isTestingConnection}
             onClick={onConnect}
@@ -356,7 +371,9 @@ function CustomConnectorRow({
               actionLabel
             )}
           </Button>
-        ) : (
+        ) : null}
+
+        {showDetailsButton ? (
           <Button
             asChild
             disabled={isTestingConnection}
@@ -374,7 +391,7 @@ function CustomConnectorRow({
               )}
             </Link>
           </Button>
-        )}
+        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost">

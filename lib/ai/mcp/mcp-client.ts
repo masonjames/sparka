@@ -18,7 +18,10 @@ type McpClientStatus =
   | "disconnected"
   | "connecting"
   | "connected"
-  | "authorizing";
+  | "authorizing"
+  | "incompatible";
+
+export type { McpClientStatus };
 
 function getBaseUrl(): string {
   if (env.VERCEL_PROJECT_PRODUCTION_URL) {
@@ -133,6 +136,7 @@ export class MCPClient {
   async attemptConnection(): Promise<{
     status: McpClientStatus;
     needsAuth: boolean;
+    error?: string;
   }> {
     // If already connected, return current status
     if (this.status === "connected" && this.client) {
@@ -155,8 +159,29 @@ export class MCPClient {
         needsAuth: false,
       };
     } catch (error) {
-      log.error({ error, connectorId: this.id }, "attemptConnection failed");
-      return { status: "disconnected", needsAuth: false };
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      log.error(
+        {
+          connectorId: this.id,
+          errorMessage,
+          errorStack: error instanceof Error ? error.stack : undefined,
+        },
+        "attemptConnection failed"
+      );
+
+      // Detect incompatible server errors
+      if (errorMessage.includes("does not support dynamic client registration")) {
+        this._status = "incompatible";
+        return {
+          status: "incompatible",
+          needsAuth: false,
+          error:
+            "Server requires pre-configured OAuth credentials (does not support dynamic client registration)",
+        };
+      }
+
+      return { status: "disconnected", needsAuth: false, error: errorMessage };
     }
   }
 

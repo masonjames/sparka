@@ -251,11 +251,16 @@ export const mcpRouter = createTRPCRouter({
           connectorId: connector.id,
           status: result.status,
           needsAuth: result.needsAuth,
+          error: result.error,
         },
         "MCP connection test completed"
       );
 
-      return result;
+      return {
+        status: result.status,
+        needsAuth: result.needsAuth,
+        error: result.error,
+      };
     }),
 
   discover: protectedProcedure
