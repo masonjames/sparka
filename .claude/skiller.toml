@@ -19,6 +19,10 @@ enabled = false
 [rules]
 merge_strategy = "cursor"
 
+[skills]
+generate_from_rules = true
+
+
 # --- Agent Specific Configurations ---
 # You can enable/disable agents and override their default output paths here.
 # Use lowercase agent identifiers: amp, copilot, claude, codex, cursor, windsurf, cline, aider, kilocode
