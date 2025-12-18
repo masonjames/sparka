@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useConfig } from "@/components/config-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useConfig } from "@/components/config-provider";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 import { Favicon } from "../favicon";

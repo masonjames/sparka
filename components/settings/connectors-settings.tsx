@@ -12,8 +12,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
-import { useCallback, useMemo } from "react";
+import { Fragment, useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import { useConfig } from "@/components/config-provider";
+import { ConnectorHeader } from "@/components/settings/connector-header";
+import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
+import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
+import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,17 +28,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import type { McpConnector } from "@/lib/db/schema";
 import {
   type McpConnectorsDialog,
   mcpConnectorsSettingsSearchParams,
 } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
-import { useConfig } from "../config-provider";
-import { ConnectorHeader } from "./connector-header";
-import { McpConnectDialog } from "./mcp-connect-dialog";
-import { McpCreateDialog } from "./mcp-create-dialog";
-import { SettingsPageContent } from "./settings-page";
 
 export function ConnectorsSettings() {
   const trpc = useTRPC();
@@ -182,35 +183,39 @@ export function ConnectorsSettings() {
         </Button>
       </div>
 
-      {customConnectors.length > 0 ? (
-        <div className="space-y-2">
-          {customConnectors.map((connector) => (
-            <CustomConnectorRow
-              connector={connector}
-              isDisconnecting={isDisconnecting}
-              key={connector.id}
-              onConnect={() => handleOpenConnectDialog(connector.id)}
-              onDisconnect={() => disconnectConnector({ id: connector.id })}
-              onUninstall={() => deleteConnector({ id: connector.id })}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="mb-4 rounded-full bg-muted p-3">
-            <Radio className="size-6 text-muted-foreground" />
+      <div className="flex flex-col">
+        {customConnectors.length > 0 ? (
+          <>
+            {customConnectors.map((connector, index) => (
+              <Fragment key={connector.id}>
+                <CustomConnectorRow
+                  connector={connector}
+                  isDisconnecting={isDisconnecting}
+                  onConnect={() => handleOpenConnectDialog(connector.id)}
+                  onDisconnect={() => disconnectConnector({ id: connector.id })}
+                  onUninstall={() => deleteConnector({ id: connector.id })}
+                />
+                {index < customConnectors.length - 1 ? <Separator /> : null}
+              </Fragment>
+            ))}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="mb-4 rounded-full bg-muted p-3">
+              <Radio className="size-6 text-muted-foreground" />
+            </div>
+            <p className="font-medium text-sm">No custom connectors</p>
+            <p className="mt-1 max-w-sm text-muted-foreground text-xs">
+              Add a custom MCP connector to access tools from your services.
+            </p>
           </div>
-          <p className="font-medium text-sm">No custom connectors</p>
-          <p className="mt-1 max-w-sm text-muted-foreground text-xs">
-            Add a custom MCP connector to access tools from your services.
-          </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {globalConnectors.length > 0 ? (
-        <div className="space-y-2">
+        <div>
           <p className="font-medium text-sm">Built-in connectors</p>
-          <div className="space-y-2">
+          <div className="divide-y">
             {globalConnectors.map((connector) => (
               <BuiltInConnectorRow connector={connector} key={connector.id} />
             ))}
@@ -291,11 +296,8 @@ function CustomConnectorRow({
   const showDetailsButton = !(needsOAuth || isIncompatible);
 
   return (
-    <div className="flex items-center gap-4 overflow-hidden rounded-xl border bg-card px-4 py-3">
-      <Link
-        className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left"
-        href={href}
-      >
+    <div className="flex items-center gap-4 py-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left">
         <ConnectorHeader
           isCustom
           name={connector.name}
@@ -303,7 +305,7 @@ function CustomConnectorRow({
           type={connector.type}
           url={connector.url}
         />
-      </Link>
+      </div>
 
       <div className="flex shrink-0 items-center gap-2">
         {isIncompatible ? (
@@ -314,11 +316,7 @@ function CustomConnectorRow({
         ) : null}
 
         {showOAuthButton ? (
-          <Button
-            disabled={isTestingConnection}
-            onClick={onConnect}
-            size="sm"
-          >
+          <Button disabled={isTestingConnection} onClick={onConnect} size="sm">
             {isTestingConnection ? (
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="size-4 animate-spin" />
@@ -402,17 +400,16 @@ function CustomConnectorRow({
 function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
   return (
-    <Link
-      className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left"
-      href={href}
-    >
+    <div className="flex w-full items-center gap-3 py-3 text-left">
       <ConnectorHeader
         isCustom={false}
         name={connector.name}
         type={connector.type}
         url={connector.url}
       />
-      <span className="text-muted-foreground text-xs">View</span>
-    </Link>
+      <Button asChild size="sm" variant="outline">
+        <Link href={href}>View</Link>
+      </Button>
+    </div>
   );
 }
