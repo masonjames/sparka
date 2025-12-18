@@ -4,10 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   BookText,
-  Check,
   ChevronLeft,
   FileText,
-  Globe,
   Loader2,
   Trash2,
   Wrench,
@@ -17,14 +15,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useTRPC } from "@/trpc/react";
-import { Badge } from "../ui/badge";
-import { Favicon } from "../favicon";
-import { getGoogleFaviconUrl } from "../get-google-favicon-url";
-import { getUrlWithoutParams } from "../get-url-without-params";
+import { ConnectorHeader } from "./connector-header";
 import { McpConnectDialog } from "./mcp-connect-dialog";
 import { SettingsPageContent } from "./settings-page";
 
@@ -161,9 +157,6 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
     discoveryError?.data?.code === "UNAUTHORIZED" &&
     discoveryError.message.includes("OAuth authorization");
 
-  const faviconUrl =
-    connector?.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
-
   useEffect(() => {
     const connected = searchParams.get("connected");
     const err = searchParams.get("error");
@@ -272,56 +265,30 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
         </Link>
       </Button>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3 overflow-hidden">
-          <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
-            {faviconUrl ? (
-              <>
-                <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-                <Globe className="hidden size-5 text-muted-foreground" />
-              </>
-            ) : (
-              <Globe className="size-5 text-muted-foreground" />
-            )}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <ConnectorHeader
+          isCustom={connector.userId !== null}
+          name={connector.name}
+          type={connector.type}
+          url={connector.url}
+        />
+
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={connector.enabled}
+              disabled={!canEdit}
+              id="connector-enabled"
+              onCheckedChange={handleToggleEnabled}
+            />
+            <Label
+              className="text-muted-foreground text-xs"
+              htmlFor="connector-enabled"
+            >
+              Enabled
+            </Label>
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <h2 className="truncate font-semibold text-lg">
-                {connector.name}
-              </h2>
-            </div>
-            <p className="mt-0.5 truncate text-muted-foreground text-sm">
-              {getUrlWithoutParams(connector.url)}
-            </p>
-
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {connector.userId !== null ? (
-                <Badge
-                  className="h-5 shrink-0 px-2 text-[10px]"
-                  variant="secondary"
-                >
-                  CUSTOM
-                </Badge>
-              ) : (
-                <Badge className="h-5 shrink-0 px-2 text-[10px]" variant="outline">
-                  Built-in
-                </Badge>
-              )}
-
-              <div className="ml-1 flex items-center gap-2 rounded-md border bg-card px-2 py-1">
-                <span className="text-muted-foreground text-xs">Enabled</span>
-                <Switch
-                  checked={connector.enabled}
-                  disabled={!canEdit}
-                  onCheckedChange={handleToggleEnabled}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
           {canEdit ? (
             <Button
               onClick={handleUninstall}
@@ -337,68 +304,17 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
 
       <Separator className="my-2" />
 
-      {(needsOAuth && isAuthenticated) || isLoadingDiscovery ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : null}
-
-      {showConnectButton ? (
-        <div className="flex flex-col items-center gap-4 py-12 text-center">
-          <p className="font-medium text-sm">Authorization required</p>
-          <p className="max-w-xs text-muted-foreground text-xs">
-            Connect this connector to access its tools and resources.
-          </p>
-          <Button onClick={() => setConnectOpen(true)}>
-            Connect
-          </Button>
-        </div>
-      ) : null}
-
-      {isIncompatible ? (
-        <div className="flex flex-col items-center gap-2 py-12 text-center">
-          <AlertCircle className="size-6 text-destructive" />
-          <p className="font-medium text-sm">Incompatible server</p>
-          <p className="max-w-xs text-muted-foreground text-xs">
-            {connectionStatus?.error ??
-              "This server requires pre-configured OAuth credentials."}
-          </p>
-        </div>
-      ) : null}
-
-      {discoveryError && !needsOAuth && !isIncompatible ? (
-        <div className="flex flex-col items-center gap-2 py-12 text-center">
-          <AlertCircle className="size-6 text-destructive" />
-          <p className="text-muted-foreground text-sm">
-            Failed to connect to MCP server
-          </p>
-          <p className="max-w-xs text-muted-foreground text-xs">
-            {formatMcpError(discoveryError.message)}
-          </p>
-        </div>
-      ) : null}
-
-      {showDiscovery ? (
-        <ScrollArea className="max-h-[60vh]">
-          <div className="space-y-4 pr-4">
-            <DetailsSection
-              icon={<Wrench className="size-4" />}
-              items={discovery.tools.map((t) => t.name)}
-              title="Tools"
-            />
-            <DetailsSection
-              icon={<FileText className="size-4" />}
-              items={discovery.resources.map((r) => r.name)}
-              title="Resources"
-            />
-            <DetailsSection
-              icon={<BookText className="size-4" />}
-              items={discovery.prompts.map((p) => p.name)}
-              title="Prompts"
-            />
-          </div>
-        </ScrollArea>
-      ) : null}
+      <DiscoveryContent
+        connectionError={connectionStatus?.error}
+        discovery={discovery ?? null}
+        discoveryError={discoveryError}
+        isIncompatible={isIncompatible}
+        isLoading={(needsOAuth && isAuthenticated) || isLoadingDiscovery}
+        needsOAuth={needsOAuth}
+        onConnect={() => setConnectOpen(true)}
+        showConnectButton={showConnectButton}
+        showDiscovery={showDiscovery ?? false}
+      />
 
       <McpConnectDialog
         connector={connector}
@@ -407,6 +323,105 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
       />
     </SettingsPageContent>
   );
+}
+
+function DiscoveryContent({
+  isLoading,
+  showConnectButton,
+  onConnect,
+  isIncompatible,
+  connectionError,
+  discoveryError,
+  needsOAuth,
+  showDiscovery,
+  discovery,
+}: {
+  isLoading: boolean;
+  showConnectButton: boolean;
+  onConnect: () => void;
+  isIncompatible: boolean;
+  connectionError?: string;
+  discoveryError: { message: string } | null;
+  needsOAuth: boolean;
+  showDiscovery: boolean;
+  discovery: {
+    tools: { name: string }[];
+    resources: { name: string }[];
+    prompts: { name: string }[];
+  } | null;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (showConnectButton) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-12 text-center">
+        <p className="font-medium text-sm">Authorization required</p>
+        <p className="max-w-xs text-muted-foreground text-xs">
+          Connect this connector to access its tools and resources.
+        </p>
+        <Button onClick={onConnect}>Connect</Button>
+      </div>
+    );
+  }
+
+  if (isIncompatible) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-12 text-center">
+        <AlertCircle className="size-6 text-destructive" />
+        <p className="font-medium text-sm">Incompatible server</p>
+        <p className="max-w-xs text-muted-foreground text-xs">
+          {connectionError ??
+            "This server requires pre-configured OAuth credentials."}
+        </p>
+      </div>
+    );
+  }
+
+  if (discoveryError && !needsOAuth) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-12 text-center">
+        <AlertCircle className="size-6 text-destructive" />
+        <p className="text-muted-foreground text-sm">
+          Failed to connect to MCP server
+        </p>
+        <p className="max-w-xs text-muted-foreground text-xs">
+          {formatMcpError(discoveryError.message)}
+        </p>
+      </div>
+    );
+  }
+
+  if (showDiscovery && discovery) {
+    return (
+      <ScrollArea className="max-h-[60vh]">
+        <div className="space-y-4 pr-4">
+          <DetailsSection
+            icon={<Wrench className="size-4" />}
+            items={discovery.tools.map((t) => t.name)}
+            title="Tools"
+          />
+          <DetailsSection
+            icon={<FileText className="size-4" />}
+            items={discovery.resources.map((r) => r.name)}
+            title="Resources"
+          />
+          <DetailsSection
+            icon={<BookText className="size-4" />}
+            items={discovery.prompts.map((p) => p.name)}
+            title="Prompts"
+          />
+        </div>
+      </ScrollArea>
+    );
+  }
+
+  return null;
 }
 
 function DetailsSection({

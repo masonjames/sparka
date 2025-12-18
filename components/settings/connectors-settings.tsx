@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  Globe,
   Loader2,
   MoreHorizontal,
   Plus,
@@ -30,9 +29,7 @@ import {
 } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 import { useConfig } from "../config-provider";
-import { Favicon } from "../favicon";
-import { getGoogleFaviconUrl } from "../get-google-favicon-url";
-import { getUrlWithoutParams } from "../get-url-without-params";
+import { ConnectorHeader } from "./connector-header";
 import { McpConnectDialog } from "./mcp-connect-dialog";
 import { McpCreateDialog } from "./mcp-create-dialog";
 import { SettingsPageContent } from "./settings-page";
@@ -78,10 +75,10 @@ export function ConnectorsSettings() {
       },
       onError: (_err, _data, context) => {
         queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to delete connector");
+        toast.error("Failed to uninstall connector");
       },
       onSuccess: () => {
-        toast.success("Connector removed");
+        toast.success("Connector uninstalled");
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
@@ -193,7 +190,7 @@ export function ConnectorsSettings() {
               key={connector.id}
               onConnect={() => handleOpenConnectDialog(connector.id)}
               onDisconnect={() => disconnectConnector({ id: connector.id })}
-              onRemove={() => deleteConnector({ id: connector.id })}
+              onUninstall={() => deleteConnector({ id: connector.id })}
             />
           ))}
         </div>
@@ -237,19 +234,17 @@ export function ConnectorsSettings() {
 function CustomConnectorRow({
   connector,
   onConnect,
-  onRemove,
+  onUninstall,
   onDisconnect,
   isDisconnecting,
 }: {
   connector: McpConnector;
   onConnect: () => void;
-  onRemove: () => void;
+  onUninstall: () => void;
   onDisconnect: () => void;
   isDisconnecting: boolean;
 }) {
   const trpc = useTRPC();
-  const faviconUrl =
-    connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
 
   const { data: authStatus } = useQuery({
     ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
@@ -303,34 +298,13 @@ function CustomConnectorRow({
         className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left"
         href={href}
       >
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          {faviconUrl ? (
-            <>
-              <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-              <Globe className="hidden size-5 text-muted-foreground" />
-            </>
-          ) : (
-            <Globe className="size-5 text-muted-foreground" />
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="truncate font-medium text-sm">
-              {connector.name}
-            </span>
-            <Badge
-              className="h-5 shrink-0 px-2 text-[10px]"
-              variant="secondary"
-            >
-              CUSTOM
-            </Badge>
-          </div>
-          <p className="mt-1 truncate text-muted-foreground text-xs">
-            {getUrlWithoutParams(connector.url)}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">{statusText}</p>
-        </div>
+        <ConnectorHeader
+          isCustom
+          name={connector.name}
+          statusText={statusText}
+          type={connector.type}
+          url={connector.url}
+        />
       </Link>
 
       <div className="flex shrink-0 items-center gap-2">
@@ -411,10 +385,10 @@ function CustomConnectorRow({
             ) : null}
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={onRemove}
+              onClick={onUninstall}
             >
               <Trash2 className="size-4" />
-              Remove
+              Uninstall
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -424,35 +398,18 @@ function CustomConnectorRow({
 }
 
 function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
-  const faviconUrl =
-    connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
   return (
     <Link
       className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left"
       href={href}
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-        {faviconUrl ? (
-          <>
-            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-            <Globe className="hidden size-5 text-muted-foreground" />
-          </>
-        ) : (
-          <Globe className="size-5 text-muted-foreground" />
-        )}
-      </div>
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="truncate font-medium text-sm">{connector.name}</span>
-          <Badge className="h-5 shrink-0 px-2 text-[10px]" variant="outline">
-            Built-in
-          </Badge>
-        </div>
-        <p className="mt-1 truncate text-muted-foreground text-xs">
-          {getUrlWithoutParams(connector.url)}
-        </p>
-      </div>
+      <ConnectorHeader
+        isCustom={false}
+        name={connector.name}
+        type={connector.type}
+        url={connector.url}
+      />
       <span className="text-muted-foreground text-xs">View</span>
     </Link>
   );
