@@ -290,11 +290,7 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
           </div>
 
           {canEdit ? (
-            <Button
-              onClick={handleUninstall}
-              size="sm"
-              variant="destructive"
-            >
+            <Button onClick={handleUninstall} size="sm" variant="destructive">
               <Trash2 className="size-4" />
               Uninstall
             </Button>

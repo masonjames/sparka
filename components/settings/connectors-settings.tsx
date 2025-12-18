@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  ArrowUpRight,
   Loader2,
   MoreHorizontal,
   Plus,
@@ -217,10 +218,7 @@ export function ConnectorsSettings() {
         </div>
       ) : null}
 
-      <McpCreateDialog
-        onClose={handleDialogClose}
-        open={createOpen}
-      />
+      <McpCreateDialog onClose={handleDialogClose} open={createOpen} />
 
       <McpConnectDialog
         connector={connectConnector}
@@ -290,7 +288,7 @@ function CustomConnectorRow({
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
 
   const showOAuthButton = needsOAuth && !isIncompatible;
-  const showDetailsButton = !needsOAuth && !isIncompatible;
+  const showDetailsButton = !(needsOAuth || isIncompatible);
 
   return (
     <div className="flex items-center gap-4 overflow-hidden rounded-xl border bg-card px-4 py-3">
@@ -320,15 +318,17 @@ function CustomConnectorRow({
             disabled={isTestingConnection}
             onClick={onConnect}
             size="sm"
-            variant="outline"
           >
             {isTestingConnection ? (
-              <>
+              <span className="inline-flex items-center gap-2">
                 <Loader2 className="size-4 animate-spin" />
                 Loading
-              </>
+              </span>
             ) : (
-              actionLabel
+              <span className="inline-flex items-center gap-2">
+                Connect
+                <ArrowUpRight className="-mr-1 size-4" />
+              </span>
             )}
           </Button>
         ) : null}
@@ -342,12 +342,14 @@ function CustomConnectorRow({
           >
             <Link href={href}>
               {isTestingConnection ? (
-                <>
+                <span className="inline-flex items-center gap-2">
                   <Loader2 className="size-4 animate-spin" />
                   Loading
-                </>
+                </span>
               ) : (
-                actionLabel
+                <span className="inline-flex items-center gap-2">
+                  {actionLabel}
+                </span>
               )}
             </Link>
           </Button>

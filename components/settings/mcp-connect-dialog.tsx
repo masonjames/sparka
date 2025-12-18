@@ -1,7 +1,14 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ExternalLink, Globe, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ExternalLink,
+  Globe,
+  Loader2,
+  Lock,
+  Shield,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useConfig } from "@/components/config-provider";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 import { Favicon } from "../favicon";
@@ -28,6 +36,7 @@ export function McpConnectDialog({
   onClose: () => void;
   connector: McpConnector | null;
 }) {
+  const config = useConfig();
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -82,16 +91,54 @@ export function McpConnectDialog({
           </div>
         </DialogHeader>
 
-        <p className="text-muted-foreground text-sm">
-          You’ll be redirected to complete authentication and then brought back
-          here.
-        </p>
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <Shield className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">
+                Permissions always respected
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {config.appName} is strictly limited to permissions you
+                explicitly set. Disable access anytime to revoke permissions.
+              </p>
+            </div>
+          </div>
 
-        <DialogFooter>
-          <Button disabled={isPending || isRedirecting} onClick={onClose} variant="outline">
-            Cancel
-          </Button>
-          <Button disabled={isPending || isRedirecting || !connector} onClick={handleContinue}>
+          <div className="flex gap-3">
+            <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">
+                How {config.appName} uses data
+              </p>
+              <p className="text-muted-foreground text-sm">
+                By default, we do not train on your data. Data from{" "}
+                {connector?.name ?? "this connector"} may be used to provide you
+                relevant and useful information.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">
+                Connectors may introduce risk
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Connectors are designed to respect your privacy, but sites may
+                attempt to steal your data.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="flex-col gap-2 sm:flex-col">
+          <Button
+            className="w-full"
+            disabled={isPending || isRedirecting || !connector}
+            onClick={handleContinue}
+          >
             {isPending || isRedirecting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
@@ -99,10 +146,18 @@ export function McpConnectDialog({
               </>
             ) : (
               <>
-                <ExternalLink className="size-4" />
                 Continue to {connector?.name ?? "connector"}
+                <ExternalLink className="size-4" />
               </>
             )}
+          </Button>
+          <Button
+            className="w-full"
+            disabled={isPending || isRedirecting}
+            onClick={onClose}
+            variant="ghost"
+          >
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>

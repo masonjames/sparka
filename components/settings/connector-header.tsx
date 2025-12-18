@@ -54,7 +54,9 @@ export function ConnectorHeader({
           {getUrlWithoutParams(url)}
         </p>
         {statusText ? (
-          <p className="mt-0.5 text-[11px] text-muted-foreground">{statusText}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {statusText}
+          </p>
         ) : null}
       </div>
     </div>

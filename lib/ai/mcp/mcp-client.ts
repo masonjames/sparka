@@ -171,7 +171,9 @@ export class MCPClient {
       );
 
       // Detect incompatible server errors
-      if (errorMessage.includes("does not support dynamic client registration")) {
+      if (
+        errorMessage.includes("does not support dynamic client registration")
+      ) {
         this._status = "incompatible";
         return {
           status: "incompatible",
