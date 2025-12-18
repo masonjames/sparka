@@ -39,7 +39,6 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
-import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 
 const mcpConnectorFormSchema = z.object({
@@ -65,11 +64,9 @@ const HIDE_ADVANCED_SETTINGS = true;
 export function McpCreateDialog({
   open,
   onClose,
-  connector,
 }: {
   open: boolean;
   onClose: () => void;
-  connector: McpConnector | null;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -77,16 +74,14 @@ export function McpCreateDialog({
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  const isEditing = connector !== null;
-
   const form = useForm<McpConnectorFormValues>({
     resolver: zodResolver(mcpConnectorFormSchema),
     defaultValues: {
-      name: connector?.name ?? "",
-      url: connector?.url ?? "",
-      type: (connector?.type as "http" | "sse") ?? "http",
-      oauthClientId: connector?.oauthClientId ?? "",
-      oauthClientSecret: connector?.oauthClientSecret ?? "",
+      name: "",
+      url: "",
+      type: "http",
+      oauthClientId: "",
+      oauthClientSecret: "",
     },
   });
 
@@ -96,40 +91,23 @@ export function McpCreateDialog({
     }
 
     form.reset({
-      name: connector?.name ?? "",
-      url: connector?.url ?? "",
-      type: (connector?.type as "http" | "sse") ?? "http",
-      oauthClientId: connector?.oauthClientId ?? "",
-      oauthClientSecret: connector?.oauthClientSecret ?? "",
+      name: "",
+      url: "",
+      type: "http",
+      oauthClientId: "",
+      oauthClientSecret: "",
     });
 
-    setAdvancedOpen(
-      Boolean(connector?.oauthClientId || connector?.oauthClientSecret)
-    );
-  }, [open, connector, form]);
+    setAdvancedOpen(false);
+  }, [open, form]);
 
-  const { mutateAsync: createConnector, isPending: isCreating } = useMutation(
+  const { mutateAsync: createConnector, isPending } = useMutation(
     trpc.mcp.create.mutationOptions({
       onError: (err) => {
         toast.error(err.message || "Failed to add connector");
       },
     })
   );
-
-  const { mutate: updateConnector, isPending: isUpdating } = useMutation(
-    trpc.mcp.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Connector updated");
-        queryClient.invalidateQueries({ queryKey });
-        onClose();
-      },
-      onError: (err) => {
-        toast.error(err.message || "Failed to update connector");
-      },
-    })
-  );
-
-  const isPending = isCreating || isUpdating;
 
   const handleSubmit = async (values: McpConnectorFormValues) => {
     const trimmed: McpConnectorFormValues = {
@@ -140,38 +118,23 @@ export function McpCreateDialog({
       oauthClientSecret: values.oauthClientSecret?.trim() || undefined,
     };
 
-    if (isEditing && connector) {
-      updateConnector({
-        id: connector.id,
-        updates: {
-          name: trimmed.name,
-          url: trimmed.url,
-          type: trimmed.type,
-          oauthClientId: trimmed.oauthClientId ?? null,
-          oauthClientSecret: trimmed.oauthClientSecret ?? null,
-        },
-      });
-    } else {
-      await createConnector({
-        name: trimmed.name,
-        url: trimmed.url,
-        type: trimmed.type,
-        oauthClientId: trimmed.oauthClientId,
-        oauthClientSecret: trimmed.oauthClientSecret,
-      });
-      toast.success("Connector added");
-      queryClient.invalidateQueries({ queryKey });
-      onClose();
-    }
+    await createConnector({
+      name: trimmed.name,
+      url: trimmed.url,
+      type: trimmed.type,
+      oauthClientId: trimmed.oauthClientId,
+      oauthClientSecret: trimmed.oauthClientSecret,
+    });
+    toast.success("Connector added");
+    queryClient.invalidateQueries({ queryKey });
+    onClose();
   };
 
   return (
     <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Configure connector" : "Add custom connector"}
-          </DialogTitle>
+          <DialogTitle>Add custom connector</DialogTitle>
           <DialogDescription>
             Connect to an MCP server to extend AI capabilities with external
             tools.
@@ -323,7 +286,7 @@ export function McpCreateDialog({
               </Button>
               <Button disabled={isPending} type="submit">
                 {isPending && <Spinner />}
-                {isEditing ? "Save" : "Add"}
+                Add
               </Button>
             </DialogFooter>
           </form>

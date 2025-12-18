@@ -26,7 +26,6 @@ import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
 import { McpConnectDialog } from "./mcp-connect-dialog";
-import { McpCreateDialog } from "./mcp-create-dialog";
 import { SettingsPageContent } from "./settings-page";
 
 const HTTP_STATUS_REGEX = /HTTP (\d{3})/;
@@ -65,7 +64,6 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
   const searchParams = useSearchParams();
 
   const [connectOpen, setConnectOpen] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
 
   const queryKey = trpc.mcp.list.queryKey();
 
@@ -294,14 +292,6 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
           </div>
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-            <Button
-              disabled={!canEdit}
-              onClick={() => setConfigOpen(true)}
-              variant="outline"
-            >
-              <Settings2 className="size-4" />
-              Configure
-            </Button>
             <Button disabled={isIncompatible} onClick={() => setConnectOpen(true)}>
               {isAuthenticated ? "Reconnect" : "Connect"}
             </Button>
@@ -376,12 +366,6 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
           ) : null}
         </ScrollArea>
       </div>
-
-      <McpCreateDialog
-        connector={connector}
-        onClose={() => setConfigOpen(false)}
-        open={configOpen}
-      />
 
       <McpConnectDialog
         connector={connector}

@@ -51,15 +51,8 @@ export function ConnectorsSettings() {
     trpc.mcp.list.queryOptions()
   );
 
-  const configOpen = qs.dialog === "config";
+  const createOpen = qs.dialog === "config";
   const connectOpen = qs.dialog === "connect";
-
-  const editingConnector = useMemo(() => {
-    if (!(configOpen && qs.connectorId && connectors)) {
-      return null;
-    }
-    return connectors.find((c) => c.id === qs.connectorId) ?? null;
-  }, [configOpen, qs.connectorId, connectors]);
 
   const connectConnector = useMemo(() => {
     if (!(connectOpen && qs.connectorId && connectors)) {
@@ -133,12 +126,9 @@ export function ConnectorsSettings() {
     [setQs]
   );
 
-  const handleOpenConfigDialog = useCallback(
-    (connectorId?: string) => {
-      setDialogState({ dialog: "config", connectorId: connectorId ?? null });
-    },
-    [setDialogState]
-  );
+  const handleOpenCreateDialog = useCallback(() => {
+    setDialogState({ dialog: "config" });
+  }, [setDialogState]);
 
   const handleDialogClose = () => {
     setDialogState({ dialog: null });
@@ -188,7 +178,7 @@ export function ConnectorsSettings() {
             Connect MCP servers you trust to extend your AI with tools.
           </p>
         </div>
-        <Button onClick={() => handleOpenConfigDialog()} size="sm">
+        <Button onClick={handleOpenCreateDialog} size="sm">
           <Plus className="size-4" />
           Add custom connector
         </Button>
@@ -201,7 +191,6 @@ export function ConnectorsSettings() {
               connector={connector}
               isDisconnecting={isDisconnecting}
               key={connector.id}
-              onConfigure={() => handleOpenConfigDialog(connector.id)}
               onConnect={() => handleOpenConnectDialog(connector.id)}
               onDisconnect={() => disconnectConnector({ id: connector.id })}
               onRemove={() => deleteConnector({ id: connector.id })}
@@ -232,9 +221,8 @@ export function ConnectorsSettings() {
       ) : null}
 
       <McpCreateDialog
-        connector={editingConnector}
         onClose={handleDialogClose}
-        open={configOpen}
+        open={createOpen}
       />
 
       <McpConnectDialog
@@ -248,14 +236,12 @@ export function ConnectorsSettings() {
 
 function CustomConnectorRow({
   connector,
-  onConfigure,
   onConnect,
   onRemove,
   onDisconnect,
   isDisconnecting,
 }: {
   connector: McpConnector;
-  onConfigure: () => void;
   onConnect: () => void;
   onRemove: () => void;
   onDisconnect: () => void;
@@ -303,7 +289,7 @@ function CustomConnectorRow({
     if (needsOAuth) {
       return "Connect";
     }
-    return "Details";
+    return "Configure";
   })();
 
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
@@ -410,14 +396,6 @@ function CustomConnectorRow({
                 <DropdownMenuSeparator />
               </>
             ) : null}
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.preventDefault();
-                onConfigure();
-              }}
-            >
-              Configure
-            </DropdownMenuItem>
             {needsOAuth ? (
               <>
                 <DropdownMenuItem
@@ -430,9 +408,7 @@ function CustomConnectorRow({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
-            ) : (
-              <DropdownMenuSeparator />
-            )}
+            ) : null}
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={onRemove}
