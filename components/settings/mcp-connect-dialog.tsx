@@ -91,27 +91,27 @@ export function McpConnectDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex gap-3">
+        <div className="space-y-6 py-2">
+          <div className="flex gap-4">
             <Shield className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium text-sm">
                 Permissions always respected
               </p>
-              <p className="text-muted-foreground text-sm">
+              <p className="mt-1 text-muted-foreground text-sm">
                 {config.appName} is strictly limited to permissions you
                 explicitly set. Disable access anytime to revoke permissions.
               </p>
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium text-sm">
                 How {config.appName} uses data
               </p>
-              <p className="text-muted-foreground text-sm">
+              <p className="mt-1 text-muted-foreground text-sm">
                 By default, we do not train on your data. Data from{" "}
                 {connector?.name ?? "this connector"} may be used to provide you
                 relevant and useful information.
@@ -119,13 +119,13 @@ export function McpConnectDialog({
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium text-sm">
                 Connectors may introduce risk
               </p>
-              <p className="text-muted-foreground text-sm">
+              <p className="mt-1 text-muted-foreground text-sm">
                 Connectors are designed to respect your privacy, but sites may
                 attempt to steal your data.
               </p>
@@ -133,7 +133,7 @@ export function McpConnectDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
+        <DialogFooter className="mt-4 flex-col gap-3 sm:flex-col">
           <Button
             className="w-full"
             disabled={isPending || isRedirecting || !connector}

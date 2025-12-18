@@ -185,20 +185,18 @@ export function ConnectorsSettings() {
 
       <div className="flex flex-col">
         {customConnectors.length > 0 ? (
-          <>
-            {customConnectors.map((connector, index) => (
-              <Fragment key={connector.id}>
-                <CustomConnectorRow
-                  connector={connector}
-                  isDisconnecting={isDisconnecting}
-                  onConnect={() => handleOpenConnectDialog(connector.id)}
-                  onDisconnect={() => disconnectConnector({ id: connector.id })}
-                  onUninstall={() => deleteConnector({ id: connector.id })}
-                />
-                {index < customConnectors.length - 1 ? <Separator /> : null}
-              </Fragment>
-            ))}
-          </>
+          customConnectors.map((connector, index) => (
+            <Fragment key={connector.id}>
+              <CustomConnectorRow
+                connector={connector}
+                isDisconnecting={isDisconnecting}
+                onConnect={() => handleOpenConnectDialog(connector.id)}
+                onDisconnect={() => disconnectConnector({ id: connector.id })}
+                onUninstall={() => deleteConnector({ id: connector.id })}
+              />
+              {index < customConnectors.length - 1 ? <Separator /> : null}
+            </Fragment>
+          ))
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <div className="mb-4 rounded-full bg-muted p-3">
