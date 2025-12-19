@@ -1,4 +1,5 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { gateway } from "@ai-sdk/gateway";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { type OpenAIResponsesProviderOptions, openai } from "@ai-sdk/openai";
@@ -18,16 +19,29 @@ export const getLanguageModel = async (modelId: ModelId) => {
   const model = await getAppModelDefinition(modelId);
   const languageProvider = gateway(model.id);
 
-  // Wrap with reasoning middleware if the model supports reasoning
-  if (model.reasoning && model.owned_by === "xai") {
-    console.log("Wrapping reasoning middleware for", model.id);
-    return wrapLanguageModel({
-      model: languageProvider,
-      middleware: extractReasoningMiddleware({ tagName: "think" }),
-    });
+  const middlewares: Parameters<typeof wrapLanguageModel>[0]["middleware"][] =
+    [];
+
+  // Add devtools middleware in development
+  if (process.env.NODE_ENV === "development") {
+    middlewares.push(devToolsMiddleware());
   }
 
-  return languageProvider;
+  // Add reasoning middleware if the model supports reasoning
+  if (model.reasoning && model.owned_by === "xai") {
+    console.log("Wrapping reasoning middleware for", model.id);
+    middlewares.push(extractReasoningMiddleware({ tagName: "think" }));
+  }
+
+  if (middlewares.length === 0) {
+    return languageProvider;
+  }
+
+  return wrapLanguageModel({
+    model: languageProvider,
+    // @ts-expect-error - Version of LanguageModel don't match
+    middleware: middlewares,
+  });
 };
 
 export const getImageModel = (modelId: ImageModelId) => {

@@ -1,4 +1,3 @@
-import { AIDevtools } from "@ai-sdk-tools/devtools";
 import { cookies, headers } from "next/headers";
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -90,7 +89,6 @@ export default async function ChatLayout({
             </SidebarProvider>
           </ChatProviders>
         </SessionProvider>
-        {process.env.NODE_ENV === "development" && <AIDevtools />}
       </HydrateClient>
     </TRPCReactProvider>
   );

@@ -4,7 +4,7 @@ globs:
 alwaysApply: true
 ---
 
-## Repo Context
+# Repo Context
 
 - The package manager is bun
 - Vercel AI SDK for AI framework and frontend-backend interactions
