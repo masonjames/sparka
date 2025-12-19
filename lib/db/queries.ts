@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 import { del } from "@vercel/blob";
 import {
   and,

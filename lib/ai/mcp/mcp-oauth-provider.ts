@@ -122,7 +122,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return this.cachedAuthData;
   }
 
-  private async updateAuthData(data: { tokens?: OAuthTokens | null }) {
+  private async updateAuthData(data: {
+    tokens?: OAuthTokens | null;
+    clientInfo?: OAuthClientInformationFull | null;
+    codeVerifier?: string | null;
+  }) {
     if (!this.currentOAuthState) {
       throw new Error("OAuth not initialized");
     }
@@ -366,6 +370,18 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.currentOAuthState = "";
     } else if (scope === "tokens") {
       await this.updateAuthData({ tokens: null });
+    } else if (scope === "client") {
+      // Clear client credentials - this forces re-registration with the OAuth server
+      await this.updateAuthData({ clientInfo: null });
+      // Reset state since client info is foundational to the OAuth flow
+      this.initialized = false;
+      this.currentOAuthState = "";
+      this.cachedAuthData = undefined;
+    } else if (scope === "verifier") {
+      // Clear the PKCE verifier - this invalidates any pending authorization
+      await this.updateAuthData({ codeVerifier: null });
+      // Clear cached authorization URL since it's tied to the old verifier
+      this.cachedAuthorizationUrl = null;
     }
   }
 }

@@ -292,6 +292,8 @@ export async function updateSessionByState({
   state: string;
   updates: {
     tokens?: OAuthTokens | null;
+    clientInfo?: OAuthClientInformationFull | null;
+    codeVerifier?: string | null;
   };
 }): Promise<McpOAuthSession> {
   // Filter out undefined values - only include explicit values (including null)

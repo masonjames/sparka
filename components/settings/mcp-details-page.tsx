@@ -273,7 +273,7 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
           url={connector.url}
         />
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-6">
           <div className="flex items-center gap-2">
             <Switch
               checked={connector.enabled}

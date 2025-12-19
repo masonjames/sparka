@@ -71,12 +71,17 @@ export function waitForOAuthComplete({
 }): Promise<boolean> {
   return new Promise((resolve, reject) => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let resolved = false;
 
     const cleanup = () => {
       if (intervalId) {
         clearInterval(intervalId);
         intervalId = null;
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
       }
       window.removeEventListener("message", messageHandler);
     };
@@ -145,7 +150,7 @@ export function waitForOAuthComplete({
     }, 500);
 
     // Timeout after 5 minutes
-    setTimeout(
+    timeoutId = setTimeout(
       () => {
         if (!resolved) {
           try {
