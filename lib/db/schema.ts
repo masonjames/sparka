@@ -15,7 +15,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { encryptedText } from "./encrypted-text";
+import { encryptedJson, encryptedText } from "./encrypted-text";
 
 export type User = InferSelectModel<typeof user>;
 
@@ -369,7 +369,7 @@ export const mcpConnector = pgTable(
       .notNull()
       .default("http"),
     oauthClientId: text("oauthClientId"),
-    oauthClientSecret: text("oauthClientSecret"),
+    oauthClientSecret: encryptedText("oauthClientSecret"),
     enabled: boolean("enabled").notNull().default(true),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt")
@@ -399,9 +399,9 @@ export const mcpOAuthSession = pgTable(
       .notNull()
       .references(() => mcpConnector.id, { onDelete: "cascade" }),
     serverUrl: text("serverUrl").notNull(),
-    clientInfo: json("clientInfo"), // OAuthClientInformationFull from MCP SDK
-    tokens: json("tokens"), // OAuthTokens from MCP SDK
-    codeVerifier: text("codeVerifier"), // PKCE verifier
+    clientInfo: encryptedJson<Record<string, unknown>>()("clientInfo"), // OAuthClientInformationFull from MCP SDK
+    tokens: encryptedJson<Record<string, unknown>>()("tokens"), // OAuthTokens from MCP SDK
+    codeVerifier: encryptedText("codeVerifier"), // PKCE verifier
     state: text("state").unique(), // OAuth state param (unique for security)
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt")

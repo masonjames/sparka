@@ -48,3 +48,15 @@ export const encryptedText = customType<{ data: string; driverData: string }>({
   toDriver: (value) => encrypt(value),
   fromDriver: (value) => decrypt(value),
 });
+
+/**
+ * Custom Drizzle type for encrypted JSON fields.
+ * Automatically encrypts on write and decrypts on read using AES-256-GCM.
+ * Stores JSON as encrypted text in the database.
+ */
+export const encryptedJson = <T>() =>
+  customType<{ data: T; driverData: string }>({
+    dataType: () => "text",
+    toDriver: (value) => encrypt(JSON.stringify(value)),
+    fromDriver: (value) => JSON.parse(decrypt(value)) as T,
+  });
