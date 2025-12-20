@@ -604,8 +604,8 @@ function PureMultimodalInput({
           <ContextBar
             attachments={attachments}
             className="w-full"
-            onImageClick={handleImageClick}
-            onRemove={removeAttachment}
+            onImageClickAction={handleImageClick}
+            onRemoveAction={removeAttachment}
             uploadQueue={uploadQueue}
           />
 

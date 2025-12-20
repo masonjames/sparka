@@ -87,7 +87,7 @@ export const PureUserMessage = ({
               >
                 <AttachmentList
                   attachments={getAttachmentsFromMessage(message)}
-                  onImageClick={handleImageClick}
+                  onImageClickAction={handleImageClick}
                   testId="message-attachments"
                 />
                 <pre className="whitespace-pre-wrap font-sans">
@@ -107,7 +107,7 @@ export const PureUserMessage = ({
                 >
                   <AttachmentList
                     attachments={getAttachmentsFromMessage(message)}
-                    onImageClick={handleImageClick}
+                    onImageClickAction={handleImageClick}
                     testId="message-attachments"
                   />
                   <pre className="whitespace-pre-wrap font-sans">
