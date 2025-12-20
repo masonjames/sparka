@@ -4,8 +4,8 @@ import type { ToolUIPart } from "ai";
 import {
   isDataUIPart,
   isReasoningUIPart,
+  isStaticToolUIPart,
   isTextUIPart,
-  isToolOrDynamicToolUIPart,
   isToolUIPart,
 } from "ai";
 import { memo } from "react";
@@ -134,12 +134,12 @@ function PureMessagePart({
   }
 
   if (isToolUIPart(part)) {
-    return (
-      <ToolPart isReadonly={isReadonly} messageId={messageId} part={part} />
-    );
-  }
-  if (isToolOrDynamicToolUIPart(part)) {
-    // Non-dynamic tools are handled beforehand by the ToolPart component
+    if (isStaticToolUIPart(part)) {
+      return (
+        <ToolPart isReadonly={isReadonly} messageId={messageId} part={part} />
+      );
+    }
+    // At this point it's a Dynamic Tool, tools are handled beforehand by the ToolPart component
     return (
       <DynamicToolPart
         isReadonly={isReadonly}
