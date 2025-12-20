@@ -2,78 +2,65 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Eye,
-  Globe,
+  AlertTriangle,
+  ArrowUpRight,
+  Loader2,
   MoreHorizontal,
-  Pencil,
   Plus,
   Radio,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { useQueryStates } from "nuqs";
+import { Fragment, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import type { McpConnector } from "@/lib/db/schema";
-import { useTRPC } from "@/trpc/react";
-import { useConfig } from "../config-provider";
-import { Favicon } from "../favicon";
-import { getGoogleFaviconUrl } from "../get-google-favicon-url";
-import { getUrlWithoutParams } from "../get-url-without-params";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { useConfig } from "@/components/config-provider";
+import { ConnectorHeader } from "@/components/settings/connector-header";
+import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
+import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
+import { SettingsPageContent } from "@/components/settings/settings-page";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Switch } from "../ui/switch";
-import { McpConfigDialog } from "./mcp-config-dialog";
-import { McpDetailsDialog } from "./mcp-details-dialog";
-import { SettingsPageContent } from "./settings-page";
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import type { McpConnector } from "@/lib/db/schema";
+import {
+  type McpConnectorsDialog,
+  mcpConnectorsSettingsSearchParams,
+} from "@/lib/nuqs/mcp-search-params";
+import { useTRPC } from "@/trpc/react";
 
 export function ConnectorsSettings() {
   const trpc = useTRPC();
   const config = useConfig();
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [editingConnector, setEditingConnector] = useState<McpConnector | null>(
-    null
-  );
-  const [detailsConnector, setDetailsConnector] = useState<McpConnector | null>(
-    null
-  );
+
+  const [qs, setQs] = useQueryStates(mcpConnectorsSettingsSearchParams, {
+    history: "replace",
+    shallow: true,
+  });
 
   const { data: connectors, isLoading } = useQuery(
     trpc.mcp.list.queryOptions()
   );
 
-  const queryKey = trpc.mcp.list.queryKey();
+  const createOpen = qs.dialog === "config";
+  const connectOpen = qs.dialog === "connect";
 
-  const { mutate: toggleEnabled } = useMutation(
-    trpc.mcp.toggleEnabled.mutationOptions({
-      onMutate: async (newData) => {
-        await queryClient.cancelQueries({ queryKey });
-        const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
-          }
-          return old.map((c) =>
-            c.id === newData.id ? { ...c, enabled: newData.enabled } : c
-          );
-        });
-        return { prev };
-      },
-      onError: (_err, _newData, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to update connector");
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
-      },
-    })
-  );
+  const connectConnector = useMemo(() => {
+    if (!(connectOpen && qs.connectorId && connectors)) {
+      return null;
+    }
+    return connectors.find((c) => c.id === qs.connectorId) ?? null;
+  }, [connectOpen, qs.connectorId, connectors]);
+
+  const queryKey = trpc.mcp.list.queryKey();
 
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
@@ -90,10 +77,10 @@ export function ConnectorsSettings() {
       },
       onError: (_err, _data, context) => {
         queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to delete connector");
+        toast.error("Failed to uninstall connector");
       },
       onSuccess: () => {
-        toast.success("Connector deleted");
+        toast.success("Connector uninstalled");
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
@@ -101,25 +88,61 @@ export function ConnectorsSettings() {
     })
   );
 
-  const handleEdit = (connector: McpConnector) => {
-    setEditingConnector(connector);
-    setDialogOpen(true);
-  };
+  const { mutate: disconnectConnector, isPending: isDisconnecting } =
+    useMutation(
+      trpc.mcp.disconnect.mutationOptions({
+        onSuccess: () => {
+          toast.success("Disconnected");
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to disconnect");
+        },
+        onSettled: (_data, _err, vars) => {
+          queryClient.invalidateQueries({ queryKey });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.checkAuth.queryKey({ id: vars.id }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
+          });
+        },
+      })
+    );
+
+  const setDialogState = useCallback(
+    ({
+      dialog,
+      connectorId,
+    }: {
+      dialog: McpConnectorsDialog | null;
+      connectorId?: string | null;
+    }) => {
+      setQs({
+        dialog,
+        connectorId: connectorId ?? null,
+      });
+    },
+    [setQs]
+  );
+
+  const handleOpenCreateDialog = useCallback(() => {
+    setDialogState({ dialog: "config" });
+  }, [setDialogState]);
 
   const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingConnector(null);
+    setDialogState({ dialog: null });
   };
 
-  const handleViewDetails = (connector: McpConnector) => {
-    setDetailsConnector(connector);
-    setDetailsDialogOpen(true);
-  };
+  const handleOpenConnectDialog = useCallback(
+    (connectorId: string) => {
+      setDialogState({ dialog: "connect", connectorId });
+    },
+    [setDialogState]
+  );
 
-  const handleDetailsDialogClose = () => {
-    setDetailsDialogOpen(false);
-    setDetailsConnector(null);
-  };
+  const handleConnectDialogClose = useCallback(() => {
+    setDialogState({ dialog: null });
+  }, [setDialogState]);
 
   if (!config.integrations.mcp) {
     return (
@@ -142,110 +165,191 @@ export function ConnectorsSettings() {
     );
   }
 
+  const customConnectors = (connectors ?? []).filter((c) => c.userId !== null);
+  const globalConnectors = (connectors ?? []).filter((c) => c.userId === null);
+
   return (
-    <SettingsPageContent className="gap-4">
-      <div className="flex shrink-0 gap-2">
-        <Button onClick={() => setDialogOpen(true)} size="sm" variant="outline">
+    <SettingsPageContent className="gap-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="font-medium text-sm">Custom connectors</p>
+          <p className="mt-0.5 text-muted-foreground text-xs">
+            Connect MCP servers you trust to extend your AI with tools.
+          </p>
+        </div>
+        <Button onClick={handleOpenCreateDialog} size="sm">
           <Plus className="size-4" />
           Add custom connector
         </Button>
       </div>
 
-      {connectors && connectors.length > 0 ? (
-        <div className="space-y-3 px-1">
-          {connectors.map((connector) => (
-            <ConnectorRow
-              connector={connector}
-              key={connector.id}
-              onDelete={() => deleteConnector({ id: connector.id })}
-              onEdit={() => handleEdit(connector)}
-              onToggle={(enabled) =>
-                toggleEnabled({ id: connector.id, enabled })
-              }
-              onViewDetails={() => handleViewDetails(connector)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="mb-4 rounded-full bg-muted p-3">
-            <Radio className="size-6 text-muted-foreground" />
+      <div className="flex flex-col">
+        {customConnectors.length > 0 ? (
+          customConnectors.map((connector, index) => (
+            <Fragment key={connector.id}>
+              <CustomConnectorRow
+                connector={connector}
+                isDisconnecting={isDisconnecting}
+                onConnect={() => handleOpenConnectDialog(connector.id)}
+                onDisconnect={() => disconnectConnector({ id: connector.id })}
+                onUninstall={() => deleteConnector({ id: connector.id })}
+              />
+              {index < customConnectors.length - 1 ? <Separator /> : null}
+            </Fragment>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="mb-4 rounded-full bg-muted p-3">
+              <Radio className="size-6 text-muted-foreground" />
+            </div>
+            <p className="font-medium text-sm">No custom connectors</p>
+            <p className="mt-1 max-w-sm text-muted-foreground text-xs">
+              Add a custom MCP connector to access tools from your services.
+            </p>
           </div>
-          <p className="font-medium text-sm">No connectors configured</p>
-          <p className="mt-1 max-w-sm text-muted-foreground text-xs">
-            Add an MCP connector to extend your AI with external tools and
-            capabilities.
-          </p>
+        )}
+      </div>
+
+      {globalConnectors.length > 0 ? (
+        <div>
+          <p className="font-medium text-sm">Built-in connectors</p>
+          <div className="divide-y">
+            {globalConnectors.map((connector) => (
+              <BuiltInConnectorRow connector={connector} key={connector.id} />
+            ))}
+          </div>
         </div>
-      )}
+      ) : null}
 
-      <McpConfigDialog
-        connector={editingConnector}
-        onClose={handleDialogClose}
-        open={dialogOpen}
-      />
+      <McpCreateDialog onClose={handleDialogClose} open={createOpen} />
 
-      <McpDetailsDialog
-        connector={detailsConnector}
-        onClose={handleDetailsDialogClose}
-        open={detailsDialogOpen}
+      <McpConnectDialog
+        connector={connectConnector}
+        onClose={handleConnectDialogClose}
+        open={connectOpen}
       />
     </SettingsPageContent>
   );
 }
 
-function ConnectorRow({
+function CustomConnectorRow({
   connector,
-  onToggle,
-  onEdit,
-  onDelete,
-  onViewDetails,
+  onConnect,
+  onUninstall,
+  onDisconnect,
+  isDisconnecting,
 }: {
   connector: McpConnector;
-  onToggle: (enabled: boolean) => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onViewDetails: () => void;
+  onConnect: () => void;
+  onUninstall: () => void;
+  onDisconnect: () => void;
+  isDisconnecting: boolean;
 }) {
-  const isGlobal = connector.userId === null;
-  const faviconUrl =
-    connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+  const trpc = useTRPC();
+
+  const { data: authStatus } = useQuery({
+    ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
+    staleTime: 30_000,
+  });
+
+  const { isLoading: isTestingConnection, data: connectionStatus } = useQuery({
+    ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
+    staleTime: 30_000,
+    retry: false,
+  });
+
+  const needsOAuth = connectionStatus?.needsAuth ?? false;
+  const isConnected = connectionStatus?.status === "connected";
+  const isIncompatible = connectionStatus?.status === "incompatible";
+
+  const statusText = (() => {
+    if (isTestingConnection) {
+      return "Checking connection…";
+    }
+    if (isIncompatible) {
+      return "Incompatible server";
+    }
+    if (needsOAuth) {
+      return "Authorization required";
+    }
+    if (isConnected) {
+      return "Connected";
+    }
+    return connectionStatus?.error ?? "Unable to reach server";
+  })();
+
+  const actionLabel = (() => {
+    if (isTestingConnection) {
+      return "Loading";
+    }
+    if (needsOAuth) {
+      return "Connect";
+    }
+    return "Configure";
+  })();
+
+  const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
+
+  const showOAuthButton = needsOAuth && !isIncompatible;
+  const showDetailsButton = !(needsOAuth || isIncompatible);
 
   return (
-    <div className="flex items-center gap-4 overflow-hidden rounded-lg border bg-card p-4">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
-        {faviconUrl ? (
-          <>
-            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-            <Globe className="hidden size-5 text-muted-foreground" />
-          </>
-        ) : (
-          <Globe className="size-5 text-muted-foreground" />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="truncate font-medium text-sm">{connector.name}</span>
-          <Badge
-            className="shrink-0 text-[10px]"
-            variant={connector.type === "http" ? "default" : "secondary"}
-          >
-            {connector.type.toUpperCase()}
-          </Badge>
-          {isGlobal && (
-            <Badge className="shrink-0 text-[10px]" variant="outline">
-              Global
-            </Badge>
-          )}
-        </div>
-        <p className="mt-1 truncate text-muted-foreground text-xs">
-          {getUrlWithoutParams(connector.url)}
-        </p>
+    <div className="flex items-center gap-4 py-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left">
+        <ConnectorHeader
+          isCustom
+          name={connector.name}
+          statusText={statusText}
+          type={connector.type}
+          url={connector.url}
+        />
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <Switch checked={connector.enabled} onCheckedChange={onToggle} />
+        {isIncompatible ? (
+          <Badge className="gap-1" variant="destructive">
+            <AlertTriangle className="size-3" />
+            Error
+          </Badge>
+        ) : null}
+
+        {showOAuthButton ? (
+          <Button disabled={isTestingConnection} onClick={onConnect} size="sm">
+            {isTestingConnection ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                Loading
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                Connect
+                <ArrowUpRight className="-mr-1 size-4" />
+              </span>
+            )}
+          </Button>
+        ) : null}
+
+        {showDetailsButton ? (
+          <Button
+            asChild
+            disabled={isTestingConnection}
+            size="sm"
+            variant="outline"
+          >
+            <Link href={href}>
+              {isTestingConnection ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="size-4 animate-spin" />
+                  Loading
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  {actionLabel}
+                </span>
+              )}
+            </Link>
+          </Button>
+        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost">
@@ -253,26 +357,57 @@ function ConnectorRow({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onViewDetails}>
-              <Eye className="size-4" />
-              Details
+            {authStatus?.isAuthenticated ? (
+              <>
+                <DropdownMenuItem
+                  disabled={isDisconnecting}
+                  onClick={onDisconnect}
+                >
+                  Disconnect
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
+            {needsOAuth ? (
+              <>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onConnect();
+                  }}
+                >
+                  Connect
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={onUninstall}
+            >
+              <Trash2 className="size-4" />
+              Uninstall
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="size-4" />
-              Configure
-            </DropdownMenuItem>
-            {!isGlobal && (
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={onDelete}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </div>
+  );
+}
+
+function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
+  const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
+  return (
+    <div className="flex w-full items-center gap-3 py-3 text-left">
+      <ConnectorHeader
+        isCustom={false}
+        name={connector.name}
+        type={connector.type}
+        url={connector.url}
+      />
+      <Button asChild size="sm" variant="outline">
+        <Link href={href}>View</Link>
+      </Button>
     </div>
   );
 }

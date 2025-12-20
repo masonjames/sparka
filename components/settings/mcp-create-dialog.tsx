@@ -2,11 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useConfig } from "@/components/config-provider";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -37,8 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
-import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 
 const mcpConnectorFormSchema = z.object({
@@ -60,32 +62,28 @@ const mcpConnectorFormSchema = z.object({
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
 const HIDE_ADVANCED_SETTINGS = true;
-
-export function McpConfigDialog({
+export function McpCreateDialog({
   open,
   onClose,
-  connector,
 }: {
   open: boolean;
   onClose: () => void;
-  connector: McpConnector | null;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
+  const { appName } = useConfig();
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
-
-  const isEditing = connector !== null;
 
   const form = useForm<McpConnectorFormValues>({
     resolver: zodResolver(mcpConnectorFormSchema),
     defaultValues: {
-      name: connector?.name ?? "",
-      url: connector?.url ?? "",
-      type: (connector?.type as "http" | "sse") ?? "http",
-      oauthClientId: connector?.oauthClientId ?? "",
-      oauthClientSecret: connector?.oauthClientSecret ?? "",
+      name: "",
+      url: "",
+      type: "http",
+      oauthClientId: "",
+      oauthClientSecret: "",
     },
   });
 
@@ -95,47 +93,25 @@ export function McpConfigDialog({
     }
 
     form.reset({
-      name: connector?.name ?? "",
-      url: connector?.url ?? "",
-      type: (connector?.type as "http" | "sse") ?? "http",
-      oauthClientId: connector?.oauthClientId ?? "",
-      oauthClientSecret: connector?.oauthClientSecret ?? "",
+      name: "",
+      url: "",
+      type: "http",
+      oauthClientId: "",
+      oauthClientSecret: "",
     });
 
-    setAdvancedOpen(
-      Boolean(connector?.oauthClientId || connector?.oauthClientSecret)
-    );
-  }, [open, connector, form]);
+    setAdvancedOpen(false);
+  }, [open, form]);
 
-  const { mutate: createConnector, isPending: isCreating } = useMutation(
+  const { mutateAsync: createConnector, isPending } = useMutation(
     trpc.mcp.create.mutationOptions({
-      onSuccess: () => {
-        toast.success("Connector added");
-        queryClient.invalidateQueries({ queryKey });
-        onClose();
-      },
       onError: (err) => {
         toast.error(err.message || "Failed to add connector");
       },
     })
   );
 
-  const { mutate: updateConnector, isPending: isUpdating } = useMutation(
-    trpc.mcp.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Connector updated");
-        queryClient.invalidateQueries({ queryKey });
-        onClose();
-      },
-      onError: (err) => {
-        toast.error(err.message || "Failed to update connector");
-      },
-    })
-  );
-
-  const isPending = isCreating || isUpdating;
-
-  const handleSubmit = (values: McpConnectorFormValues) => {
+  const handleSubmit = async (values: McpConnectorFormValues) => {
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
@@ -144,38 +120,34 @@ export function McpConfigDialog({
       oauthClientSecret: values.oauthClientSecret?.trim() || undefined,
     };
 
-    if (isEditing && connector) {
-      updateConnector({
-        id: connector.id,
-        updates: {
-          name: trimmed.name,
-          url: trimmed.url,
-          type: trimmed.type,
-          oauthClientId: trimmed.oauthClientId ?? null,
-          oauthClientSecret: trimmed.oauthClientSecret ?? null,
-        },
-      });
-    } else {
-      createConnector({
-        name: trimmed.name,
-        url: trimmed.url,
-        type: trimmed.type,
-        oauthClientId: trimmed.oauthClientId,
-        oauthClientSecret: trimmed.oauthClientSecret,
-      });
-    }
+    await createConnector({
+      name: trimmed.name,
+      url: trimmed.url,
+      type: trimmed.type,
+      oauthClientId: trimmed.oauthClientId,
+      oauthClientSecret: trimmed.oauthClientSecret,
+    });
+    toast.success("Connector added");
+    queryClient.invalidateQueries({ queryKey });
+    onClose();
   };
 
   return (
     <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Configure connector" : "Add custom connector"}
+          <DialogTitle className="flex items-center gap-2">
+            Add custom connector
+            <Badge
+              className="rounded-sm px-1 py-0 text-[10px] uppercase"
+              variant="secondary"
+            >
+              Beta
+            </Badge>
           </DialogTitle>
           <DialogDescription>
-            Connect to an MCP server to extend AI capabilities with external
-            tools.
+            Connect {appName} to your data and tools. Learn more about
+            connectors or get started with pre-built ones.
           </DialogDescription>
         </DialogHeader>
 
@@ -189,12 +161,11 @@ export function McpConfigDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       maxLength={MCP_NAME_MAX_LENGTH}
-                      placeholder="MCP Example"
+                      placeholder="Name"
                     />
                   </FormControl>
                   <FormMessage />
@@ -207,41 +178,12 @@ export function McpConfigDialog({
               name="url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="https://mcp-server.example.com/mcp"
+                      placeholder="Remote MCP server URL"
                       type="url"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Transport Type</FormLabel>
-                  <FormControl>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="http">HTTP (Streamable)</SelectItem>
-                        <SelectItem value="sse">
-                          SSE (Server-Sent Events)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -252,18 +194,47 @@ export function McpConfigDialog({
               <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
                 <CollapsibleTrigger asChild>
                   <Button
-                    className="w-full justify-between"
+                    className="h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
                     size="sm"
                     type="button"
                     variant="ghost"
                   >
-                    Advanced settings
                     <ChevronDown
-                      className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+                      className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
                     />
+                    Advanced settings
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-2">
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Transport Type</FormLabel>
+                        <FormControl>
+                          <Select
+                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="http">
+                                HTTP (Streamable)
+                              </SelectItem>
+                              <SelectItem value="sse">
+                                SSE (Server-Sent Events)
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="oauthClientId"
@@ -298,20 +269,11 @@ export function McpConfigDialog({
               </Collapsible>
             )}
 
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-              <div className="flex gap-2">
-                <AlertTriangle className="size-4 shrink-0 text-amber-500" />
-                <div className="space-y-1">
-                  <p className="font-medium text-amber-500 text-sm">
-                    Confirm that you trust this connector
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    This connector has not been verified. You are responsible
-                    for all actions taken with this connector.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Only use connectors from developers you trust. {appName} does not
+              control which tools developers make available and cannot verify
+              that they will work as intended or that they won't change.
+            </p>
 
             <DialogFooter>
               <Button
@@ -323,8 +285,8 @@ export function McpConfigDialog({
                 Cancel
               </Button>
               <Button disabled={isPending} type="submit">
-                {isPending && "Saving..."}
-                {!isPending && (isEditing ? "Save" : "Add")}
+                {isPending && <Spinner />}
+                Add
               </Button>
             </DialogFooter>
           </form>

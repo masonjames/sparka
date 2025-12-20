@@ -1,5 +1,8 @@
 import { env } from "./env";
 
+// NOTE: In client components, use the `useConfig` hook from
+// `@/components/config-provider` instead of importing `siteConfig` directly.
+
 export type PricingConfig = {
   currency?: string;
   free?: {

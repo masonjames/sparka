@@ -37,9 +37,9 @@ import {
   filterAffordableTools,
   getBaseModelCostByModelId,
 } from "@/lib/credits/credits-utils";
+import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
   getChatById,
-  getMcpConnectorsByUserId,
   getMessageById,
   getProjectById,
   getUserById,

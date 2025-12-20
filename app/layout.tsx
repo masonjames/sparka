@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 
 import "./globals.css";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -92,17 +93,19 @@ export default async function RootLayout({
           src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
           strategy="beforeInteractive"
         />
-        <ConfigProvider value={siteConfig}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            disableTransitionOnChange
-            enableSystem
-          >
-            <Toaster position="top-center" />
-            {children}
-          </ThemeProvider>
-        </ConfigProvider>
+        <NuqsAdapter>
+          <ConfigProvider value={siteConfig}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              disableTransitionOnChange
+              enableSystem
+            >
+              <Toaster position="top-center" />
+              {children}
+            </ThemeProvider>
+          </ConfigProvider>
+        </NuqsAdapter>
         <Analytics />
         <SpeedInsights />
       </body>

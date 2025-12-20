@@ -253,6 +253,20 @@
       "when": 1765272571239,
       "tag": "0036_thankful_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1765391748440,
+      "tag": "0036_fearless_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1766131700424,
+      "tag": "0037_small_wind_dancer",
+      "breakpoints": true
     }
   ]
 }

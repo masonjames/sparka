@@ -1,9 +1,6 @@
-import {
-  experimental_createMCPClient as createMCPClient,
-  type experimental_MCPClient as MCPClient,
-} from "@ai-sdk/mcp";
 import type { FileUIPart, ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
+import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
 import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
@@ -96,6 +93,7 @@ export function getTools({
 
 /**
  * Creates MCP clients for the given connectors and returns their tools.
+ * Uses OAuth-aware MCP clients that can authenticate with OAuth 2.1 + PKCE.
  * Returns both the tools and a cleanup function to close all clients.
  */
 export async function getMcpTools({
@@ -120,25 +118,44 @@ export async function getMcpTools({
 
   for (const connector of enabledConnectors) {
     try {
-      const client = await createMCPClient({
-        transport: {
-          type: connector.type,
-          url: connector.url,
-          // Include OAuth headers if configured
-          ...(connector.oauthClientId && connector.oauthClientSecret
+      // Get or create OAuth-aware MCP client
+      const mcpClient = getOrCreateMcpClient({
+        id: connector.id,
+        name: connector.name,
+        url: connector.url,
+        type: connector.type,
+        // Legacy Basic auth headers for connectors that have client credentials
+        headers:
+          connector.oauthClientId && connector.oauthClientSecret
             ? {
-                headers: {
-                  // TODO: Check if this is how to pass auth according to mcp spec
-                  // TODO: Replace Basic auth with OAuth 2.1 bearer token authentication per MCP specification.
-                  Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
-                },
+                Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
               }
-            : {}),
-        },
+            : undefined,
       });
 
-      clients.push(client);
-      const tools = await client.tools();
+      // Attempt to connect
+      await mcpClient.connect();
+
+      // Skip connectors that need OAuth authorization
+      if (mcpClient.status === "authorizing") {
+        log.info(
+          { connector: connector.name },
+          "MCP connector needs OAuth authorization, skipping"
+        );
+        continue;
+      }
+
+      // Skip if not connected
+      if (mcpClient.status !== "connected") {
+        log.warn(
+          { connector: connector.name, status: mcpClient.status },
+          "MCP connector not connected, skipping"
+        );
+        continue;
+      }
+
+      clients.push(mcpClient);
+      const tools = await mcpClient.tools();
 
       // Namespace tool names with connector nameId to avoid collisions
       // Format: {namespace}.{toolName} or global.{namespace}.{toolName}
