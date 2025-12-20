@@ -396,7 +396,7 @@ function DiscoveryContent({
   if (showDiscovery && discovery) {
     return (
       <ScrollArea className="max-h-[60vh]">
-        <div className="space-y-4 pr-4">
+        <div className="space-y-4">
           <DetailsSection
             icon={<Wrench className="size-4" />}
             items={discovery.tools.map((t) => t.name)}
