@@ -44,19 +44,30 @@ function getBaseUrl(): string {
  */
 export class MCPClient {
   private client?: McpClientInstance;
-  private oauthProvider: McpOAuthClientProvider;
+  private readonly oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
   private _status: McpClientStatus = "disconnected";
 
+  private readonly id: string;
+  private readonly name: string;
+  private readonly serverConfig: {
+    url: string;
+    type: "http" | "sse";
+    headers?: Record<string, string>;
+  };
+
   constructor(
-    private id: string,
-    private name: string,
-    private serverConfig: {
+    id: string,
+    name: string,
+    serverConfig: {
       url: string;
       type: "http" | "sse";
       headers?: Record<string, string>;
     }
   ) {
+    this.id = id;
+    this.name = name;
+    this.serverConfig = serverConfig;
     const baseUrl = getBaseUrl();
 
     this.oauthProvider = new McpOAuthClientProvider({
@@ -72,7 +83,7 @@ export class MCPClient {
         software_id: "sparka-ai",
         software_version: "1.0.0",
       },
-      onRedirectToAuthorization: async (authorizationUrl: URL) => {
+      onRedirectToAuthorization: (authorizationUrl: URL) => {
         this.authorizationUrl = authorizationUrl;
         throw new OAuthAuthorizationRequiredError(authorizationUrl);
       },
@@ -247,7 +258,7 @@ export class MCPClient {
       throw new Error("Client not connected");
     }
     try {
-      return await this.client.listPrompts();
+      return await this.client.experimental_listPrompts();
     } catch (error) {
       this.handlePotentialAuthError(error);
       throw error;
