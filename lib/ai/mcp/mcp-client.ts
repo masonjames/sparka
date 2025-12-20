@@ -5,6 +5,7 @@ import {
 import type { Tool } from "ai";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
+import { invalidateAllMcpCaches } from "./cache";
 import {
   McpOAuthClientProvider,
   OAuthAuthorizationRequiredError,
@@ -211,7 +212,12 @@ export class MCPClient {
     if (!this.client) {
       throw new Error("Client not connected");
     }
-    return this.client.tools();
+    try {
+      return await this.client.tools();
+    } catch (error) {
+      this.handlePotentialAuthError(error);
+      throw error;
+    }
   }
 
   /**
@@ -221,7 +227,12 @@ export class MCPClient {
     if (!this.client) {
       throw new Error("Client not connected");
     }
-    return this.client.listResources();
+    try {
+      return await this.client.listResources();
+    } catch (error) {
+      this.handlePotentialAuthError(error);
+      throw error;
+    }
   }
 
   /**
@@ -231,7 +242,12 @@ export class MCPClient {
     if (!this.client) {
       throw new Error("Client not connected");
     }
-    return this.client.listPrompts();
+    try {
+      return await this.client.listPrompts();
+    } catch (error) {
+      this.handlePotentialAuthError(error);
+      throw error;
+    }
   }
 
   /**
@@ -245,6 +261,30 @@ export class MCPClient {
     }
     this.client = undefined;
     this._status = "disconnected";
+    // Invalidate caches since connection state changed
+    invalidateAllMcpCaches(this.id);
+  }
+
+  /**
+   * Check if an error is an auth error (401/403) and invalidate caches if so.
+   */
+  private handlePotentialAuthError(error: unknown): void {
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+    const isAuthError =
+      errorMessage.includes("401") ||
+      errorMessage.includes("403") ||
+      errorMessage.includes("Unauthorized") ||
+      errorMessage.includes("Forbidden") ||
+      errorMessage.includes("token");
+
+    if (isAuthError) {
+      log.warn(
+        { connectorId: this.id, errorMessage },
+        "Auth error detected, invalidating caches"
+      );
+      invalidateAllMcpCaches(this.id);
+    }
   }
 }
 

@@ -1,5 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import {
+  createCachedConnectionStatus,
+  createCachedDiscovery,
+  invalidateAllMcpCaches,
+  type ConnectionStatusResult,
+  type DiscoveryResult,
+} from "@/lib/ai/mcp/cache";
 import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import {
@@ -57,10 +64,92 @@ async function validateAndGenerateNameId({
   return result.nameId;
 }
 
+type Permission = "own" | "own-or-global";
+
+/**
+ * Fetches connector and validates user permission.
+ * - "own": user must own the connector (userId === ctx.user.id)
+ * - "own-or-global": user must own OR connector is global (userId === null)
+ */
+async function getConnectorWithPermission({
+  id,
+  userId,
+  permission,
+}: {
+  id: string;
+  userId: string;
+  permission: Permission;
+}) {
+  const connector = await getMcpConnectorById({ id });
+  if (!connector) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Connector not found" });
+  }
+
+  const isOwner = connector.userId === userId;
+  const isGlobal = connector.userId === null;
+
+  const hasPermission =
+    permission === "own" ? isOwner : isOwner || isGlobal;
+
+  if (!hasPermission) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Cannot access this connector",
+    });
+  }
+
+  return connector;
+}
+
 export const mcpRouter = createTRPCRouter({
   list: protectedProcedure.query(
     async ({ ctx }) => await getMcpConnectorsByUserId({ userId: ctx.user.id })
   ),
+
+  /**
+   * List connectors with their connection status.
+   * Returns only connectors that have a valid connection (for use in dropdowns, etc.)
+   * Still includes enabled/disabled state so UI can show toggles.
+   */
+  listConnected: protectedProcedure.query(async ({ ctx }) => {
+    const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
+
+    const results = await Promise.all(
+      connectors.map(async (connector) => {
+        const fetchConnectionStatus =
+          async (): Promise<ConnectionStatusResult> => {
+            const mcpClient = await getOrCreateMcpClient({
+              id: connector.id,
+              name: connector.name,
+              url: connector.url,
+              type: connector.type,
+            });
+            const result = await mcpClient.attemptConnection();
+            return {
+              status: result.status,
+              needsAuth: result.needsAuth,
+              error: result.error,
+            };
+          };
+
+        const cachedFetch = createCachedConnectionStatus(
+          connector.id,
+          fetchConnectionStatus
+        );
+
+        try {
+          const status = await cachedFetch();
+          return { connector, status };
+        } catch {
+          return { connector, status: null };
+        }
+      })
+    );
+
+    return results
+      .filter((r) => r.status?.status === "connected")
+      .map((r) => r.connector);
+  }),
 
   create: protectedProcedure
     .input(
@@ -104,22 +193,12 @@ export const mcpRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow editing own connectors (not global ones)
-      if (connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot edit this connector",
-        });
-      }
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own",
+      });
 
-      // If name is being updated, regenerate nameId
       const updates = { ...input.updates };
       if (updates.name) {
         const nameId = await validateAndGenerateNameId({
@@ -137,20 +216,11 @@ export const mcpRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow deleting own connectors
-      if (connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot delete this connector",
-        });
-      }
+      await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own",
+      });
       await deleteMcpConnector({ id: input.id });
       await removeMcpClient(input.id);
       return { success: true };
@@ -162,23 +232,14 @@ export const mcpRouter = createTRPCRouter({
   disconnect: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow disconnecting own connectors or global ones
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot disconnect this connector",
-        });
-      }
-
+      await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
       await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
       await removeMcpClient(input.id);
+      invalidateAllMcpCaches(input.id);
       return { success: true };
     }),
 
@@ -190,20 +251,11 @@ export const mcpRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow toggling own connectors (not global ones)
-      if (connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot modify this connector",
-        });
-      }
+      await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own",
+      });
       await updateMcpConnector({
         id: input.id,
         updates: { enabled: input.enabled },
@@ -214,186 +266,188 @@ export const mcpRouter = createTRPCRouter({
   /**
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Much faster than discover since it doesn't fetch tools/resources/prompts.
+   * Cached for 60 seconds.
    */
   testConnection: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot access this connector",
-        });
-      }
-
-      log.debug(
-        { connectorId: connector.id, url: connector.url },
-        "testing MCP connection"
-      );
-
-      const mcpClient = await getOrCreateMcpClient({
-        id: connector.id,
-        name: connector.name,
-        url: connector.url,
-        type: connector.type,
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
       });
 
-      const result = await mcpClient.attemptConnection();
-
-      log.debug(
-        {
-          connectorId: connector.id,
-          status: result.status,
-          needsAuth: result.needsAuth,
-          error: result.error,
-        },
-        "MCP connection test completed"
-      );
-
-      return {
-        status: result.status,
-        needsAuth: result.needsAuth,
-        error: result.error,
-      };
-    }),
-
-  discover: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow discovering own connectors or global ones
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot access this connector",
-        });
-      }
-
-      log.debug(
-        { connectorId: connector.id, url: connector.url },
-        "creating MCP client for discovery"
-      );
-
-      // Use OAuth-aware client
-      const mcpClient = await getOrCreateMcpClient({
-        id: connector.id,
-        name: connector.name,
-        url: connector.url,
-        type: connector.type,
-      });
-
-      await mcpClient.connect();
-
-      // Check if authorization is needed
-      if (mcpClient.status === "authorizing") {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Connector requires OAuth authorization",
-        });
-      }
-
-      if (mcpClient.status !== "connected") {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to connect to MCP server (status: ${mcpClient.status})`,
-        });
-      }
-
-      log.debug(
-        { connectorId: connector.id },
-        "MCP client connected, discovering capabilities"
-      );
-
-      try {
-        const [toolsResult, resourcesResult, promptsResult] = await Promise.all(
-          [
-            mcpClient
-              .tools()
-              .then((tools) =>
-                Object.entries(tools).map(([name, tool]) => ({
-                  name,
-                  description: tool.description ?? null,
-                }))
-              )
-              .catch((err) => {
-                log.warn(
-                  { connectorId: connector.id, err },
-                  "failed to list tools"
-                );
-                return [];
-              }),
-            mcpClient
-              .listResources()
-              .then((r) =>
-                r.resources.map((res) => ({
-                  name: res.name,
-                  uri: res.uri,
-                  description: res.description ?? null,
-                  mimeType: res.mimeType ?? null,
-                }))
-              )
-              .catch((err) => {
-                log.warn(
-                  { connectorId: connector.id, err },
-                  "failed to list resources"
-                );
-                return [];
-              }),
-            mcpClient
-              .listPrompts()
-              .then((r) =>
-                r.prompts.map((p) => ({
-                  name: p.name,
-                  description: p.description ?? null,
-                  arguments:
-                    p.arguments?.map((arg) => ({
-                      name: arg.name,
-                      description: arg.description ?? null,
-                      required: arg.required ?? false,
-                    })) ?? [],
-                }))
-              )
-              .catch((err) => {
-                log.warn(
-                  { connectorId: connector.id, err },
-                  "failed to list prompts"
-                );
-                return [];
-              }),
-          ]
+      const fetchConnectionStatus = async (): Promise<ConnectionStatusResult> => {
+        log.debug(
+          { connectorId: connector.id, url: connector.url },
+          "testing MCP connection (cache miss)"
         );
 
-        log.info(
+        const mcpClient = await getOrCreateMcpClient({
+          id: connector.id,
+          name: connector.name,
+          url: connector.url,
+          type: connector.type,
+        });
+
+        const result = await mcpClient.attemptConnection();
+
+        log.debug(
           {
             connectorId: connector.id,
-            toolsCount: toolsResult.length,
-            resourcesCount: resourcesResult.length,
-            promptsCount: promptsResult.length,
+            status: result.status,
+            needsAuth: result.needsAuth,
+            error: result.error,
           },
-          "MCP discovery completed"
+          "MCP connection test completed"
         );
 
         return {
-          tools: toolsResult,
-          resources: resourcesResult,
-          prompts: promptsResult,
+          status: result.status,
+          needsAuth: result.needsAuth,
+          error: result.error,
         };
-      } finally {
-        // Don't close the client - keep it cached for reuse
-        log.debug({ connectorId: connector.id }, "MCP discovery finished");
-      }
+      };
+
+      const cachedFetch = createCachedConnectionStatus(
+        connector.id,
+        fetchConnectionStatus
+      );
+
+      return cachedFetch();
+    }),
+
+  /**
+   * Discover tools, resources, and prompts from an MCP server.
+   * Cached for 5 minutes.
+   */
+  discover: protectedProcedure
+    .input(z.object({ id: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
+
+      const fetchDiscovery = async (): Promise<DiscoveryResult> => {
+        log.debug(
+          { connectorId: connector.id, url: connector.url },
+          "creating MCP client for discovery (cache miss)"
+        );
+
+        // Use OAuth-aware client
+        const mcpClient = await getOrCreateMcpClient({
+          id: connector.id,
+          name: connector.name,
+          url: connector.url,
+          type: connector.type,
+        });
+
+        await mcpClient.connect();
+
+        // Check if authorization is needed
+        if (mcpClient.status === "authorizing") {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Connector requires OAuth authorization",
+          });
+        }
+
+        if (mcpClient.status !== "connected") {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to connect to MCP server (status: ${mcpClient.status})`,
+          });
+        }
+
+        log.debug(
+          { connectorId: connector.id },
+          "MCP client connected, discovering capabilities"
+        );
+
+        try {
+          const [toolsResult, resourcesResult, promptsResult] =
+            await Promise.all([
+              mcpClient
+                .tools()
+                .then((tools) =>
+                  Object.entries(tools).map(([name, tool]) => ({
+                    name,
+                    description: tool.description ?? null,
+                  }))
+                )
+                .catch((err) => {
+                  log.warn(
+                    { connectorId: connector.id, err },
+                    "failed to list tools"
+                  );
+                  return [];
+                }),
+              mcpClient
+                .listResources()
+                .then((r) =>
+                  r.resources.map((res) => ({
+                    name: res.name,
+                    uri: res.uri,
+                    description: res.description ?? null,
+                    mimeType: res.mimeType ?? null,
+                  }))
+                )
+                .catch((err) => {
+                  log.warn(
+                    { connectorId: connector.id, err },
+                    "failed to list resources"
+                  );
+                  return [];
+                }),
+              mcpClient
+                .listPrompts()
+                .then((r) =>
+                  r.prompts.map((p) => ({
+                    name: p.name,
+                    description: p.description ?? null,
+                    arguments:
+                      p.arguments?.map((arg) => ({
+                        name: arg.name,
+                        description: arg.description ?? null,
+                        required: arg.required ?? false,
+                      })) ?? [],
+                  }))
+                )
+                .catch((err) => {
+                  log.warn(
+                    { connectorId: connector.id, err },
+                    "failed to list prompts"
+                  );
+                  return [];
+                }),
+            ]);
+
+          log.info(
+            {
+              connectorId: connector.id,
+              toolsCount: toolsResult.length,
+              resourcesCount: resourcesResult.length,
+              promptsCount: promptsResult.length,
+            },
+            "MCP discovery completed"
+          );
+
+          return {
+            tools: toolsResult,
+            resources: resourcesResult,
+            prompts: promptsResult,
+          };
+        } finally {
+          // Don't close the client - keep it cached for reuse
+          log.debug({ connectorId: connector.id }, "MCP discovery finished");
+        }
+      };
+
+      const cachedFetch = createCachedDiscovery(connector.id, fetchDiscovery);
+
+      return cachedFetch();
     }),
 
   /**
@@ -403,20 +457,11 @@ export const mcpRouter = createTRPCRouter({
   authorize: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow authorizing own connectors or global ones
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot authorize this connector",
-        });
-      }
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
 
       log.info({ connectorId: connector.id }, "Initiating OAuth authorization");
 
@@ -462,20 +507,11 @@ export const mcpRouter = createTRPCRouter({
   checkAuth: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      // Only allow checking own connectors or global ones
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot access this connector",
-        });
-      }
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
 
       const session = await getAuthenticatedSession({
         mcpConnectorId: connector.id,
@@ -493,22 +529,14 @@ export const mcpRouter = createTRPCRouter({
   refreshClient: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const connector = await getMcpConnectorById({ id: input.id });
-      if (!connector) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connector not found",
-        });
-      }
-      if (connector.userId !== null && connector.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot access this connector",
-        });
-      }
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
 
-      // Remove existing client and reconnect
       await removeMcpClient(connector.id);
+      invalidateAllMcpCaches(connector.id);
 
       const mcpClient = await getOrCreateMcpClient({
         id: connector.id,

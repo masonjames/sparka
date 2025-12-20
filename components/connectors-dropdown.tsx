@@ -26,11 +26,11 @@ export function ConnectorsDropdown({ compact }: { compact?: boolean }) {
   const config = useConfig();
 
   const { data: connectors } = useQuery({
-    ...trpc.mcp.list.queryOptions(),
+    ...trpc.mcp.listConnected.queryOptions(),
     enabled: config.integrations.mcp,
   });
 
-  const queryKey = trpc.mcp.list.queryKey();
+  const queryKey = trpc.mcp.listConnected.queryKey();
 
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
