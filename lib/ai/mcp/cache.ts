@@ -43,7 +43,7 @@ export type DiscoveryResult = {
 
 /**
  * Create a cached connection status fetcher for a specific connector.
- * Cache duration: 60 seconds
+ * Cache duration: 5 minutes
  */
 export function createCachedConnectionStatus(
   connectorId: string,

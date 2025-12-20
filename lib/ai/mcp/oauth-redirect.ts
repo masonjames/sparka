@@ -72,6 +72,7 @@ export function waitForOAuthComplete({
   return new Promise((resolve, reject) => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelTimeoutId: ReturnType<typeof setTimeout> | null = null;
     let resolved = false;
 
     const cleanup = () => {
@@ -82,6 +83,10 @@ export function waitForOAuthComplete({
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
+      }
+      if (cancelTimeoutId) {
+        clearTimeout(cancelTimeoutId);
+        cancelTimeoutId = null;
       }
       window.removeEventListener("message", messageHandler);
     };
@@ -139,13 +144,16 @@ export function waitForOAuthComplete({
     intervalId = setInterval(() => {
       if (authWindow.closed) {
         if (!resolved) {
-          setTimeout(() => {
+          cancelTimeoutId = setTimeout(() => {
             if (!resolved) {
               handleError(new Error("Authentication cancelled"));
             }
           }, 500);
         }
-        cleanup();
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
       }
     }, 500);
 
