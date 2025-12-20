@@ -2,6 +2,10 @@ import {
   auth,
   experimental_createMCPClient as createMCPClient,
 } from "@ai-sdk/mcp";
+import type {
+  ListPromptsResult,
+  ListResourcesResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "ai";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
@@ -223,7 +227,7 @@ export class MCPClient {
   /**
    * List resources from the MCP server.
    */
-  async listResources() {
+  async listResources(): Promise<ListResourcesResult> {
     if (!this.client) {
       throw new Error("Client not connected");
     }
@@ -238,7 +242,7 @@ export class MCPClient {
   /**
    * List prompts from the MCP server.
    */
-  async listPrompts() {
+  async listPrompts(): Promise<ListPromptsResult> {
     if (!this.client) {
       throw new Error("Client not connected");
     }
@@ -269,8 +273,7 @@ export class MCPClient {
    * Check if an error is an auth error (401/403) and invalidate caches if so.
    */
   private handlePotentialAuthError(error: unknown): void {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     const isAuthError =
       errorMessage.includes("401") ||
       errorMessage.includes("403") ||
@@ -294,7 +297,7 @@ const clientsMap = new Map<string, MCPClient>();
 /**
  * Get or create an MCP client for a connector.
  */
-export async function getOrCreateMcpClient({
+export function getOrCreateMcpClient({
   id,
   name,
   url,
@@ -306,7 +309,7 @@ export async function getOrCreateMcpClient({
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
-}): Promise<MCPClient> {
+}): MCPClient {
   let client = clientsMap.get(id);
 
   if (!client) {

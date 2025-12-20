@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
+  type ConnectionStatusResult,
   createCachedConnectionStatus,
   createCachedDiscovery,
-  invalidateAllMcpCaches,
-  type ConnectionStatusResult,
   type DiscoveryResult,
+  invalidateAllMcpCaches,
 } from "@/lib/ai/mcp/cache";
 import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
@@ -88,8 +88,7 @@ async function getConnectorWithPermission({
   const isOwner = connector.userId === userId;
   const isGlobal = connector.userId === null;
 
-  const hasPermission =
-    permission === "own" ? isOwner : isOwner || isGlobal;
+  const hasPermission = permission === "own" ? isOwner : isOwner || isGlobal;
 
   if (!hasPermission) {
     throw new TRPCError({
@@ -118,7 +117,7 @@ export const mcpRouter = createTRPCRouter({
       connectors.map(async (connector) => {
         const fetchConnectionStatus =
           async (): Promise<ConnectionStatusResult> => {
-            const mcpClient = await getOrCreateMcpClient({
+            const mcpClient = getOrCreateMcpClient({
               id: connector.id,
               name: connector.name,
               url: connector.url,
@@ -277,37 +276,38 @@ export const mcpRouter = createTRPCRouter({
         permission: "own-or-global",
       });
 
-      const fetchConnectionStatus = async (): Promise<ConnectionStatusResult> => {
-        log.debug(
-          { connectorId: connector.id, url: connector.url },
-          "testing MCP connection (cache miss)"
-        );
+      const fetchConnectionStatus =
+        async (): Promise<ConnectionStatusResult> => {
+          log.debug(
+            { connectorId: connector.id, url: connector.url },
+            "testing MCP connection (cache miss)"
+          );
 
-        const mcpClient = await getOrCreateMcpClient({
-          id: connector.id,
-          name: connector.name,
-          url: connector.url,
-          type: connector.type,
-        });
+          const mcpClient = getOrCreateMcpClient({
+            id: connector.id,
+            name: connector.name,
+            url: connector.url,
+            type: connector.type,
+          });
 
-        const result = await mcpClient.attemptConnection();
+          const result = await mcpClient.attemptConnection();
 
-        log.debug(
-          {
-            connectorId: connector.id,
+          log.debug(
+            {
+              connectorId: connector.id,
+              status: result.status,
+              needsAuth: result.needsAuth,
+              error: result.error,
+            },
+            "MCP connection test completed"
+          );
+
+          return {
             status: result.status,
             needsAuth: result.needsAuth,
             error: result.error,
-          },
-          "MCP connection test completed"
-        );
-
-        return {
-          status: result.status,
-          needsAuth: result.needsAuth,
-          error: result.error,
+          };
         };
-      };
 
       const cachedFetch = createCachedConnectionStatus(
         connector.id,
@@ -337,7 +337,7 @@ export const mcpRouter = createTRPCRouter({
         );
 
         // Use OAuth-aware client
-        const mcpClient = await getOrCreateMcpClient({
+        const mcpClient = getOrCreateMcpClient({
           id: connector.id,
           name: connector.name,
           url: connector.url,
@@ -469,7 +469,7 @@ export const mcpRouter = createTRPCRouter({
       await removeMcpClient(connector.id);
 
       // Create a new client and attempt to connect
-      const mcpClient = await getOrCreateMcpClient({
+      const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
         url: connector.url,
@@ -538,7 +538,7 @@ export const mcpRouter = createTRPCRouter({
       await removeMcpClient(connector.id);
       invalidateAllMcpCaches(connector.id);
 
-      const mcpClient = await getOrCreateMcpClient({
+      const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
         url: connector.url,

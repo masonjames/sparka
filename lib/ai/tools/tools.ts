@@ -119,7 +119,7 @@ export async function getMcpTools({
   for (const connector of enabledConnectors) {
     try {
       // Get or create OAuth-aware MCP client
-      const mcpClient = await getOrCreateMcpClient({
+      const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
         url: connector.url,
