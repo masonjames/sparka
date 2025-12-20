@@ -56,7 +56,7 @@ export async function createCoreChatAgent({
   const messagesWithoutReasoning = filterReasoningParts(messages.slice(-5));
 
   // Convert to model messages
-  const modelMessages = convertToModelMessages(messagesWithoutReasoning);
+  const modelMessages = await convertToModelMessages(messagesWithoutReasoning);
 
   // Replace file URLs with binary data
   const contextForLLM =

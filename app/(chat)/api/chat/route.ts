@@ -835,7 +835,7 @@ async function prepareRequestContext({
 
   // Validate input token limit (50k tokens for user message)
   const totalTokens = calculateMessagesTokens(
-    convertToModelMessages([userMessage])
+    await convertToModelMessages([userMessage])
   );
 
   if (totalTokens > MAX_INPUT_TOKENS) {
