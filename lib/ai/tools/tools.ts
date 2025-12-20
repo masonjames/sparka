@@ -4,7 +4,7 @@ import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
 import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
-import { generateImage } from "@/lib/ai/tools/generate-image";
+import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
@@ -76,7 +76,9 @@ export function getTools({
 
     ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
     ...(siteConfig.integrations.openai
-      ? { generateImage: generateImage({ attachments, lastGeneratedImage }) }
+      ? {
+          generateImage: generateImageTool({ attachments, lastGeneratedImage }),
+        }
       : {}),
     ...(siteConfig.integrations.webSearch
       ? {

@@ -1,10 +1,8 @@
-import { experimental_generateImage, type FileUIPart, tool } from "ai";
-import OpenAI, { toFile } from "openai";
+import { type FileUIPart, generateImage, tool } from "ai";
 import { z } from "zod";
 import { DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
 import { getImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
-import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 
 type GenerateImageProps = {
@@ -12,120 +10,86 @@ type GenerateImageProps = {
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
 };
 
-const openaiClient: OpenAI | null = env.OPENAI_API_KEY
-  ? new OpenAI({
-      apiKey: env.OPENAI_API_KEY,
-    })
-  : null;
-
 const log = createModuleLogger("ai.tools.generate-image");
 
-async function prepareInputImages({
+type ImageMode = "edit" | "generate";
+
+async function fetchImageBuffer(url: string): Promise<Buffer> {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+async function collectEditImages({
   imageParts,
   lastGeneratedImage,
 }: {
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
-}): Promise<File[]> {
-  const inputImages = [] as File[];
-
-  if (lastGeneratedImage) {
-    const response = await fetch(lastGeneratedImage.imageUrl);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const lastGenImage = await toFile(buffer, lastGeneratedImage.name, {
-      type: "image/png",
-    });
-    inputImages.push(lastGenImage);
-  }
-
-  const partImages = await Promise.all(
-    imageParts.map(async (part) => {
-      const response = await fetch(part.url);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      return await toFile(buffer, part.filename || "image.png", {
-        type: part.mediaType || "image/png",
-      });
-    })
-  );
-
-  inputImages.push(...partImages);
-  return inputImages;
+}): Promise<Buffer[]> {
+  return await Promise.all([
+    ...(lastGeneratedImage
+      ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
+      : []),
+    ...imageParts.map((p) => fetchImageBuffer(p.url)),
+  ]);
 }
 
-async function executeEditMode({
+function serializeError(err: unknown): {
+  name?: string;
+  message: string;
+  stack?: string;
+} {
+  if (err instanceof Error) {
+    return { name: err.name, message: err.message, stack: err.stack };
+  }
+
+  return { message: String(err) };
+}
+
+async function runGenerateImage({
+  mode,
   prompt,
   imageParts,
   lastGeneratedImage,
-  hasLastGeneratedImage,
   startMs,
 }: {
+  mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
-  hasLastGeneratedImage: boolean;
   startMs: number;
 }): Promise<{ imageUrl: string; prompt: string }> {
-  log.debug(
-    {
-      note: "OpenAI edit mode",
-      lastGeneratedCount: hasLastGeneratedImage ? 1 : 0,
-      attachmentCount: imageParts.length,
-    },
-    "generateImage: preparing edit images"
-  );
+  let promptInput:
+    | string
+    | {
+        text: string;
+        images: Buffer[];
+      };
 
-  const inputImages = await prepareInputImages({
-    imageParts,
-    lastGeneratedImage,
-  });
-
-  if (!openaiClient) {
-    log.warn(
-      { missingKey: true },
-      "generateImage: edit requested but OPENAI_API_KEY is not set"
+  if (mode === "edit") {
+    log.debug(
+      {
+        note: "OpenAI edit mode",
+        lastGeneratedCount: lastGeneratedImage ? 1 : 0,
+        attachmentCount: imageParts.length,
+      },
+      "generateImage: preparing edit images"
     );
-    throw new Error("OPENAI_API_KEY is required for image edits");
+
+    const inputImages = await collectEditImages({
+      imageParts,
+      lastGeneratedImage,
+    });
+    promptInput = { text: prompt, images: inputImages };
+  } else {
+    promptInput = prompt;
   }
 
-  const rsp = await openaiClient.images.edit({
-    model: "gpt-image-1",
-    image: inputImages,
-    prompt,
-  });
-
-  const buffer = Buffer.from(rsp.data?.[0]?.b64_json || "", "base64");
-  const timestamp = Date.now();
-  const filename = `generated-image-${timestamp}.png`;
-  const result = await uploadFile(filename, buffer);
-
-  log.info(
-    {
-      mode: "edit",
-      ms: Date.now() - startMs,
-      imageUrl: result.url,
-      uploadedFilename: filename,
-    },
-    "generateImage: success"
-  );
-
-  return {
-    imageUrl: result.url,
-    prompt,
-  };
-}
-
-async function executeGenerateMode({
-  prompt,
-  startMs,
-}: {
-  prompt: string;
-  startMs: number;
-}): Promise<{ imageUrl: string; prompt: string }> {
-  const res = await experimental_generateImage({
+  const res = await generateImage({
+    // For edits, OpenAI expects `gpt-image-1` and accepts input images via prompt.images
     model: getImageModel(DEFAULT_IMAGE_MODEL),
-    prompt,
+    prompt: promptInput,
     n: 1,
     providerOptions: {
       telemetry: { isEnabled: true },
@@ -134,7 +98,7 @@ async function executeGenerateMode({
 
   log.debug(
     {
-      mode: "generate",
+      mode,
       base64Length: res.images?.[0]?.base64?.length ?? 0,
     },
     "generateImage: provider response received"
@@ -147,7 +111,7 @@ async function executeGenerateMode({
 
   log.info(
     {
-      mode: "generate",
+      mode,
       ms: Date.now() - startMs,
       imageUrl: result.url,
       uploadedFilename: filename,
@@ -155,13 +119,10 @@ async function executeGenerateMode({
     "generateImage: success"
   );
 
-  return {
-    imageUrl: result.url,
-    prompt,
-  };
+  return { imageUrl: result.url, prompt };
 }
 
-export const generateImage = ({
+export const generateImageTool = ({
   attachments = [],
   lastGeneratedImage = null,
 }: GenerateImageProps = {}) =>
@@ -187,48 +148,35 @@ Use for:
         (part) => part.type === "file" && part.mediaType?.startsWith("image/")
       );
 
-      const hasLastGeneratedImage = lastGeneratedImage !== null;
-      const isEdit = imageParts.length > 0 || hasLastGeneratedImage;
+      const mode: ImageMode =
+        imageParts.length > 0 || lastGeneratedImage !== null
+          ? "edit"
+          : "generate";
 
       log.info(
         {
-          mode: isEdit ? "edit" : "generate",
+          mode,
           attachmentCount: imageParts.length,
-          hasLastGeneratedImage,
+          hasLastGeneratedImage: lastGeneratedImage !== null,
           promptLength: prompt.length,
         },
         "generateImage: start"
       );
 
       try {
-        if (isEdit) {
-          return await executeEditMode({
-            prompt,
-            imageParts,
-            lastGeneratedImage,
-            hasLastGeneratedImage,
-            startMs,
-          });
-        }
-
-        return await executeGenerateMode({
+        return await runGenerateImage({
+          mode,
           prompt,
+          imageParts,
+          lastGeneratedImage,
           startMs,
         });
       } catch (error) {
-        const err = error as unknown;
         log.error(
           {
-            mode: isEdit ? "edit" : "generate",
+            mode,
             ms: Date.now() - startMs,
-            error:
-              err && typeof err === "object"
-                ? {
-                    name: (err as Error).name,
-                    message: (err as Error).message,
-                    stack: (err as Error).stack,
-                  }
-                : { message: String(err) },
+            error: serializeError(error),
           },
           "generateImage: failure"
         );
