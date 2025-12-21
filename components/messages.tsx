@@ -2,10 +2,9 @@ import { useChatId, useChatStatus } from "@ai-sdk-tools/store";
 import { memo } from "react";
 import {
   Conversation,
-  ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-// import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
+import { ConversationContent } from "@/components/ai-elements/extra/conversation-content-scroll-area";
 import type { Vote } from "@/lib/db/schema";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import { Greeting } from "./greeting";
