@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe, Plug, Settings } from "lucide-react";
 import Link from "next/link";
+import { memo } from "react";
 import { toast } from "sonner";
 import { useTRPC } from "@/trpc/react";
 import { useConfig } from "./config-provider";
@@ -19,7 +20,7 @@ import {
 import { Switch } from "./ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-export function ConnectorsDropdown({ compact }: { compact?: boolean }) {
+function PureConnectorsDropdown() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -74,9 +75,7 @@ export function ConnectorsDropdown({ compact }: { compact?: boolean }) {
               variant="ghost"
             >
               <Plug size={14} />
-              {!compact && (
-                <span className="@[500px]:inline hidden">Connectors</span>
-              )}
+              <span className="@[500px]:inline hidden">Connectors</span>
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
@@ -130,3 +129,5 @@ export function ConnectorsDropdown({ compact }: { compact?: boolean }) {
     </DropdownMenu>
   );
 }
+
+export const ConnectorsDropdown = memo(PureConnectorsDropdown);
