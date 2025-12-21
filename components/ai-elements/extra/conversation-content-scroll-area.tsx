@@ -27,7 +27,7 @@ export const ConversationContent = ({
 
   return (
     <ScrollArea
-      className="h-full w-full *:data-radix-scroll-area-viewport:overscroll-contain *:data-radix-scroll-area-viewport:contain-strict"
+      className="h-full w-full *:data-radix-scroll-area-viewport:contain-strict"
       viewportRef={context.scrollRef}
     >
       <div
