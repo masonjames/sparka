@@ -118,78 +118,29 @@ export function Chat({
         sidebarState === "collapsed" && "md:max-w-screen"
       )}
     >
-      {/* Mobile: show either main or artifact using hidden/block, no resizable */}
-      <MainPanel
-        chatId={id}
-        className={cn(
-          "flex h-full min-w-0 flex-1 flex-col md:hidden",
-          isArtifactVisible && "hidden",
-          !isArtifactVisible && "flex"
-        )}
-        disableSuggestedActions={disableSuggestedActions}
-        hasMessages={messageIds.length > 0}
-        isArtifactVisible={isArtifactVisible}
-        isProjectPage={isProjectPage}
-        isReadonly={isReadonly}
-        projectId={projectId}
-        status={status}
-        user={session?.user}
-        votes={votes}
-      />
-
-      <ArtifactPanel
-        chatId={id}
-        className={cn(
-          "flex h-full min-w-0 flex-1 flex-col md:hidden",
-          !isArtifactVisible && "hidden",
-          isArtifactVisible && "flex"
-        )}
-        isAuthenticated={!!session?.user}
-        isReadonly={isReadonly}
-        status={status}
-        stop={stopAsync}
-        votes={votes}
-      />
-
-      {/* Desktop: main full-width when artifact hidden */}
-      {!isArtifactVisible && (
-        <MainPanel
-          chatId={id}
-          className="hidden h-full min-w-0 flex-1 flex-col md:flex"
-          disableSuggestedActions={disableSuggestedActions}
-          hasMessages={messageIds.length > 0}
-          isArtifactVisible={isArtifactVisible}
-          isProjectPage={isProjectPage}
-          isReadonly={isReadonly}
-          projectId={projectId}
-          status={status}
-          user={session?.user}
-          votes={votes}
-        />
-      )}
-
-      {/* Desktop: resizable main + artifact when artifact visible */}
-      {isArtifactVisible && (
-        <ResizablePanelGroup
-          className="hidden! md:flex! h-full w-full"
-          direction="horizontal"
+      <ResizablePanelGroup className="h-full w-full" direction="horizontal">
+        <ResizablePanel
+          className={isArtifactVisible ? "hidden md:block" : undefined}
+          defaultSize={65}
+          minSize={40}
         >
-          <ResizablePanel defaultSize={65} minSize={40}>
-            <MainPanel
-              chatId={id}
-              className="flex h-full min-w-0 flex-1 flex-col"
-              disableSuggestedActions={disableSuggestedActions}
-              hasMessages={messageIds.length > 0}
-              isArtifactVisible={isArtifactVisible}
-              isProjectPage={isProjectPage}
-              isReadonly={isReadonly}
-              projectId={projectId}
-              status={status}
-              user={session?.user}
-              votes={votes}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
+          <MainPanel
+            chatId={id}
+            className={cn("flex h-full min-w-0 flex-1 flex-col")}
+            disableSuggestedActions={disableSuggestedActions}
+            hasMessages={messageIds.length > 0}
+            isArtifactVisible={isArtifactVisible}
+            isProjectPage={isProjectPage}
+            isReadonly={isReadonly}
+            projectId={projectId}
+            status={status}
+            user={session?.user}
+            votes={votes}
+          />
+        </ResizablePanel>
+        {/* TODO: Introduce withHandle prop to resizable ResizableHandle component and make sure it's in the middle */}
+        {isArtifactVisible && <ResizableHandle className="hidden md:block" />}
+        {isArtifactVisible && (
           <ResizablePanel defaultSize={35} minSize={25}>
             <ArtifactPanel
               chatId={id}
@@ -201,8 +152,8 @@ export function Chat({
               votes={votes}
             />
           </ResizablePanel>
-        </ResizablePanelGroup>
-      )}
+        )}
+      </ResizablePanelGroup>
     </div>
   );
 }
