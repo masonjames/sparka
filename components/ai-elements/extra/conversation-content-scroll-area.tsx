@@ -27,7 +27,14 @@ export const ConversationContent = ({
 
   return (
     <ScrollArea
-      className="h-full w-full *:data-radix-scroll-area-viewport:contain-strict"
+      className={cn(
+        "h-full w-full",
+        // Radix injects an inner wrapper: <Viewport><div style='min-width: 100%; display: table;'></div></Viewport>
+        // Force it to behave like a normal block and allow shrinking to avoid horizontal overflow.
+        "[&_[data-slot=scroll-area-viewport]>div]:block!",
+        "[&_[data-slot=scroll-area-viewport]>div]:min-w-0!",
+        "[&_[data-slot=scroll-area-viewport]>div]:max-w-full"
+      )}
       viewportRef={context.scrollRef}
     >
       <div

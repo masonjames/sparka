@@ -25,33 +25,13 @@ export type ConversationContentProps = ComponentProps<
 
 export const ConversationContent = ({
   className,
-  children,
   ...props
-}: ConversationContentProps) =>{
-  const context = useStickToBottomContext();
-
-  return (
-    <div
-      ref={context.scrollRef}
-      style={{
-        height: "100%",
-        width: "100%",
-        overflow: "auto",
-        overscrollBehavior: "contain",
-        contain: "strict",
-      }}
-    >
-      <div
-        {...props}
-        className={cn("flex flex-col gap-8 p-4", className)}
-        ref={context.contentRef}
-      >
-        {typeof children === "function" ? children(context) : children}
-      </div>
-    </div>
-  );
-};
-
+}: ConversationContentProps) => (
+  <StickToBottom.Content
+    className={cn("flex flex-col gap-8 p-4", className)}
+    {...props}
+  />
+);
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;
