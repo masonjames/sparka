@@ -40,7 +40,6 @@ const PureSidebarChatItem = ({
     chat.projectId
       ? `/project/${chat.projectId}/chat/${chat.id}`
       : `/chat/${chat.id}`;
-  const pathname = usePathname();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
