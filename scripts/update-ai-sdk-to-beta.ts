@@ -22,7 +22,7 @@ if (aiPackage) {
 }
 
 if (packagesToUpdate.length === 0) {
-  console.log("No @ai-sdk packages or ai packag@e found");
+  console.log("No @ai-sdk packages or ai package found");
   process.exit(0);
 }
 
@@ -37,10 +37,12 @@ if (aiPackage) {
   console.log(`  - ${aiPackage}`);
 }
 
-const packagesToAdd = packagesToUpdate.map((pkg) => `${pkg}@beta`).join(" ");
+// Install latest stable versions and pin them exactly in package.json.
+// (No tag = bun resolves to latest stable on the current registry)
+const packagesToAdd = packagesToUpdate.join(" ");
 
 console.log(
-  "\nUpdating package.json and installing @beta versions with pinned versions..."
+  "\nUpdating package.json and installing latest stable versions with pinned versions..."
 );
 execSync(`bun add --exact ${packagesToAdd}`, { stdio: "inherit" });
 
