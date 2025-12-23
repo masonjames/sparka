@@ -4,8 +4,8 @@ import { useCallback } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
 import {
-    type CustomChatStoreState,
-    useCustomChatStoreApi,
+  type CustomChatStoreState,
+  useCustomChatStoreApi,
 } from "./custom-store-provider";
 
 export function useThreadStore<T>(

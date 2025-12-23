@@ -19,6 +19,7 @@ import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 import { MessageSiblings } from "./message-siblings";
 import { RetryButton } from "./retry-button";
 import { Tag } from "./tag";
+
 export function PureMessageActions({
   chatId,
   messageId,
@@ -123,55 +124,59 @@ export function PureMessageActions({
 
       <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
 
-      {role === "assistant" && !isReadOnly && isAuthenticated && (
+      {role === "assistant" && !isReadOnly && (
         <>
-          <Action
-            className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            data-testid="message-upvote"
-            disabled={vote?.isUpvoted || !isAuthenticated}
-            onClick={() => {
-              toast.promise(
-                voteMessageMutation.mutateAsync({
-                  chatId,
-                  messageId,
-                  type: "up" as const,
-                }),
-                {
-                  loading: "Upvoting Response...",
-                  success: "Upvoted Response!",
-                  error: "Failed to upvote response.",
-                }
-              );
-            }}
-            tooltip="Upvote Response"
-          >
-            <ThumbUpIcon size={14} />
-          </Action>
+          {isAuthenticated ? (
+            <>
+              <Action
+                className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                data-testid="message-upvote"
+                disabled={vote?.isUpvoted}
+                onClick={() => {
+                  toast.promise(
+                    voteMessageMutation.mutateAsync({
+                      chatId,
+                      messageId,
+                      type: "up" as const,
+                    }),
+                    {
+                      loading: "Upvoting Response...",
+                      success: "Upvoted Response!",
+                      error: "Failed to upvote response.",
+                    }
+                  );
+                }}
+                tooltip="Upvote Response"
+              >
+                <ThumbUpIcon size={14} />
+              </Action>
 
-          <Action
-            className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            data-testid="message-downvote"
-            disabled={(vote && !vote.isUpvoted) || !session?.user}
-            onClick={() => {
-              toast.promise(
-                voteMessageMutation.mutateAsync({
-                  chatId,
-                  messageId,
-                  type: "down" as const,
-                }),
-                {
-                  loading: "Downvoting Response...",
-                  success: "Downvoted Response!",
-                  error: "Failed to downvote response.",
-                }
-              );
-            }}
-            tooltip="Downvote Response"
-          >
-            <ThumbDownIcon size={14} />
-          </Action>
+              <Action
+                className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                data-testid="message-downvote"
+                disabled={vote && !vote.isUpvoted}
+                onClick={() => {
+                  toast.promise(
+                    voteMessageMutation.mutateAsync({
+                      chatId,
+                      messageId,
+                      type: "down" as const,
+                    }),
+                    {
+                      loading: "Downvoting Response...",
+                      success: "Downvoted Response!",
+                      error: "Failed to downvote response.",
+                    }
+                  );
+                }}
+                tooltip="Downvote Response"
+              >
+                <ThumbDownIcon size={14} />
+              </Action>
+            </>
+          ) : null}
 
-          {!isReadOnly && <RetryButton messageId={messageId} />}
+          <RetryButton messageId={messageId} />
           <SelectedModelId messageId={messageId} />
         </>
       )}
