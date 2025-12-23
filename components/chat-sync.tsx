@@ -1,23 +1,22 @@
 "use client";
 
-import { useChat } from "@ai-sdk-tools/store";
+import { useChat, useChatActions } from "@ai-sdk-tools/store";
 import { DefaultChatTransport } from "ai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
+import { useThreadInitialMessages } from "@/lib/stores/hooks-threads";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 export function ChatSync({
   id,
-  initialMessages,
   projectId,
 }: {
   id: string;
-  initialMessages: ChatMessage[];
   projectId?: string;
 }) {
   const { data: session } = useSession();
@@ -26,11 +25,26 @@ export function ChatSync({
   const [_, setAutoResume] = useState(true);
 
   const isAuthenticated = !!session?.user;
+  const { stop } = useChatActions<ChatMessage>();
+  const threadInitialMessages = useThreadInitialMessages();
+
+  // Backstop: if we remount ChatSync (e.g. threadEpoch changes), ensure the prior
+  // in-flight stream is aborted and we don't replay old deltas.
+  useEffect(
+    () => () => {
+      stop?.();
+      setDataStream([]);
+    },
+    [setDataStream, stop]
+  );
 
   useChat<ChatMessage>({
     experimental_throttle: 100,
     id,
-    messages: initialMessages,
+    // TODO: this is a special "snapshot" value in the store that is only updated
+    // on store init + sibling switch. Once the store can guarantee up-to-date
+    // messages at ChatSync remount time, we can likely remove this override.
+    messages: threadInitialMessages,
     generateId: generateUUID,
     onFinish: ({ message }) => {
       saveChatMessage({ message, chatId: id });
