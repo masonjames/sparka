@@ -93,6 +93,9 @@ export function PureMessageActions({
             <Pencil className="h-3.5 w-3.5" />
           </Action>
         ))}
+
+      <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
+
       <Action
         className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         onClick={async () => {
@@ -122,35 +125,10 @@ export function PureMessageActions({
         <CopyIcon size={14} />
       </Action>
 
-      <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
-
       {role === "assistant" && !isReadOnly && (
         <>
           {isAuthenticated ? (
             <>
-              <Action
-                className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                data-testid="message-upvote"
-                disabled={vote?.isUpvoted}
-                onClick={() => {
-                  toast.promise(
-                    voteMessageMutation.mutateAsync({
-                      chatId,
-                      messageId,
-                      type: "up" as const,
-                    }),
-                    {
-                      loading: "Upvoting Response...",
-                      success: "Upvoted Response!",
-                      error: "Failed to upvote response.",
-                    }
-                  );
-                }}
-                tooltip="Upvote Response"
-              >
-                <ThumbUpIcon size={14} />
-              </Action>
-
               <Action
                 className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 data-testid="message-downvote"
@@ -172,6 +150,29 @@ export function PureMessageActions({
                 tooltip="Downvote Response"
               >
                 <ThumbDownIcon size={14} />
+              </Action>
+
+              <Action
+                className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                data-testid="message-upvote"
+                disabled={vote?.isUpvoted}
+                onClick={() => {
+                  toast.promise(
+                    voteMessageMutation.mutateAsync({
+                      chatId,
+                      messageId,
+                      type: "up" as const,
+                    }),
+                    {
+                      loading: "Upvoting Response...",
+                      success: "Upvoted Response!",
+                      error: "Failed to upvote response.",
+                    }
+                  );
+                }}
+                tooltip="Upvote Response"
+              >
+                <ThumbUpIcon size={14} />
               </Action>
             </>
           ) : null}
