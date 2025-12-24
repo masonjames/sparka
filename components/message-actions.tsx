@@ -107,14 +107,12 @@ export function PureMessageActions({
       </Action>
 
       {role === "assistant" && !isReadOnly && (
-        <>
-          <FeedbackActions
-            chatId={chatId}
-            isReadOnly={isReadOnly}
-            messageId={messageId}
-            vote={vote}
-          />
-        </>
+        <FeedbackActions
+          chatId={chatId}
+          isReadOnly={isReadOnly}
+          messageId={messageId}
+          vote={vote}
+        />
       )}
     </Actions>
   );

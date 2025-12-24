@@ -111,6 +111,30 @@ export function waitForOAuthComplete({
       reject(error);
     };
 
+    const closeAuthWindow = () => {
+      try {
+        authWindow.close();
+      } catch {
+        // Ignore errors closing the window
+      }
+    };
+
+    const handleOAuthMessage = (
+      type: string,
+      error?: string,
+      error_description?: string
+    ) => {
+      if (type === "MCP_OAUTH_SUCCESS") {
+        closeAuthWindow();
+        handleSuccess();
+      } else if (type === "MCP_OAUTH_ERROR") {
+        closeAuthWindow();
+        handleError(
+          new Error(error_description || error || "OAuth authentication failed")
+        );
+      }
+    };
+
     const messageHandler = (event: MessageEvent) => {
       // Only accept messages from our own origin
       if (event.origin !== window.location.origin) {
@@ -118,24 +142,7 @@ export function waitForOAuthComplete({
       }
 
       const { type, error, error_description } = event.data || {};
-
-      if (type === "MCP_OAUTH_SUCCESS") {
-        try {
-          authWindow.close();
-        } catch {
-          // Ignore errors closing the window
-        }
-        handleSuccess();
-      } else if (type === "MCP_OAUTH_ERROR") {
-        try {
-          authWindow.close();
-        } catch {
-          // Ignore errors closing the window
-        }
-        handleError(
-          new Error(error_description || error || "OAuth authentication failed")
-        );
-      }
+      handleOAuthMessage(type, error, error_description);
     };
 
     window.addEventListener("message", messageHandler);
