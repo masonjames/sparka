@@ -11,6 +11,7 @@ import { motion } from "motion/react";
 import { memo, useMemo, useState } from "react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,7 @@ function PureSuggestedActions({
       return;
     }
 
+    setSelectedCategoryId(null);
     window.history.pushState({}, "", `/chat/${chatId}`);
 
     sendMessage(
@@ -123,7 +125,7 @@ function PureSuggestedActions({
 
   return (
     <div
-      className={cn("flex w-full flex-col gap-3", className)}
+      className={cn("relative flex w-full flex-col", className)}
       data-testid="suggested-actions"
     >
       <Suggestions className="mx-auto gap-1.5">
@@ -162,22 +164,29 @@ function PureSuggestedActions({
       {selectedCategory ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
+          className="absolute start-0 top-full w-full pt-2"
           initial={{ opacity: 0, y: 6 }}
           key={selectedCategory.id}
           transition={{ duration: 0.15 }}
         >
-          <div className="flex flex-col gap-1">
-            {selectedCategory.prompts.map((prompt) => (
-              <Button
-                className="h-auto justify-start rounded-lg px-3 py-2 text-left text-sm"
-                key={prompt}
-                onClick={() => sendPrompt(prompt)}
-                type="button"
-                variant="ghost"
-              >
-                {prompt}
-              </Button>
-            ))}
+          <div className="w-full rounded-xl border bg-background p-2 shadow-sm">
+            <div className="flex w-full flex-col">
+              {selectedCategory.prompts.map((prompt, index) => (
+                <div className="w-full" key={prompt}>
+                  <Button
+                    className="h-auto w-full justify-start whitespace-pre-wrap rounded-lg px-3 py-2 text-left text-sm"
+                    onClick={() => sendPrompt(prompt)}
+                    type="button"
+                    variant="ghost"
+                  >
+                    {prompt}
+                  </Button>
+                  {index < selectedCategory.prompts.length - 1 ? (
+                    <Separator className="my-1" />
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
       ) : null}
