@@ -228,13 +228,14 @@ export const models = [
     owned_by: "alibaba",
     name: "Qwen3 Next 80B A3B Instruct",
     description:
-      "Qwen3-Next uses a highly sparse MoE design: 80B total parameters, but only ~3B activated per inference step. Experiments show that, with global load balancing, increasing total expert parameters while keeping activated experts fixed steadily reduces training loss.Compared to Qwen3’s MoE (128 total experts, 8 routed), Qwen3-Next expands to 512 total experts, combining 10 routed experts + 1 shared expert — maximizing resource usage without hurting performance. The Qwen3-Next-80B-A3B-Instruct performs comparably to our flagship model Qwen3-235B-A22B-Instruct-2507, and shows clear advantages in tasks requiring ultra-long context (up to 256K tokens).",
-    context_window: 65_536,
-    max_tokens: 65_536,
+      "A new generation of open-source, non-thinking mode model powered by Qwen3. This version demonstrates superior Chinese text understanding, augmented logical reasoning, and enhanced capabilities in text generation tasks over the previous iteration (Qwen3-235B-A22B-Instruct-2507).",
+    context_window: 262_144,
+    max_tokens: 32_768,
     type: "language",
+    tags: [],
     pricing: {
-      input: "0.00000015",
-      output: "0.0000015",
+      input: "0.00000009",
+      output: "0.0000011",
     },
   },
   {
@@ -831,24 +832,6 @@ export const models = [
     },
   },
   {
-    id: "deepseek/deepseek-v3.2-speciale",
-    object: "model",
-    created: 1_755_815_280,
-    owned_by: "deepseek",
-    name: "DeepSeek V3.2 Speciale",
-    description:
-      "DeepSeek-V3.2-Speciale: Pushing the boundaries of reasoning capabilities (thinking mode only)",
-    context_window: 128_000,
-    max_tokens: 128_000,
-    type: "language",
-    tags: ["reasoning"],
-    pricing: {
-      input: "0.00000028",
-      output: "0.00000042",
-      input_cache_read: "0.000000028",
-    },
-  },
-  {
     id: "deepseek/deepseek-v3.2-thinking",
     object: "model",
     created: 1_755_815_280,
@@ -991,6 +974,7 @@ export const models = [
     pricing: {
       input: "0.0000001",
       output: "0.0000004",
+      input_cache_read: "0.00000001",
       web_search: "35",
     },
   },
@@ -1033,6 +1017,25 @@ export const models = [
     },
   },
   {
+    id: "google/gemini-3-flash",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "google",
+    name: "Gemini 3 Flash",
+    description:
+      "Google's most intelligent model built for speed, combining frontier intelligence with superior search and grounding.",
+    context_window: 1_000_000,
+    max_tokens: 64_000,
+    type: "language",
+    tags: ["reasoning", "file-input", "vision", "tool-use"],
+    pricing: {
+      input: "0.0000005",
+      output: "0.000003",
+      input_cache_read: "0.00000005",
+      web_search: "14",
+    },
+  },
+  {
     id: "google/gemini-3-pro-image",
     object: "model",
     created: 1_755_815_280,
@@ -1047,6 +1050,7 @@ export const models = [
     pricing: {
       input: "0.000002",
       output: "0.00012",
+      web_search: "14",
     },
   },
   {
@@ -1065,6 +1069,7 @@ export const models = [
       input: "0.000002",
       output: "0.000012",
       input_cache_read: "0.0000002",
+      web_search: "14",
     },
   },
   {
@@ -1178,10 +1183,10 @@ export const models = [
     },
   },
   {
-    id: "kwaikat/kat-coder-pro-v1",
+    id: "kwaipilot/kat-coder-pro-v1",
     object: "model",
     created: 1_755_815_280,
-    owned_by: "kwaikat",
+    owned_by: "kwaipilot",
     name: "KAT-Coder-Pro V1",
     description:
       "KAT-Coder-Pro V1 is KwaiKAT's most advanced agentic coding model in the KwaiKAT series. Designed specifically for agentic coding tasks, it excels in real-world software engineering scenarios, achieving a remarkable 73.4% solve rate on the SWE-Bench Verified benchmark. KAT-Coder-Pro V1 delivers top-tier coding performance and has been rigorously tested by thousands of in-house engineers. The model has been optimized for tool-use capability, multi-turn interaction, instruction following, generalization and comprehensive capabilities through a multi-stage training process, including mid-training, supervised fine-tuning (SFT), reinforcement fine-tuning (RFT), and scalable agentic RL.",
@@ -1391,6 +1396,44 @@ export const models = [
     },
   },
   {
+    id: "minimax/minimax-m2.1",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "minimax",
+    name: "MiniMax M2.1",
+    description:
+      "MiniMax 2.1 is MiniMax's latest model, optimized specifically for robustness in coding, tool use,\ninstruction following, and long-horizon planning.",
+    context_window: 204_800,
+    max_tokens: 131_072,
+    type: "language",
+    tags: ["reasoning", "tool-use"],
+    pricing: {
+      input: "0.0000003",
+      output: "0.0000012",
+      input_cache_read: "0.00000003",
+      input_cache_write: "0.000000375",
+    },
+  },
+  {
+    id: "minimax/minimax-m2.1-lightning",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "minimax",
+    name: "MiniMax M2.1 Lightning",
+    description:
+      "MiniMax-M2.1-lightning is a faster version of MiniMax-M2.1, offering the same performance but with significantly higher throughput (output speed ~100 TPS, MiniMax-M2 output speed ~60 TPS).",
+    context_window: 204_800,
+    max_tokens: 131_072,
+    type: "language",
+    tags: ["reasoning", "tool-use"],
+    pricing: {
+      input: "0.0000003",
+      output: "0.0000024",
+      input_cache_read: "0.00000003",
+      input_cache_write: "0.000000375",
+    },
+  },
+  {
     id: "mistral/codestral",
     object: "model",
     created: 1_755_815_280,
@@ -1568,37 +1611,20 @@ export const models = [
     },
   },
   {
-    id: "mistral/mistral-large",
-    object: "model",
-    created: 1_755_815_280,
-    owned_by: "mistral",
-    name: "Mistral Large",
-    description:
-      "Mistral Large is ideal for complex tasks that require large reasoning capabilities or are highly specialized - like Synthetic Text Generation, Code Generation, RAG, or Agents.",
-    context_window: 32_000,
-    max_tokens: 4000,
-    type: "language",
-    tags: ["tool-use"],
-    pricing: {
-      input: "0.000002",
-      output: "0.000006",
-    },
-  },
-  {
     id: "mistral/mistral-large-3",
     object: "model",
     created: 1_755_815_280,
     owned_by: "mistral",
     name: "Mistral Large 3",
     description:
-      "Mistral Large is ideal for complex tasks that require large reasoning capabilities or are highly specialized - like Synthetic Text Generation, Code Generation, RAG, or Agents.",
-    context_window: 32_000,
-    max_tokens: 4000,
+      "Mistral Large 3 2512 is Mistral’s most capable model to date. It has a sparse mixture-of-experts architecture with 41B active parameters (675B total).",
+    context_window: 256_000,
+    max_tokens: 256_000,
     type: "language",
-    tags: ["tool-use"],
+    tags: ["vision"],
     pricing: {
-      input: "0.000002",
-      output: "0.000006",
+      input: "0.0000005",
+      output: "0.0000015",
     },
   },
   {
@@ -1616,6 +1642,23 @@ export const models = [
     pricing: {
       input: "0.0000004",
       output: "0.000002",
+    },
+  },
+  {
+    id: "mistral/mistral-nemo",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "mistral",
+    name: "Mistral Nemo",
+    description:
+      "A 12B parameter model with a 128k token context length built by Mistral in collaboration with NVIDIA. The model is multilingual, supporting English, French, German, Spanish, Italian, Portuguese, Chinese, Japanese, Korean, Arabic, and Hindi. It supports function calling and is released under the Apache 2.0 license.",
+    context_window: 60_288,
+    max_tokens: 16_000,
+    type: "language",
+    tags: ["tool-use"],
+    pricing: {
+      input: "0.00000004",
+      output: "0.00000017",
     },
   },
   {
@@ -1801,6 +1844,75 @@ export const models = [
     pricing: {
       input: "0.0000009",
       output: "0.0000019",
+    },
+  },
+  {
+    id: "nvidia/nemotron-3-nano-30b-a3b",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "nvidia",
+    name: "Nemotron 3 Nano 30B A3B",
+    description:
+      "NVIDIA Nemotron 3 Nano is an open reasoning model optimized for fast, cost-efficient inference. Built with a hybrid MoE and Mamba architecture and trained on NVIDIA-curated synthetic reasoning data, it delivers strong multi-step reasoning with stable latency and predictable performance for agentic and production workloads.",
+    context_window: 262_144,
+    max_tokens: 262_144,
+    type: "language",
+    tags: ["reasoning"],
+    pricing: {
+      input: "0.00000006",
+      output: "0.00000024",
+    },
+  },
+  {
+    id: "nvidia/nemotron-nano-12b-v2-vl",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "nvidia",
+    name: "Nvidia Nemotron Nano 12B V2 VL",
+    description:
+      "The model is an auto-regressive vision language model that uses an optimized transformer architecture. The model enables multi-image reasoning and video understanding, along with strong document intelligence, visual Q&A and summarization capabilities.",
+    context_window: 131_072,
+    max_tokens: 131_072,
+    type: "language",
+    tags: ["vision", "reasoning", "tool-use"],
+    pricing: {
+      input: "0.0000002",
+      output: "0.0000006",
+    },
+  },
+  {
+    id: "nvidia/nemotron-nano-9b-v2",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "nvidia",
+    name: "Nvidia Nemotron Nano 9B V2",
+    description:
+      "NVIDIA-Nemotron-Nano-9B-v2 is a large language model (LLM) trained from scratch by NVIDIA, and designed as a unified model for both reasoning and non-reasoning tasks. It responds to user queries and tasks by first generating a reasoning trace and then concluding with a final response. The model's reasoning capabilities can be controlled via a system prompt. If the user prefers the model to provide its final answer without intermediate reasoning traces, it can be configured to do so.",
+    context_window: 131_072,
+    max_tokens: 131_072,
+    type: "language",
+    tags: ["reasoning", "tool-use"],
+    pricing: {
+      input: "0.00000004",
+      output: "0.00000016",
+    },
+  },
+  {
+    id: "openai/codex-mini",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "Codex Mini",
+    description:
+      "Codex Mini is a fine-tuned version of o4-mini specifically for use in Codex CLI.",
+    context_window: 200_000,
+    max_tokens: 100_000,
+    type: "language",
+    tags: ["reasoning", "vision", "file-input", "tool-use", "implicit-caching"],
+    pricing: {
+      input: "0.0000015",
+      output: "0.000006",
+      input_cache_read: "0.000000375",
     },
   },
   {
@@ -2180,14 +2292,7 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: [
-      "tool-use",
-      "vision",
-      "file-input",
-      "reasoning",
-      "image-generation",
-      "implicit-caching",
-    ],
+    tags: ["tool-use", "vision", "file-input", "reasoning", "implicit-caching"],
     pricing: {
       input: "0.00000175",
       output: "0.000014",
@@ -2202,17 +2307,10 @@ export const models = [
     name: "GPT-5.2 Chat",
     description:
       "The model powering ChatGPT is gpt-5.2-chat-latest: this is OpenAI's best general-purpose model, part of the GPT-5 flagship model family.",
-    context_window: 400_000,
-    max_tokens: 128_000,
+    context_window: 128_000,
+    max_tokens: 16_384,
     type: "language",
-    tags: [
-      "vision",
-      "file-input",
-      "tool-use",
-      "image-generation",
-      "reasoning",
-      "implicit-caching",
-    ],
+    tags: ["vision", "file-input", "tool-use", "reasoning", "implicit-caching"],
     pricing: {
       input: "0.00000175",
       output: "0.000014",
@@ -2230,14 +2328,7 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: [
-      "tool-use",
-      "vision",
-      "implicit-caching",
-      "image-generation",
-      "reasoning",
-      "file-input",
-    ],
+    tags: ["tool-use", "vision", "implicit-caching", "reasoning", "file-input"],
     pricing: {
       input: "0.000021",
       output: "0.000168",
@@ -2366,6 +2457,23 @@ export const models = [
       input: "0.0000011",
       output: "0.0000044",
       input_cache_read: "0.00000055",
+    },
+  },
+  {
+    id: "openai/o3-pro",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "o3 Pro",
+    description:
+      "The o-series of models are trained with reinforcement learning to think before they answer and perform complex reasoning. The o3-pro model uses more compute to think harder and provide consistently better answers.",
+    context_window: 200_000,
+    max_tokens: 100_000,
+    type: "language",
+    tags: ["reasoning", "vision", "file-input", "tool-use"],
+    pricing: {
+      input: "0.00002",
+      output: "0.00008",
     },
   },
   {
@@ -2898,6 +3006,23 @@ export const models = [
     },
   },
   {
+    id: "xiaomi/mimo-v2-flash",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "xiaomi",
+    name: "MiMo V2 Flash",
+    description:
+      "Xiaomi MiMo-V2-Flash is a proprietary MoE model developed by Xiaomi, designed for extreme inference efficiency with 309B total parameters (15B active). By incorporating an innovative Hybrid attention architecture and multi-layer MTP inference acceleration, it ranks among the top 2 global open-source models across multiple Agent benchmarks.",
+    context_window: 262_144,
+    max_tokens: 32_000,
+    type: "language",
+    tags: ["reasoning", "tool-use"],
+    pricing: {
+      input: "0.000000098",
+      output: "0.000000293",
+    },
+  },
+  {
     id: "zai/glm-4.5",
     object: "model",
     created: 1_755_815_280,
@@ -2997,5 +3122,23 @@ export const models = [
     type: "language",
     tags: ["vision", "reasoning", "file-input", "tool-use"],
     pricing: {},
+  },
+  {
+    id: "zai/glm-4.7",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "zai",
+    name: "GLM 4.7",
+    description:
+      "GLM-4.7 is Z.ai’s latest flagship model, with major upgrades focused on two key areas: stronger coding capabilities and more stable multi-step reasoning and execution.",
+    context_window: 202_752,
+    max_tokens: 120_000,
+    type: "language",
+    tags: ["reasoning", "implicit-caching", "tool-use"],
+    pricing: {
+      input: "0.00000043",
+      output: "0.00000175",
+      input_cache_read: "0.00000008",
+    },
   },
 ] as const satisfies readonly AiGatewayModel[];
