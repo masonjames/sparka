@@ -30,7 +30,7 @@ function PureMessagesPane({
     >
       <div
         className={cn(
-          "min-h-0",
+          "min-h-0 h-full",
           hasMessages ? "flex-1" : "h-0 overflow-hidden"
         )}
       >

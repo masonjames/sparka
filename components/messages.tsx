@@ -61,7 +61,7 @@ export type MessagesProps = {
 
 function PureMessages({ isReadonly }: MessagesProps) {
   return (
-    <Conversation>
+    <Conversation className="h-full">
       <ConversationContent className="container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl">
         <PureMessagesInternal isReadonly={isReadonly} />
       </ConversationContent>
