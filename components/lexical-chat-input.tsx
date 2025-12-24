@@ -1,8 +1,8 @@
 "use client";
 
 import {
-    type InitialConfigType,
-    LexicalComposer,
+  type InitialConfigType,
+  LexicalComposer,
 } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -11,22 +11,22 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import {
-    $createParagraphNode,
-    $createTextNode,
-    $getRoot,
-    COMMAND_PRIORITY_HIGH,
-    type EditorState,
-    KEY_ENTER_COMMAND,
-    type LexicalEditor,
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  COMMAND_PRIORITY_HIGH,
+  type EditorState,
+  KEY_ENTER_COMMAND,
+  type LexicalEditor,
 } from "lexical";
 import {
-    type ClipboardEvent,
-    type KeyboardEvent,
-    type RefObject,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useState,
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
 } from "react";
 import { useAutoFocus } from "@/hooks/use-auto-focus";
 import { cn } from "@/lib/utils";
