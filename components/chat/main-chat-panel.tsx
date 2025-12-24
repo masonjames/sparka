@@ -6,7 +6,6 @@ import { useMessageIds } from "@/lib/stores/hooks-base";
 import { useSession } from "@/providers/session-provider";
 import { MessagesPane } from "../messages-pane";
 import { ProjectHome } from "../project-home";
-import { useChatVotes } from "./use-chat-votes";
 
 export function MainChatPanel({
   chatId,
@@ -24,7 +23,6 @@ export function MainChatPanel({
   const { data: session } = useSession();
   const status = useChatStatus();
   const messageIds = useMessageIds() as string[];
-  const { data: votes } = useChatVotes(chatId, { isReadonly });
   const hasMessages = messageIds.length > 0;
 
   return (
@@ -45,7 +43,6 @@ export function MainChatPanel({
           className="bg-background"
           isReadonly={isReadonly}
           status={status}
-          votes={votes}
         />
       )}
     </div>

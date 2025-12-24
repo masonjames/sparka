@@ -2,7 +2,6 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistance } from "date-fns";
-import equal from "fast-deep-equal";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { useDocuments, useSaveDocument } from "@/hooks/chat-sync-hooks";
@@ -13,7 +12,7 @@ import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { codeArtifact } from "@/lib/artifacts/code/client";
 import { sheetArtifact } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
-import type { Document, Vote } from "@/lib/db/schema";
+import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import {
@@ -47,13 +46,11 @@ function PureArtifactPanel({
   chatId: _chatId,
   status,
   stop,
-  votes: _votes,
   isReadonly,
   isAuthenticated,
   className,
 }: {
   chatId: string;
-  votes: Vote[] | undefined;
   status: UseChatHelpers<ChatMessage>["status"];
   stop: UseChatHelpers<ChatMessage>["stop"];
   isReadonly: boolean;
@@ -376,9 +373,6 @@ export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
     return false;
   }
   if (prevProps.stop !== nextProps.stop) {
-    return false;
-  }
-  if (!equal(prevProps.votes, nextProps.votes)) {
     return false;
   }
   if (prevProps.isReadonly !== nextProps.isReadonly) {

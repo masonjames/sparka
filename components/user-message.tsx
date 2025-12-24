@@ -1,10 +1,8 @@
 "use client";
 import { useChatId, useMessageById } from "@ai-sdk-tools/store";
-import equal from "fast-deep-equal";
 import { memo, useState } from "react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { ChatMessage } from "@/lib/ai/types";
-import type { Vote } from "@/lib/db/schema";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
 import { AttachmentList } from "./attachment-list";
 import { ImageModal } from "./image-modal";
@@ -13,7 +11,6 @@ import { MessageEditor } from "./message-editor";
 
 export type BaseMessageProps = {
   messageId: string;
-  vote: Vote | undefined;
   isLoading: boolean;
   isReadonly: boolean;
   parentMessageId: string | null;
@@ -21,7 +18,6 @@ export type BaseMessageProps = {
 
 export const PureUserMessage = ({
   messageId,
-  vote,
   isLoading,
   isReadonly,
   parentMessageId,
@@ -138,7 +134,6 @@ export const PureUserMessage = ({
               messageId={message.id}
               onCancelEdit={() => setMode("view")}
               onStartEdit={() => setMode("edit")}
-              vote={vote}
             />
           </div>
         </div>
@@ -161,9 +156,6 @@ export const UserMessage = memo(PureUserMessage, (prevProps, nextProps) => {
     return false;
   }
   if (prevProps.parentMessageId !== nextProps.parentMessageId) {
-    return false;
-  }
-  if (!equal(prevProps.vote, nextProps.vote)) {
     return false;
   }
   if (prevProps.isLoading !== nextProps.isLoading) {

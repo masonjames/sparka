@@ -4,7 +4,6 @@ import type React from "react";
 import { memo } from "react";
 import { CloneChatButton } from "@/components/clone-chat-button";
 import type { ChatMessage } from "@/lib/ai/types";
-import type { Vote } from "@/lib/db/schema";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { Messages } from "./messages";
@@ -13,7 +12,6 @@ import { MultimodalInput } from "./multimodal-input";
 export type MessagesPaneProps = {
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
-  votes: Vote[] | undefined;
   isReadonly: boolean;
   className?: string;
   emptyStateOverride?: React.ReactNode;
@@ -22,7 +20,6 @@ export type MessagesPaneProps = {
 function PureMessagesPane({
   chatId,
   status,
-  votes,
   isReadonly,
   className,
   emptyStateOverride,
@@ -33,7 +30,7 @@ function PureMessagesPane({
     <div
       className={cn("flex h-full min-h-0 w-full flex-1 flex-col", className)}
     >
-      <Messages isReadonly={isReadonly} votes={votes} />
+      <Messages isReadonly={isReadonly} />
 
       <div className="relative bottom-4 z-10 w-full">
         {isReadonly ? (
