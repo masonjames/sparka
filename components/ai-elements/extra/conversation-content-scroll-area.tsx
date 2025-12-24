@@ -29,6 +29,8 @@ export const ConversationContent = ({
     <ScrollArea
       className={cn(
         "h-full w-full",
+        // Avoid overscroll with page down
+        "*:data-radix-scroll-area-viewport:contain-strict",
         // Radix injects an inner wrapper: <Viewport><div style='min-width: 100%; display: table;'></div></Viewport>
         // Force it to behave like a normal block and allow shrinking to avoid horizontal overflow.
         "[&_[data-slot=scroll-area-viewport]>div]:block!",

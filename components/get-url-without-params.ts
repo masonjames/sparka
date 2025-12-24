@@ -8,3 +8,4 @@ export function getUrlWithoutParams(url: string): string {
     return qIndex === -1 ? url : url.slice(0, qIndex);
   }
 }
+

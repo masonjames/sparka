@@ -10,6 +10,7 @@ import { Greeting } from "./greeting";
 import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
 import { ThinkingMessage } from "./thinking-message";
+import { cn } from "@/lib/utils";
 
 type PureMessagesInternalProps = {
   isReadonly: boolean;
@@ -57,12 +58,13 @@ const PureMessagesInternal = memo(
 export type MessagesProps = {
   isReadonly: boolean;
   onModelChange?: (modelId: string) => void;
+  className?: string;
 };
 
-function PureMessages({ isReadonly }: MessagesProps) {
+function PureMessages({ isReadonly, className }: MessagesProps) {
   return (
-    <Conversation className="h-full">
-      <ConversationContent className="container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl">
+    <Conversation className={cn("h-full", className)}>
+      <ConversationContent className={cn("container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl", className)}>
         <PureMessagesInternal isReadonly={isReadonly} />
       </ConversationContent>
       <ConversationScrollButton />
