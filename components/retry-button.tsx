@@ -1,4 +1,8 @@
-import { useChatActions, useChatStoreApi, useChatStatus } from "@ai-sdk-tools/store";
+import {
+  useChatActions,
+  useChatStatus,
+  useChatStoreApi,
+} from "@ai-sdk-tools/store";
 import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
@@ -63,7 +67,7 @@ export function RetryButton({
     toast.success("Retrying message...");
   }, [sendMessage, messageId, setMessages, chatStore]);
 
-  if(  status === "streaming" || status === "submitted"){
+  if (status === "streaming" || status === "submitted") {
     return null;
   }
 
