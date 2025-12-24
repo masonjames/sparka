@@ -244,7 +244,7 @@ export function ProjectHome({
   };
 
   return (
-    <div className="flex flex-1 justify-center overflow-hidden">
+    <div className="flex flex-1 justify-center overflow-y-auto">
       <div
         className={cn(
           "mx-auto flex h-full min-h-0 w-full flex-col p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6",
@@ -271,7 +271,7 @@ export function ProjectHome({
             className={cn(
               shouldCenter
                 ? "row-start-3 mt-6"
-                : "mt-4 min-h-0 flex-1 overflow-y-auto"
+                : "mt-4 min-h-0 flex-1"
             )}
           >
             <ProjectChats

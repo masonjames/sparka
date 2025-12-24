@@ -3,7 +3,6 @@
 import { useChatStatus } from "@ai-sdk-tools/store";
 import { ChatHeader } from "@/components/chat-header";
 import { useMessageIds } from "@/lib/stores/hooks-base";
-import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { MessagesPane } from "../messages-pane";
 import { ProjectHome } from "../project-home";
@@ -29,7 +28,7 @@ export function MainChatPanel({
   const isProjectHome = isProjectPage && !hasMessages && projectId;
 
   return (
-    <div className={cn(isProjectHome && "overflow-y-auto", className)}>
+    <div className={className}>
       <ChatHeader
         chatId={chatId}
         hasMessages={hasMessages}
