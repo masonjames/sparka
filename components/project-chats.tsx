@@ -1,6 +1,7 @@
 "use client";
 
 import { ProjectChatItem } from "@/components/project-chat-item";
+import { Separator } from "@/components/ui/separator";
 import type { UIChat } from "@/lib/types/ui-chat";
 
 export function ProjectChats({
@@ -32,13 +33,15 @@ export function ProjectChats({
 
   return (
     <div>
-      {chats.map((chat) => (
-        <ProjectChatItem
-          chat={chat}
-          key={chat.id}
-          onDelete={onDelete}
-          onRename={onRename}
-        />
+      {chats.map((chat, index) => (
+        <div key={chat.id}>
+          {index > 0 && <Separator />}
+          <ProjectChatItem
+            chat={chat}
+            onDelete={onDelete}
+            onRename={onRename}
+          />
+        </div>
       ))}
     </div>
   );

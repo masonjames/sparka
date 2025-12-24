@@ -17,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import type { UIChat } from "@/lib/types/ui-chat";
 export function ProjectChatItem({
@@ -37,7 +36,7 @@ export function ProjectChatItem({
     await onRename(chat.id, title);
   };
 
-  const lastMessageText = `Last message ${formatDistance(
+  const lastMessageText = `${formatDistance(
     new Date(chat.updatedAt),
     new Date(),
     { addSuffix: true }
@@ -46,7 +45,6 @@ export function ProjectChatItem({
   return (
     <>
       <div className="group relative">
-        <Separator />
         <div className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
           <Link className="absolute inset-0 z-10" href={chatHref} />
           <div className="min-w-0 flex-1">
@@ -91,7 +89,6 @@ export function ProjectChatItem({
             </DropdownMenu>
           </div>
         </div>
-        <Separator />
       </div>
       {shareDialogOpen && (
         <ShareDialog
