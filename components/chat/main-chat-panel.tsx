@@ -6,6 +6,7 @@ import { useMessageIds } from "@/lib/stores/hooks-base";
 import { useSession } from "@/providers/session-provider";
 import { MessagesPane } from "../messages-pane";
 import { ProjectHome } from "../project-home";
+import { cn } from "@/lib/utils";
 
 export function MainChatPanel({
   chatId,
@@ -25,8 +26,10 @@ export function MainChatPanel({
   const messageIds = useMessageIds() as string[];
   const hasMessages = messageIds.length > 0;
 
+const isProjectHome =   isProjectPage && !hasMessages && projectId;
+
   return (
-    <div className={className}>
+    <div className={cn(isProjectHome && "overflow-y-auto", className)}>
       <ChatHeader
         chatId={chatId}
         hasMessages={hasMessages}
@@ -35,7 +38,7 @@ export function MainChatPanel({
         user={session?.user}
       />
 
-      {isProjectPage && !hasMessages && projectId ? (
+      {isProjectHome ? (
         <ProjectHome chatId={chatId} projectId={projectId} status={status} />
       ) : (
         <MessagesPane
