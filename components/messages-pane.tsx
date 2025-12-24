@@ -36,7 +36,7 @@ function PureMessagesPane({
         className={cn(
           "z-10 w-full",
           hasMessages
-            ? "relative bottom-4 shrink-0"
+            ? "relative @[500px]:bottom-4 shrink-0"
             : "flex min-h-0 flex-1 items-center justify-center"
         )}
       >
