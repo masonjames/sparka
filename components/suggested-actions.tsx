@@ -145,7 +145,7 @@ function PureSuggestedActions({
                 aria-pressed={selected}
                 className={cn(
                   "gap-2",
-                  selected && "border-transparent shadow-sm"
+                  selected && "border-transparent border shadow-sm"
                 )}
                 onClick={() =>
                   setSelectedCategoryId((prev) => (prev === c.id ? null : c.id))
