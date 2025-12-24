@@ -6,11 +6,11 @@ import {
 } from "@/components/ai-elements/conversation";
 import { ConversationContent } from "@/components/ai-elements/extra/conversation-content-scroll-area";
 import { useMessageIds } from "@/lib/stores/hooks-base";
+import { cn } from "@/lib/utils";
 import { Greeting } from "./greeting";
 import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
 import { ThinkingMessage } from "./thinking-message";
-import { cn } from "@/lib/utils";
 
 type PureMessagesInternalProps = {
   isReadonly: boolean;
@@ -64,7 +64,12 @@ export type MessagesProps = {
 function PureMessages({ isReadonly, className }: MessagesProps) {
   return (
     <Conversation className={cn("h-full", className)}>
-      <ConversationContent className={cn("container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl", className)}>
+      <ConversationContent
+        className={cn(
+          "container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl",
+          className
+        )}
+      >
         <PureMessagesInternal isReadonly={isReadonly} />
       </ConversationContent>
       <ConversationScrollButton />

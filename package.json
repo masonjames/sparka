@@ -37,7 +37,7 @@
     "ai:devtools": "bunx @ai-sdk/devtools",
     "hooks:enable": "husky",
     "hooks:disable": "git config core.hooksPath .git/hooks",
-    "fetch:models": "bun scripts/fetch-models.ts"
+    "fetch:models": "bun scripts/fetch-models.ts && bun format"
   },
   "dependencies": {
     "@ai-sdk-tools/store": "1.2.0",
