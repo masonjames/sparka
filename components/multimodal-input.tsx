@@ -9,6 +9,7 @@ import {
   memo,
   type SetStateAction,
   useCallback,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -25,10 +26,9 @@ import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
+import type { AppModelId } from "@/lib/ai/app-models";
 import {
   DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL,
-  DEFAULT_CHAT_MODEL,
   DEFAULT_PDF_MODEL,
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
@@ -144,34 +144,32 @@ function PureMultimodalInput({
   });
 
   // Centralized submission gating
-
-  const _selectedModelDef: AppModelDefinition | undefined =
-    getModelById(selectedModelId) ?? getModelById(DEFAULT_CHAT_MODEL);
-  const submission: { enabled: false; message: string } | { enabled: true } =
-    (() => {
-      if (isModelDisallowedForAnonymous) {
-        return { enabled: false, message: "Log in to use this model" };
-      }
-      if (status !== "ready" && status !== "error") {
-        return {
-          enabled: false,
-          message: "Please wait for the model to finish its response!",
-        };
-      }
-      if (uploadQueue.length > 0) {
-        return {
-          enabled: false,
-          message: "Please wait for files to finish uploading!",
-        };
-      }
-      if (isEmpty) {
-        return {
-          enabled: false,
-          message: "Please enter a message before sending!",
-        };
-      }
-      return { enabled: true };
-    })();
+  const submission = useMemo(():
+    | { enabled: false; message: string }
+    | { enabled: true } => {
+    if (isModelDisallowedForAnonymous) {
+      return { enabled: false, message: "Log in to use this model" };
+    }
+    if (status !== "ready" && status !== "error") {
+      return {
+        enabled: false,
+        message: "Please wait for the model to finish its response!",
+      };
+    }
+    if (uploadQueue.length > 0) {
+      return {
+        enabled: false,
+        message: "Please wait for files to finish uploading!",
+      };
+    }
+    if (isEmpty) {
+      return {
+        enabled: false,
+        message: "Please enter a message before sending!",
+      };
+    }
+    return { enabled: true };
+  }, [isEmpty, isModelDisallowedForAnonymous, status, uploadQueue.length]);
 
   // Helper function to process and validate files
   const processFiles = useCallback(
@@ -642,7 +640,6 @@ function PureMultimodalInput({
 
           <ChatInputBottomControls
             fileInputRef={fileInputRef}
-            isEmpty={isEmpty}
             onModelChange={handleModelChange}
             parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
@@ -651,7 +648,6 @@ function PureMultimodalInput({
             status={status}
             submission={submission}
             submitForm={submitForm}
-            uploadQueue={uploadQueue}
           />
         </PromptInput>
       </div>
@@ -723,9 +719,7 @@ function PureChatInputBottomControls({
   setSelectedTool,
   fileInputRef,
   status,
-  isEmpty: _isEmpty,
   submitForm,
-  uploadQueue: _uploadQueue,
   submission,
   parentMessageId,
 }: {
@@ -735,9 +729,7 @@ function PureChatInputBottomControls({
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
-  isEmpty: boolean;
   submitForm: () => void;
-  uploadQueue: string[];
   submission: { enabled: boolean; message?: string };
   parentMessageId: string | null;
 }) {
@@ -789,48 +781,7 @@ function PureChatInputBottomControls({
   );
 }
 
-const ChatInputBottomControls = memo(
-  PureChatInputBottomControls,
-  (prevProps, nextProps) => {
-    if (prevProps.selectedModelId !== nextProps.selectedModelId) {
-      return false;
-    }
-    if (prevProps.onModelChange !== nextProps.onModelChange) {
-      return false;
-    }
-    if (prevProps.selectedTool !== nextProps.selectedTool) {
-      return false;
-    }
-    if (prevProps.setSelectedTool !== nextProps.setSelectedTool) {
-      return false;
-    }
-    if (prevProps.fileInputRef !== nextProps.fileInputRef) {
-      return false;
-    }
-    if (prevProps.status !== nextProps.status) {
-      return false;
-    }
-    if (prevProps.isEmpty !== nextProps.isEmpty) {
-      return false;
-    }
-    if (prevProps.submitForm !== nextProps.submitForm) {
-      return false;
-    }
-    if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length) {
-      return false;
-    }
-    if (prevProps.submission.enabled !== nextProps.submission.enabled) {
-      return false;
-    }
-    if (prevProps.submission.message !== nextProps.submission.message) {
-      return false;
-    }
-    if (prevProps.parentMessageId !== nextProps.parentMessageId) {
-      return false;
-    }
-    return true;
-  }
-);
+const ChatInputBottomControls = memo(PureChatInputBottomControls);
 
 export const MultimodalInput = memo(
   PureMultimodalInput,
