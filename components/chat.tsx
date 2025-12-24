@@ -59,7 +59,6 @@ export function Chat({
         {isSecondaryPanelVisible && (
           <ResizablePanel defaultSize={35} minSize={25}>
             <SecondaryChatPanel
-              chatId={id}
               className="flex h-full min-w-0 flex-1 flex-col"
               isReadonly={isReadonly}
             />

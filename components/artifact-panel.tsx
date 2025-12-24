@@ -1,5 +1,8 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import { useChatStoreApi } from "@ai-sdk-tools/store";
+import {
+  useChatActions,
+  useChatStatus,
+  useChatStoreApi,
+} from "@ai-sdk-tools/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistance } from "date-fns";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -43,16 +46,10 @@ export type UIArtifact = {
 };
 
 function PureArtifactPanel({
-  chatId: _chatId,
-  status,
-  stop,
   isReadonly,
   isAuthenticated,
   className,
 }: {
-  chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
-  stop: UseChatHelpers<ChatMessage>["stop"];
   isReadonly: boolean;
   isAuthenticated: boolean;
   className?: string;
@@ -212,6 +209,8 @@ function PureArtifactPanel({
     }
   };
 
+  const status = useChatStatus();
+  const { stop } = useChatActions<ChatMessage>();
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
   /*
@@ -369,12 +368,6 @@ function PureArtifactPanel({
 }
 
 export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
-  if (prevProps.status !== nextProps.status) {
-    return false;
-  }
-  if (prevProps.stop !== nextProps.stop) {
-    return false;
-  }
   if (prevProps.isReadonly !== nextProps.isReadonly) {
     return false;
   }
