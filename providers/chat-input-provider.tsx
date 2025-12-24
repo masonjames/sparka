@@ -30,6 +30,7 @@ type ChatInputContextType = {
   getInitialInput: () => string;
   isEmpty: boolean;
   handleSubmit: (submitFn: () => void, isEditMode?: boolean) => void;
+  disableSuggestedActions: boolean;
 };
 
 const ChatInputContext = createContext<ChatInputContextType | undefined>(
@@ -43,6 +44,7 @@ type ChatInputProviderProps = {
   initialAttachments?: Attachment[];
   overrideModelId?: AppModelId; // For message editing where we want to use the original model
   localStorageEnabled?: boolean;
+  disableSuggestedActions?: boolean;
 };
 
 export function ChatInputProvider({
@@ -52,6 +54,7 @@ export function ChatInputProvider({
   initialAttachments = [],
   overrideModelId,
   localStorageEnabled = true,
+  disableSuggestedActions = false,
 }: ChatInputProviderProps) {
   const [hasHydrated, setHasHydrated] = useState(false);
 
@@ -216,6 +219,7 @@ export function ChatInputProvider({
         getInitialInput,
         isEmpty,
         handleSubmit,
+        disableSuggestedActions,
       }}
     >
       {children}

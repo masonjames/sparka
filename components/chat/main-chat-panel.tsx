@@ -13,14 +13,12 @@ export function MainChatPanel({
   isProjectPage,
   projectId,
   isReadonly,
-  disableSuggestedActions,
   className,
 }: {
   chatId: string;
   isProjectPage?: boolean;
   projectId?: string;
   isReadonly: boolean;
-  disableSuggestedActions?: boolean;
   className?: string;
 }) {
   const { data: session } = useSession();
@@ -45,7 +43,6 @@ export function MainChatPanel({
         <MessagesPane
           chatId={chatId}
           className="bg-background"
-          disableSuggestedActions={disableSuggestedActions}
           isReadonly={isReadonly}
           status={status}
           votes={votes}

@@ -19,14 +19,12 @@ export function Chat({
   id,
   initialMessages: _initialMessages,
   isReadonly,
-  disableSuggestedActions,
   isProjectPage,
   projectId,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   isReadonly: boolean;
-  disableSuggestedActions?: boolean;
   isProjectPage?: boolean;
   projectId?: string;
 }) {
@@ -49,7 +47,6 @@ export function Chat({
           <MainChatPanel
             chatId={id}
             className={cn("flex h-full min-w-0 flex-1 flex-col")}
-            disableSuggestedActions={disableSuggestedActions}
             isProjectPage={isProjectPage}
             isReadonly={isReadonly}
             projectId={projectId}

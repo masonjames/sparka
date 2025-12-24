@@ -72,7 +72,6 @@ export const ChatSystem = memo(function PureChatSystem({
                   withHandler={false}
                 />
                 <Chat
-                  disableSuggestedActions={isProjectPage}
                   id={id}
                   initialMessages={initialMessages}
                   isProjectPage={isProjectPage}
@@ -83,6 +82,7 @@ export const ChatSystem = memo(function PureChatSystem({
               </>
             ) : (
               <ChatInputProvider
+                disableSuggestedActions={isProjectPage}
                 initialTool={initialTool ?? null}
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
@@ -93,7 +93,6 @@ export const ChatSystem = memo(function PureChatSystem({
                   withHandler={true}
                 />
                 <Chat
-                  disableSuggestedActions={isProjectPage}
                   id={id}
                   initialMessages={initialMessages}
                   isProjectPage={isProjectPage}

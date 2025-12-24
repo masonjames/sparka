@@ -125,7 +125,6 @@ export function ProjectHome({
 
         <MultimodalInput
           chatId={chatId}
-          disableSuggestedActions
           parentMessageId={parentMessageId}
           status={status}
         />

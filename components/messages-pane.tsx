@@ -16,7 +16,6 @@ export type MessagesPaneProps = {
   votes: Vote[] | undefined;
   isReadonly: boolean;
   className?: string;
-  disableSuggestedActions?: boolean;
   emptyStateOverride?: React.ReactNode;
 };
 
@@ -26,7 +25,6 @@ function PureMessagesPane({
   votes,
   isReadonly,
   className,
-  disableSuggestedActions,
   emptyStateOverride,
 }: MessagesPaneProps) {
   const parentMessageId = useLastMessageId();
@@ -44,7 +42,6 @@ function PureMessagesPane({
           <div className="mx-auto w-full p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6">
             <MultimodalInput
               chatId={chatId}
-              disableSuggestedActions={disableSuggestedActions}
               emptyStateOverride={emptyStateOverride}
               parentMessageId={parentMessageId}
               status={status}

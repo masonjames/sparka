@@ -67,7 +67,6 @@ function PureMultimodalInput({
   isEditMode = false,
   parentMessageId,
   onSendMessage,
-  disableSuggestedActions = false,
   emptyStateOverride,
 }: {
   chatId: string;
@@ -76,7 +75,6 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
-  disableSuggestedActions?: boolean;
   emptyStateOverride?: React.ReactNode;
 }) {
   const storeApi = useChatStoreApi<ChatMessage>();
@@ -100,6 +98,7 @@ function PureMultimodalInput({
     getInitialInput,
     isEmpty,
     handleSubmit,
+    disableSuggestedActions,
   } = useChatInput();
 
   const isAnonymous = !session?.user;
