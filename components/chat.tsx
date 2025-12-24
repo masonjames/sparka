@@ -1,7 +1,6 @@
 "use client";
-import { useChatActions, useChatId, useChatStatus } from "@ai-sdk-tools/store";
-import { useQuery } from "@tanstack/react-query";
-import { ChatHeader } from "@/components/chat-header";
+import { MainChatPanel } from "@/components/chat/main-chat-panel";
+import { SecondaryChatPanel } from "@/components/chat/secondary-chat-panel";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -10,106 +9,10 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/providers/session-provider";
-import { useTRPC } from "@/trpc/react";
-import { ArtifactPanel } from "./artifact-panel";
-import { MessagesPane } from "./messages-pane";
-import { ProjectHome } from "./project-home";
 
 function useIsSecondaryChatPanelVisible() {
   return useArtifactSelector((state) => state.isVisible);
-}
-
-function useChatVotes(chatId: string, { isReadonly }: { isReadonly: boolean }) {
-  const trpc = useTRPC();
-  const { data: session } = useSession();
-  const isLoading = chatId !== useChatId();
-  const messageIds = useMessageIds() as string[];
-
-  return useQuery({
-    ...trpc.vote.getVotes.queryOptions({ chatId }),
-    enabled:
-      messageIds.length >= 2 && !isReadonly && !!session?.user && !isLoading,
-  });
-}
-
-function MainChatPanel({
-  chatId,
-  isProjectPage,
-  projectId,
-  isReadonly,
-  disableSuggestedActions,
-  isSecondaryPanelVisible,
-  className,
-}: {
-  chatId: string;
-  isProjectPage?: boolean;
-  projectId?: string;
-  isReadonly: boolean;
-  disableSuggestedActions?: boolean;
-  isSecondaryPanelVisible: boolean;
-  className?: string;
-}) {
-  const { data: session } = useSession();
-  const status = useChatStatus();
-  const messageIds = useMessageIds() as string[];
-  const { data: votes } = useChatVotes(chatId, { isReadonly });
-  const hasMessages = messageIds.length > 0;
-
-  return (
-    <div className={className}>
-      <ChatHeader
-        chatId={chatId}
-        hasMessages={hasMessages}
-        isReadonly={isReadonly}
-        projectId={projectId}
-        user={session?.user}
-      />
-
-      {isProjectPage && !hasMessages && projectId ? (
-        <ProjectHome chatId={chatId} projectId={projectId} status={status} />
-      ) : (
-        <MessagesPane
-          chatId={chatId}
-          className="bg-background"
-          disableSuggestedActions={disableSuggestedActions}
-          isReadonly={isReadonly}
-          isVisible={!isSecondaryPanelVisible}
-          status={status}
-          votes={votes}
-        />
-      )}
-    </div>
-  );
-}
-
-function SecondaryChatPanel({
-  chatId,
-  isReadonly,
-  className,
-}: {
-  chatId: string;
-  isReadonly: boolean;
-  className?: string;
-}) {
-  const { data: session } = useSession();
-  const status = useChatStatus();
-  const { stop } = useChatActions<ChatMessage>();
-  const { data: votes } = useChatVotes(chatId, { isReadonly });
-
-  return (
-    <ArtifactPanel
-      chatId={chatId}
-      className={className}
-      isAuthenticated={!!session?.user}
-      isReadonly={isReadonly}
-      status={status}
-      stop={stop}
-      votes={votes}
-    />
-  );
 }
 
 export function Chat({
@@ -149,7 +52,6 @@ export function Chat({
             disableSuggestedActions={disableSuggestedActions}
             isProjectPage={isProjectPage}
             isReadonly={isReadonly}
-            isSecondaryPanelVisible={isSecondaryPanelVisible}
             projectId={projectId}
           />
         </ResizablePanel>

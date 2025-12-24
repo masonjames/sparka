@@ -67,10 +67,7 @@ export type MessagesProps = {
   onModelChange?: (modelId: string) => void;
 };
 
-function PureMessages({
-  votes,
-  isReadonly,
-}: MessagesProps) {
+function PureMessages({ votes, isReadonly }: MessagesProps) {
   return (
     <Conversation>
       <ConversationContent className="container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl">
@@ -88,7 +85,6 @@ export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.isReadonly !== nextProps.isReadonly) {
     return false;
   }
-
 
   return true;
 });

@@ -15,7 +15,6 @@ export type MessagesPaneProps = {
   status: UseChatHelpers<ChatMessage>["status"];
   votes: Vote[] | undefined;
   isReadonly: boolean;
-  isVisible: boolean;
   className?: string;
   disableSuggestedActions?: boolean;
   emptyStateOverride?: React.ReactNode;
@@ -26,7 +25,6 @@ function PureMessagesPane({
   status,
   votes,
   isReadonly,
-  isVisible,
   className,
   disableSuggestedActions,
   emptyStateOverride,
