@@ -2,7 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { PencilEditIcon } from "@/components/icons";
 import { MultimodalInput } from "@/components/multimodal-input";
@@ -24,7 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useDeleteChat,
@@ -34,7 +33,142 @@ import {
 } from "@/hooks/chat-sync-hooks";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
+import type { UIChat } from "@/lib/types/ui-chat";
+import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+
+function ProjectConfig({
+  projectName,
+  instructions,
+  onEditInstructions,
+  onRenameProject,
+}: {
+  projectName?: string;
+  instructions?: string | null;
+  onEditInstructions: () => void;
+  onRenameProject: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {projectName && (
+        <div className="flex items-center gap-2">
+          <h1 className="font-bold text-2xl">{projectName}</h1>
+          <Button
+            className="h-8 w-8"
+            onClick={onRenameProject}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <PencilEditIcon size={16} />
+            <span className="sr-only">Rename project</span>
+          </Button>
+        </div>
+      )}
+
+      <Card className="bg-background">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Instructions</CardTitle>
+              {!instructions?.trim() && (
+                <CardDescription>
+                  Add instructions to tailor AI responses for this project.
+                </CardDescription>
+              )}
+            </div>
+            {instructions?.trim() ? (
+              <Button
+                className="h-8 w-8"
+                onClick={onEditInstructions}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <PencilEditIcon size={16} />
+                <span className="sr-only">Edit instructions</span>
+              </Button>
+            ) : (
+              <Button
+                onClick={onEditInstructions}
+                type="button"
+                variant="outline"
+              >
+                Set instructions
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        {instructions?.trim() && (
+          <CardContent>
+            <div className="line-clamp-3 whitespace-pre-wrap text-muted-foreground text-sm">
+              {instructions}
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function ProjectInput({
+  chatId,
+  parentMessageId,
+  status,
+}: {
+  chatId: string;
+  parentMessageId: string | null;
+  status: UseChatHelpers<ChatMessage>["status"];
+}) {
+  return (
+    <MultimodalInput
+      chatId={chatId}
+      parentMessageId={parentMessageId}
+      status={status}
+    />
+  );
+}
+
+function ProjectChats({
+  chats,
+  onDelete,
+  onRename,
+}: {
+  chats: UIChat[] | undefined;
+  onDelete: (chatId: string) => void;
+  onRename: (chatId: string, title: string) => Promise<void>;
+}) {
+  if (!chats) {
+    return null;
+  }
+
+  if (chats.length === 0) {
+    return (
+      <div className="rounded-xl border border-border/60 px-4 py-6">
+        <p className="font-medium text-foreground text-sm">
+          No chats in this project
+        </p>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Start a chat to keep conversations organized and re-use project
+          knowledge.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {chats.map((chat) => (
+        <ProjectChatItem
+          chat={chat}
+          key={chat.id}
+          onDelete={onDelete}
+          onRename={onRename}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function ProjectHome({
   chatId,
@@ -48,18 +182,16 @@ export function ProjectHome({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const parentMessageId = useLastMessageId();
-  const { data: project, isLoading: isLoadingProject } = useQuery(
+  const { data: project } = useQuery(
     trpc.project.getById.queryOptions({ id: projectId })
   );
-  const { data: chats, isLoading: isLoadingChats } = useGetAllChats();
+  const { data: chats } = useGetAllChats({
+    projectId,
+  });
   const [instructionsDialogOpen, setInstructionsDialogOpen] = useState(false);
   const [instructionsValue, setInstructionsValue] = useState("");
   const [renameProjectDialogOpen, setRenameProjectDialogOpen] = useState(false);
-
-  const projectChats = useMemo(
-    () => (chats ?? []).filter((c) => c.projectId === projectId),
-    [chats, projectId]
-  );
+  const shouldCenter = chats !== undefined && chats.length === 0;
 
   const { deleteChat } = useDeleteChat();
   const renameChatMutation = useRenameChat();
@@ -103,132 +235,52 @@ export function ProjectHome({
     });
   };
 
+  const handleRenameChat = async (idToRename: string, title: string) => {
+    await renameChatMutation.mutateAsync({
+      chatId: idToRename,
+      title,
+    });
+    toast.success("Chat renamed successfully");
+  };
+
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <div className="mx-auto w-full p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6">
-        {isLoadingProject && <Skeleton className="mb-3 h-8 w-48" />}
-        {!isLoadingProject && project?.name && (
-          <div className="mb-3 flex items-center gap-2">
-            <h1 className="font-bold text-2xl">{project.name}</h1>
-            <Button
-              className="h-8 w-8"
-              onClick={() => setRenameProjectDialogOpen(true)}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <PencilEditIcon size={16} />
-              <span className="sr-only">Rename project</span>
-            </Button>
+    <div className="flex flex-1 justify-center overflow-hidden">
+      <div
+        className={cn(
+          "mx-auto flex h-full min-h-0 w-full flex-col p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6",
+          shouldCenter && "grid grid-rows-[1fr_auto_1fr]"
+        )}
+      >
+        <div className={cn("space-y-4", shouldCenter ? "row-start-2" : "mt-4")}>
+          <ProjectConfig
+            instructions={project?.instructions}
+            onEditInstructions={handleOpenInstructionsDialog}
+            onRenameProject={() => setRenameProjectDialogOpen(true)}
+            projectName={project?.name}
+          />
+
+          <ProjectInput
+            chatId={chatId}
+            parentMessageId={parentMessageId}
+            status={status}
+          />
+        </div>
+
+        {chats !== undefined && (
+          <div
+            className={cn(
+              shouldCenter
+                ? "row-start-3 mt-6"
+                : "mt-4 min-h-0 flex-1 overflow-y-auto"
+            )}
+          >
+            <ProjectChats
+              chats={chats}
+              onDelete={deleteChat}
+              onRename={handleRenameChat}
+            />
           </div>
         )}
-
-        <MultimodalInput
-          chatId={chatId}
-          parentMessageId={parentMessageId}
-          status={status}
-        />
-
-        <div className="mt-4">
-          {isLoadingProject && (
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-2 h-4 w-64" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-10 w-40" />
-              </CardContent>
-            </Card>
-          )}
-
-          {!isLoadingProject && project?.instructions?.trim() && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Instructions</CardTitle>
-                  <Button
-                    className="h-8 w-8"
-                    onClick={handleOpenInstructionsDialog}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <PencilEditIcon size={16} />
-                    <span className="sr-only">Edit instructions</span>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="line-clamp-3 whitespace-pre-wrap text-muted-foreground text-sm">
-                  {project.instructions}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {!(isLoadingProject || project?.instructions?.trim()) && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Instructions</CardTitle>
-                <CardDescription>
-                  Add instructions to tailor AI responses.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={handleOpenInstructionsDialog}
-                  type="button"
-                  variant="outline"
-                >
-                  Set instructions
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        <div className="mt-4 space-y-2">
-          {isLoadingChats &&
-            [1, 2, 3].map((i) => (
-              <div
-                className="rounded-xl border border-border/60 bg-muted/10 px-4 py-3"
-                key={i}
-              >
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="mt-2 h-3 w-24" />
-              </div>
-            ))}
-
-          {!isLoadingChats &&
-            projectChats.length > 0 &&
-            projectChats.map((chat) => (
-              <ProjectChatItem
-                chat={chat}
-                key={chat.id}
-                onDelete={deleteChat}
-                onRename={async (idToRename, title) => {
-                  await renameChatMutation.mutateAsync({
-                    chatId: idToRename,
-                    title,
-                  });
-                  toast.success("Chat renamed successfully");
-                }}
-              />
-            ))}
-
-          {!isLoadingChats && projectChats.length === 0 && (
-            <div className="rounded-xl border border-border/60 px-4 py-6">
-              <p className="font-medium text-foreground text-sm">
-                No chats in this project
-              </p>
-              <p className="mt-1 text-muted-foreground text-sm">
-                Start a chat to keep conversations organized and re-use project
-                knowledge.
-              </p>
-            </div>
-          )}
-        </div>
 
         <Dialog
           onOpenChange={handleCloseInstructionsDialog}

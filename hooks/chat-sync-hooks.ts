@@ -3,7 +3,12 @@
 // Hooks for chat data fetching and mutations
 // For authenticated users only - anonymous users don't persist data
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryKey,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
@@ -15,6 +20,33 @@ import type { UIChat } from "@/lib/types/ui-chat";
 import { useChatId } from "@/providers/chat-id-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
+
+function snapshotAllChatsQueries(
+  qc: ReturnType<typeof useQueryClient>,
+  key: QueryKey
+) {
+  return qc.getQueriesData<UIChat[]>({ queryKey: key });
+}
+
+function restoreAllChatsQueries(
+  qc: ReturnType<typeof useQueryClient>,
+  snapshot: Array<[QueryKey, UIChat[] | undefined]>
+) {
+  for (const [k, data] of snapshot) {
+    qc.setQueryData(k, data);
+  }
+}
+
+function updateAllChatsQueries(
+  qc: ReturnType<typeof useQueryClient>,
+  key: QueryKey,
+  updater: (old: UIChat[] | undefined) => UIChat[] | undefined
+) {
+  const entries = qc.getQueriesData<UIChat[]>({ queryKey: key });
+  for (const [k] of entries) {
+    qc.setQueryData<UIChat[] | undefined>(k, updater);
+  }
+}
 
 export function useProject(
   projectId: string | null,
@@ -52,29 +84,34 @@ export function useDeleteChat() {
   const isAuthenticated = !!session?.user;
   const trpc = useTRPC();
   const qc = useQueryClient();
+  const allChatsKey = trpc.chat.getAllChats.queryKey();
 
   const deleteMutation = useMutation({
     mutationFn: trpc.chat.deleteChat.mutationOptions().mutationFn,
-    onMutate: async ({ chatId }): Promise<{ previousChats?: UIChat[] }> => {
+    onMutate: async ({
+      chatId,
+    }): Promise<{
+      previousAllChats?: Array<[QueryKey, UIChat[] | undefined]>;
+    }> => {
       if (!isAuthenticated) {
-        return { previousChats: undefined };
+        return { previousAllChats: undefined };
       }
-      const key = trpc.chat.getAllChats.queryKey();
-      await qc.cancelQueries({ queryKey: key });
-      const previousChats = qc.getQueryData<UIChat[]>(key);
-      qc.setQueryData<UIChat[]>(
-        key,
+      const snapshot = snapshotAllChatsQueries(qc, allChatsKey);
+      await qc.cancelQueries({ queryKey: allChatsKey, exact: false });
+      updateAllChatsQueries(
+        qc,
+        allChatsKey,
         (old) => old?.filter((c) => c.id !== chatId) ?? old
       );
-      return { previousChats };
+      return { previousAllChats: snapshot };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previousChats) {
-        qc.setQueryData(trpc.chat.getAllChats.queryKey(), ctx.previousChats);
+      if (ctx?.previousAllChats) {
+        restoreAllChatsQueries(qc, ctx.previousAllChats);
       }
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: trpc.chat.getAllChats.queryKey() });
+      qc.invalidateQueries({ queryKey: allChatsKey, exact: false });
     },
   });
 
@@ -106,6 +143,7 @@ export function useRenameChat() {
   const isAuthenticated = !!session?.user;
   const qc = useQueryClient();
   const trpc = useTRPC();
+  const allChatsKey = trpc.chat.getAllChats.queryKey();
 
   return useMutation({
     mutationFn: trpc.chat.renameChat.mutationOptions().mutationFn,
@@ -113,35 +151,36 @@ export function useRenameChat() {
       chatId,
       title,
     }): Promise<{
-      previousChats?: UIChat[];
+      previousAllChats?: Array<[QueryKey, UIChat[] | undefined]>;
       previousChatById?: UIChat | null;
     }> => {
       if (!isAuthenticated) {
-        return { previousChats: undefined, previousChatById: undefined };
+        return { previousAllChats: undefined, previousChatById: undefined };
       }
-      const allKey = trpc.chat.getAllChats.queryKey();
       const byIdKey = trpc.chat.getChatById.queryKey({ chatId });
 
       await Promise.all([
-        qc.cancelQueries({ queryKey: allKey }),
+        qc.cancelQueries({ queryKey: allChatsKey, exact: false }),
         qc.cancelQueries({ queryKey: byIdKey }),
       ]);
 
-      const previousChats = qc.getQueryData<UIChat[]>(allKey);
+      const previousAllChats = snapshotAllChatsQueries(qc, allChatsKey);
       const previousChatById = qc.getQueryData<UIChat | null>(byIdKey);
 
-      qc.setQueryData<UIChat[] | undefined>(allKey, (old) =>
-        old?.map((c) => (c.id === chatId ? { ...c, title } : c))
+      updateAllChatsQueries(
+        qc,
+        allChatsKey,
+        (old) => old?.map((c) => (c.id === chatId ? { ...c, title } : c)) ?? old
       );
       if (previousChatById) {
         qc.setQueryData<UIChat | null>(byIdKey, { ...previousChatById, title });
       }
 
-      return { previousChats, previousChatById };
+      return { previousAllChats, previousChatById };
     },
     onError: (_err, { chatId }, ctx) => {
-      if (ctx?.previousChats) {
-        qc.setQueryData(trpc.chat.getAllChats.queryKey(), ctx.previousChats);
+      if (ctx?.previousAllChats) {
+        restoreAllChatsQueries(qc, ctx.previousAllChats);
       }
       if (ctx?.previousChatById !== undefined) {
         qc.setQueryData(
@@ -153,7 +192,7 @@ export function useRenameChat() {
     },
     onSettled: async (_data, _error, { chatId }) => {
       await Promise.all([
-        qc.invalidateQueries({ queryKey: trpc.chat.getAllChats.queryKey() }),
+        qc.invalidateQueries({ queryKey: allChatsKey, exact: false }),
         qc.invalidateQueries({
           queryKey: trpc.chat.getChatById.queryKey({ chatId }),
         }),
@@ -202,33 +241,38 @@ export function usePinChat() {
   const isAuthenticated = !!session?.user;
   const trpc = useTRPC();
   const qc = useQueryClient();
+  const allChatsKey = trpc.chat.getAllChats.queryKey();
 
   return useMutation({
     mutationFn: trpc.chat.setIsPinned.mutationOptions().mutationFn,
     onMutate: async ({
       chatId,
       isPinned,
-    }): Promise<{ previousChats?: UIChat[] }> => {
+    }): Promise<{
+      previousAllChats?: Array<[QueryKey, UIChat[] | undefined]>;
+    }> => {
       if (!isAuthenticated) {
-        return { previousChats: undefined };
+        return { previousAllChats: undefined };
       }
-      const key = trpc.chat.getAllChats.queryKey();
-      await qc.cancelQueries({ queryKey: key });
-      const previousChats = qc.getQueryData<UIChat[]>(key);
-      qc.setQueryData<UIChat[]>(key, (old) =>
-        old?.map((c) => (c.id === chatId ? { ...c, isPinned } : c))
+      const snapshot = snapshotAllChatsQueries(qc, allChatsKey);
+      await qc.cancelQueries({ queryKey: allChatsKey, exact: false });
+      updateAllChatsQueries(
+        qc,
+        allChatsKey,
+        (old) =>
+          old?.map((c) => (c.id === chatId ? { ...c, isPinned } : c)) ?? old
       );
-      return { previousChats };
+      return { previousAllChats: snapshot };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previousChats) {
-        qc.setQueryData(trpc.chat.getAllChats.queryKey(), ctx.previousChats);
+      if (ctx?.previousAllChats) {
+        restoreAllChatsQueries(qc, ctx.previousAllChats);
       }
       toast.error("Failed to pin chat");
     },
     onSettled: async (_data, _error, { chatId }) => {
       await Promise.all([
-        qc.invalidateQueries({ queryKey: trpc.chat.getAllChats.queryKey() }),
+        qc.invalidateQueries({ queryKey: allChatsKey, exact: false }),
         qc.invalidateQueries({
           queryKey: trpc.chat.getChatById.queryKey({ chatId }),
         }),
@@ -292,11 +336,11 @@ export function useDeleteTrailingMessages() {
 export function useCloneChat() {
   const trpc = useTRPC();
   const qc = useQueryClient();
+  const allChatsKey = trpc.chat.getAllChats.queryKey();
 
   return useMutation({
     ...trpc.chat.cloneSharedChat.mutationOptions(),
-    onSettled: () =>
-      qc.refetchQueries({ queryKey: trpc.chat.getAllChats.queryKey() }),
+    onSettled: () => qc.refetchQueries({ queryKey: allChatsKey, exact: false }),
     onError: (error) => console.error("Failed to copy chat:", error),
   });
 }
@@ -329,7 +373,10 @@ export function useSaveMessageMutation() {
           queryKey: trpc.credits.getAvailableCredits.queryKey(),
         });
         await Promise.all([
-          qc.invalidateQueries({ queryKey: trpc.chat.getAllChats.queryKey() }),
+          qc.invalidateQueries({
+            queryKey: trpc.chat.getAllChats.queryKey(),
+            exact: false,
+          }),
           qc.invalidateQueries({
             queryKey: trpc.chat.getChatById.queryKey({ chatId }),
           }),
@@ -347,7 +394,10 @@ export function useSetVisibility() {
     ...trpc.chat.setVisibility.mutationOptions(),
     onError: () => toast.error("Failed to update chat visibility"),
     onSettled: () =>
-      qc.invalidateQueries({ queryKey: trpc.chat.getAllChats.queryKey() }),
+      qc.invalidateQueries({
+        queryKey: trpc.chat.getAllChats.queryKey(),
+        exact: false,
+      }),
     onSuccess: (_data, { visibility }) => {
       toast.success(
         visibility === "public"
@@ -420,12 +470,18 @@ export function useDocuments(id: string, disable: boolean) {
   });
 }
 
-export function useGetAllChats(limit?: number) {
+export function useGetAllChats(opts?: {
+  projectId?: string | null;
+  limit?: number;
+}) {
   const { data: session } = useSession();
   const trpc = useTRPC();
+  const { projectId, limit } = opts ?? {};
 
   return useQuery({
-    ...trpc.chat.getAllChats.queryOptions(),
+    ...trpc.chat.getAllChats.queryOptions({
+      projectId: projectId ?? undefined,
+    }),
     enabled: !!session?.user,
     select: limit ? (data: UIChat[]) => data.slice(0, limit) : undefined,
   });

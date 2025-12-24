@@ -33,7 +33,7 @@
     "test": "bun test:playwright && bun test:unit",
     "test:playwright": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
-    "test:types": "next typegen . && tsc --noEmit",
+    "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "ai:devtools": "bunx @ai-sdk/devtools",
     "hooks:enable": "husky",
     "hooks:disable": "git config core.hooksPath .git/hooks",

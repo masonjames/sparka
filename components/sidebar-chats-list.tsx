@@ -25,7 +25,7 @@ const PROJECT_CHAT_REGEX = /^\/project\/[^/]+\/chat\/(.+)$/;
 
 export function SidebarChatsList() {
   const pathname = usePathname();
-  const { data: allChats, isLoading } = useGetAllChats(50);
+  const { data: allChats, isLoading } = useGetAllChats({ limit: 50 });
   const { setOpenMobile } = useSidebar();
   const { mutate: renameChatMutation } = useRenameChat();
   const { mutate: pinChatMutation } = usePinChat();

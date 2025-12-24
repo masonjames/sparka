@@ -8,7 +8,7 @@ export default async function ProjectPageRoute({
 }) {
   const { projectId } = await params;
 
-  // Prefetch project and its chats
+  // Prefetch project + chats (hydrate on client; avoid layout shift)
   prefetch(trpc.project.getById.queryOptions({ id: projectId }));
   prefetch(trpc.chat.getAllChats.queryOptions({ projectId }));
 
