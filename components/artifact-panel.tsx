@@ -10,7 +10,6 @@ import { useDebounceCallback } from "usehooks-ts";
 import { useDocuments, useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
-//
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { codeArtifact } from "@/lib/artifacts/code/client";
 import { sheetArtifact } from "@/lib/artifacts/sheet/client";
