@@ -1,12 +1,19 @@
 "use client";
 
 import { useChatActions } from "@ai-sdk-tools/store";
+import {
+  Code2Icon,
+  GraduationCapIcon,
+  PenLineIcon,
+  SparklesIcon,
+} from "lucide-react";
 import { motion } from "motion/react";
-import { memo } from "react";
+import { memo, useMemo, useState } from "react";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { Button } from "@/components/ui/button";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
 
 type SuggestedActionsProps = {
   chatId: string;
@@ -20,86 +27,162 @@ function PureSuggestedActions({
   className,
 }: SuggestedActionsProps) {
   const { sendMessage } = useChatActions<ChatMessage>();
-  const suggestedActions = [
-    {
-      title: "What are the advantages",
-      label: "of using Next.js?",
-      action: "What are the advantages of using Next.js?",
-    },
-    {
-      title: "Write code to",
-      label: `demonstrate djikstra's algorithm`,
-      action: `Write code to demonstrate djikstra's algorithm`,
-    },
-    {
-      title: "Help me write an essay",
-      label: "about silicon valley",
-      action: "Help me write an essay about silicon valley",
-    },
-    {
-      title: "What is the weather",
-      label: "in San Francisco?",
-      action: "What is the weather in San Francisco?",
-    },
-  ];
+  const categories = useMemo(
+    () =>
+      [
+        {
+          id: "write",
+          label: "Write",
+          icon: PenLineIcon,
+          prompts: [
+            "Write a concise email to reschedule a meeting",
+            "Turn these bullet points into a clear memo",
+            "Rewrite this paragraph to be more direct",
+            "Draft a blog post outline about this topic",
+            "Brainstorm 10 headline ideas for this",
+          ],
+        },
+        {
+          id: "learn",
+          label: "Learn",
+          icon: GraduationCapIcon,
+          prompts: [
+            "Explain this concept like I’m smart but new to it",
+            "Quiz me on this topic (start easy, ramp up)",
+            "Give me a mental model + common pitfalls",
+            "Summarize this in 5 bullets + 3 key takeaways",
+            "Compare these two approaches and when to use each",
+          ],
+        },
+        {
+          id: "code",
+          label: "Code",
+          icon: Code2Icon,
+          prompts: [
+            "Implement this feature and explain tradeoffs",
+            "Find the bug in this snippet and fix it",
+            "Refactor this for readability + performance",
+            "Write tests for this module (edge cases too)",
+            "Design a clean API for this requirement",
+          ],
+        },
+        {
+          id: "life",
+          label: "Life stuff",
+          icon: SparklesIcon,
+          prompts: [
+            "Plan a simple healthy meal prep for the week",
+            "Help me choose between these options (pros/cons)",
+            "Create a 30-minute daily routine I’ll stick to",
+            "Write a message to resolve a conflict calmly",
+            "Suggest a weekend plan based on my constraints",
+          ],
+        },
+      ] as const,
+    []
+  );
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<
+    (typeof categories)[number]["id"] | null
+  >(null);
+
+  const selectedCategory = selectedCategoryId
+    ? categories.find((c) => c.id === selectedCategoryId)
+    : null;
+
+  const sendPrompt = (text: string) => {
+    if (!sendMessage) {
+      return;
+    }
+
+    window.history.pushState({}, "", `/chat/${chatId}`);
+
+    sendMessage(
+      {
+        role: "user",
+        parts: [{ type: "text", text }],
+        metadata: {
+          selectedModel: selectedModelId,
+          createdAt: new Date(),
+          parentMessageId: null,
+        },
+      },
+      {
+        body: {
+          data: {
+            deepResearch: false,
+            webSearch: false,
+            reason: false,
+            generateImage: false,
+            writeOrCode: false,
+          },
+        },
+      }
+    );
+  };
 
   return (
     <div
-      className={cn("grid w-full gap-2 sm:grid-cols-2", className)}
+      className={cn("flex w-full flex-col gap-3", className)}
       data-testid="suggested-actions"
     >
-      {suggestedActions.map((suggestedAction, index) => (
+      <Suggestions className="mx-auto gap-1.5">
+        {categories.map((c, index) => {
+          const Icon = c.icon;
+          const selected = c.id === selectedCategoryId;
+
+          return (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 6 }}
+              key={c.id}
+              transition={{ delay: 0.03 * index }}
+            >
+              <Suggestion
+                aria-pressed={selected}
+                className={cn(
+                  "gap-2",
+                  selected && "border-transparent shadow-sm"
+                )}
+                onClick={() =>
+                  setSelectedCategoryId((prev) => (prev === c.id ? null : c.id))
+                }
+                suggestion={c.label}
+                variant={selected ? "default" : "outline"}
+              >
+                <Icon className="size-4" />
+                <span>{c.label}</span>
+              </Suggestion>
+            </motion.div>
+          );
+        })}
+      </Suggestions>
+
+      {selectedCategory ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className={index > 1 ? "hidden sm:block" : "block"}
-          exit={{ opacity: 0, y: 20 }}
-          initial={{ opacity: 0, y: 20 }}
-          key={`suggested-action-${suggestedAction.title}-${index}`}
-          transition={{ delay: 0.05 * index }}
+          initial={{ opacity: 0, y: 6 }}
+          key={selectedCategory.id}
+          transition={{ duration: 0.15 }}
         >
-          <Button
-            className="h-auto w-full flex-1 items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col"
-            onClick={() => {
-              if (!sendMessage) {
-                return;
-              }
-
-              window.history.pushState({}, "", `/chat/${chatId}`);
-
-              sendMessage(
-                {
-                  role: "user",
-                  parts: [{ type: "text", text: suggestedAction.action }],
-                  metadata: {
-                    selectedModel: selectedModelId,
-                    createdAt: new Date(),
-                    parentMessageId: null,
-                  },
-                },
-                {
-                  body: {
-                    data: {
-                      deepResearch: false,
-                      webSearch: false,
-                      reason: false,
-                      generateImage: false,
-                      writeOrCode: false,
-                    },
-                  },
-                }
-              );
-            }}
-            variant="ghost"
-          >
-            <span className="font-medium">{suggestedAction.title}</span>
-            <span className="text-muted-foreground">
-              {suggestedAction.label}
-            </span>
-          </Button>
+          <div className="flex flex-col gap-1">
+            {selectedCategory.prompts.map((prompt) => (
+              <Button
+                className="h-auto justify-start rounded-lg px-3 py-2 text-left text-sm"
+                key={prompt}
+                onClick={() => sendPrompt(prompt)}
+                type="button"
+                variant="ghost"
+              >
+                {prompt}
+              </Button>
+            ))}
+          </div>
         </motion.div>
-      ))}
+      ) : null}
     </div>
   );
 }
 
-export const SuggestedActions = memo(PureSuggestedActions, () => true);
+export const SuggestedActions = memo(PureSuggestedActions);

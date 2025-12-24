@@ -1,6 +1,5 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type React from "react";
 import { memo } from "react";
 import { CloneChatButton } from "@/components/clone-chat-button";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -14,7 +13,6 @@ export type MessagesPaneProps = {
   status: UseChatHelpers<ChatMessage>["status"];
   isReadonly: boolean;
   className?: string;
-  emptyStateOverride?: React.ReactNode;
 };
 
 function PureMessagesPane({
@@ -22,7 +20,6 @@ function PureMessagesPane({
   status,
   isReadonly,
   className,
-  emptyStateOverride,
 }: MessagesPaneProps) {
   const parentMessageId = useLastMessageId();
   const hasMessages = useMessageIds().length > 0;
@@ -59,7 +56,6 @@ function PureMessagesPane({
           >
             <MultimodalInput
               chatId={chatId}
-              emptyStateOverride={emptyStateOverride}
               parentMessageId={parentMessageId}
               status={status}
             />

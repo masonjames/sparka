@@ -67,7 +67,6 @@ function PureMultimodalInput({
   isEditMode = false,
   parentMessageId,
   onSendMessage,
-  emptyStateOverride,
 }: {
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -75,7 +74,6 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
-  emptyStateOverride?: React.ReactNode;
 }) {
   const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
@@ -526,31 +524,15 @@ function PureMultimodalInput({
     },
   });
 
-  const showEmptyState =
+  const showSuggestedActions =
+    !disableSuggestedActions &&
     messageIds.length === 0 &&
     attachments.length === 0 &&
     uploadQueue.length === 0 &&
     !isEditMode;
 
-  let emptyStateContent: React.ReactNode = null;
-  if (showEmptyState) {
-    if (emptyStateOverride) {
-      emptyStateContent = emptyStateOverride;
-    } else if (!disableSuggestedActions) {
-      emptyStateContent = (
-        <SuggestedActions
-          chatId={chatId}
-          className="mb-4"
-          selectedModelId={selectedModelId}
-        />
-      );
-    }
-  }
-
   return (
     <div className="relative">
-      {emptyStateContent}
-
       <input
         accept="image/*,.pdf"
         className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
@@ -650,6 +632,13 @@ function PureMultimodalInput({
           />
         </PromptInput>
       </div>
+      {showSuggestedActions && (
+        <SuggestedActions
+          chatId={chatId}
+          className="mt-4"
+          selectedModelId={selectedModelId}
+        />
+      )}
 
       <ImageModal
         imageName={imageModal.imageName}
