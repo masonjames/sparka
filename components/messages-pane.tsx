@@ -4,7 +4,7 @@ import type React from "react";
 import { memo } from "react";
 import { CloneChatButton } from "@/components/clone-chat-button";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useLastMessageId } from "@/lib/stores/hooks-base";
+import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
@@ -25,18 +25,38 @@ function PureMessagesPane({
   emptyStateOverride,
 }: MessagesPaneProps) {
   const parentMessageId = useLastMessageId();
+  const hasMessages = useMessageIds().length > 0;
 
   return (
     <div
       className={cn("flex h-full min-h-0 w-full flex-1 flex-col", className)}
     >
-      <Messages isReadonly={isReadonly} />
+      <div
+        className={cn(
+          "min-h-0",
+          hasMessages ? "flex-1" : "h-0 overflow-hidden"
+        )}
+      >
+        <Messages isReadonly={isReadonly} />
+      </div>
 
-      <div className="relative bottom-4 z-10 w-full">
+      <div
+        className={cn(
+          "z-10 w-full",
+          hasMessages
+            ? "relative bottom-4 shrink-0"
+            : "flex min-h-0 flex-1 items-center justify-center"
+        )}
+      >
         {isReadonly ? (
           <CloneChatButton chatId={chatId} className="w-full" />
         ) : (
-          <div className="mx-auto w-full p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6">
+          <div
+            className={cn(
+              "mx-auto w-full p-2 @[500px]:px-4 md:max-w-3xl",
+              hasMessages ? "@[500px]:pb-4 @[500px]:md:pb-6" : undefined
+            )}
+          >
             <MultimodalInput
               chatId={chatId}
               emptyStateOverride={emptyStateOverride}
