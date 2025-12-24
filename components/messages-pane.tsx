@@ -28,13 +28,9 @@ function PureMessagesPane({
     <div
       className={cn("flex h-full min-h-0 w-full flex-1 flex-col", className)}
     >
-      <Messages
-        className={cn(
-          "h-full min-h-0",
-          hasMessages ? "flex-1" : "h-0 overflow-hidden"
-        )}
-        isReadonly={isReadonly}
-      />
+      {hasMessages && <Messages
+        className="h-full min-h-0 flex-1" isReadonly={isReadonly} />  
+      }
 
       <div
         className={cn(
