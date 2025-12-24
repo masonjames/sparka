@@ -7,6 +7,7 @@ import React, {
   type SetStateAction,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -52,6 +53,12 @@ export function ChatInputProvider({
   overrideModelId,
   localStorageEnabled = true,
 }: ChatInputProviderProps) {
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
   // Helper functions for localStorage access without state
   const getLocalStorageInput = useCallback(() => {
     if (!localStorageEnabled) {
@@ -86,7 +93,10 @@ export function ChatInputProvider({
     overrideModelId || defaultModel
   );
 
-  const inputValueRef = useRef<string>(initialInput || getLocalStorageInput());
+  // IMPORTANT: do not read localStorage during initial render.
+  // Next SSRs client components; localStorage is client-only and will cause hydration mismatches
+  // (e.g., submit button `disabled` stuck from server HTML).
+  const inputValueRef = useRef<string>(initialInput);
 
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
     initialTool
@@ -95,10 +105,9 @@ export function ChatInputProvider({
     useState<Attachment[]>(initialAttachments);
 
   // Track if input is empty for reactive UI updates
-  const [isEmpty, setIsEmpty] = useState<boolean>(() => {
-    const initial = initialInput || getLocalStorageInput();
-    return initial.trim().length === 0;
-  });
+  const [isEmpty, setIsEmpty] = useState<boolean>(
+    () => initialInput.trim().length === 0
+  );
 
   // Create ref for lexical editor
   const editorRef = useRef<LexicalChatInputRef | null>(null);
@@ -108,8 +117,12 @@ export function ChatInputProvider({
     if (!localStorageEnabled) {
       return initialInput;
     }
+    if (!hasHydrated) {
+      return initialInput;
+    }
     return initialInput || getLocalStorageInput();
-  }, [initialInput, getLocalStorageInput, localStorageEnabled]);
+  }, [initialInput, getLocalStorageInput, localStorageEnabled, hasHydrated]);
+
 
   const { getModelById } = useChatModels();
 
