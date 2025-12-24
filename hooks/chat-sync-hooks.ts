@@ -480,7 +480,7 @@ export function useGetAllChats(opts?: {
 
   return useQuery({
     ...trpc.chat.getAllChats.queryOptions({
-      projectId: projectId ?? undefined,
+      projectId: projectId ?? null,
     }),
     enabled: !!session?.user,
     select: limit ? (data: UIChat[]) => data.slice(0, limit) : undefined,

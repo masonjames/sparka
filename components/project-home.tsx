@@ -269,9 +269,7 @@ export function ProjectHome({
         {chats !== undefined && (
           <div
             className={cn(
-              shouldCenter
-                ? "row-start-3 mt-6"
-                : "mt-4 min-h-0 flex-1"
+              shouldCenter ? "row-start-3 mt-6" : "mt-4 min-h-0 flex-1"
             )}
           >
             <ProjectChats
