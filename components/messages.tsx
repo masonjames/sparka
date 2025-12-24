@@ -64,14 +64,12 @@ const PureMessagesInternal = memo(
 export type MessagesProps = {
   votes: Vote[] | undefined;
   isReadonly: boolean;
-  isVisible: boolean;
   onModelChange?: (modelId: string) => void;
 };
 
 function PureMessages({
   votes,
   isReadonly,
-  isVisible: _isVisible,
 }: MessagesProps) {
   return (
     <Conversation>
@@ -90,10 +88,7 @@ export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.isReadonly !== nextProps.isReadonly) {
     return false;
   }
-  // NOTE: isVisible avoids re-renders when the messages aren't visible
-  if (prevProps.isVisible !== nextProps.isVisible) {
-    return false;
-  }
+
 
   return true;
 });

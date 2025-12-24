@@ -123,7 +123,6 @@ export function ChatInputProvider({
     return initialInput || getLocalStorageInput();
   }, [initialInput, getLocalStorageInput, localStorageEnabled, hasHydrated]);
 
-
   const { getModelById } = useChatModels();
 
   const handleModelChange = useCallback(
