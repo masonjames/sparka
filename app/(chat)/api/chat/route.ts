@@ -31,6 +31,7 @@ import {
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
+import { siteConfig } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import type { CreditReservation } from "@/lib/credits/credit-reservation";
 import {
@@ -1093,9 +1094,11 @@ export async function POST(request: NextRequest) {
 
     const { previousMessages, budgetAllowedTools } = contextResult;
 
-    // Fetch MCP connectors for authenticated users
+    // Fetch MCP connectors for authenticated users (only if MCP integration enabled)
     const mcpConnectors: McpConnector[] =
-      userId && !isAnonymous ? await getMcpConnectorsByUserId({ userId }) : [];
+      siteConfig.integrations.mcp && userId && !isAnonymous
+        ? await getMcpConnectorsByUserId({ userId })
+        : [];
 
     // Create AbortController with 55s timeout for credit cleanup
     const abortController = new AbortController();

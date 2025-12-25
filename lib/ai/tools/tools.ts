@@ -106,6 +106,13 @@ export async function getMcpTools({
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
 }> {
+  if (!siteConfig.integrations.mcp) {
+    return {
+      tools: {},
+      cleanup: async () => Promise.resolve(),
+    };
+  }
+
   const enabledConnectors = connectors.filter((c) => c.enabled);
 
   if (enabledConnectors.length === 0) {

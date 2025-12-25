@@ -60,9 +60,7 @@ export default async function ChatLayout({
   if (session?.user?.id) {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
-    queryClient.prefetchQuery(
-      trpc.settings.getModelPreferences.queryOptions()
-    );
+    queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
     queryClient.prefetchQuery(trpc.project.list.queryOptions());
     queryClient.prefetchQuery(
       trpc.chat.getAllChats.queryOptions({ projectId: null })
