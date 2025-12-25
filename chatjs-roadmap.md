@@ -25,6 +25,7 @@ Help devs/companies launch AI chat apps 10x faster through:
 - [ ] Rename everywhere (repo, package.json, config, README, UI)
 - [ ] Landing page with 2 pillars: Patterns + Start
 - [ ] Domain + socials
+- [ ] Email addresses in (legal@chatjs.dev, privacy@chatjs.dev)
 
 ### 2. Patterns Docs
 
