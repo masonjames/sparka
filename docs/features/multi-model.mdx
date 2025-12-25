@@ -1,0 +1,56 @@
+---
+title: "Multi-Model Support"
+description: "Access 120+ AI models through a unified API"
+---
+
+ChatJS uses the Vercel AI SDK to provide access to 120+ models from multiple providers through a single, unified interface.
+
+## Supported Providers
+
+- **Anthropic** — Claude 4, Claude 3.5
+- **OpenAI** — GPT-5, GPT-4o, o1, o3
+- **Google** — Gemini 2.5, Gemini 2.0
+- **xAI** — Grok 3, Grok 2
+- **Meta** — Llama 4, Llama 3.3
+- **Mistral** — Mistral Large, Codestral
+- **DeepSeek** — DeepSeek R1, V3
+- **And more** — Cohere, Perplexity, Amazon, Alibaba
+
+## How It Works
+
+Models are accessed via the Vercel AI Gateway, which routes requests to the appropriate provider:
+
+```typescript
+import { getAppModelDefinition } from "@/lib/ai/app-models";
+
+const model = await getAppModelDefinition("claude-4-sonnet");
+```
+
+## Model Selection
+
+Users select models from the chat interface. The selected model ID is passed in message metadata:
+
+```typescript
+const selectedModelId = userMessage.metadata?.selectedModel;
+```
+
+## Adding New Models
+
+Models are defined in `lib/ai/app-models.ts`. To add a new model:
+
+```typescript
+{
+  id: "your-model-id",
+  name: "Model Display Name",
+  provider: "provider-name",
+  reasoning: false,
+  input: true,
+  // ... capabilities
+}
+```
+
+## API Gateway
+
+You need either:
+- `VERCEL_OIDC_TOKEN` — Auto-provided on Vercel
+- `AI_GATEWAY_API_KEY` — For self-hosted deployments

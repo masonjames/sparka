@@ -1,0 +1,61 @@
+---
+title: "Authentication"
+description: "User authentication with Better Auth"
+---
+
+ChatJS uses [Better Auth](https://better-auth.com) for authentication, supporting multiple OAuth providers and anonymous guest access.
+
+## Supported Providers
+
+| Provider | Environment Variables |
+|----------|----------------------|
+| GitHub | `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` |
+| Google | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` |
+| Vercel | `VERCEL_APP_CLIENT_ID`, `VERCEL_APP_CLIENT_SECRET` |
+
+Providers auto-enable when credentials are configured:
+
+```typescript title="lib/config.ts"
+authentication: {
+  google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
+  github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
+  vercel: Boolean(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET),
+},
+```
+
+## Anonymous Mode
+
+Users can try the app without signing up. Anonymous sessions:
+- Have limited message credits
+- Access a subset of models
+- Don't persist chat history to database
+
+```typescript title="lib/types/anonymous.ts"
+export const ANONYMOUS_LIMITS = {
+  CREDITS: 10,
+  AVAILABLE_MODELS: ["claude-3-5-haiku", "gpt-4o-mini", ...],
+  AVAILABLE_TOOLS: ["webSearch"],
+};
+```
+
+## Session Handling
+
+Get the current session in server components:
+
+```typescript
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
+const session = await auth.api.getSession({ headers: await headers() });
+const userId = session?.user?.id;
+```
+
+## Auth Secret
+
+Generate a secure `AUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+Or use [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32).

@@ -1,0 +1,39 @@
+---
+title: "Features"
+description: "Built-in functionality included with ChatJS"
+---
+
+ChatJS includes production-ready features out of the box. Toggle them via `lib/config.ts`.
+
+## Core Features
+
+<CardGroup cols={2}>
+  <Card title="Multi-Model Support" icon="robot" href="/features/multi-model">
+    120+ AI models via unified API
+  </Card>
+  <Card title="Authentication" icon="lock" href="/features/authentication">
+    Better Auth with multiple providers
+  </Card>
+  <Card title="Attachments" icon="paperclip" href="/features/attachments">
+    Images, PDFs, documents in conversations
+  </Card>
+</CardGroup>
+
+## AI Tools
+
+| Tool | Description | Requires |
+|------|-------------|----------|
+| Web Search | Real-time search via Tavily/Exa | `TAVILY_API_KEY` |
+| Code Execution | Python/JS sandboxes | `integrations.sandbox` |
+| Image Generation | AI image creation | Model capability |
+| Document Creation | Generate docs, spreadsheets | Built-in |
+| Deep Research | Multi-step research with citations | Built-in |
+
+## Chat Features
+
+| Feature | Description |
+|---------|-------------|
+| Resumable Streams | Continue after disconnection (Redis) |
+| Chat Branching | Alternative conversation paths |
+| Chat Sharing | Public share links |
+| Projects | Organize chats with custom instructions |

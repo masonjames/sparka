@@ -1,97 +1,65 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "ChatJS"
+description: "Ship AI chat apps 10x faster"
 ---
 
-## Setting up
+Build production-ready AI chat applications with battle-tested patterns and a complete starter template.
 
-Get your documentation site up and running in minutes.
+## Two Ways to Use ChatJS
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Patterns" icon="book" href="/patterns/index">
+    Reusable solutions for complex AI chat functionality. Copy-paste implementations for tools, streaming, branching, and more.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Start" icon="rocket" href="/quickstart">
+    Full-featured starter app. Clone, configure, deploy. Auth, 120+ models, attachments, and tools included.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What's Included
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="120+ AI Models" icon="robot">
+    Claude, GPT, Gemini, Grok via unified API
+  </Card>
+  <Card title="Authentication" icon="lock">
+    Better Auth with GitHub, Google, anonymous mode
+  </Card>
+  <Card title="Attachments" icon="paperclip">
+    Images, PDFs, documents in conversations
+  </Card>
+  <Card title="Tool Calling" icon="wrench">
+    Web search, code execution, image generation
+  </Card>
+  <Card title="Streaming" icon="bolt">
+    Resumable streams with Redis support
+  </Card>
+  <Card title="Chat Branching" icon="code-branch">
+    Alternative conversation paths
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Stack
 
-## Need inspiration?
+- **Next.js 16** - App Router, RSC
+- **Vercel AI SDK v5** - Unified AI providers
+- **Better Auth** - Authentication
+- **Drizzle ORM** - Type-safe database
+- **tRPC** - End-to-end type safety
+- **Shadcn/UI** - Components
+- **Tailwind CSS 4** - Styling
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
+## Quick Start
+
+```bash
+git clone https://github.com/franciscomoretti/chatjs.git
+cd chatjs
+bun install
+cp .env.example .env.local
+bun db:migrate
+bun dev
+```
+
+<Card title="Full Setup Guide" icon="arrow-right" href="/quickstart">
+  Environment variables, database setup, deployment options
 </Card>

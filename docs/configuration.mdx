@@ -1,0 +1,158 @@
+---
+title: "Configuration"
+description: "Customize ChatJS via lib/config.ts"
+---
+
+All feature toggles and app settings live in `lib/config.ts`. This is the central hub for enabling/disabling features and customizing your app.
+
+## Config Structure
+
+```typescript lib/config.ts
+export const siteConfig: SiteConfig = {
+  appName: "Your App Name",
+  appPrefix: "your-app",
+  githubUrl: "https://github.com/you/your-app",
+
+  organization: {
+    name: "Your Company",
+    contact: {
+      privacyEmail: "privacy@example.com",
+      legalEmail: "legal@example.com",
+    },
+  },
+
+  integrations: {
+    sandbox: true,      // Code execution (Python/JS)
+    webSearch: true,    // Tavily/Exa web search
+    openai: true,       // Direct OpenAI access
+    mcp: true,          // MCP connector support
+  },
+
+  authentication: {
+    google: true,
+    github: true,
+    vercel: false,
+  },
+
+  // ... more options
+};
+```
+
+## Integrations
+
+Toggle features on/off. Most are auto-detected from environment variables:
+
+| Integration | Config Key | Env Dependency |
+|-------------|------------|----------------|
+| Code Sandbox | `integrations.sandbox` | Always available |
+| Web Search | `integrations.webSearch` | `TAVILY_API_KEY` |
+| OpenAI Direct | `integrations.openai` | `OPENAI_API_KEY` |
+| MCP Connectors | `integrations.mcp` | `MCP_ENCRYPTION_KEY` |
+
+```typescript
+integrations: {
+  sandbox: true,
+  webSearch: Boolean(env.TAVILY_API_KEY),
+  openai: Boolean(env.OPENAI_API_KEY),
+  mcp: Boolean(env.MCP_ENCRYPTION_KEY),
+},
+```
+
+## Authentication
+
+Enable/disable auth providers based on configured credentials:
+
+```typescript
+authentication: {
+  google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
+  github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
+  vercel: Boolean(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET),
+},
+```
+
+## Branding
+
+Customize app name and organization details:
+
+```typescript
+appName: "ChatJS",
+appPrefix: "chatjs",
+githubUrl: "https://github.com/franciscomoretti/chatjs",
+
+organization: {
+  name: "Your Company",
+  contact: {
+    privacyEmail: "privacy@example.com",
+    legalEmail: "legal@example.com",
+  },
+},
+```
+
+## Using Config in Components
+
+In server components, import directly:
+
+```typescript
+import { siteConfig } from "@/lib/config";
+
+export function ServerComponent() {
+  return <div>{siteConfig.appName}</div>;
+}
+```
+
+In client components, use the hook:
+
+```typescript
+"use client";
+import { useConfig } from "@/components/config-provider";
+
+export function ClientComponent() {
+  const config = useConfig();
+  return <div>{config.appName}</div>;
+}
+```
+
+## Type Definition
+
+Full type reference:
+
+```typescript
+export type SiteConfig = {
+  githubUrl: string;
+  appPrefix: string;
+  appName: string;
+  organization: {
+    name: string;
+    contact: {
+      privacyEmail: string;
+      legalEmail: string;
+    };
+  };
+  services: {
+    hosting: string;
+    aiProviders: string[];
+    paymentProcessors: string[];
+  };
+  integrations: {
+    sandbox: boolean;
+    webSearch: boolean;
+    openai: boolean;
+    mcp: boolean;
+  };
+  pricing?: PricingConfig;
+  legal: {
+    minimumAge: number;
+    governingLaw: string;
+    refundPolicy: string;
+  };
+  policies: {
+    privacy: { title: string; lastUpdated?: string };
+    terms: { title: string; lastUpdated?: string };
+  };
+  authentication: {
+    google: boolean;
+    github: boolean;
+    vercel: boolean;
+  };
+};
+```

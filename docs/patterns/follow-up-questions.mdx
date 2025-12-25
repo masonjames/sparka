@@ -1,0 +1,159 @@
+---
+title: "Follow-up Questions"
+description: "Generate and display contextual follow-up suggestions"
+---
+
+## Problem
+
+You want to:
+- Suggest follow-up questions after each AI response
+- Only show suggestions on the last message (not historical ones)
+- Exclude suggestions from the LLM context (they're UI-only)
+
+## Solution
+
+1. Generate suggestions server-side after the response completes
+2. Stream them as a `data-*` part (not a tool, so excluded from context)
+3. Conditionally render only on the last message
+
+## Implementation
+
+### 1. Generate Suggestions (Backend)
+
+After the AI response, generate follow-up questions:
+
+```typescript title="lib/ai/followup-suggestions.ts"
+import { streamObject } from "ai";
+import { z } from "zod";
+
+export async function generateFollowupSuggestions(messages: ModelMessage[]) {
+  return streamObject({
+    model: await getLanguageModel("gpt-4o-mini"),
+    messages: [
+      ...messages,
+      {
+        role: "user",
+        content: "What question should I ask next? Return 3-5 suggestions.",
+      },
+    ],
+    schema: z.object({
+      suggestions: z.array(z.string()).min(3).max(5),
+    }),
+  });
+}
+```
+
+### 2. Stream as Data Part
+
+In the chat route, stream suggestions after the main response:
+
+```typescript title="app/(chat)/api/chat/route.ts"
+// After result.consumeStream()
+const followupResult = generateFollowupSuggestions([
+  ...contextForLLM,
+  ...responseMessages,
+]);
+
+await streamFollowupSuggestions({
+  followupSuggestionsResult: followupResult,
+  writer: dataStream,
+});
+```
+
+The streaming function writes `data-*` parts:
+
+```typescript title="lib/ai/followup-suggestions.ts"
+export async function streamFollowupSuggestions({ followupResult, writer }) {
+  const result = await followupResult;
+
+  for await (const chunk of result.partialObjectStream) {
+    writer.write({
+      id: generateUUID(),
+      type: "data-followupSuggestions", // data-* prefix = excluded from LLM context
+      data: {
+        suggestions: chunk.suggestions?.filter(Boolean) ?? [],
+      },
+    });
+  }
+}
+```
+
+### 3. Conditional Display (Frontend)
+
+Only render on the last message:
+
+```typescript title="components/followup-suggestions.tsx"
+"use client";
+
+import { useMessageIds } from "@/lib/stores/hooks-base";
+
+export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
+  const ids = useMessageIds();
+  const isLastMessage = ids.at(-1) === messageId;
+
+  // Only show on last message
+  if (!isLastMessage) {
+    return null;
+  }
+
+  const types = useMessagePartTypesById(messageId);
+  const partIdx = types.indexOf("data-followupSuggestions");
+
+  if (partIdx === -1) {
+    return null;
+  }
+
+  return <FollowUpSuggestionsPart messageId={messageId} partIdx={partIdx} />;
+}
+```
+
+### 4. Render Suggestions
+
+Display clickable suggestion chips:
+
+```typescript title="components/followup-suggestions.tsx"
+export function FollowUpSuggestions({ suggestions }: { suggestions: string[] }) {
+  const storeApi = useChatStoreApi();
+
+  const handleClick = (suggestion: string) => {
+    const sendMessage = storeApi.getState().sendMessage;
+    sendMessage({
+      id: generateUUID(),
+      role: "user",
+      parts: [{ type: "text", text: suggestion }],
+      metadata: { /* ... */ },
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-xs text-muted-foreground">Related</div>
+      {suggestions.map((s) => (
+        <button key={s} onClick={() => handleClick(s)}>
+          {s}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+## Why `data-*` Parts?
+
+Using the `data-` prefix for the part type is key:
+
+| Part Type | Included in LLM Context |
+|-----------|------------------------|
+| `tool-*` | Yes |
+| `text` | Yes |
+| `data-*` | No |
+
+This ensures follow-up suggestions are UI-only and don't pollute the conversation context sent to the model.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/ai/followup-suggestions.ts` | Generation + streaming logic |
+| `app/(chat)/api/chat/route.ts` | Integration point |
+| `components/followup-suggestions.tsx` | UI component |

@@ -1,0 +1,151 @@
+---
+title: "Tool → Part"
+description: "Backend tool definition to frontend UI component"
+---
+
+## Problem
+
+You want to add an AI tool that:
+- Executes on the server
+- Streams results to the client
+- Renders a custom UI component
+
+## Solution
+
+1. Define a tool with Vercel AI SDK's `tool()` function
+2. Register it in the tools configuration
+3. Route tool parts to a React component
+4. Handle loading/complete states in the UI
+
+## Implementation
+
+### 1. Backend Tool Definition
+
+Create your tool in `lib/ai/tools/`:
+
+```typescript title="lib/ai/tools/get-weather.ts"
+import { tool } from "ai";
+import { z } from "zod";
+
+export const getWeather = tool({
+  description: "Get the current weather at a location",
+  inputSchema: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
+  execute: async ({ latitude, longitude }) => {
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m`
+    );
+    return response.json();
+  },
+});
+```
+
+### 2. Register Tool Definition
+
+Add to the tools registry with cost info:
+
+```typescript title="lib/ai/tools/tools-definitions.ts"
+export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
+  getWeather: {
+    name: "getWeather",
+    description: "Get the weather in a specific location",
+    cost: 1,
+  },
+  // ... other tools
+};
+```
+
+### 3. Add Tool to Agent
+
+Include in the tools passed to the chat agent:
+
+```typescript title="lib/ai/tools/tools.ts"
+import { getWeather } from "./get-weather";
+
+export const tools = {
+  getWeather,
+  // ... other tools
+};
+```
+
+### 4. Route to UI Component
+
+In `components/message-parts.tsx`, route the tool type to your component:
+
+```typescript title="components/message-parts.tsx"
+import { Weather } from "./part/weather";
+
+function ToolPart({ part, messageId, isReadonly }) {
+  if (part.type === "tool-getWeather") {
+    return <Weather tool={part} />;
+  }
+  // ... other tools
+}
+```
+
+### 5. Frontend Component
+
+Create the UI component that receives the tool part:
+
+```typescript title="components/part/weather.tsx"
+"use client";
+
+import type { ChatMessage } from "@/lib/ai/types";
+
+export type WeatherTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-getWeather" }
+>;
+
+export function Weather({ tool }: { tool: WeatherTool }) {
+  // Loading state: input available but no output yet
+  const isLoading = tool.state === "input-available";
+
+  if (isLoading) {
+    return <WeatherSkeleton />;
+  }
+
+  // Complete state: output available
+  const data = tool.output;
+
+  return (
+    <div className="rounded-2xl bg-blue-400 p-4">
+      <div className="text-4xl text-white">
+        {data.current.temperature_2m}°C
+      </div>
+    </div>
+  );
+}
+```
+
+## Tool Part States
+
+Tool parts have two states:
+
+| State | `tool.state` | Description |
+|-------|--------------|-------------|
+| Loading | `"input-available"` | Tool called, execution in progress |
+| Complete | `"output-available"` | Execution finished, result available |
+
+```typescript
+if (tool.state === "input-available") {
+  // Show loading/skeleton UI
+  // tool.input contains the input params
+}
+
+if (tool.state === "output-available") {
+  // Show complete UI
+  // tool.output contains the result
+}
+```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/ai/tools/*.ts` | Tool definitions |
+| `lib/ai/tools/tools-definitions.ts` | Tool registry with costs |
+| `components/message-parts.tsx` | Tool → Component routing |
+| `components/part/*.tsx` | Tool UI components |

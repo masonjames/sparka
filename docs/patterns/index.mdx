@@ -1,0 +1,36 @@
+---
+title: "Patterns"
+description: "Reusable solutions for AI chat functionality"
+---
+
+Patterns are battle-tested implementations for complex AI chat features. Each pattern documents the backend, network, and frontend layers with real code from ChatJS.
+
+## Available Patterns
+
+<CardGroup cols={2}>
+  <Card title="Tool → Part" icon="wrench" href="/patterns/tool-part">
+    Define a backend tool, stream results over the network, render a custom UI component.
+  </Card>
+  <Card title="Follow-up Questions" icon="message-question" href="/patterns/follow-up-questions">
+    Generate contextual follow-up suggestions, display only on the last message, exclude from LLM context.
+  </Card>
+</CardGroup>
+
+## Pattern Structure
+
+Each pattern covers three layers:
+
+| Layer | Description |
+|-------|-------------|
+| **Backend** | Server-side logic, tool definitions, API routes |
+| **Network** | Data transport, streaming, message parts |
+| **Frontend** | React components, state management, UI rendering |
+
+## Using Patterns
+
+Patterns are designed to be copy-paste ready. Each includes:
+
+1. **Problem** — What pain this solves
+2. **Solution** — High-level approach
+3. **Implementation** — Code for each layer
+4. **Key Files** — Where to find the code in ChatJS
