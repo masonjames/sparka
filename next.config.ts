@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
 
   experimental: {
-    turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
