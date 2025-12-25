@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import { auth } from "@/lib/auth";
+import { siteConfig } from "@/lib/config";
 import { getAllMessagesByChatId, getChatById } from "@/lib/db/queries";
 import { getRedisPublisher, getStreamContext } from "../../route";
 
@@ -49,8 +50,8 @@ async function getStreamIds({
   }
 
   const keyPattern = isAuthenticated
-    ? `chatjs:stream:${chatId}:*`
-    : `chatjs:anonymous-stream:${chatId}:*`;
+    ? `${siteConfig.appPrefix}:stream:${chatId}:*`
+    : `${siteConfig.appPrefix}:anonymous-stream:${chatId}:*`;
 
   const keys = await redisPublisher.keys(keyPattern);
   return keys

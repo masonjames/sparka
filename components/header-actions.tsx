@@ -3,6 +3,7 @@
 import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
+import { useConfig } from "@/components/config-provider";
 import { GitIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ function PureHeaderActions() {
   const { data: session } = useSession();
   const user = session?.user;
   const router = useRouter();
+  const config = useConfig();
 
   return (
     <div className="flex items-center gap-2">
@@ -41,7 +43,7 @@ function PureHeaderActions() {
       <Button asChild size="icon" type="button" variant="ghost">
         <a
           className="flex items-center justify-center"
-          href="https://github.com/franciscomoretti/chatjs"
+          href={config.githubUrl}
           rel="noopener noreferrer"
           target="_blank"
         >

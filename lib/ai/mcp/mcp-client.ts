@@ -7,6 +7,7 @@ import type {
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "ai";
+import { siteConfig } from "@/lib/config";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import { invalidateAllMcpCaches } from "./cache";
@@ -74,13 +75,13 @@ export class MCPClient {
       mcpConnectorId: this.id,
       serverUrl: this.serverConfig.url,
       clientMetadata: {
-        client_name: `chatjs-${this.name}`,
+        client_name: `${siteConfig.appPrefix}-${this.name}`,
         grant_types: ["authorization_code", "refresh_token"],
         response_types: ["code"],
         token_endpoint_auth_method: "none", // PKCE
         scope: "mcp:tools",
         redirect_uris: [`${baseUrl}/api/mcp/oauth/callback`],
-        software_id: "chatjs",
+        software_id: siteConfig.appPrefix,
         software_version: "1.0.0",
       },
       onRedirectToAuthorization: (authorizationUrl: URL) => {

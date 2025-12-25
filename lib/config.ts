@@ -1,5 +1,3 @@
-import { env } from "./env";
-
 // NOTE: In client components, use the `useConfig` hook from
 // `@/components/config-provider` instead of importing `siteConfig` directly.
 
@@ -32,10 +30,19 @@ export type SiteConfig = {
     aiProviders: string[];
     paymentProcessors: string[];
   };
+  /**
+   * Feature flags for optional integrations.
+   * Set to true to enable - requires corresponding env vars.
+   * Validated at server startup via validateConfig().
+   */
   integrations: {
+    /** Code sandbox execution (E2B) */
     sandbox: boolean;
+    /** Web search (requires TAVILY_API_KEY) */
     webSearch: boolean;
+    /** OpenAI features like image gen (requires OPENAI_API_KEY) */
     openai: boolean;
+    /** MCP tool servers (requires MCP_ENCRYPTION_KEY) */
     mcp: boolean;
   };
   pricing?: PricingConfig;
@@ -54,18 +61,30 @@ export type SiteConfig = {
       lastUpdated?: string;
     };
   };
+  /**
+   * Auth provider toggles.
+   * Set to true to enable - requires corresponding env vars.
+   * Validated at server startup via validateConfig().
+   */
   authentication: {
+    /** Google OAuth (requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET) */
     google: boolean;
+    /** GitHub OAuth (requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET) */
     github: boolean;
+    /** Vercel OAuth (requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET) */
     vercel: boolean;
   };
 };
 
+/**
+ * Site configuration - customize these values for your app.
+ * Feature flags (integrations/authentication) are validated at server startup.
+ */
 export const siteConfig: SiteConfig = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
-
   appName: "ChatJS",
+
   organization: {
     name: "ChatJS",
     contact: {
@@ -73,6 +92,7 @@ export const siteConfig: SiteConfig = {
       legalEmail: "legal@chatjs.dev",
     },
   },
+
   services: {
     hosting: "Vercel",
     aiProviders: [
@@ -95,17 +115,21 @@ export const siteConfig: SiteConfig = {
     ],
     paymentProcessors: [],
   },
+
+  // Set to true to enable - ensure env vars are configured
   integrations: {
     sandbox: true,
-    webSearch: Boolean(env.TAVILY_API_KEY),
-    openai: Boolean(env.OPENAI_API_KEY),
-    mcp: Boolean(env.MCP_ENCRYPTION_KEY),
+    webSearch: true,
+    openai: true,
+    mcp: true,
   },
+
   legal: {
     minimumAge: 13,
     governingLaw: "United States",
     refundPolicy: "no-refunds",
   },
+
   policies: {
     privacy: {
       title: "Privacy Policy",
@@ -116,9 +140,11 @@ export const siteConfig: SiteConfig = {
       lastUpdated: "July 24, 2025",
     },
   },
+
+  // Set to true to enable - ensure env vars are configured
   authentication: {
-    google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
-    github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
-    vercel: Boolean(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET),
+    google: false,
+    github: true,
+    vercel: false,
   },
 };

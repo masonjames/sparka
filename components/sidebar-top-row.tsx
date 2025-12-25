@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useConfig } from "@/components/config-provider";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useChatId } from "@/providers/chat-id-provider";
@@ -9,6 +10,7 @@ import { useChatId } from "@/providers/chat-id-provider";
 export function SidebarTopRow() {
   const { setOpenMobile, open, openMobile } = useSidebar();
   const { refreshChatID } = useChatId();
+  const config = useConfig();
   const isExpanded = open || openMobile;
 
   return (
@@ -28,13 +30,13 @@ export function SidebarTopRow() {
         >
           <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 font-semibold text-lg hover:bg-muted">
             <Image
-              alt="ChatJS"
+              alt={config.appName}
               className="h-6 w-6"
               height={24}
               src="/icon.svg"
               width={24}
             />
-            ChatJS
+            {config.appName}
           </span>
         </Link>
       ) : null}

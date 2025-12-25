@@ -1,3 +1,5 @@
+import { siteConfig } from "@/lib/config";
+
 export const isProductionEnvironment = process.env.NODE_ENV === "production";
 
 export const isTestEnvironment = Boolean(
@@ -6,6 +8,6 @@ export const isTestEnvironment = Boolean(
     process.env.CI_PLAYWRIGHT
 );
 
-export const BLOB_FILE_PREFIX = "chatjs/files/";
+export const BLOB_FILE_PREFIX = `${siteConfig.appPrefix}/files/`;
 
 export const ANONYMOUS_SESSION_COOKIES_KEY = "anonymous-session";
