@@ -74,13 +74,13 @@ export class MCPClient {
       mcpConnectorId: this.id,
       serverUrl: this.serverConfig.url,
       clientMetadata: {
-        client_name: `sparka-ai-${this.name}`,
+        client_name: `chatjs-${this.name}`,
         grant_types: ["authorization_code", "refresh_token"],
         response_types: ["code"],
         token_endpoint_auth_method: "none", // PKCE
         scope: "mcp:tools",
         redirect_uris: [`${baseUrl}/api/mcp/oauth/callback`],
-        software_id: "sparka-ai",
+        software_id: "chatjs",
         software_version: "1.0.0",
       },
       onRedirectToAuthorization: (authorizationUrl: URL) => {

@@ -12,14 +12,14 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sparka.ai"),
-  title: "Sparka AI - Production-Ready AI Chat Template",
+  metadataBase: new URL("https://chatjs.dev"),
+  title: "ChatJS - Production-Ready AI Chat Template",
   description:
     "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
   openGraph: {
-    siteName: "Sparka AI",
-    url: "https://sparka.ai",
-    title: "Sparka AI - Production-Ready AI Chat Template",
+    siteName: "ChatJS",
+    url: "https://chatjs.dev",
+    title: "ChatJS - Production-Ready AI Chat Template",
     description:
       "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
   },

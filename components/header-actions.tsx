@@ -41,7 +41,7 @@ function PureHeaderActions() {
       <Button asChild size="icon" type="button" variant="ghost">
         <a
           className="flex items-center justify-center"
-          href="https://github.com/franciscomoretti/sparka"
+          href="https://github.com/franciscomoretti/chatjs"
           rel="noopener noreferrer"
           target="_blank"
         >

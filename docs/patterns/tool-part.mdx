@@ -1,11 +1,12 @@
 ---
-title: "Tool → Part"
+title: "Tool Part"
 description: "Backend tool definition to frontend UI component"
 ---
 
 ## Problem
 
 You want to add an AI tool that:
+
 - Executes on the server
 - Streams results to the client
 - Renders a custom UI component
@@ -112,9 +113,7 @@ export function Weather({ tool }: { tool: WeatherTool }) {
 
   return (
     <div className="rounded-2xl bg-blue-400 p-4">
-      <div className="text-4xl text-white">
-        {data.current.temperature_2m}°C
-      </div>
+      <div className="text-4xl text-white">{data.current.temperature_2m}°C</div>
     </div>
   );
 }
@@ -124,9 +123,9 @@ export function Weather({ tool }: { tool: WeatherTool }) {
 
 Tool parts have two states:
 
-| State | `tool.state` | Description |
-|-------|--------------|-------------|
-| Loading | `"input-available"` | Tool called, execution in progress |
+| State    | `tool.state`         | Description                          |
+| -------- | -------------------- | ------------------------------------ |
+| Loading  | `"input-available"`  | Tool called, execution in progress   |
 | Complete | `"output-available"` | Execution finished, result available |
 
 ```typescript
@@ -143,9 +142,9 @@ if (tool.state === "output-available") {
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `lib/ai/tools/*.ts` | Tool definitions |
+| File                                | Purpose                  |
+| ----------------------------------- | ------------------------ |
+| `lib/ai/tools/*.ts`                 | Tool definitions         |
 | `lib/ai/tools/tools-definitions.ts` | Tool registry with costs |
-| `components/message-parts.tsx` | Tool → Component routing |
-| `components/part/*.tsx` | Tool UI components |
+| `components/message-parts.tsx`      | Tool → Component routing |
+| `components/part/*.tsx`             | Tool UI components       |

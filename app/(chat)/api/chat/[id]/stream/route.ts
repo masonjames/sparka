@@ -49,8 +49,8 @@ async function getStreamIds({
   }
 
   const keyPattern = isAuthenticated
-    ? `sparka-ai:stream:${chatId}:*`
-    : `sparka-ai:anonymous-stream:${chatId}:*`;
+    ? `chatjs:stream:${chatId}:*`
+    : `chatjs:anonymous-stream:${chatId}:*`;
 
   const keys = await redisPublisher.keys(keyPattern);
   return keys

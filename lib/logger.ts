@@ -6,7 +6,7 @@ export const logger: Logger =
   process.env.NODE_ENV === "production"
     ? pino({
         level: "info",
-        base: { app: "sparka" },
+        base: { app: "chatjs" },
         timestamp: stdTimeFunctions.isoTime,
         redact: {
           paths: [
@@ -21,7 +21,7 @@ export const logger: Logger =
       })
     : pino({
         level: "debug",
-        base: { app: "sparka" },
+        base: { app: "chatjs" },
         timestamp: stdTimeFunctions.isoTime,
         transport: {
           target: "pino-pretty",

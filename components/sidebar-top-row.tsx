@@ -28,13 +28,13 @@ export function SidebarTopRow() {
         >
           <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 font-semibold text-lg hover:bg-muted">
             <Image
-              alt="Sparka AI"
+              alt="ChatJS"
               className="h-6 w-6"
               height={24}
               src="/icon.svg"
               width={24}
             />
-            Sparka
+            ChatJS
           </span>
         </Link>
       ) : null}

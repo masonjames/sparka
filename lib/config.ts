@@ -62,15 +62,15 @@ export type SiteConfig = {
 };
 
 export const siteConfig: SiteConfig = {
-  githubUrl: "https://github.com/franciscomoretti/sparka",
-  appPrefix: "sparka-ai",
+  githubUrl: "https://github.com/franciscomoretti/chatjs",
+  appPrefix: "chatjs",
 
-  appName: "Sparka AI",
+  appName: "ChatJS",
   organization: {
-    name: "Sparka AI Ltd",
+    name: "ChatJS",
     contact: {
-      privacyEmail: "privacy@sparka.ai",
-      legalEmail: "legal@sparka.ai",
+      privacyEmail: "privacy@chatjs.dev",
+      legalEmail: "legal@chatjs.dev",
     },
   },
   services: {
