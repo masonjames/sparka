@@ -6,6 +6,7 @@
   "scripts": {
     "prebuild": "",
     "dev": "bun run skiller:apply && bash scripts/with-db.sh next dev",
+    "dev:inspect": "bun run skiller:apply && bash scripts/with-db.sh next dev --inspect",
     "build": "tsx lib/db/migrate && next build",
     "analyze": "next experimental-analyze",
     "start": "next start",
