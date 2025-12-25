@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { siteConfig } from "./config";
 
 export const env = createEnv({
   server: {
@@ -8,7 +9,7 @@ export const env = createEnv({
     AUTH_SECRET: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
 
-    // One of the authentication providers must be configured
+    // Authentication providers (enable in lib/config.ts)
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
@@ -23,13 +24,13 @@ export const env = createEnv({
     // Optional cleanup cron job secret
     CRON_SECRET: z.string().optional(),
 
-    // Optional features
+    // Optional features (enable in lib/config.ts)
     REDIS_URL: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
     TAVILY_API_KEY: z.string().optional(),
     EXA_API_KEY: z.string().optional(),
     FIRECRAWL_API_KEY: z.string().optional(),
-    MCP_ENCRYPTION_KEY: z.string().length(44).optional(), // 44 bytes base64
+    MCP_ENCRYPTION_KEY: z.string().length(44).optional(),
 
     // Misc / platform
     VERCEL_URL: z.string().optional(),
@@ -39,23 +40,98 @@ export const env = createEnv({
   experimental__runtimeEnv: {},
 });
 
-if (
-  typeof window === "undefined" &&
-  !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET) &&
-  !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET) &&
-  !(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET)
-) {
-  throw new Error(
-    "No social auth providers configured: enable Google (AUTH_GOOGLE_ID/SECRET), GitHub (AUTH_GITHUB_ID/SECRET), or Vercel (VERCEL_APP_CLIENT_ID/SECRET)."
-  );
-}
+type ValidationError = { feature: string; missing: string[] };
 
-// VERCEL_OIDC_TOKEN is not set on Middleware so this can't be a runtime error
-// if (
-//   typeof window === "undefined" &&
-//   !(env.VERCEL_OIDC_TOKEN || env.AI_GATEWAY_API_KEY)
-// ) {
-//   throw new Error(
-//     "No AI Gateway API key or Vercel OIDC token configured. Please set one of them in the environment variables."
-//   );
-// }
+/**
+ * Validates that enabled features in siteConfig have their required env vars.
+ * Call at server startup (instrumentation.ts).
+ * Throws in production, warns in development.
+ */
+export function validateConfig(): void {
+  const errors: ValidationError[] = [];
+
+  // Validate integrations
+  if (siteConfig.integrations.webSearch && !env.TAVILY_API_KEY) {
+    errors.push({
+      feature: "integrations.webSearch",
+      missing: ["TAVILY_API_KEY"],
+    });
+  }
+
+  if (siteConfig.integrations.openai && !env.OPENAI_API_KEY) {
+    errors.push({
+      feature: "integrations.openai",
+      missing: ["OPENAI_API_KEY"],
+    });
+  }
+
+  if (siteConfig.integrations.mcp && !env.MCP_ENCRYPTION_KEY) {
+    errors.push({
+      feature: "integrations.mcp",
+      missing: ["MCP_ENCRYPTION_KEY"],
+    });
+  }
+
+  // Validate authentication
+  if (
+    siteConfig.authentication.google &&
+    (!env.AUTH_GOOGLE_ID || !env.AUTH_GOOGLE_SECRET)
+  ) {
+    const missing = [];
+    if (!env.AUTH_GOOGLE_ID) missing.push("AUTH_GOOGLE_ID");
+    if (!env.AUTH_GOOGLE_SECRET) missing.push("AUTH_GOOGLE_SECRET");
+    errors.push({ feature: "authentication.google", missing });
+  }
+
+  if (
+    siteConfig.authentication.github &&
+    (!env.AUTH_GITHUB_ID || !env.AUTH_GITHUB_SECRET)
+  ) {
+    const missing = [];
+    if (!env.AUTH_GITHUB_ID) missing.push("AUTH_GITHUB_ID");
+    if (!env.AUTH_GITHUB_SECRET) missing.push("AUTH_GITHUB_SECRET");
+    errors.push({ feature: "authentication.github", missing });
+  }
+
+  if (
+    siteConfig.authentication.vercel &&
+    (!env.VERCEL_APP_CLIENT_ID || !env.VERCEL_APP_CLIENT_SECRET)
+  ) {
+    const missing = [];
+    if (!env.VERCEL_APP_CLIENT_ID) missing.push("VERCEL_APP_CLIENT_ID");
+    if (!env.VERCEL_APP_CLIENT_SECRET) missing.push("VERCEL_APP_CLIENT_SECRET");
+    errors.push({ feature: "authentication.vercel", missing });
+  }
+
+  // Check at least one auth provider is enabled and configured
+  const hasAuth =
+    (siteConfig.authentication.google &&
+      env.AUTH_GOOGLE_ID &&
+      env.AUTH_GOOGLE_SECRET) ||
+    (siteConfig.authentication.github &&
+      env.AUTH_GITHUB_ID &&
+      env.AUTH_GITHUB_SECRET) ||
+    (siteConfig.authentication.vercel &&
+      env.VERCEL_APP_CLIENT_ID &&
+      env.VERCEL_APP_CLIENT_SECRET);
+
+  if (!hasAuth) {
+    errors.push({
+      feature: "authentication",
+      missing: ["At least one auth provider must be enabled and configured"],
+    });
+  }
+
+  if (errors.length > 0) {
+    const message = errors
+      .map((e) => `  - ${e.feature}: ${e.missing.join(", ")}`)
+      .join("\n");
+
+    const fullMessage = `Config validation failed:\n${message}\n\nEither set the env vars or disable the feature in lib/config.ts`;
+
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(fullMessage);
+    }
+    console.warn(`⚠️  ${fullMessage}`);
+  }
+}

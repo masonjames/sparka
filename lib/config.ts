@@ -121,7 +121,7 @@ export const siteConfig: SiteConfig = {
     sandbox: true,
     webSearch: true,
     openai: true,
-    mcp: true,
+    mcp: false,
   },
 
   legal: {
