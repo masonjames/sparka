@@ -37,7 +37,7 @@ function PureMessagesPane({
           "z-10 w-full",
           hasMessages
             ? "relative @[500px]:bottom-4 shrink-0"
-            : "flex min-h-0 flex-1 items-center justify-center"
+            : "flex min-h-0 flex-1 items-end @[500px]:items-center justify-center"
         )}
       >
         {isReadonly ? (
