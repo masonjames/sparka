@@ -20,13 +20,14 @@ export interface AnonymousMessage extends DBMessage {
 }
 
 export const ANONYMOUS_LIMITS = {
-  CREDITS: process.env.NODE_ENV === "production" ? 10 : 1000,
+  // Credits in cents - 10 cents in prod, 100 cents ($1) in dev
+  CREDITS: process.env.NODE_ENV === "production" ? 10 : 100,
   AVAILABLE_MODELS: ANONYMOUS_AVAILABLE_MODELS,
   AVAILABLE_TOOLS: ["createDocument", "updateDocument"] satisfies ToolName[],
   SESSION_DURATION: 2_147_483_647, // Max session time
   // Rate limiting for anonymous users based on IP
   RATE_LIMIT: {
     REQUESTS_PER_MINUTE: process.env.NODE_ENV === "production" ? 5 : 60,
-    REQUESTS_PER_MONTH: process.env.NODE_ENV === "production" ? 10 : 1000, // Same as MAX_MESSAGES
+    REQUESTS_PER_MONTH: process.env.NODE_ENV === "production" ? 20 : 1000,
   },
 } as const;
