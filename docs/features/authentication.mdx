@@ -5,7 +5,21 @@ description: "User authentication with Better Auth"
 
 ChatJS uses [Better Auth](https://better-auth.com) for authentication, supporting multiple OAuth providers and anonymous guest access.
 
-## Supported Providers
+## Configuration
+
+Enable providers in `lib/config.ts`:
+
+```typescript title="lib/config.ts"
+authentication: {
+  google: false, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+  github: true,  // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
+  vercel: false, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+},
+```
+
+At least one provider must be enabled and configured.
+
+## Environment Variables
 
 | Provider | Environment Variables |
 |----------|----------------------|
@@ -13,22 +27,14 @@ ChatJS uses [Better Auth](https://better-auth.com) for authentication, supportin
 | Google | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` |
 | Vercel | `VERCEL_APP_CLIENT_ID`, `VERCEL_APP_CLIENT_SECRET` |
 
-Providers auto-enable when credentials are configured:
-
-```typescript title="lib/config.ts"
-authentication: {
-  google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
-  github: Boolean(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET),
-  vercel: Boolean(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET),
-},
-```
+The `validateConfig()` function in `lib/env.ts` runs at server startup. It checks that enabled providers have their required env vars set. Missing vars throw in production and warn in development.
 
 ## Anonymous Mode
 
 Users can try the app without signing up. Anonymous sessions:
 - Have limited message credits
-- Access a subset of models
-- Don't persist chat history to database
+- Access a subset of models and tools
+- Do not persist chat history to database
 
 ```typescript title="lib/types/anonymous.ts"
 export const ANONYMOUS_LIMITS = {
@@ -36,18 +42,6 @@ export const ANONYMOUS_LIMITS = {
   AVAILABLE_MODELS: ["claude-3-5-haiku", "gpt-4o-mini", ...],
   AVAILABLE_TOOLS: ["webSearch"],
 };
-```
-
-## Session Handling
-
-Get the current session in server components:
-
-```typescript
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-
-const session = await auth.api.getSession({ headers: await headers() });
-const userId = session?.user?.id;
 ```
 
 ## Auth Secret
