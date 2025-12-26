@@ -1,43 +1,56 @@
 ---
-title: "ChatJS"
-description: "Ship AI chat apps 10x faster"
+title: "Introduction"
+description: "The fastest way to ship AI chat apps"
 ---
 
-Build production-ready AI chat applications with battle-tested patterns and a complete starter template.
-
-## Two Ways to Use ChatJS
+Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-ready foundation with authentication, 120+ models, streaming, and tools so you can focus on what makes your app unique.
 
 <CardGroup cols={2}>
-  <Card title="Patterns" icon="book" href="/patterns/index">
-    Reusable solutions for complex AI chat functionality. Copy-paste
-    implementations for tools, streaming, branching, and more.
+  <Card title="Get Started" icon="rocket" href="/quickstart">
+    Clone, configure, deploy. Go from zero to production in minutes.
   </Card>
-  <Card title="Start" icon="rocket" href="/quickstart">
-    Full-featured starter app. Clone, configure, deploy. Auth, 120+ models,
-    attachments, and tools included.
+  <Card title="Live Demo" icon="sparkles" href="https://chatjs.dev">
+    See it in action before you build.
+  </Card>
+</CardGroup>
+
+## Why ChatJS?
+
+Every AI chat app needs the same boring stuff: auth, message persistence, streaming, file uploads, model switching. You've probably built it before. Maybe twice.
+
+ChatJS packages all of that into a single, well-architected codebase. Fork it, customize it, ship it.
+
+<CardGroup cols={2}>
+  <Card title="Not a Framework" icon="cube">
+    It's your code. No dependencies to update, no breaking changes, no vendor
+    lock-in. Eject nothing because you own everything.
+  </Card>
+  <Card title="Battle-Tested Patterns" icon="shield-check">
+    Real solutions extracted from production apps. Resumable streams,
+    conversation branching, tool orchestration—already solved.
   </Card>
 </CardGroup>
 
 ## What's Included
 
 <CardGroup cols={3}>
-  <Card title="120+ AI Models" icon="robot">
-    Claude, GPT, Gemini, Grok via unified API
+  <Card title="120+ Models" icon="robot">
+    Claude, GPT, Gemini, Grok, Llama—one API
   </Card>
-  <Card title="Authentication" icon="lock">
-    Better Auth with GitHub, Google, anonymous mode
+  <Card title="Auth" icon="lock">
+    GitHub, Google, anonymous. Ready to go.
   </Card>
   <Card title="Attachments" icon="paperclip">
-    Images, PDFs, documents in conversations
+    Images, PDFs, docs. Drag and drop.
   </Card>
-  <Card title="Tool Calling" icon="wrench">
-    Web search, code execution, image generation
+  <Card title="Tools" icon="wrench">
+    Web search, code exec, image gen
   </Card>
   <Card title="Streaming" icon="bolt">
-    Resumable streams with Redis support
+    Resumable with Redis fallback
   </Card>
-  <Card title="Chat Branching" icon="code-branch">
-    Alternative conversation paths
+  <Card title="Branching" icon="code-branch">
+    Fork conversations, explore alternatives
   </Card>
 </CardGroup>
 
@@ -66,18 +79,3 @@ Build production-ready AI chat applications with battle-tested patterns and a co
 - [Streamdown](https://streamdown.ai/) - Markdown for AI streaming
 - [AI Elements](https://ai-sdk.dev/elements/overview) - AI-native Components
 - [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
-
-## Quick Start
-
-```bash
-git clone https://github.com/franciscomoretti/chatjs.git
-cd chatjs
-bun install
-cp .env.example .env.local
-bun db:migrate
-bun dev
-```
-
-<Card title="Full Setup Guide" icon="arrow-right" href="/quickstart">
-  Environment variables, database setup, deployment options
-</Card>
