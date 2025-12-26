@@ -30,7 +30,7 @@ function snapshotAllChatsQueries(
 
 function restoreAllChatsQueries(
   qc: ReturnType<typeof useQueryClient>,
-  snapshot: Array<[QueryKey, UIChat[] | undefined]>
+  snapshot: [QueryKey, UIChat[] | undefined][]
 ) {
   for (const [k, data] of snapshot) {
     qc.setQueryData(k, data);
@@ -91,7 +91,7 @@ export function useDeleteChat() {
     onMutate: async ({
       chatId,
     }): Promise<{
-      previousAllChats?: Array<[QueryKey, UIChat[] | undefined]>;
+      previousAllChats?: [QueryKey, UIChat[] | undefined][];
     }> => {
       if (!isAuthenticated) {
         return { previousAllChats: undefined };
@@ -151,7 +151,7 @@ export function useRenameChat() {
       chatId,
       title,
     }): Promise<{
-      previousAllChats?: Array<[QueryKey, UIChat[] | undefined]>;
+      previousAllChats?: [QueryKey, UIChat[] | undefined][];
       previousChatById?: UIChat | null;
     }> => {
       if (!isAuthenticated) {
@@ -249,7 +249,7 @@ export function usePinChat() {
       chatId,
       isPinned,
     }): Promise<{
-      previousAllChats?: Array<[QueryKey, UIChat[] | undefined]>;
+      previousAllChats?: [QueryKey, UIChat[] | undefined][];
     }> => {
       if (!isAuthenticated) {
         return { previousAllChats: undefined };
