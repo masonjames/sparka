@@ -48,6 +48,7 @@ cp .env.example .env.local
     | GitHub | `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` |
     | Google | `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` |
     | Vercel | `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET` |
+
   </Tab>
   <Tab title="Self-hosted">
     ### Required
@@ -66,6 +67,7 @@ cp .env.example .env.local
     | GitHub | `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` |
     | Google | `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` |
     | Vercel | `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET` |
+
   </Tab>
 </Tabs>
 
@@ -73,18 +75,18 @@ cp .env.example .env.local
 
 These work on both Vercel and self-hosted:
 
-| Variable | Description |
-|----------|-------------|
-| `CRON_SECRET` | Cleanup cron job |
-| `REDIS_URL` | Resumable streams |
-| `OPENAI_API_KEY` | Direct OpenAI access |
-| `TAVILY_API_KEY` | Web search |
-| `EXA_API_KEY` | Web search |
-| `FIRECRAWL_API_KEY` | Web scraping |
-| `LANGFUSE_PUBLIC_KEY` | Observability |
-| `LANGFUSE_SECRET_KEY` | Observability |
-| `LANGFUSE_BASE_URL` | Custom Langfuse URL |
-| `MCP_ENCRYPTION_KEY` | MCP connectors |
+| Variable              | Description          |
+| --------------------- | -------------------- |
+| `CRON_SECRET`         | Cleanup cron job     |
+| `REDIS_URL`           | Resumable streams    |
+| `OPENAI_API_KEY`      | Direct OpenAI access |
+| `TAVILY_API_KEY`      | Web search           |
+| `EXA_API_KEY`         | Web search           |
+| `FIRECRAWL_API_KEY`   | Web scraping         |
+| `LANGFUSE_PUBLIC_KEY` | Observability        |
+| `LANGFUSE_SECRET_KEY` | Observability        |
+| `LANGFUSE_BASE_URL`   | Custom Langfuse URL  |
+| `MCP_ENCRYPTION_KEY`  | MCP connectors       |
 
 ## Database Setup
 
@@ -95,27 +97,28 @@ bun db:migrate
 <Accordion title="Development with Neon Branching">
   When working on schema changes, use Neon branching to avoid affecting production:
 
-  ```bash
-  # First time: authenticate
-  bunx neonctl auth
-  bunx neonctl set-context --project-id <your-project-id>
+```bash
+# First time: authenticate
+bunx neonctl auth
+bunx neonctl set-context --project-id <your-project-id>
 
-  # Quick workflow
-  bun db:branch:start    # Create dev-local branch
-  bun dev                # Uses branch DB
-  bun db:generate
-  bun db:migrate
-  bun db:branch:stop     # Delete branch, switch to main
-  ```
+# Quick workflow
+bun db:branch:start    # Create dev-local branch
+bun dev                # Uses branch DB
+bun db:generate
+bun db:migrate
+bun db:branch:stop     # Delete branch, switch to main
+```
 
-  | Command | Description |
-  |---------|-------------|
-  | `bun db:branch:start [name]` | Create and switch to branch |
-  | `bun db:branch:stop [name]` | Delete branch, switch to main |
-  | `bun db:branch:use [name]` | Switch to branch |
-  | `bun db:branch:create [name]` | Create branch only |
-  | `bun db:branch:delete [name]` | Delete branch only |
-  | `bun db:branch:list` | List all branches |
+| Command                       | Description                   |
+| ----------------------------- | ----------------------------- |
+| `bun db:branch:start [name]`  | Create and switch to branch   |
+| `bun db:branch:stop [name]`   | Delete branch, switch to main |
+| `bun db:branch:use [name]`    | Switch to branch              |
+| `bun db:branch:create [name]` | Create branch only            |
+| `bun db:branch:delete [name]` | Delete branch only            |
+| `bun db:branch:list`          | List all branches             |
+
 </Accordion>
 
 ## Run Development Server
