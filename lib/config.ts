@@ -116,12 +116,11 @@ export const siteConfig: SiteConfig = {
     paymentProcessors: [],
   },
 
-  // Set to true to enable - ensure env vars are configured
   integrations: {
-    sandbox: true,
-    webSearch: true,
-    openai: true,
-    mcp: false,
+    sandbox: true, // Vercel-native, no key needed
+    webSearch: true, // Requires TAVILY_API_KEY or EXA_API_KEY
+    openai: true, // Requires OPENAI_API_KEY
+    mcp: false, // Requires MCP_ENCRYPTION_KEY
   },
 
   legal: {
@@ -141,10 +140,9 @@ export const siteConfig: SiteConfig = {
     },
   },
 
-  // Set to true to enable - ensure env vars are configured
   authentication: {
-    google: false,
-    github: true,
-    vercel: false,
+    google: false, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+    github: true, // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
+    vercel: false, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
 };

@@ -43,6 +43,11 @@
           "anchor": "GitHub",
           "href": "https://github.com/franciscomoretti/chatjs",
           "icon": "github"
+        },
+        {
+          "anchor": "Demo",
+          "href": "https://chatjs.dev",
+          "icon": "play"
         }
       ]
     }
