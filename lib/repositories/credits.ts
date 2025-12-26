@@ -8,7 +8,7 @@ async function ensureUserCreditRow(userId: string) {
 }
 
 /**
- * Get user's current credit balance (in dollars).
+ * Get user's current credit balance (in cents).
  */
 export async function getCredits(userId: string): Promise<number> {
   let rows = await db

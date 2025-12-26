@@ -24,8 +24,8 @@ export const userCredit = pgTable("UserCredit", {
     .primaryKey()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  credits: integer("credits").notNull().default(100),
-  reservedCredits: integer("reservedCredits").notNull().default(0),
+  /** Balance in cents. Default = $0.50 */
+  credits: integer("credits").notNull().default(50),
 });
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
