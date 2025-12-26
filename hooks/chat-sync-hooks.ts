@@ -9,7 +9,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -20,6 +20,9 @@ import type { UIChat } from "@/lib/types/ui-chat";
 import { useChatId } from "@/providers/chat-id-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
+
+// Query key for anonymous credits - allows invalidation after messages
+export const ANONYMOUS_CREDITS_KEY = ["anonymousCredits"] as const;
 
 function snapshotAllChatsQueries(
   qc: ReturnType<typeof useQueryClient>,
@@ -366,21 +369,26 @@ export function useSaveMessageMutation() {
       return { previousMessages, chatId };
     },
     onSuccess: async (_data, { message, chatId }) => {
-      if (isAuthenticated && message.role === "assistant") {
-        // TODO: Move this to the data-stream-handler (earlier) once the query cache is independent of message
-        confirmChatId(chatId);
-        qc.invalidateQueries({
-          queryKey: trpc.credits.getAvailableCredits.queryKey(),
-        });
-        await Promise.all([
+      if (message.role === "assistant") {
+        if (isAuthenticated) {
+          // TODO: Move this to the data-stream-handler (earlier) once the query cache is independent of message
+          confirmChatId(chatId);
           qc.invalidateQueries({
-            queryKey: trpc.chat.getAllChats.queryKey(),
-            exact: false,
-          }),
-          qc.invalidateQueries({
-            queryKey: trpc.chat.getChatById.queryKey({ chatId }),
-          }),
-        ]);
+            queryKey: trpc.credits.getAvailableCredits.queryKey(),
+          });
+          await Promise.all([
+            qc.invalidateQueries({
+              queryKey: trpc.chat.getAllChats.queryKey(),
+              exact: false,
+            }),
+            qc.invalidateQueries({
+              queryKey: trpc.chat.getChatById.queryKey({ chatId }),
+            }),
+          ]);
+        } else {
+          // Refresh anonymous credits from cookie
+          qc.invalidateQueries({ queryKey: ANONYMOUS_CREDITS_KEY });
+        }
       }
     },
   });
@@ -518,22 +526,20 @@ export function useGetCredits() {
     enabled: isAuthenticated,
   });
 
-  const [anonymousCredits, setAnonymousCredits] = useState<number>(
-    ANONYMOUS_LIMITS.CREDITS
-  );
-
-  useEffect(() => {
-    if (!isAuthenticated) {
+  // Use a query for anonymous credits so we can invalidate it
+  const { data: anonymousCredits } = useQuery({
+    queryKey: ANONYMOUS_CREDITS_KEY,
+    queryFn: () => {
       const anonymousSession = getAnonymousSession();
-      setAnonymousCredits(
-        anonymousSession?.remainingCredits ?? ANONYMOUS_LIMITS.CREDITS
-      );
-    }
-  }, [isAuthenticated]);
+      return anonymousSession?.remainingCredits ?? ANONYMOUS_LIMITS.CREDITS;
+    },
+    enabled: !isAuthenticated,
+    staleTime: 0,
+  });
 
   if (!isAuthenticated) {
     return {
-      credits: anonymousCredits,
+      credits: anonymousCredits ?? ANONYMOUS_LIMITS.CREDITS,
       isLoadingCredits: false,
     };
   }
