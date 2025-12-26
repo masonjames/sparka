@@ -3,54 +3,105 @@ title: "Multi-Model Support"
 description: "Access 120+ AI models through a unified API"
 ---
 
-ChatJS uses the Vercel AI SDK to provide access to 120+ models from multiple providers through a single, unified interface.
+ChatJS provides access to 120+ models from multiple providers through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway).
 
-## Supported Providers
+## Model Registry Architecture
 
-- **Anthropic**: Claude 4, Claude 3.5
-- **OpenAI**: GPT-5, GPT-4o, o1, o3
-- **Google**: Gemini 2.5, Gemini 2.0
-- **xAI**: Grok 3, Grok 2
-- **Meta**: Llama 4, Llama 3.3
-- **Mistral**: Mistral Large, Codestral
-- **DeepSeek**: DeepSeek R1, V3
-- **And more**: Cohere, Perplexity, Amazon, Alibaba
+### Auto-Update (Runtime)
 
-## How It Works
-
-Models are accessed via the Vercel AI Gateway, which routes requests to the appropriate provider:
+The app fetches available models from the AI Gateway API at runtime. Results are cached for 1 hour.
 
 ```typescript
-import { getAppModelDefinition } from "@/lib/ai/app-models";
-
-const model = await getAppModelDefinition("claude-4-sonnet");
+// lib/ai/models.ts
+export const fetchModels = unstable_cache(
+  async (): Promise<ModelData[]> => {
+    const models = await fetchModelsRaw();
+    return models.map(toModelData);
+  },
+  ["ai-gateway-models"],
+  { revalidate: 3600, tags: ["ai-gateway-models"] }
+);
 ```
 
-## Model Selection
+When no API key is available, the app falls back to a static snapshot in `models.generated.ts`.
 
-Users select models from the chat interface. The selected model ID is passed in message metadata:
+### Manual Update (Build-time)
+
+To refresh the fallback snapshot, run:
+
+```bash
+bun fetch:models
+```
+
+This fetches current models from the gateway and writes them to `lib/ai/models.generated.ts`. Run this periodically to keep the fallback fresh.
+
+## Model Configuration
+
+Model behavior is configured in `lib/ai/app-models.ts`.
+
+### Disabled Models
+
+Some models can be hard-blocked from appearing:
 
 ```typescript
-const selectedModelId = userMessage.metadata?.selectedModel;
+const DISABLED_MODELS: Partial<Record<ModelId, true>> = {
+  "morph/morph-v3-large": true,
+};
 ```
 
-## Adding New Models
+### Provider Sort Order
 
-Models are defined in `lib/ai/app-models.ts`. To add a new model:
+Models are sorted in the selector by provider priority:
 
 ```typescript
-{
-  id: "your-model-id",
-  name: "Model Display Name",
-  provider: "provider-name",
-  reasoning: false,
-  input: true,
-  // ... capabilities
-}
+const PROVIDER_ORDER = ["openai", "google", "anthropic", "xai"];
 ```
 
-## API Gateway
+Providers not in this list appear after these four.
 
-You need either:
-- `VERCEL_OIDC_TOKEN`: Auto-provided on Vercel
-- `AI_GATEWAY_API_KEY`: For self-hosted deployments
+### Default Models
+
+Various default model constants control which model is used for specific tasks:
+
+```typescript
+export const DEFAULT_CHAT_MODEL: ModelId = "openai/gpt-5-nano";
+export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
+// ... and more for PDF, artifacts, suggestions, etc.
+```
+
+## Reasoning Variants
+
+Models that support extended thinking are automatically split into two variants:
+
+- `{model-id}` (standard mode)
+- `{model-id}-reasoning` (extended thinking enabled)
+
+This happens automatically in `buildAppModels()` for any model with `reasoning: true`.
+
+## Visibility Pipeline
+
+Model visibility is determined through a pipeline:
+
+### Authenticated Users
+
+1. **Remove** disabled models (`DISABLED_MODELS`)
+2. **Apply defaults** (`CURATED_DEFAULT_MODELS` + any new API models not in `models.generated.ts`)
+3. **Apply user overrides** from saved preferences
+
+### Anonymous Users
+
+1. **Remove** disabled models
+2. **Filter** to `ANONYMOUS_AVAILABLE_MODELS` only
+
+## User Settings
+
+Users configure their model preferences at `/settings/models`. This page lets users toggle individual models on or off. A link to [AI Registry](https://airegistry.app) provides detailed model information.
+
+## Environment Variables
+
+The AI Gateway handles authentication with all providers. You do not need individual API keys for OpenAI, Anthropic, Google, etc. Instead, you authenticate with the gateway using one of these:
+
+- `VERCEL_OIDC_TOKEN` (automatically provided on Vercel deployments)
+- `AI_GATEWAY_API_KEY` (for self-hosted deployments, obtain from [Vercel AI Gateway](https://vercel.com/docs/ai-gateway))
+
+Without either key, the app uses the fallback model list and cannot make API calls to providers.
