@@ -26,18 +26,11 @@ import { systemPrompt } from "@/lib/ai/prompts";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
 import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
-import {
-  getAnonymousSession,
-  setAnonymousSession,
-} from "@/lib/anonymous-session-server";
+import { getAnonymousSession } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
 import { siteConfig } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
-import type { CreditReservation } from "@/lib/credits/credit-reservation";
-import {
-  filterAffordableTools,
-  getBaseModelCostByModelId,
-} from "@/lib/credits/credits-utils";
+import { calculateLLMCostFromModel } from "@/lib/credits/cost-utils";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
   getChatById,
@@ -52,12 +45,12 @@ import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
+import { canSpend, deductCredits } from "@/lib/repositories/credits";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
-import { getCreditReservation } from "./get-credit-reservation";
 import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";
 
 // Create shared Redis clients for resumable stream and cleanup
@@ -248,139 +241,78 @@ async function handleChatValidation({
   return null;
 }
 
-async function handleCreditReservation({
+async function checkUserCanSpend({
   userId,
   isAnonymous,
-  baseModelCost,
   anonymousSession,
 }: {
   userId: string | null;
   isAnonymous: boolean;
-  baseModelCost: number;
   anonymousSession: AnonymousSession | null;
-}): Promise<{
-  reservation: CreditReservation | null;
-  error: Response | null;
-}> {
+}): Promise<{ error: Response | null }> {
   if (!isAnonymous) {
     if (!userId) {
       return {
-        reservation: null,
         error: new Response("User ID is required for authenticated users", {
           status: 401,
         }),
       };
     }
 
-    const { reservation: res, error: creditError } = await getCreditReservation(
-      userId,
-      baseModelCost
-    );
-
-    if (creditError) {
-      console.log(
-        "RESPONSE > POST /api/chat: Credit reservation error:",
-        creditError
-      );
+    const userCanSpend = await canSpend(userId);
+    if (!userCanSpend) {
       return {
-        reservation: null,
-        error: new Response(creditError, {
-          status: 402,
-        }),
+        error: new Response("Insufficient credits", { status: 402 }),
       };
     }
 
-    return { reservation: res, error: null };
+    return { error: null };
   }
 
-  if (anonymousSession) {
-    // Increment message count and update session
-    anonymousSession.remainingCredits -= baseModelCost;
-    await setAnonymousSession(anonymousSession);
+  // Check anonymous session credits
+  if (anonymousSession && anonymousSession.remainingCredits <= 0) {
+    return {
+      error: new Response("Anonymous credits exhausted", { status: 402 }),
+    };
   }
 
-  return { reservation: null, error: null };
+  return { error: null };
 }
 
 /**
- * Determines which built-in tools are allowed based on budget and model capabilities.
- * This is purely about pricing & model gating for static ToolNames.
+ * Determines which built-in tools are allowed based on model capabilities.
  * MCP tools are handled separately in core-chat-agent.
  */
-function determineBudgetAllowedTools({
+function determineAllowedTools({
   isAnonymous,
-  reservation,
-  baseModelCost,
   modelDefinition,
   explicitlyRequestedTools,
 }: {
   isAnonymous: boolean;
-  reservation: CreditReservation | null;
-  baseModelCost: number;
   modelDefinition: AppModelDefinition;
   explicitlyRequestedTools: ToolName[] | null;
-}): {
-  budgetAllowedTools: ToolName[];
-  error: Response | null;
-} {
-  const log = createModuleLogger("api:chat:tools");
-
-  const availableBudget = isAnonymous
-    ? ANONYMOUS_LIMITS.CREDITS
-    : (reservation?.budget ?? baseModelCost);
-  const remainingBudget = availableBudget - baseModelCost;
-
-  let budgetAllowedTools: ToolName[] = filterAffordableTools(
-    isAnonymous ? ANONYMOUS_LIMITS.AVAILABLE_TOOLS : allTools,
-    remainingBudget
-  );
+}): ToolName[] {
+  // Start with all tools or anonymous-limited tools
+  let allowedTools: ToolName[] = isAnonymous
+    ? [...ANONYMOUS_LIMITS.AVAILABLE_TOOLS]
+    : [...allTools];
 
   // Disable all tools for models with unspecified features
-  if (modelDefinition?.input) {
-    // Let's not allow deepResearch if the model support reasoning (it's expensive and slow)
-    if (
-      modelDefinition.reasoning &&
-      budgetAllowedTools.some((tool: ToolName) => tool === "deepResearch")
-    ) {
-      budgetAllowedTools = budgetAllowedTools.filter(
-        (tool: ToolName) => tool !== "deepResearch"
-      );
-    }
-  } else {
-    budgetAllowedTools = [];
+  if (!modelDefinition?.input) {
+    return [];
   }
 
-  if (
-    explicitlyRequestedTools &&
-    explicitlyRequestedTools.length > 0 &&
-    !budgetAllowedTools.some((tool: ToolName) =>
-      explicitlyRequestedTools.includes(tool)
-    )
-  ) {
-    log.warn(
-      { explicitlyRequestedTools },
-      "Insufficient budget for requested tool"
-    );
-    return {
-      budgetAllowedTools: [],
-      error: new Response(
-        `Insufficient budget for requested tool: ${explicitlyRequestedTools}.`,
-        {
-          status: 402,
-        }
-      ),
-    };
+  // Don't allow deepResearch if the model supports reasoning (expensive and slow)
+  if (modelDefinition.reasoning) {
+    allowedTools = allowedTools.filter((tool) => tool !== "deepResearch");
   }
 
+  // If specific tools were requested, use only those
   if (explicitlyRequestedTools && explicitlyRequestedTools.length > 0) {
-    log.debug(
-      { explicitlyRequestedTools },
-      "Setting explicitly requested tools"
-    );
-    budgetAllowedTools = explicitlyRequestedTools;
+    return explicitlyRequestedTools;
   }
 
-  return { budgetAllowedTools, error: null };
+  return allowedTools;
 }
 
 async function setupStreamContext({
@@ -434,13 +366,12 @@ async function createChatStream({
   userMessage,
   previousMessages,
   selectedModelId,
+  modelDefinition,
   selectedTool,
   userId,
-  budgetAllowedTools,
+  allowedTools,
   abortController,
   isAnonymous,
-  baseModelCost,
-  reservation,
   timeoutId,
   mcpConnectors,
 }: {
@@ -449,13 +380,12 @@ async function createChatStream({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
+  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
-  budgetAllowedTools: ToolName[];
+  allowedTools: ToolName[];
   abortController: AbortController;
   isAnonymous: boolean;
-  baseModelCost: number;
-  reservation: CreditReservation | null;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
 }) {
@@ -466,6 +396,9 @@ async function createChatStream({
     selectedTool && selectedTool in toolsDefinitions
       ? (selectedTool as ToolName)
       : null;
+
+  // Store usage for cost calculation
+  let finalUsage: { inputTokens?: number; outputTokens?: number } | undefined;
 
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
@@ -487,7 +420,7 @@ async function createChatStream({
         selectedModelId,
         selectedTool: narrowedSelectedTool,
         userId,
-        budgetAllowedTools,
+        budgetAllowedTools: allowedTools,
         abortSignal: abortController.signal,
         messageId,
         dataStream,
@@ -515,6 +448,8 @@ async function createChatStream({
 
             // when the message is finished, send additional information:
             if (part.type === "finish") {
+              // Capture usage for cost calculation
+              finalUsage = part.totalUsage;
               return {
                 ...initialMetadata,
                 isPartial: false,
@@ -540,30 +475,20 @@ async function createChatStream({
       });
     },
     generateId: () => messageId,
-    onFinish: async ({
-      messages,
-      isContinuation: _isContinuation,
-      responseMessage: _responseMessage,
-    }) => {
+    onFinish: async ({ messages }) => {
       clearTimeout(timeoutId);
       await finalizeMessageAndCredits({
         messages,
-        baseModelCost,
         userId,
         isAnonymous,
         chatId,
-        reservation,
+        modelDefinition,
+        usage: finalUsage ?? {},
       });
     },
     onError: () => {
       clearTimeout(timeoutId);
       log.error("onError");
-      // Release reserved credits on error
-      if (reservation) {
-        reservation.cleanup().catch((error) => {
-          log.error({ error }, "Failed to cleanup reservation in onError");
-        });
-      }
       return "Oops, an error occured!";
     },
   });
@@ -576,12 +501,11 @@ async function executeChatRequest({
   userMessage,
   previousMessages,
   selectedModelId,
+  modelDefinition,
   selectedTool,
   userId,
   isAnonymous,
-  baseModelCost,
-  budgetAllowedTools,
-  reservation,
+  allowedTools,
   abortController,
   timeoutId,
   mcpConnectors,
@@ -590,12 +514,11 @@ async function executeChatRequest({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
+  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
-  baseModelCost: number;
-  budgetAllowedTools: ToolName[];
-  reservation: CreditReservation | null;
+  allowedTools: ToolName[];
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
@@ -638,13 +561,12 @@ async function executeChatRequest({
     userMessage,
     previousMessages,
     selectedModelId,
+    modelDefinition,
     selectedTool,
     userId,
-    budgetAllowedTools,
+    allowedTools,
     abortController,
     isAnonymous,
-    baseModelCost,
-    reservation,
     timeoutId,
     mcpConnectors,
   });
@@ -796,43 +718,27 @@ async function prepareRequestContext({
   chatId,
   isAnonymous,
   anonymousPreviousMessages,
-  baseModelCost,
   modelDefinition,
-  reservation,
   explicitlyRequestedTools,
 }: {
   userMessage: ChatMessage;
   chatId: string;
   isAnonymous: boolean;
   anonymousPreviousMessages: ChatMessage[];
-  baseModelCost: number;
   modelDefinition: AppModelDefinition;
-  reservation: CreditReservation | null;
   explicitlyRequestedTools: ToolName[] | null;
 }): Promise<{
   previousMessages: ChatMessage[];
-  budgetAllowedTools: ToolName[];
+  allowedTools: ToolName[];
   error: Response | null;
 }> {
   const log = createModuleLogger("api:chat:prepare");
 
-  const toolsResult = determineBudgetAllowedTools({
+  const allowedTools = determineAllowedTools({
     isAnonymous,
-    reservation,
-    baseModelCost,
     modelDefinition,
     explicitlyRequestedTools,
   });
-
-  if (toolsResult.error) {
-    return {
-      previousMessages: [],
-      budgetAllowedTools: [],
-      error: toolsResult.error,
-    };
-  }
-
-  const budgetAllowedTools = toolsResult.budgetAllowedTools;
 
   // Validate input token limit (50k tokens for user message)
   const totalTokens = calculateMessagesTokens(
@@ -847,7 +753,7 @@ async function prepareRequestContext({
     );
     return {
       previousMessages: [],
-      budgetAllowedTools: [],
+      allowedTools: [],
       error: error.toResponse(),
     };
   }
@@ -860,50 +766,27 @@ async function prepareRequestContext({
       );
 
   const previousMessages = messageThreadToParent.slice(-5);
-  log.debug({ budgetAllowedTools }, "budget allowed tools");
+  log.debug({ allowedTools }, "allowed tools");
 
-  return { previousMessages, budgetAllowedTools, error: null };
+  return { previousMessages, allowedTools, error: null };
 }
 
 async function finalizeMessageAndCredits({
   messages,
-  baseModelCost,
   userId,
   isAnonymous,
   chatId,
-  reservation,
+  modelDefinition,
+  usage,
 }: {
   messages: ChatMessage[];
-  baseModelCost: number;
   userId: string | null;
   isAnonymous: boolean;
   chatId: string;
-  reservation: CreditReservation | null;
+  modelDefinition: AppModelDefinition;
+  usage: { inputTokens?: number; outputTokens?: number };
 }): Promise<void> {
   const log = createModuleLogger("api:chat:finalize");
-
-  if (!userId) {
-    return;
-  }
-
-  const actualCost =
-    baseModelCost +
-    messages
-      .flatMap((message) => message.parts)
-      .reduce((acc, toolResult) => {
-        if (!toolResult.type.startsWith("tool-")) {
-          return acc;
-        }
-
-        const toolDef =
-          toolsDefinitions[toolResult.type.replace("tool-", "") as ToolName];
-
-        if (!toolDef) {
-          return acc;
-        }
-
-        return acc + toolDef.cost;
-      }, 0);
 
   try {
     const assistantMessage = messages.at(-1);
@@ -920,16 +803,30 @@ async function finalizeMessageAndCredits({
       });
     }
 
-    // Finalize credit usage: deduct actual cost, release reservation
-    if (reservation) {
-      await reservation.finalize(actualCost);
+    // Calculate and deduct credits for authenticated users
+    if (userId && !isAnonymous && usage) {
+      // Calculate LLM cost from actual token usage
+      const llmCost = calculateLLMCostFromModel(usage, modelDefinition);
+
+      // Calculate tool costs (external API fees)
+      const toolCost = messages
+        .flatMap((message) => message.parts)
+        .reduce((acc, part) => {
+          if (!part.type.startsWith("tool-")) {
+            return acc;
+          }
+          const toolName = part.type.replace("tool-", "") as ToolName;
+          const toolDef = toolsDefinitions[toolName];
+          return acc + (toolDef?.cost ?? 0);
+        }, 0);
+
+      const totalCost = llmCost + toolCost;
+      log.debug({ llmCost, toolCost, totalCost }, "Deducting credits");
+
+      await deductCredits(userId, totalCost);
     }
   } catch (error) {
     log.error({ error }, "Failed to save chat or finalize credits");
-    // Still release the reservation on error
-    if (reservation) {
-      await reservation.cleanup();
-    }
   }
 }
 
@@ -938,13 +835,11 @@ async function handleRequestExecution({
   userMessage,
   previousMessages,
   selectedModelId,
+  modelDefinition,
   selectedTool,
   userId,
   isAnonymous,
-  anonymousSession,
-  baseModelCost,
-  budgetAllowedTools,
-  reservation,
+  allowedTools,
   abortController,
   timeoutId,
   mcpConnectors,
@@ -953,13 +848,11 @@ async function handleRequestExecution({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
+  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
-  anonymousSession: AnonymousSession | null;
-  baseModelCost: number;
-  budgetAllowedTools: ToolName[];
-  reservation: CreditReservation | null;
+  allowedTools: ToolName[];
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
@@ -971,12 +864,11 @@ async function handleRequestExecution({
       userMessage,
       previousMessages,
       selectedModelId,
+      modelDefinition,
       selectedTool,
       userId,
       isAnonymous,
-      baseModelCost,
-      budgetAllowedTools,
-      reservation,
+      allowedTools,
       abortController,
       timeoutId,
       mcpConnectors,
@@ -984,13 +876,6 @@ async function handleRequestExecution({
   } catch (error) {
     clearTimeout(timeoutId);
     log.error({ error }, "error found in try block");
-    if (reservation) {
-      await reservation.cleanup();
-    }
-    if (anonymousSession) {
-      anonymousSession.remainingCredits += baseModelCost;
-      await setAnonymousSession(anonymousSession);
-    }
     throw error;
   }
 }
@@ -1062,29 +947,23 @@ export async function POST(request: NextRequest) {
     const explicitlyRequestedTools =
       determineExplicitlyRequestedTools(selectedTool);
 
-    const baseModelCost = await getBaseModelCostByModelId(selectedModelId);
-
-    const creditResult = await handleCreditReservation({
+    // Check if user can spend (has positive credits)
+    const creditCheck = await checkUserCanSpend({
       userId,
       isAnonymous,
-      baseModelCost,
       anonymousSession,
     });
 
-    if (creditResult.error) {
-      return creditResult.error;
+    if (creditCheck.error) {
+      return creditCheck.error;
     }
-
-    const reservation = creditResult.reservation;
 
     const contextResult = await prepareRequestContext({
       userMessage,
       chatId,
       isAnonymous,
       anonymousPreviousMessages,
-      baseModelCost,
       modelDefinition,
-      reservation,
       explicitlyRequestedTools,
     });
 
@@ -1092,7 +971,7 @@ export async function POST(request: NextRequest) {
       return contextResult.error;
     }
 
-    const { previousMessages, budgetAllowedTools } = contextResult;
+    const { previousMessages, allowedTools } = contextResult;
 
     // Fetch MCP connectors for authenticated users (only if MCP integration enabled)
     const mcpConnectors: McpConnector[] =
@@ -1100,28 +979,22 @@ export async function POST(request: NextRequest) {
         ? await getMcpConnectorsByUserId({ userId })
         : [];
 
-    // Create AbortController with 55s timeout for credit cleanup
+    // Create AbortController with timeout
     const abortController = new AbortController();
-    const timeoutId = setTimeout(async () => {
-      if (reservation) {
-        await reservation.cleanup();
-      }
+    const timeoutId = setTimeout(() => {
       abortController.abort();
     }, 290_000); // 290 seconds
 
-    // Ensure cleanup on any unhandled errors
     return await handleRequestExecution({
       chatId,
       userMessage,
       previousMessages,
       selectedModelId,
+      modelDefinition,
       selectedTool,
       userId,
       isAnonymous,
-      anonymousSession,
-      baseModelCost,
-      budgetAllowedTools,
-      reservation,
+      allowedTools,
       abortController,
       timeoutId,
       mcpConnectors,

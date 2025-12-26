@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { userCredit } from "../db/schema";
 
@@ -7,138 +7,107 @@ async function ensureUserCreditRow(userId: string) {
   await db.insert(userCredit).values({ userId }).onConflictDoNothing();
 }
 
-export async function getUserCreditsInfo({ userId }: { userId: string }) {
-  let creditsRows = await db
-    .select({
-      credits: userCredit.credits,
-      reservedCredits: userCredit.reservedCredits,
-    })
+/**
+ * Get user's current credit balance (in dollars).
+ */
+export async function getCredits(userId: string): Promise<number> {
+  let rows = await db
+    .select({ credits: userCredit.credits })
     .from(userCredit)
     .where(eq(userCredit.userId, userId))
     .limit(1);
 
-  let userInfo = creditsRows[0];
-  if (!userInfo) {
+  if (rows.length === 0) {
     await ensureUserCreditRow(userId);
-    creditsRows = await db
-      .select({
-        credits: userCredit.credits,
-        reservedCredits: userCredit.reservedCredits,
-      })
+    rows = await db
+      .select({ credits: userCredit.credits })
       .from(userCredit)
       .where(eq(userCredit.userId, userId))
       .limit(1);
-    userInfo = creditsRows[0];
-    if (!userInfo) {
-      return null;
-    }
   }
 
+  return rows[0]?.credits ?? 0;
+}
+
+/**
+ * Check if user has positive credits (can spend).
+ */
+export async function canSpend(userId: string): Promise<boolean> {
+  const credits = await getCredits(userId);
+  return credits > 0;
+}
+
+/**
+ * Deduct credits from user. Allows going slightly negative for in-progress operations.
+ */
+export async function deductCredits(
+  userId: string,
+  amount: number
+): Promise<void> {
+  await db
+    .update(userCredit)
+    .set({
+      credits: sql`${userCredit.credits} - ${amount}`,
+    })
+    .where(eq(userCredit.userId, userId));
+}
+
+/**
+ * Add credits to user (for purchases, refunds, etc).
+ */
+export async function addCredits(
+  userId: string,
+  amount: number
+): Promise<void> {
+  await ensureUserCreditRow(userId);
+  await db
+    .update(userCredit)
+    .set({
+      credits: sql`${userCredit.credits} + ${amount}`,
+    })
+    .where(eq(userCredit.userId, userId));
+}
+
+// Legacy exports for backwards compatibility during migration
+export async function getUserCreditsInfo({ userId }: { userId: string }) {
+  const credits = await getCredits(userId);
   return {
-    totalCredits: userInfo.credits,
-    availableCredits: userInfo.credits - userInfo.reservedCredits,
-    reservedCredits: userInfo.reservedCredits,
+    totalCredits: credits,
+    availableCredits: credits,
+    reservedCredits: 0,
   };
 }
 
-export async function reserveAvailableCredits({
-  userId,
-  maxAmount,
-  minAmount,
-}: {
+// Keep old functions during migration - will be removed
+export async function reserveAvailableCredits(_args: {
   userId: string;
   maxAmount: number;
   minAmount: number;
 }): Promise<
-  | {
-      success: true;
-      reservedAmount: number;
-    }
-  | {
-      success: false;
-      error: string;
-    }
+  { success: true; reservedAmount: number } | { success: false; error: string }
 > {
-  try {
-    const userInfo = await getUserCreditsInfo({ userId });
-    if (!userInfo) {
-      return { success: false, error: "User credits not initialized" };
-    }
-
-    const availableCredits = userInfo.availableCredits;
-    const amountToReserve = Math.min(maxAmount, availableCredits);
-
-    if (amountToReserve < minAmount) {
-      return { success: false, error: "Insufficient credits" };
-    }
-
-    const result = await db
-      .update(userCredit)
-      .set({
-        reservedCredits: sql`${userCredit.reservedCredits} + ${amountToReserve}`,
-      })
-      .where(
-        and(
-          eq(userCredit.userId, userId),
-          gte(
-            sql`${userCredit.credits} - ${userCredit.reservedCredits}`,
-            amountToReserve
-          )
-        )
-      )
-      .returning({
-        credits: userCredit.credits,
-        reservedCredits: userCredit.reservedCredits,
-      });
-
-    if (result.length === 0) {
-      return { success: false, error: "Failed to reserve credits" };
-    }
-
-    return {
-      success: true,
-      reservedAmount: amountToReserve,
-    };
-  } catch (error) {
-    console.error("Failed to reserve available credits:", error);
-    return { success: false, error: "Failed to reserve credits" };
+  // No-op during migration - just check if user can spend
+  const canUserSpend = await canSpend(_args.userId);
+  if (!canUserSpend) {
+    return { success: false, error: "Insufficient credits" };
   }
+  return { success: true, reservedAmount: _args.maxAmount };
 }
 
 export async function finalizeCreditsUsage({
   userId,
-  reservedAmount,
   actualAmount,
 }: {
   userId: string;
   reservedAmount: number;
   actualAmount: number;
 }): Promise<void> {
-  await db
-    .update(userCredit)
-    .set({
-      credits: sql`${userCredit.credits} - ${actualAmount}`,
-      reservedCredits: sql`${userCredit.reservedCredits} - ${reservedAmount}`,
-    })
-    .where(eq(userCredit.userId, userId));
+  await deductCredits(userId, actualAmount);
 }
 
-export async function releaseReservedCredits({
-  userId,
-  amount,
-}: {
+export async function releaseReservedCredits(_args: {
   userId: string;
   amount: number;
 }): Promise<void> {
-  await db
-    .update(userCredit)
-    .set({
-      reservedCredits: sql`${userCredit.reservedCredits} - ${amount}`,
-    })
-    .where(
-      and(
-        eq(userCredit.userId, userId),
-        gte(userCredit.reservedCredits, amount)
-      )
-    );
+  // No-op - no more reservations
 }
