@@ -75,7 +75,7 @@ export function validateConfig(): void {
   // Validate authentication
   if (
     siteConfig.authentication.google &&
-    (!env.AUTH_GOOGLE_ID || !env.AUTH_GOOGLE_SECRET)
+    !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)
   ) {
     const missing = [];
     if (!env.AUTH_GOOGLE_ID) missing.push("AUTH_GOOGLE_ID");
@@ -85,7 +85,7 @@ export function validateConfig(): void {
 
   if (
     siteConfig.authentication.github &&
-    (!env.AUTH_GITHUB_ID || !env.AUTH_GITHUB_SECRET)
+    !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
   ) {
     const missing = [];
     if (!env.AUTH_GITHUB_ID) missing.push("AUTH_GITHUB_ID");
@@ -95,7 +95,7 @@ export function validateConfig(): void {
 
   if (
     siteConfig.authentication.vercel &&
-    (!env.VERCEL_APP_CLIENT_ID || !env.VERCEL_APP_CLIENT_SECRET)
+    !(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET)
   ) {
     const missing = [];
     if (!env.VERCEL_APP_CLIENT_ID) missing.push("VERCEL_APP_CLIENT_ID");

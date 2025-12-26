@@ -40,7 +40,8 @@
 - Language tags on all code blocks
 - Alt text on all images
 - Relative paths for internal links
-- Never use Em dashes (—).
+- Never use em dashes (U+2014).
+- Avoid semicolons in prose. Prefer two sentences or parentheses.
 
 ## Git workflow
 
