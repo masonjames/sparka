@@ -19,10 +19,6 @@ cp .env.example .env.local
 
 <Tabs>
   <Tab title="Vercel (Recommended)">
-    ### Deploy with Vercel
-
-    Use the deploy button to set up with Vercel Postgres and Blob integrations:
-
     [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/franciscomoretti/chatjs)
 
     After deploy, pull environment variables locally:
@@ -33,61 +29,62 @@ cp .env.example .env.local
     ```
 
     ### Provided Automatically
-    - `VERCEL_OIDC_TOKEN` — replaces `AI_GATEWAY_API_KEY`
-    - `DATABASE_URL` — via Vercel Postgres
-    - `BLOB_READ_WRITE_TOKEN` — via Vercel Blob
+    | Variable | Source |
+    |----------|--------|
+    | `VERCEL_OIDC_TOKEN` | Replaces `AI_GATEWAY_API_KEY` |
+    | `DATABASE_URL` | Vercel Postgres |
+    | `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
+    | `VERCEL_URL` | System |
+    | `VERCEL_PROJECT_PRODUCTION_URL` | System |
 
-    ### Required Variables
-    - `AUTH_SECRET` — [Generate one](https://generate-secret.vercel.app/32)
-    - One auth provider pair:
-      - `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET`
-      - `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`
-      - `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET`
+    ### Required
+    | Variable | Description |
+    |----------|-------------|
+    | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
+
+    ### Auth Provider (choose one pair)
+    | Provider | Variables |
+    |----------|-----------|
+    | GitHub | `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` |
+    | Google | `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` |
+    | Vercel | `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET` |
   </Tab>
   <Tab title="Self-hosted">
-    ### Required Variables
+    ### Required
+    | Variable | Description |
+    |----------|-------------|
+    | `DATABASE_URL` | PostgreSQL connection string |
+    | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token |
+    | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
+    | `AI_GATEWAY_API_KEY` | Or use `VERCEL_OIDC_TOKEN` |
+    | `VERCEL_URL` | Your deployment URL |
+    | `VERCEL_PROJECT_PRODUCTION_URL` | Production URL |
 
-    ```bash
-    DATABASE_URL=postgres://...
-    BLOB_READ_WRITE_TOKEN=...
-    AUTH_SECRET=...
-    AI_GATEWAY_API_KEY=...  # or VERCEL_OIDC_TOKEN
-    VERCEL_URL=...
-    VERCEL_PROJECT_PRODUCTION_URL=...
-    ```
-
-    ### Auth Provider (choose one)
-
-    ```bash
-    # GitHub
-    AUTH_GITHUB_ID=...
-    AUTH_GITHUB_SECRET=...
-
-    # Or Google
-    AUTH_GOOGLE_ID=...
-    AUTH_GOOGLE_SECRET=...
-
-    # Or Vercel
-    VERCEL_APP_CLIENT_ID=...
-    VERCEL_APP_CLIENT_SECRET=...
-    ```
-
-    ### Optional
-
-    ```bash
-    CRON_SECRET=...                 # Cleanup cron job
-    REDIS_URL=redis://...           # Resumable streams
-    OPENAI_API_KEY=...              # Direct OpenAI access
-    TAVILY_API_KEY=...              # Web search
-    EXA_API_KEY=...                 # Web search
-    FIRECRAWL_API_KEY=...           # Web scraping
-    LANGFUSE_PUBLIC_KEY=...         # Observability
-    LANGFUSE_SECRET_KEY=...
-    LANGFUSE_BASE_URL=...           # Custom Langfuse URL
-    MCP_ENCRYPTION_KEY=...          # MCP connectors
-    ```
+    ### Auth Provider (choose one pair)
+    | Provider | Variables |
+    |----------|-----------|
+    | GitHub | `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` |
+    | Google | `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` |
+    | Vercel | `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET` |
   </Tab>
 </Tabs>
+
+### Optional Variables
+
+These work on both Vercel and self-hosted:
+
+| Variable | Description |
+|----------|-------------|
+| `CRON_SECRET` | Cleanup cron job |
+| `REDIS_URL` | Resumable streams |
+| `OPENAI_API_KEY` | Direct OpenAI access |
+| `TAVILY_API_KEY` | Web search |
+| `EXA_API_KEY` | Web search |
+| `FIRECRAWL_API_KEY` | Web scraping |
+| `LANGFUSE_PUBLIC_KEY` | Observability |
+| `LANGFUSE_SECRET_KEY` | Observability |
+| `LANGFUSE_BASE_URL` | Custom Langfuse URL |
+| `MCP_ENCRYPTION_KEY` | MCP connectors |
 
 ## Database Setup
 
