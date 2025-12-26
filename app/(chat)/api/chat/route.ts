@@ -888,6 +888,21 @@ async function handleRequestExecution({
   }
 }
 
+const ANONYMOUS_COST_PER_MESSAGE = 1;
+
+async function preDeductAnonymousCredits(
+  isAnonymous: boolean,
+  anonymousSession: AnonymousSession | null
+) {
+  if (isAnonymous && anonymousSession) {
+    await setAnonymousSession({
+      ...anonymousSession,
+      remainingCredits:
+        anonymousSession.remainingCredits - ANONYMOUS_COST_PER_MESSAGE,
+    });
+  }
+}
+
 export async function POST(request: NextRequest) {
   const log = createModuleLogger("api:chat");
   try {
@@ -967,15 +982,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Pre-deduct credits for anonymous users (cookies must be set before streaming)
-    // Using flat 0.5 cents per message since anonymous users use basic models
-    const ANONYMOUS_COST_PER_MESSAGE = 1;
-    if (isAnonymous && anonymousSession) {
-      await setAnonymousSession({
-        ...anonymousSession,
-        remainingCredits:
-          anonymousSession.remainingCredits - ANONYMOUS_COST_PER_MESSAGE,
-      });
-    }
+    await preDeductAnonymousCredits(isAnonymous, anonymousSession);
 
     const contextResult = await prepareRequestContext({
       userMessage,
