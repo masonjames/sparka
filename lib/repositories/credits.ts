@@ -44,6 +44,7 @@ export async function deductCredits(
   userId: string,
   amount: number
 ): Promise<void> {
+  await ensureUserCreditRow(userId);
   await db
     .update(userCredit)
     .set({
