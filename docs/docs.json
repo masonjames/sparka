@@ -23,7 +23,14 @@
               "features/index",
               "features/multi-model",
               "features/authentication",
-              "features/attachments"
+              "features/attachments",
+              "features/image-generation",
+              "features/code-execution",
+              "features/web-search",
+              "features/document-creation",
+              "features/chat-sharing",
+              "features/projects",
+              "features/mcp"
             ]
           },
           {
@@ -31,8 +38,27 @@
             "pages": [
               "patterns/index",
               "patterns/tool-part",
-              "patterns/follow-up-questions"
+              "patterns/follow-up-questions",
+              "patterns/resumable-streams",
+              "patterns/credit-tracking",
+              "patterns/chat-branching"
             ]
+          },
+          {
+            "group": "Customization",
+            "pages": [
+              "customization/theming",
+              "customization/models",
+              "customization/prompts"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": ["deployment/vercel", "deployment/self-hosted"]
+          },
+          {
+            "group": "Reference",
+            "pages": ["reference/config", "reference/architecture"]
           }
         ]
       }

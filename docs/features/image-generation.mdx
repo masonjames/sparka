@@ -1,0 +1,28 @@
+---
+title: Image Generation
+description: AI-powered image creation in your chat app
+---
+
+<Note>
+  This documentation is coming soon. The feature is available in the starter app.
+</Note>
+
+## Overview
+
+Generate images directly in chat using AI models like DALL-E and Stable Diffusion.
+
+## Quick Start
+
+Image generation requires OpenAI integration in `lib/config.ts`:
+
+```ts
+integrations: {
+  openai: true, // Requires OPENAI_API_KEY
+}
+```
+
+## Environment Variables
+
+```bash
+OPENAI_API_KEY=your_openai_key
+```

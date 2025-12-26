@@ -1,0 +1,57 @@
+---
+title: Config Reference
+description: Full lib/config.ts API reference
+---
+
+<Note>
+  This documentation is coming soon.
+</Note>
+
+## Overview
+
+`lib/config.ts` is the central configuration hub for ChatJS. Toggle features, configure providers, and customize behavior.
+
+## Configuration Shape
+
+```ts
+export const siteConfig: SiteConfig = {
+  githubUrl: string,
+  appPrefix: string,
+  appName: string,
+
+  organization: {
+    name: string,
+    contact: {
+      privacyEmail: string,
+      legalEmail: string,
+    },
+  },
+
+  services: {
+    hosting: string,
+    aiProviders: string[],
+    paymentProcessors: string[],
+  },
+
+  integrations: {
+    sandbox: boolean,    // Code execution (Vercel-native)
+    webSearch: boolean,  // Requires TAVILY_API_KEY or EXA_API_KEY
+    openai: boolean,     // Requires OPENAI_API_KEY
+    mcp: boolean,        // Requires MCP_ENCRYPTION_KEY
+  },
+
+  authentication: {
+    google: boolean,     // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+    github: boolean,     // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
+    vercel: boolean,     // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+  },
+
+  legal: { ... },
+  policies: { ... },
+  pricing?: { ... },
+}
+```
+
+## Related
+
+- [Configuration Guide](/configuration) - Setup walkthrough

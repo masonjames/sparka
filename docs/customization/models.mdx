@@ -1,0 +1,32 @@
+---
+title: Models
+description: Add, remove, or configure AI models
+---
+
+<Note>
+  This documentation is coming soon.
+</Note>
+
+## Overview
+
+Configure which AI models are available in your app and how they behave.
+
+## Quick Start
+
+Models are configured via AI Gateway. The available providers are listed in `lib/config.ts`:
+
+```ts
+services: {
+  aiProviders: [
+    "OpenAI", "Anthropic", "xAI", "Google", "Meta",
+    "Mistral", "Alibaba", "Amazon", "Cohere", "DeepSeek",
+    "Perplexity", "Vercel", "Inception", "Moonshot", "Morph", "ZAI",
+  ],
+}
+```
+
+Model selection and configuration is handled through the Vercel AI Gateway.
+
+## Related
+
+- [Multi-Model](/features/multi-model) - Using multiple models

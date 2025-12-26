@@ -1,0 +1,28 @@
+---
+title: MCP Integration
+description: Model Context Protocol connector support
+---
+
+<Note>
+  This documentation is coming soon. The feature is available in the starter app.
+</Note>
+
+## Overview
+
+Connect to MCP (Model Context Protocol) servers to extend your AI's capabilities with external tools and data sources.
+
+## Quick Start
+
+Enable MCP in `lib/config.ts`:
+
+```ts
+integrations: {
+  mcp: true, // Requires MCP_ENCRYPTION_KEY
+}
+```
+
+## Environment Variables
+
+```bash
+MCP_ENCRYPTION_KEY=your_encryption_key
+```

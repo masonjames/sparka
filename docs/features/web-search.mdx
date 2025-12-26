@@ -1,0 +1,30 @@
+---
+title: Web Search
+description: Real-time web search with citations
+---
+
+<Note>
+  This documentation is coming soon. The feature is available in the starter app.
+</Note>
+
+## Overview
+
+Enable your AI to search the web in real-time and provide answers with citations.
+
+## Quick Start
+
+Enable web search in `lib/config.ts`:
+
+```ts
+integrations: {
+  webSearch: true, // Requires TAVILY_API_KEY or EXA_API_KEY
+}
+```
+
+## Environment Variables
+
+```bash
+TAVILY_API_KEY=your_tavily_key
+# or
+EXA_API_KEY=your_exa_key
+```

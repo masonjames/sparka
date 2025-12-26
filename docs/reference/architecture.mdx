@@ -1,0 +1,40 @@
+---
+title: Architecture
+description: App structure and key files
+---
+
+<Note>
+  This documentation is coming soon.
+</Note>
+
+## Overview
+
+ChatJS follows Next.js App Router conventions with additional structure for AI functionality.
+
+## Directory Structure
+
+```
+├── app/
+│   ├── (chat)/           # Main chat routes
+│   │   ├── api/chat/     # AI streaming endpoint
+│   │   └── page.tsx      # Chat UI
+│   └── (auth)/           # Auth routes
+├── components/
+│   ├── chat/             # Chat-specific components
+│   └── ui/               # Shadcn/UI components
+├── lib/
+│   ├── ai/               # AI utilities, prompts, tools
+│   ├── db/               # Drizzle schema & queries
+│   └── config.ts         # App configuration
+└── server/
+    └── routers/          # tRPC routers
+```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `app/(chat)/api/chat/route.ts` | Main AI streaming endpoint |
+| `lib/config.ts` | Feature toggles |
+| `lib/db/schema.ts` | Database schema |
+| `lib/ai/tools.ts` | AI tool definitions |
