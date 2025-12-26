@@ -20,7 +20,7 @@
           {
             "group": "Features",
             "pages": [
-              "features/index",
+              "features/overview",
               "features/multi-model",
               "features/authentication",
               "features/attachments",
@@ -36,7 +36,7 @@
           {
             "group": "Patterns",
             "pages": [
-              "patterns/index",
+              "patterns/overview",
               "patterns/tool-part",
               "patterns/follow-up-questions",
               "patterns/resumable-streams",

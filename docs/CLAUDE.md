@@ -40,6 +40,7 @@
 - Language tags on all code blocks
 - Alt text on all images
 - Relative paths for internal links
+- Never use Em dashes (—).
 
 ## Git workflow
 
