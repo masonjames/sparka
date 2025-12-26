@@ -26,7 +26,10 @@ import { systemPrompt } from "@/lib/ai/prompts";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
 import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
-import { getAnonymousSession } from "@/lib/anonymous-session-server";
+import {
+  getAnonymousSession,
+  setAnonymousSession,
+} from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
 import { siteConfig } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
@@ -146,18 +149,17 @@ async function handleAnonymousSession({
     anonymousSession = await createAnonymousSession();
   }
 
-  // Check message limits
+  // Check credit limits
   if (anonymousSession.remainingCredits <= 0) {
-    log.info("Anonymous message limit reached");
+    log.info("Anonymous credit limit reached");
     return {
       anonymousSession: null as any,
       error: new Response(
         JSON.stringify({
-          error: `You've used all ${ANONYMOUS_LIMITS.CREDITS} free messages. Sign up to continue chatting with unlimited access!`,
+          error: "You've used your free credits. Sign up to continue chatting!",
           type: "ANONYMOUS_LIMIT_EXCEEDED",
-          maxMessages: ANONYMOUS_LIMITS.CREDITS,
           suggestion:
-            "Create an account to get unlimited messages and access to more AI models",
+            "Create an account to get more credits and access to more AI models",
         }),
         {
           status: 402,
@@ -307,9 +309,11 @@ function determineAllowedTools({
     allowedTools = allowedTools.filter((tool) => tool !== "deepResearch");
   }
 
-  // If specific tools were requested, use only those
+  // If specific tools were requested, filter them against allowed tools
   if (explicitlyRequestedTools && explicitlyRequestedTools.length > 0) {
-    return explicitlyRequestedTools;
+    return explicitlyRequestedTools.filter((tool) =>
+      allowedTools.includes(tool)
+    );
   }
 
   return allowedTools;
@@ -803,28 +807,32 @@ async function finalizeMessageAndCredits({
       });
     }
 
-    // Calculate and deduct credits for authenticated users
-    if (userId && !isAnonymous && usage) {
-      // Calculate LLM cost from actual token usage
-      const llmCost = calculateLLMCostFromModel(usage, modelDefinition);
+    // Calculate cost from actual token usage
+    const llmCost = usage
+      ? calculateLLMCostFromModel(usage, modelDefinition)
+      : 0;
 
-      // Calculate tool costs (external API fees)
-      const toolCost = messages
-        .flatMap((message) => message.parts)
-        .reduce((acc, part) => {
-          if (!part.type.startsWith("tool-")) {
-            return acc;
-          }
-          const toolName = part.type.replace("tool-", "") as ToolName;
-          const toolDef = toolsDefinitions[toolName];
-          return acc + (toolDef?.cost ?? 0);
-        }, 0);
+    // Calculate tool costs (external API fees)
+    const toolCost = messages
+      .flatMap((message) => message.parts)
+      .reduce((acc, part) => {
+        if (!part.type.startsWith("tool-")) {
+          return acc;
+        }
+        const toolName = part.type.replace("tool-", "") as ToolName;
+        const toolDef = toolsDefinitions[toolName];
+        return acc + (toolDef?.cost ?? 0);
+      }, 0);
 
-      const totalCost = llmCost + toolCost;
+    const totalCost = llmCost + toolCost;
+
+    // Deduct credits for authenticated users
+    if (userId && !isAnonymous) {
       log.debug({ llmCost, toolCost, totalCost }, "Deducting credits");
-
       await deductCredits(userId, totalCost);
     }
+
+    // Note: Anonymous credits are pre-deducted before streaming starts (cookies can't be set after response begins)
   } catch (error) {
     log.error({ error }, "Failed to save chat or finalize credits");
   }
@@ -956,6 +964,17 @@ export async function POST(request: NextRequest) {
 
     if (creditCheck.error) {
       return creditCheck.error;
+    }
+
+    // Pre-deduct credits for anonymous users (cookies must be set before streaming)
+    // Using flat 0.5 cents per message since anonymous users use basic models
+    const ANONYMOUS_COST_PER_MESSAGE = 1;
+    if (isAnonymous && anonymousSession) {
+      await setAnonymousSession({
+        ...anonymousSession,
+        remainingCredits:
+          anonymousSession.remainingCredits - ANONYMOUS_COST_PER_MESSAGE,
+      });
     }
 
     const contextResult = await prepareRequestContext({
