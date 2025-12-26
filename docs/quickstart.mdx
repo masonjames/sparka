@@ -42,6 +42,7 @@ cp .env.example .env.local
     - One auth provider pair:
       - `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET`
       - `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`
+      - `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET`
   </Tab>
   <Tab title="Self-hosted">
     ### Required Variables
@@ -51,6 +52,8 @@ cp .env.example .env.local
     BLOB_READ_WRITE_TOKEN=...
     AUTH_SECRET=...
     AI_GATEWAY_API_KEY=...  # or VERCEL_OIDC_TOKEN
+    VERCEL_URL=...
+    VERCEL_PROJECT_PRODUCTION_URL=...
     ```
 
     ### Auth Provider (choose one)
@@ -63,11 +66,16 @@ cp .env.example .env.local
     # Or Google
     AUTH_GOOGLE_ID=...
     AUTH_GOOGLE_SECRET=...
+
+    # Or Vercel
+    VERCEL_APP_CLIENT_ID=...
+    VERCEL_APP_CLIENT_SECRET=...
     ```
 
     ### Optional
 
     ```bash
+    CRON_SECRET=...                 # Cleanup cron job
     REDIS_URL=redis://...           # Resumable streams
     OPENAI_API_KEY=...              # Direct OpenAI access
     TAVILY_API_KEY=...              # Web search
@@ -75,6 +83,8 @@ cp .env.example .env.local
     FIRECRAWL_API_KEY=...           # Web scraping
     LANGFUSE_PUBLIC_KEY=...         # Observability
     LANGFUSE_SECRET_KEY=...
+    LANGFUSE_BASE_URL=...           # Custom Langfuse URL
+    MCP_ENCRYPTION_KEY=...          # MCP connectors
     ```
   </Tab>
 </Tabs>
@@ -106,6 +116,8 @@ bun db:migrate
   | `bun db:branch:start [name]` | Create and switch to branch |
   | `bun db:branch:stop [name]` | Delete branch, switch to main |
   | `bun db:branch:use [name]` | Switch to branch |
+  | `bun db:branch:create [name]` | Create branch only |
+  | `bun db:branch:delete [name]` | Delete branch only |
   | `bun db:branch:list` | List all branches |
 </Accordion>
 
