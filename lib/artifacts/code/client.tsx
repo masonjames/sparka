@@ -14,7 +14,6 @@ import {
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
-import { DEFAULT_CODE_EDITS_MODEL } from "@/lib/ai/app-models";
 import { generateUUID, getLanguageFromFileName } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
@@ -269,7 +268,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     {
       icon: <MessageIcon />,
       description: "Add comments",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -279,7 +278,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_CODE_EDITS_MODEL,
+            selectedModel: config.models.defaults.codeEdits,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
           },
@@ -289,7 +288,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     {
       icon: <LogsIcon />,
       description: "Add logs",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -299,7 +298,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_CODE_EDITS_MODEL,
+            selectedModel: config.models.defaults.codeEdits,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
           },

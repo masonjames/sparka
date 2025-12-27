@@ -29,7 +29,8 @@ import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact-panel";
-import type { ArtifactToolbarItem } from "./create-artifact";
+import { useConfig } from "./config-provider";
+import type { ArtifactToolbarContext, ArtifactToolbarItem } from "./create-artifact";
 import { ArrowUpIcon, StopIcon, SummarizeIcon } from "./icons";
 
 type ToolProps = {
@@ -40,13 +41,7 @@ type ToolProps = {
   isToolbarVisible?: boolean;
   setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
   isAnimating: boolean;
-  onClick: ({
-    sendMessage,
-    storeApi,
-  }: {
-    sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-    storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-  }) => void;
+  onClick: (context: ArtifactToolbarContext) => void;
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
@@ -62,6 +57,7 @@ function Tool({
   storeApi,
 }: ToolProps) {
   const { sendMessage } = useChatActions<ChatMessage>();
+  const config = useConfig();
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -86,7 +82,7 @@ function Tool({
       setSelectedTool(description);
     } else {
       setSelectedTool(null);
-      onClick({ sendMessage, storeApi });
+      onClick({ sendMessage, storeApi, config });
     }
   };
 

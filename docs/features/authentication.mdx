@@ -36,13 +36,20 @@ Users can try the app without signing up. Anonymous sessions:
 - Access a subset of models and tools
 - Do not persist chat history to database
 
-```typescript title="lib/types/anonymous.ts"
-export const ANONYMOUS_LIMITS = {
-  CREDITS: 10,
-  AVAILABLE_MODELS: ["claude-3-5-haiku", "gpt-4o-mini", ...],
-  AVAILABLE_TOOLS: ["webSearch"],
-};
+Configure anonymous limits in `lib/config.ts`:
+
+```typescript title="lib/config.ts"
+anonymous: {
+  credits: { production: 10, development: 1000 },
+  availableTools: ["createDocument", "updateDocument"],
+  rateLimit: {
+    requestsPerMinute: { production: 5, development: 60 },
+    requestsPerMonth: { production: 10, development: 1000 },
+  },
+},
 ```
+
+Anonymous-available models are configured in `models.anonymousModels`.
 
 ## Auth Secret
 

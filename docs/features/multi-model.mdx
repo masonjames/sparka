@@ -37,37 +37,41 @@ This fetches current models from the gateway and writes them to `lib/ai/models.g
 
 ## Model Configuration
 
-Model behavior is configured in `lib/ai/app-models.ts`.
+All model settings are configured in `lib/config.ts` under the `models` key:
 
-### Disabled Models
-
-Some models can be hard-blocked from appearing:
-
-```typescript
-const DISABLED_MODELS: Partial<Record<ModelId, true>> = {
-  "morph/morph-v3-large": true,
-};
+```typescript title="lib/config.ts"
+models: {
+  providerOrder: ["openai", "google", "anthropic", "xai"],
+  disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
+  curatedDefaults: [
+    "openai/gpt-5-nano",
+    "openai/gpt-5-mini",
+    "google/gemini-2.5-flash-lite",
+    "anthropic/claude-sonnet-4.5",
+    // ...
+  ],
+  anonymousModels: [
+    "google/gemini-2.5-flash-lite",
+    "openai/gpt-5-mini",
+    // ...
+  ],
+  defaults: {
+    chat: "openai/gpt-5-nano",
+    title: "google/gemini-2.5-flash-lite",
+    pdf: "openai/gpt-5-mini",
+    artifact: "openai/gpt-5-nano",
+    // ...
+  },
+},
 ```
 
-### Provider Sort Order
-
-Models are sorted in the selector by provider priority:
-
-```typescript
-const PROVIDER_ORDER = ["openai", "google", "anthropic", "xai"];
-```
-
-Providers not in this list appear after these four.
-
-### Default Models
-
-Various default model constants control which model is used for specific tasks:
-
-```typescript
-export const DEFAULT_CHAT_MODEL: ModelId = "openai/gpt-5-nano";
-export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
-// ... and more for PDF, artifacts, suggestions, etc.
-```
+| Setting | Description |
+|---------|-------------|
+| `providerOrder` | Provider sort order in model selector |
+| `disabledModels` | Models hidden from all users |
+| `curatedDefaults` | Models enabled by default for new users |
+| `anonymousModels` | Models available to anonymous users |
+| `defaults.*` | Default model for each task type |
 
 ## Reasoning Variants
 
@@ -84,14 +88,14 @@ Model visibility is determined through a pipeline:
 
 ### Authenticated Users
 
-1. **Remove** disabled models (`DISABLED_MODELS`)
-2. **Apply defaults** (`CURATED_DEFAULT_MODELS` + any new API models not in `models.generated.ts`)
+1. **Remove** disabled models (`models.disabledModels`)
+2. **Apply defaults** (`models.curatedDefaults` + any new API models not in `models.generated.ts`)
 3. **Apply user overrides** from saved preferences
 
 ### Anonymous Users
 
 1. **Remove** disabled models
-2. **Filter** to `ANONYMOUS_AVAILABLE_MODELS` only
+2. **Filter** to `models.anonymousModels` only
 
 ## User Settings
 

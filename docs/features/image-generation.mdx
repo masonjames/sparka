@@ -13,16 +13,10 @@ Generate images directly in chat using AI models like DALL-E and Stable Diffusio
 
 ## Quick Start
 
-Image generation requires OpenAI integration in `lib/config.ts`:
+Enable image generation in `lib/config.ts` (uses Vercel AI Gateway):
 
 ```ts
 integrations: {
-  openai: true, // Requires OPENAI_API_KEY
+  openai: true,
 }
-```
-
-## Environment Variables
-
-```bash
-OPENAI_API_KEY=your_openai_key
 ```

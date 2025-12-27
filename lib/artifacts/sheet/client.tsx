@@ -9,10 +9,6 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { SpreadsheetEditor } from "@/components/sheet-editor";
-import {
-  DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL,
-  DEFAULT_FORMAT_AND_CLEAN_SHEET_MODEL,
-} from "@/lib/ai/app-models";
 
 type Metadata = any;
 
@@ -99,14 +95,14 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     {
       description: "Format and clean data",
       icon: <SparklesIcon />,
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
           parts: [
             { type: "text", text: "Can you please format and clean the data?" },
           ],
           metadata: {
-            selectedModel: DEFAULT_FORMAT_AND_CLEAN_SHEET_MODEL,
+            selectedModel: config.models.defaults.formatSheet,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
           },
@@ -116,7 +112,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     {
       description: "Analyze and visualize data",
       icon: <LineChartIcon />,
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -126,7 +122,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL,
+            selectedModel: config.models.defaults.analyzeSheet,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
           },

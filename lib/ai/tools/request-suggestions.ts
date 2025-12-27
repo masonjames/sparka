@@ -1,10 +1,10 @@
 import { streamObject, tool } from "ai";
 import { z } from "zod";
 import type { Session } from "@/lib/auth";
+import { siteConfig } from "@/lib/config";
 import { getDocumentById, saveSuggestions } from "@/lib/db/queries";
 import type { Suggestion } from "@/lib/db/schema";
 import { generateUUID } from "@/lib/utils";
-import { DEFAULT_ARTIFACT_SUGGESTION_MODEL } from "../app-models";
 import { getLanguageModel } from "../providers";
 import type { StreamWriter } from "../types";
 
@@ -55,7 +55,7 @@ Behavior:
       >[] = [];
 
       const { elementStream } = streamObject({
-        model: await getLanguageModel(DEFAULT_ARTIFACT_SUGGESTION_MODEL),
+        model: await getLanguageModel(siteConfig.models.defaults.artifactSuggestion),
         experimental_telemetry: { isEnabled: true },
 
         system:

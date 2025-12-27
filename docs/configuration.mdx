@@ -46,14 +46,14 @@ Toggle features on/off. Set to `true` to enable. Missing env vars are caught at 
 |-------------|------------|----------------|
 | Code Sandbox | `integrations.sandbox` | Vercel deployment only |
 | Web Search | `integrations.webSearch` | `TAVILY_API_KEY` or `EXA_API_KEY` |
-| OpenAI Direct | `integrations.openai` | `OPENAI_API_KEY` |
+| OpenAI Direct | `integrations.openai` | None |
 | MCP Connectors | `integrations.mcp` | `MCP_ENCRYPTION_KEY` |
 
 ```typescript
 integrations: {
   sandbox: true,   // Vercel-native, no key needed
   webSearch: true, // Requires TAVILY_API_KEY or EXA_API_KEY
-  openai: true,    // Requires OPENAI_API_KEY
+  openai: true,    // No API key required
   mcp: false,      // Requires MCP_ENCRYPTION_KEY
 },
 ```

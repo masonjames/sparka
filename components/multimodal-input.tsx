@@ -26,11 +26,7 @@ import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { AppModelId } from "@/lib/ai/app-models";
-import {
-  DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL,
-  DEFAULT_PDF_MODEL,
-} from "@/lib/ai/app-models";
+import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
@@ -40,6 +36,7 @@ import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+import { useConfig } from "./config-provider";
 import { ConnectorsDropdown } from "./connectors-dropdown";
 import { ImageModal } from "./image-modal";
 import { LexicalChatInput } from "./lexical-chat-input";
@@ -77,6 +74,7 @@ function PureMultimodalInput({
 }) {
   const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
+  const config = useConfig();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   useChatId();
@@ -106,27 +104,27 @@ function PureMultimodalInput({
 
   // Helper function to auto-switch to PDF-compatible model
   const switchToPdfCompatibleModel = useCallback(() => {
-    const defaultPdfModelDef = getModelById(DEFAULT_PDF_MODEL);
+    const pdfModel = config.models.defaults.pdf;
+    const defaultPdfModelDef = getModelById(pdfModel);
     if (defaultPdfModelDef) {
       toast.success(`Switched to ${defaultPdfModelDef.name} (supports PDF)`);
     }
-    handleModelChange(DEFAULT_PDF_MODEL);
+    handleModelChange(pdfModel);
     return defaultPdfModelDef;
-  }, [handleModelChange, getModelById]);
+  }, [handleModelChange, getModelById, config.models.defaults.pdf]);
 
   // Helper function to auto-switch to image-compatible model
   const switchToImageCompatibleModel = useCallback(() => {
-    const defaultImageModelDef = getModelById(
-      DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL
-    );
+    const imageModel = config.models.defaults.chatImageCompatible;
+    const defaultImageModelDef = getModelById(imageModel);
     if (defaultImageModelDef) {
       toast.success(
         `Switched to ${defaultImageModelDef.name} (supports images)`
       );
     }
-    handleModelChange(DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL);
+    handleModelChange(imageModel);
     return defaultImageModelDef;
-  }, [handleModelChange, getModelById]);
+  }, [handleModelChange, getModelById, config.models.defaults.chatImageCompatible]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);

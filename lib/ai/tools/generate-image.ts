@@ -1,7 +1,7 @@
 import { type FileUIPart, generateImage, tool } from "ai";
 import { z } from "zod";
-import { DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
 import { getImageModel } from "@/lib/ai/providers";
+import { siteConfig } from "@/lib/config";
 import { uploadFile } from "@/lib/blob";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -88,7 +88,7 @@ async function runGenerateImage({
 
   const res = await generateImage({
     // For edits, OpenAI expects `gpt-image-1` and accepts input images via prompt.images
-    model: getImageModel(DEFAULT_IMAGE_MODEL),
+    model: getImageModel(siteConfig.models.defaults.image),
     prompt: promptInput,
     n: 1,
     providerOptions: {

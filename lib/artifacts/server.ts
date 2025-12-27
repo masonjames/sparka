@@ -1,4 +1,4 @@
-import type { ModelId } from "@/lib/ai/models";
+import type { ModelId } from "@/lib/ai/app-model-id";
 import { codeDocumentHandler } from "@/lib/artifacts/code/server";
 import { sheetDocumentHandler } from "@/lib/artifacts/sheet/server";
 import { textDocumentHandler } from "@/lib/artifacts/text/server";

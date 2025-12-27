@@ -11,10 +11,6 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { Editor } from "@/components/text-editor";
-import {
-  DEFAULT_POLISH_TEXT_MODEL,
-  DEFAULT_SUGGESTIONS_MODEL,
-} from "@/lib/ai/app-models";
 import type { Suggestion } from "@/lib/db/schema";
 
 type TextArtifactMetadata = {
@@ -168,7 +164,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     {
       icon: <PenIcon />,
       description: "Add final polish",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -178,7 +174,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_POLISH_TEXT_MODEL,
+            selectedModel: config.models.defaults.polishText,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
           },
@@ -188,7 +184,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     {
       icon: <MessageIcon />,
       description: "Request suggestions",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -198,7 +194,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_SUGGESTIONS_MODEL,
+            selectedModel: config.models.defaults.suggestions,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
           },

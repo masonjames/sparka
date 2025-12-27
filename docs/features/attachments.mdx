@@ -1,6 +1,6 @@
 ---
 title: "Attachments"
-description: "Upload images, PDFs, and documents to conversations"
+description: "Upload images and PDFs to conversations"
 ---
 
 ChatJS supports file attachments in conversations. Files are uploaded to Vercel Blob storage and processed by AI models that support multimodal input.
@@ -9,9 +9,8 @@ ChatJS supports file attachments in conversations. Files are uploaded to Vercel 
 
 | Type | Extensions | Processing |
 |------|------------|------------|
-| Images | `.png`, `.jpg`, `.gif`, `.webp` | Direct vision input |
+| Images | `.png`, `.jpg`, `.jpeg` | Direct vision input |
 | PDFs | `.pdf` | Text extraction |
-| Documents | `.txt`, `.md`, `.csv` | Text content |
 
 ## How It Works
 
@@ -29,20 +28,6 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_...
 ```
 
 On Vercel, this is auto-provided via the Blob integration.
-
-## Message Structure
-
-Attachments are included in message parts:
-
-```typescript
-{
-  role: "user",
-  parts: [
-    { type: "text", text: "What's in this image?" },
-    { type: "file", url: "https://...", mimeType: "image/png" }
-  ]
-}
-```
 
 ## Model Support
 
