@@ -4,6 +4,7 @@ import { type KeyboardEvent, memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { DeleteChatDialog } from "@/components/delete-chat-dialog";
+import { ProjectIcon } from "@/components/project-icon";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,6 +28,7 @@ import {
 import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import { usePublicChat } from "@/hooks/use-shared-chat";
 import type { Session } from "@/lib/auth";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
 
@@ -134,6 +136,8 @@ export function HeaderBreadcrumb({
       <Breadcrumb className={cn("flex-1", className)}>
         <BreadcrumbList>
           <ProjectBreadcrumb
+            projectColor={project?.iconColor as ProjectColorName | undefined}
+            projectIcon={project?.icon as ProjectIconName | undefined}
             projectId={resolvedProjectId}
             projectLabel={projectLabel}
           />
@@ -311,9 +315,13 @@ function useSyncDraftValue({
 function ProjectBreadcrumb({
   projectLabel,
   projectId,
+  projectIcon,
+  projectColor,
 }: {
   projectLabel?: string;
   projectId: string | null;
+  projectIcon?: ProjectIconName;
+  projectColor?: ProjectColorName;
 }) {
   if (!(projectLabel && projectId)) {
     return null;
@@ -322,8 +330,16 @@ function ProjectBreadcrumb({
   return (
     <>
       <BreadcrumbItem>
-        <BreadcrumbLink href={`/project/${projectId}`}>
-          {projectLabel}
+        <BreadcrumbLink
+          className="flex items-center"
+          href={`/project/${projectId}`}
+          title={projectLabel}
+        >
+          {projectIcon && projectColor ? (
+            <ProjectIcon color={projectColor} icon={projectIcon} size={16} />
+          ) : (
+            projectLabel
+          )}
         </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator />

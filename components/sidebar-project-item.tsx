@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
 "use client";
 
 import Link from "next/link";
@@ -6,13 +5,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { MoreHorizontalIcon } from "@/components/icons";
+import {
+  ProjectDetailsDialog,
+  type ProjectDetailsData,
+} from "@/components/project-details-dialog";
+import { ProjectIcon } from "@/components/project-icon";
 import { ProjectMenuItems } from "@/components/project-menu-items";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   SidebarMenuAction,
   SidebarMenuButton,
@@ -20,6 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useRenameProject } from "@/hooks/chat-sync-hooks";
 import type { Project } from "@/lib/db/schema";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
 export function SidebarProjectItem({
   project,
@@ -30,79 +34,48 @@ export function SidebarProjectItem({
   isActive: boolean;
   setOpenMobile: (open: boolean) => void;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(project.name);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
 
-  const { mutateAsync: renameProject } = useRenameProject();
+  const { mutateAsync: renameProject, isPending } = useRenameProject();
 
   const projectHref = `/project/${project.id}` as const;
 
-  const handleRename = async () => {
-    const trimmed = editName.trim();
-    if (trimmed === "" || trimmed === project.name) {
-      setIsEditing(false);
-      setEditName(project.name);
-      return;
-    }
-    try {
-      await renameProject({
-        id: project.id,
-        updates: { name: trimmed },
-      });
-      setIsEditing(false);
-    } catch {
-      setEditName(project.name);
-      setIsEditing(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleRename();
-    } else if (e.key === "Escape") {
-      setIsEditing(false);
-      setEditName(project.name);
-    }
+  const handleRename = async (data: ProjectDetailsData) => {
+    await renameProject({
+      id: project.id,
+      updates: {
+        name: data.name,
+        icon: data.icon,
+        iconColor: data.color,
+      },
+    });
   };
 
   return (
     <SidebarMenuItem>
-      {isEditing ? (
-        <div className="flex w-full items-center gap-2 overflow-hidden rounded-md bg-background p-2 text-left text-sm">
-          <Input
-            autoFocus
-            className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-            maxLength={255}
-            onBlur={handleRename}
-            onChange={(e) => setEditName(e.target.value)}
-            onKeyDown={handleKeyDown}
-            value={editName}
-          />
-        </div>
-      ) : (
-        <SidebarMenuButton
-          asChild
-          className="cursor-pointer"
-          isActive={isActive}
+      <SidebarMenuButton asChild className="cursor-pointer" isActive={isActive}>
+        <Link
+          href={projectHref}
+          onClick={(e) => {
+            if (e.button === 1 || e.ctrlKey || e.metaKey) {
+              return;
+            }
+            e.preventDefault();
+            router.push(projectHref);
+            setOpenMobile(false);
+          }}
+          prefetch={false}
         >
-          <Link
-            href={projectHref}
-            onClick={(e) => {
-              if (e.button === 1 || e.ctrlKey || e.metaKey) {
-                return;
-              }
-              e.preventDefault();
-              router.push(projectHref);
-              setOpenMobile(false);
-            }}
-            prefetch={false}
-          >
-            <span>{project.name}</span>
-          </Link>
-        </SidebarMenuButton>
-      )}
+          <ProjectIcon
+            color={project.iconColor as ProjectColorName}
+            icon={project.icon as ProjectIconName}
+            size={16}
+          />
+          <span>{project.name}</span>
+        </Link>
+      </SidebarMenuButton>
 
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
@@ -117,13 +90,22 @@ export function SidebarProjectItem({
         <DropdownMenuContent align="end" side="bottom">
           <ProjectMenuItems
             onDelete={() => setShowDeleteDialog(true)}
-            onRename={() => {
-              setIsEditing(true);
-              setEditName(project.name);
-            }}
+            onRename={() => setShowEditDialog(true)}
           />
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ProjectDetailsDialog
+        initialColor={project.iconColor as ProjectColorName}
+        initialIcon={project.icon as ProjectIconName}
+        initialName={project.name}
+        isLoading={isPending}
+        mode="edit"
+        onOpenChange={setShowEditDialog}
+        onSubmit={handleRename}
+        open={showEditDialog}
+      />
+
       <DeleteProjectDialog
         deleteId={project.id}
         setShowDeleteDialog={setShowDeleteDialog}

@@ -7,7 +7,10 @@ import { toast } from "sonner";
 import { MultimodalInput } from "@/components/multimodal-input";
 import { ProjectChats } from "@/components/project-chats";
 import { ProjectConfig } from "@/components/project-config";
-import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import {
+  ProjectDetailsDialog,
+  type ProjectDetailsData,
+} from "@/components/project-details-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +28,7 @@ import {
   useRenameProject,
 } from "@/hooks/chat-sync-hooks";
 import type { ChatMessage } from "@/lib/ai/types";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
@@ -84,10 +88,14 @@ export function ProjectHome({
     });
   };
 
-  const handleRenameProject = async (name: string) => {
+  const handleRenameProject = async (data: ProjectDetailsData) => {
     await renameProjectMutation.mutateAsync({
       id: projectId,
-      updates: { name },
+      updates: {
+        name: data.name,
+        icon: data.icon,
+        iconColor: data.color,
+      },
     });
     queryClient.invalidateQueries({
       queryKey: trpc.project.getById.queryKey({ id: projectId }),
@@ -115,6 +123,8 @@ export function ProjectHome({
             instructions={project?.instructions}
             onEditInstructions={handleOpenInstructionsDialog}
             onRenameProject={() => setRenameProjectDialogOpen(true)}
+            projectColor={project?.iconColor as ProjectColorName | undefined}
+            projectIcon={project?.icon as ProjectIconName | undefined}
             projectName={project?.name}
           />
 
@@ -183,7 +193,9 @@ export function ProjectHome({
         </Dialog>
 
         <ProjectDetailsDialog
-          initialValue={project?.name}
+          initialColor={project?.iconColor as ProjectColorName | undefined}
+          initialIcon={project?.icon as ProjectIconName | undefined}
+          initialName={project?.name}
           isLoading={renameProjectMutation.isPending}
           mode="edit"
           onOpenChange={setRenameProjectDialogOpen}

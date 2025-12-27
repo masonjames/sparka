@@ -163,11 +163,15 @@ export async function createProject({
   userId,
   name,
   instructions = "",
+  icon,
+  iconColor,
 }: {
   id: string;
   userId: string;
   name: string;
   instructions?: string;
+  icon?: string;
+  iconColor?: string;
 }) {
   try {
     return await db.insert(project).values({
@@ -175,6 +179,8 @@ export async function createProject({
       userId,
       name,
       instructions,
+      ...(icon && { icon }),
+      ...(iconColor && { iconColor }),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -215,7 +221,7 @@ export async function updateProject({
   updates,
 }: {
   id: string;
-  updates: Partial<{ name: string; instructions: string }>;
+  updates: Partial<{ name: string; instructions: string; icon: string; iconColor: string }>;
 }) {
   try {
     return await db
