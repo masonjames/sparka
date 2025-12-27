@@ -27,7 +27,7 @@
               "features/image-generation",
               "features/code-execution",
               "features/web-search",
-              "features/document-creation",
+              "features/canvas",
               "features/chat-sharing",
               "features/projects",
               "features/mcp"

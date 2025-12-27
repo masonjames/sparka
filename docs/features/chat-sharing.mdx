@@ -1,16 +1,60 @@
 ---
 title: Chat Sharing
-description: Share conversations with public links
+description: Share conversations publicly and let others view your chats
 ---
 
 <Note>
-  This documentation is coming soon. The feature is available in the starter app.
+  This documentation is coming soon. The feature is available in the starter
+  app.
 </Note>
 
-## Overview
+You can share your chat conversations with others by making them public. Anyone with the share link can view your chat, and you can easily toggle visibility back to private at any time.
 
-Allow users to share their chat conversations via public links.
+## How to Share a Chat
 
-## Quick Start
+1. Open a chat in your workspace
+2. Click the Share button (icon in the chat header)
+3. Click **Share Chat** to make the conversation public
+4. Copy the share link that appears
+5. Send the link to anyone you want to share the chat with
 
-Chat sharing is built into the app. No additional configuration required.
+## Viewing a Shared Chat
+
+Anyone with the share link can view a shared chat without creating an account. Viewers can read all messages and see generated content, but cannot edit or continue the conversation in the original chat.
+
+## Cloning a Shared Chat
+
+When viewing a shared chat, you can create your own editable copy by clicking **Copy Chat**. This creates a new private chat in your workspace with all the messages from the shared conversation, which you can then continue or edit.
+
+## Managing Visibility
+
+### Making a Chat Private
+
+To stop sharing a chat:
+
+1. Open the chat
+2. Click the Share button
+3. Click **Make Private**
+
+The chat will no longer be accessible via the public link, and the share URL will return an error.
+
+### Understanding Visibility States
+
+Each chat has a visibility setting:
+
+- **Private** (default): Only you can access this chat. You can view, edit, and continue conversations
+- **Public**: Anyone with the link can view this chat in read-only mode. The original owner still owns and can manage the chat
+
+## Authentication Requirements
+
+The Share button requires you to be signed in. Anonymous users cannot share chats. Once a chat is public, viewers do not need to be signed in to access it.
+
+## Use Cases
+
+**Share research or analysis**: Make a detailed research conversation public so others can learn from it without needing to recreate the work.
+
+**Showcase AI capabilities**: Demonstrate what an AI assistant can do by sharing example conversations.
+
+**Collaborate asynchronously**: Share a conversation thread for team members to review and discuss.
+
+**Create templates**: Share useful chat conversations that others can clone and adapt for their own use.
