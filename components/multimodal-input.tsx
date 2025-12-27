@@ -124,7 +124,11 @@ function PureMultimodalInput({
     }
     handleModelChange(imageModel);
     return defaultImageModelDef;
-  }, [handleModelChange, getModelById, config.models.defaults.chatImageCompatible]);
+  }, [
+    handleModelChange,
+    getModelById,
+    config.models.defaults.chatImageCompatible,
+  ]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);

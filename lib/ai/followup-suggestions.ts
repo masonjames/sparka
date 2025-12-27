@@ -1,8 +1,8 @@
 import { type ModelMessage, streamObject } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { siteConfig } from "@/lib/config";
 import type { StreamWriter } from "@/lib/ai/types";
+import { siteConfig } from "@/lib/config";
 import { generateUUID } from "@/lib/utils";
 
 export async function generateFollowupSuggestions(
@@ -12,7 +12,9 @@ export async function generateFollowupSuggestions(
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
   return streamObject({
-    model: await getLanguageModel(siteConfig.models.defaults.followupSuggestions),
+    model: await getLanguageModel(
+      siteConfig.models.defaults.followupSuggestions
+    ),
     messages: [
       ...modelMessages,
       {

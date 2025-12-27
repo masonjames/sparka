@@ -2,8 +2,8 @@
 
 import { generateText } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { siteConfig } from "@/lib/config";
 import type { ChatMessage } from "@/lib/ai/types";
+import { siteConfig } from "@/lib/config";
 
 export async function generateTitleFromUserMessage({
   message,

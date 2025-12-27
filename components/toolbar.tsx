@@ -30,7 +30,10 @@ import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact-panel";
 import { useConfig } from "./config-provider";
-import type { ArtifactToolbarContext, ArtifactToolbarItem } from "./create-artifact";
+import type {
+  ArtifactToolbarContext,
+  ArtifactToolbarItem,
+} from "./create-artifact";
 import { ArrowUpIcon, StopIcon, SummarizeIcon } from "./icons";
 
 type ToolProps = {

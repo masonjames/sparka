@@ -2,12 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { generateText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { siteConfig } from "@/lib/config";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   cloneAttachmentsInMessages,
   cloneMessagesWithDocuments,
 } from "@/lib/clone-messages";
+import { siteConfig } from "@/lib/config";
 import {
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
