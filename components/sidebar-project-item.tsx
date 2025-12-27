@@ -6,8 +6,8 @@ import { useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { MoreHorizontalIcon } from "@/components/icons";
 import {
-  ProjectDetailsDialog,
   type ProjectDetailsData,
+  ProjectDetailsDialog,
 } from "@/components/project-details-dialog";
 import { ProjectIcon } from "@/components/project-icon";
 import { ProjectMenuItems } from "@/components/project-menu-items";

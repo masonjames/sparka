@@ -53,6 +53,7 @@ export const DEFAULT_PROJECT_COLOR: ProjectColorName = "gray";
 
 export function getColorValue(name: ProjectColorName): string {
   return (
-    PROJECT_COLORS.find((c) => c.name === name)?.value ?? PROJECT_COLORS[0].value
+    PROJECT_COLORS.find((c) => c.name === name)?.value ??
+    PROJECT_COLORS[0].value
   );
 }

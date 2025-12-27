@@ -1,7 +1,7 @@
 import {
   Beaker,
-  Briefcase,
   Book,
+  Briefcase,
   Calendar,
   Camera,
   ChartBar,

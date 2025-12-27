@@ -221,7 +221,12 @@ export async function updateProject({
   updates,
 }: {
   id: string;
-  updates: Partial<{ name: string; instructions: string; icon: string; iconColor: string }>;
+  updates: Partial<{
+    name: string;
+    instructions: string;
+    icon: string;
+    iconColor: string;
+  }>;
 }) {
   try {
     return await db

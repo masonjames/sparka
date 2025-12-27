@@ -8,8 +8,8 @@ import { MultimodalInput } from "@/components/multimodal-input";
 import { ProjectChats } from "@/components/project-chats";
 import { ProjectConfig } from "@/components/project-config";
 import {
-  ProjectDetailsDialog,
   type ProjectDetailsData,
+  ProjectDetailsDialog,
 } from "@/components/project-details-dialog";
 import { Button } from "@/components/ui/button";
 import {

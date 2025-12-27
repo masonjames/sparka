@@ -103,4 +103,3 @@ function SelectedModelId({ messageId }: { messageId: string }) {
     </div>
   ) : null;
 }
-

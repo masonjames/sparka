@@ -77,7 +77,11 @@ export function ProjectDetailsDialog({
         finalIcon !== initialIcon ||
         finalColor !== initialColor;
       if (hasChanges) {
-        await onSubmit({ name: trimmedName, icon: finalIcon, color: finalColor });
+        await onSubmit({
+          name: trimmedName,
+          icon: finalIcon,
+          color: finalColor,
+        });
       }
       onOpenChange(false);
     } else {

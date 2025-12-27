@@ -55,7 +55,8 @@ export function ProjectIconPicker({
             <button
               className={cn(
                 "size-6 rounded-full transition-transform hover:scale-110",
-                displayColor === c.name && "ring-2 ring-foreground ring-offset-2"
+                displayColor === c.name &&
+                  "ring-2 ring-foreground ring-offset-2"
               )}
               key={c.name}
               onClick={() => onColorChange(c.name)}

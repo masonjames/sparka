@@ -7,10 +7,7 @@ import {
   getProjectsByUserId,
   updateProject,
 } from "@/lib/db/queries";
-import {
-  PROJECT_COLOR_NAMES,
-  PROJECT_ICONS,
-} from "@/lib/project-icons";
+import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
 import { generateUUID } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 

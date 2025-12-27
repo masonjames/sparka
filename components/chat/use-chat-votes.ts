@@ -21,4 +21,3 @@ export function useChatVotes(
       messageIds.length >= 2 && !isReadonly && !!session?.user && !isLoading,
   });
 }
-
