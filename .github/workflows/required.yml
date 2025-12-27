@@ -9,7 +9,7 @@ jobs:
       - name: Wait for required workflows
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           # ============================================
           # REQUIRED CHECKS - Add/remove check names here
           # ============================================
