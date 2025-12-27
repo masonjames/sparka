@@ -331,6 +331,7 @@ function ProjectBreadcrumb({
     <>
       <BreadcrumbItem>
         <BreadcrumbLink
+          aria-label={projectLabel}
           className="flex items-center"
           href={`/project/${projectId}`}
           title={projectLabel}

@@ -53,6 +53,8 @@ export function ProjectIconPicker({
         <div className="mb-3 flex gap-1.5">
           {PROJECT_COLORS.map((c) => (
             <button
+              aria-label={`Select ${c.name} color`}
+              aria-pressed={displayColor === c.name}
               className={cn(
                 "size-6 rounded-full transition-transform hover:scale-110",
                 displayColor === c.name &&
@@ -69,6 +71,8 @@ export function ProjectIconPicker({
         <div className="grid grid-cols-5 gap-1">
           {PROJECT_ICONS.map((iconName) => (
             <button
+              aria-label={`Select ${iconName} icon`}
+              aria-pressed={icon === iconName}
               className={cn(
                 "flex size-8 items-center justify-center rounded-md transition-colors hover:bg-muted",
                 icon === iconName && "bg-muted ring-1 ring-foreground"
