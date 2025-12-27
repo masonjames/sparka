@@ -82,10 +82,10 @@ export type SiteConfig = {
     sandbox: boolean;
     /** Web search (requires TAVILY_API_KEY) */
     webSearch: boolean;
-    /** OpenAI features like image gen (via Vercel AI Gateway) */
-    openai: boolean;
     /** MCP tool servers (requires MCP_ENCRYPTION_KEY) */
     mcp: boolean;
+    /** AI image generation */
+    imageGeneration: boolean;
   };
   pricing?: PricingConfig;
   legal: {
@@ -167,8 +167,8 @@ export const siteConfig: SiteConfig = {
   integrations: {
     sandbox: true, // Vercel-native, no key needed
     webSearch: true, // Requires TAVILY_API_KEY or EXA_API_KEY
-    openai: true, // No API key required (uses Vercel AI Gateway)
     mcp: false, // Requires MCP_ENCRYPTION_KEY
+    imageGeneration: true,
   },
 
   legal: {

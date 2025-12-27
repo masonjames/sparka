@@ -58,13 +58,6 @@ export function validateConfig(): void {
     });
   }
 
-  if (siteConfig.integrations.openai && !env.OPENAI_API_KEY) {
-    errors.push({
-      feature: "integrations.openai",
-      missing: ["OPENAI_API_KEY"],
-    });
-  }
-
   if (siteConfig.integrations.mcp && !env.MCP_ENCRYPTION_KEY) {
     errors.push({
       feature: "integrations.mcp",

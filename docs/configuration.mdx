@@ -22,10 +22,10 @@ export const siteConfig: SiteConfig = {
   },
 
   integrations: {
-    sandbox: true,      // Code execution (Python/JS)
-    webSearch: true,    // Tavily/Exa web search
-    openai: true,       // Direct OpenAI access
-    mcp: true,          // MCP connector support
+    sandbox: true,         // Code execution (Python/JS)
+    webSearch: true,       // Tavily/Exa web search
+    mcp: true,             // MCP connector support
+    imageGeneration: true, // AI image generation
   },
 
   authentication: {
@@ -46,15 +46,15 @@ Toggle features on/off. Set to `true` to enable. Missing env vars are caught at 
 |-------------|------------|----------------|
 | Code Sandbox | `integrations.sandbox` | Vercel deployment only |
 | Web Search | `integrations.webSearch` | `TAVILY_API_KEY` or `EXA_API_KEY` |
-| OpenAI Direct | `integrations.openai` | None |
 | MCP Connectors | `integrations.mcp` | `MCP_ENCRYPTION_KEY` |
+| Image Generation | `integrations.imageGeneration` | None |
 
 ```typescript
 integrations: {
-  sandbox: true,   // Vercel-native, no key needed
-  webSearch: true, // Requires TAVILY_API_KEY or EXA_API_KEY
-  openai: true,    // No API key required
-  mcp: false,      // Requires MCP_ENCRYPTION_KEY
+  sandbox: true,         // Vercel-native, no key needed
+  webSearch: true,       // Requires TAVILY_API_KEY or EXA_API_KEY
+  mcp: false,            // Requires MCP_ENCRYPTION_KEY
+  imageGeneration: true, // AI image generation
 },
 ```
 
@@ -136,8 +136,8 @@ export type SiteConfig = {
   integrations: {
     sandbox: boolean;
     webSearch: boolean;
-    openai: boolean;
     mcp: boolean;
+    imageGeneration: boolean;
   };
   pricing?: PricingConfig;
   legal: {

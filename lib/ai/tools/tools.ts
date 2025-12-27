@@ -75,7 +75,7 @@ export function getTools({
       : {}),
 
     ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
-    ...(siteConfig.integrations.openai
+    ...(siteConfig.integrations.imageGeneration
       ? {
           generateImage: generateImageTool({ attachments, lastGeneratedImage }),
         }
