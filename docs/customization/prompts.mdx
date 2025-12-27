@@ -33,7 +33,12 @@ export const systemPrompt = () => `You are a friendly assistant!
 - Format exactly: [Source Title](URL)
 - Cite only the most relevant hits and avoid fluff
 
-Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
+Today's Date: ${new Date().toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "2-digit",
+  weekday: "short",
+})}
 `;
 ```
 
@@ -108,12 +113,6 @@ When projects are enabled, users can set custom instructions per project that ge
 ## Best Practices
 
 - Keep prompts focused and specific
-- Use numbered lists for rules the model should follow
 - Include examples of desired output format when relevant
 - Test changes with various inputs to ensure consistent behavior
 - Use functions for prompts that need dynamic values
-
-## Related
-
-- [Projects](/features/projects) - Project-specific instructions
-- [Models](/customization/models) - Configure available models
