@@ -1,6 +1,6 @@
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/add-explicit-tool-request-to-messages";
-import { filterReasoningParts } from "@/app/(chat)/api/chat/filter-reasoning-parts";
+import { filterPartsForLLM } from "@/app/(chat)/api/chat/filter-reasoning-parts";
 import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-generated-image";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
@@ -52,11 +52,13 @@ export async function createCoreChatAgent({
 
   addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
 
-  // Filter out reasoning parts to ensure compatibility between different models
-  const messagesWithoutReasoning = filterReasoningParts(messages.slice(-5));
+  // Filter reasoning parts (cross-model compatibility)
+  const filteredMessages = filterPartsForLLM(messages.slice(-5));
 
-  // Convert to model messages
-  const modelMessages = await convertToModelMessages(messagesWithoutReasoning);
+  // Convert to model messages, ignoring data-* parts (UI-only)
+  const modelMessages = await convertToModelMessages(filteredMessages, {
+    convertDataPart: () => undefined,
+  });
 
   // Replace file URLs with binary data
   const contextForLLM =
