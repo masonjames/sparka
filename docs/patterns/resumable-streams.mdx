@@ -7,25 +7,3 @@ description: Continue AI responses after connection interruptions
   This documentation is coming soon. The pattern is implemented in the starter
   app.
 </Note>
-
-## Problem
-
-Users lose AI responses when their connection drops mid-stream.
-
-## Solution
-
-Store stream chunks in Redis and allow clients to reconnect and resume from where they left off.
-
-## Quick Start
-
-Resumable streams require Redis. Set the environment variable:
-
-```bash
-REDIS_URL=your_redis_url
-```
-
-No config toggle needed. Streams are automatically resumable when Redis is configured.
-
-## Related
-
-- [Multi-Model](/features/multi-model) - Works with all streaming models

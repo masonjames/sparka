@@ -4,23 +4,6 @@ description: Track and limit AI usage with credit budgets
 ---
 
 <Note>
-  This documentation is coming soon. The pattern is implemented in the starter app.
+  This documentation is coming soon. The pattern is implemented in the starter
+  app.
 </Note>
-
-## Problem
-
-Need to limit AI usage per user/organization and track costs.
-
-## Solution
-
-Reserve credits before API calls, finalize after completion. Support budgets and usage analytics.
-
-## Implementation Overview
-
-1. **Reservation**: Reserve estimated credits before the AI call
-2. **Execution**: Make the AI request
-3. **Finalization**: Adjust credits based on actual token usage
-
-## Related
-
-- [Authentication](/features/authentication) - User identification for credit tracking
