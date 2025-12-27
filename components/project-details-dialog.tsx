@@ -75,7 +75,7 @@ export function ProjectDetailsDialog({
       const hasChanges =
         trimmedName !== initialName ||
         finalIcon !== (initialIcon ?? DEFAULT_PROJECT_ICON) ||
-        finalColor !== initialColor;
+        finalColor !== (initialColor ?? DEFAULT_PROJECT_COLOR);
       if (hasChanges) {
         await onSubmit({
           name: trimmedName,
