@@ -14,7 +14,7 @@ import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
-import { CodeInterpreter } from "./part/code-interpreter";
+import { CodeExecution } from "./part/code-execution";
 import { CreateDocument } from "./part/create-document";
 import { DeepResearch } from "./part/deep-research";
 import { DynamicToolPart } from "./part/dynamic-tool";
@@ -87,8 +87,8 @@ function ToolPart({
     return <ReadDocument tool={part} />;
   }
 
-  if (type === "tool-codeInterpreter") {
-    return <CodeInterpreter tool={part} />;
+  if (type === "tool-codeExecution") {
+    return <CodeExecution tool={part} />;
   }
 
   if (type === "tool-generateImage") {

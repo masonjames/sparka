@@ -208,7 +208,7 @@ function buildResponseMessage({
   return message;
 }
 
-export const codeInterpreter = tool({
+export const codeExecution = tool({
   description: `Python-only sandbox for calculations, data analysis & simple visualisations.
 
 Use for:
@@ -236,7 +236,7 @@ Output rules:
       ),
   }),
   execute: async ({ code, title }: { code: string; title: string }) => {
-    const log = createModuleLogger("code-interpreter");
+    const log = createModuleLogger("code-execution");
     const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const runtime = process.env.VERCEL_SANDBOX_RUNTIME ?? "python3.13";
     const basePackages = [
@@ -305,7 +305,7 @@ Output rules:
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      log.error({ err, requestId }, "code interpreter failed");
+      log.error({ err, requestId }, "code execution failed");
       return {
         message: `Sandbox execution failed: ${errorMessage}`,
         chart: "",

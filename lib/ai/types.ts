@@ -5,7 +5,7 @@ import type {
   UIMessageStreamWriter,
 } from "ai";
 import { z } from "zod";
-import type { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
+import type { codeExecution } from "@/lib/ai/tools/code-execution";
 import type { deepResearch } from "@/lib/ai/tools/deep-research/deep-research";
 import type { generateImageTool as generateImageToolFactory } from "@/lib/ai/tools/generate-image";
 import type { getWeather } from "@/lib/ai/tools/get-weather";
@@ -28,7 +28,7 @@ export const toolNameSchema = z.enum([
   "readDocument",
   "retrieve",
   "webSearch",
-  "codeInterpreter",
+  "codeExecution",
   "generateImage",
   "deepResearch",
 ]);
@@ -70,7 +70,7 @@ type generateImageTool = InferUITool<
   ReturnType<typeof generateImageToolFactory>
 >;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
-type codeInterpreterTool = InferUITool<typeof codeInterpreter>;
+type codeExecutionTool = InferUITool<typeof codeExecution>;
 type retrieveTool = InferUITool<typeof retrieve>;
 
 export type ChatTools = {
@@ -82,7 +82,7 @@ export type ChatTools = {
   readDocument: readDocumentTool;
   generateImage: generateImageTool;
   webSearch: webSearchTool;
-  codeInterpreter: codeInterpreterTool;
+  codeExecution: codeExecutionTool;
   retrieve: retrieveTool;
 };
 

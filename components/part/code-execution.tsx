@@ -2,9 +2,9 @@ import type { ChatMessage } from "@/lib/ai/types";
 import InteractiveChart, { type BaseChart } from "../interactive-charts";
 import { SandboxComposed } from "../sandbox";
 
-export type CodeInterpreterTool = Extract<
+export type CodeExecutionTool = Extract<
   ChatMessage["parts"][number],
-  { type: "tool-codeInterpreter" }
+  { type: "tool-codeExecution" }
 >;
 
 function isBaseChart(input: unknown): input is BaseChart {
@@ -19,7 +19,7 @@ function isBaseChart(input: unknown): input is BaseChart {
   return hasType && hasTitle && hasElements;
 }
 
-export function CodeInterpreter({ tool }: { tool: CodeInterpreterTool }) {
+export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
   const args = tool.input ?? { code: "", title: "", icon: "default" };
   const result = tool.state === "output-available" ? tool.output : null;
   const chart: BaseChart | null =

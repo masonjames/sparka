@@ -38,10 +38,10 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Search the web",
     cost: 1, // Tavily API ~1¢
   },
-  codeInterpreter: {
-    name: "codeInterpreter",
-    description: "Interpret code in a virtual environment",
-    cost: 5, // E2B execution ~5¢
+  codeExecution: {
+    name: "codeExecution",
+    description: "Execute code in a virtual environment",
+    cost: 5, // Vercel Sandbox execution ~5¢
   },
   generateImage: {
     name: "generateImage",

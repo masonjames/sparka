@@ -2,7 +2,7 @@ import type { FileUIPart, ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
+import { codeExecution } from "@/lib/ai/tools/code-execution";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
 import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
@@ -74,7 +74,7 @@ export function getTools({
         }
       : {}),
 
-    ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
+    ...(siteConfig.integrations.sandbox ? { codeExecution } : {}),
     ...(siteConfig.integrations.imageGeneration
       ? {
           generateImage: generateImageTool({ attachments, lastGeneratedImage }),
