@@ -68,6 +68,8 @@ export const project = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     instructions: text("instructions").notNull().default(""),
+    icon: varchar("icon", { length: 64 }).notNull().default("folder"),
+    iconColor: varchar("iconColor", { length: 32 }).notNull().default("gray"),
   },
   (t) => ({
     Project_user_id_idx: index("Project_user_id_idx").on(t.userId),

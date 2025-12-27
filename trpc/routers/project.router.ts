@@ -7,6 +7,7 @@ import {
   getProjectsByUserId,
   updateProject,
 } from "@/lib/db/queries";
+import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
 import { generateUUID } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
@@ -21,6 +22,8 @@ export const projectRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1),
         instructions: z.string().default(""),
+        icon: z.enum(PROJECT_ICONS).optional(),
+        iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -30,6 +33,8 @@ export const projectRouter = createTRPCRouter({
         userId: ctx.user.id,
         name: input.name,
         instructions: input.instructions,
+        icon: input.icon,
+        iconColor: input.iconColor,
       });
       return { id };
     }),
@@ -60,6 +65,8 @@ export const projectRouter = createTRPCRouter({
         updates: z.object({
           name: z.string().min(1).optional(),
           instructions: z.string().optional(),
+          icon: z.enum(PROJECT_ICONS).optional(),
+          iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
         }),
       })
     )
