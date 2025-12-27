@@ -28,7 +28,8 @@
               "features/code-execution",
               "features/web-search",
               "features/canvas",
-              "features/chat-sharing",
+              "features/sharing",
+              "features/branching",
               "features/projects",
               "features/mcp"
             ]
@@ -40,8 +41,7 @@
               "patterns/tool-part",
               "patterns/follow-up-questions",
               "patterns/resumable-streams",
-              "patterns/credit-tracking",
-              "patterns/chat-branching"
+              "patterns/credit-tracking"
             ]
           },
           {
