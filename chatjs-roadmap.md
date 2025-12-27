@@ -122,24 +122,20 @@ Agent-ready: humans or AI can copy directly to implement.
 \`\`\`tsx title="components/example.tsx"
 // Complete file or standalone snippet
 \`\`\`
-
-## Related
-
-Links to other patterns
 ```
 
 ---
 
 ## Patterns to Document
 
-| Pattern               | Scope          | Description                                    |
-| --------------------- | -------------- | ---------------------------------------------- |
-| Tool execution        | Full-stack     | Tool def → part renderer                       |
-| Follow-up suggestions | Full-stack     | Generation in route.ts → hook → UI             |
-| Chat layout           | Frontend       | Resizable main + secondary panel               |
-| Resumable streams     | Backend + Infra| Redis setup, reconnection, state recovery      |
-| Credit tracking       | Backend + DB   | Reservation before call, finalization after    |
-| Chat branching        | Frontend + DB  | Tree structure, parent refs, thread navigation |
+| Pattern               | Scope           | Description                                    |
+| --------------------- | --------------- | ---------------------------------------------- |
+| Tool execution        | Full-stack      | Tool def → part renderer                       |
+| Follow-up suggestions | Full-stack      | Generation in route.ts → hook → UI             |
+| Chat layout           | Frontend        | Resizable main + secondary panel               |
+| Resumable streams     | Backend + Infra | Redis setup, reconnection, state recovery      |
+| Credit tracking       | Backend + DB    | Reservation before call, finalization after    |
+| Chat branching        | Frontend + DB   | Tree structure, parent refs, thread navigation |
 
 ---
 
