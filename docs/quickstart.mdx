@@ -3,12 +3,35 @@ title: "Quickstart"
 description: "Get ChatJS running in minutes"
 ---
 
-## Clone and Install
+## Create Your Project
+
+<Tabs>
+  <Tab title="GitHub Template (Recommended)">
+    Click **"Use this template"** on the [ChatJS repo](https://github.com/franciscomoretti/chatjs) to create your own copy.
+
+    Then clone your new repo:
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+    cd YOUR_REPO
+    bun install
+    ```
+  </Tab>
+  <Tab title="CLI">
+    ```bash
+    bunx degit franciscomoretti/chatjs my-chat-app
+    cd my-chat-app
+    git init
+    bun install
+    ```
+  </Tab>
+</Tabs>
+
+### Cleanup
+
+Remove the docs folder (you won't need it):
 
 ```bash
-git clone https://github.com/franciscomoretti/chatjs.git
-cd chatjs
-bun install
+rm -rf docs
 ```
 
 ## Environment Setup

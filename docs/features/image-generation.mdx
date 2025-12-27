@@ -3,14 +3,9 @@ title: Image Generation
 description: AI-powered image creation in your chat app
 ---
 
-<Note>
-  This documentation is coming soon. The feature is available in the starter
-  app.
-</Note>
-
 ## Overview
 
-Generate images directly in chat using AI models like OpenAI GPT-Image-1.5.
+Generate images directly in chat using AI models. Supports both generation from text prompts and editing existing images.
 
 ## Quick Start
 
@@ -21,3 +16,165 @@ integrations: {
   imageGeneration: true,
 }
 ```
+
+Configure the default image model:
+
+```ts
+models: {
+  defaults: {
+    image: "openai/gpt-image-1.5",
+  },
+}
+```
+
+## How It Works
+
+The image generation tool operates in two modes:
+
+| Mode       | Trigger                              | Behavior                          |
+| ---------- | ------------------------------------ | --------------------------------- |
+| `generate` | Text prompt only                     | Creates new image from scratch    |
+| `edit`     | Prompt + attached images or previous | Uses images as reference/input    |
+
+## Architecture
+
+Follows the [Tool Part](/patterns/tool-part) pattern:
+
+```
+lib/ai/tools/generate-image.ts → components/part/generated-image.tsx
+```
+
+### Tool Definition
+
+```ts title="lib/ai/tools/generate-image.ts"
+import { generateImage, tool } from "ai";
+import { z } from "zod";
+import { getImageModel } from "@/lib/ai/providers";
+import { uploadFile } from "@/lib/blob";
+
+export const generateImageTool = ({
+  attachments = [],
+  lastGeneratedImage = null,
+}) =>
+  tool({
+    description: `Generate images from text descriptions...`,
+    inputSchema: z.object({
+      prompt: z.string().describe("Detailed description of the image..."),
+    }),
+    execute: async ({ prompt }) => {
+      const imageParts = attachments.filter(
+        (part) => part.mediaType?.startsWith("image/")
+      );
+
+      const mode = imageParts.length > 0 || lastGeneratedImage
+        ? "edit"
+        : "generate";
+
+      const res = await generateImage({
+        model: getImageModel(siteConfig.models.defaults.image),
+        prompt: mode === "edit"
+          ? { text: prompt, images: inputImages }
+          : prompt,
+        n: 1,
+      });
+
+      const buffer = Buffer.from(res.images[0].base64, "base64");
+      const result = await uploadFile(`generated-image-${Date.now()}.png`, buffer);
+
+      return { imageUrl: result.url, prompt };
+    },
+  });
+```
+
+### UI Component
+
+```tsx title="components/part/generated-image.tsx"
+"use client";
+
+import type { ChatMessage } from "@/lib/ai/types";
+
+export type GenerateImageTool = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-generateImage" }
+>;
+
+export function GeneratedImage({ tool }: { tool: GenerateImageTool }) {
+  // Loading state
+  if (tool.state === "input-available") {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-lg border p-8">
+        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="text-muted-foreground">
+          Generating image: "{tool.input.prompt}"
+        </div>
+      </div>
+    );
+  }
+
+  // Complete state
+  const output = tool.output;
+  return (
+    <div className="flex flex-col gap-4 rounded-lg border">
+      <img alt={output.prompt} src={output.imageUrl} />
+      <p className="text-muted-foreground">
+        Generated from: "{output.prompt}"
+      </p>
+    </div>
+  );
+}
+```
+
+### Route to Component
+
+```tsx title="components/message-parts.tsx"
+import { GeneratedImage } from "./part/generated-image";
+
+function ToolPart({ part, messageId, isReadonly }) {
+  if (part.type === "tool-generateImage") {
+    return <GeneratedImage tool={part} />;
+  }
+  // ...
+}
+```
+
+## Edit Mode
+
+When images are attached or a previous generation exists, the tool automatically switches to edit mode:
+
+```ts
+const mode = imageParts.length > 0 || lastGeneratedImage ? "edit" : "generate";
+```
+
+In edit mode, the prompt and images are combined:
+
+```ts
+promptInput = { text: prompt, images: inputImages };
+```
+
+This allows users to:
+- Upload reference images and ask for modifications
+- Iterate on previously generated images
+- Combine multiple source images
+
+## Configuration
+
+### Image Model
+
+Set the default image model in `lib/config.ts`:
+
+```ts
+models: {
+  defaults: {
+    image: "openai/gpt-image-1.5", // ImageModelId
+  },
+}
+```
+
+### Available Image Models
+
+Image models are separate from chat models. Configure via `ImageModelId` type in your providers.
+
+## Related
+
+- [Tool Part Pattern](/patterns/tool-part) - How tools connect to UI
+- [Models Configuration](/customization/models) - Model defaults

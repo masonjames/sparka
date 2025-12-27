@@ -95,7 +95,7 @@ Different tasks use different models by default. This lets you optimize for cost
 | `analyzeSheet`        | Spreadsheet analysis                        |
 | `codeEdits`           | Code modifications                          |
 | `chatImageCompatible` | Chat with image input support               |
-| `image`               | Image generation                            |
+| `image`               | Image generation (see [Image Generation](/features/image-generation)) |
 
 ## AI Providers
 
@@ -111,6 +111,19 @@ aiProviders: [
 
 Model selection and routing is handled through the Vercel AI Gateway.
 
+## Image Models
+
+Image models use a separate `ImageModelId` type. Set the default:
+
+```ts
+defaults: {
+  image: "openai/gpt-image-1.5",
+}
+```
+
+The image model is used by the `generateImage` tool for both generation and edit modes. See [Image Generation](/features/image-generation) for details.
+
 ## Related
 
 - [Multi-Model](/features/multi-model) - Using multiple models
+- [Image Generation](/features/image-generation) - AI image creation
