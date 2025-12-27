@@ -99,5 +99,8 @@
       "x": "https://x.com/franmoretti_",
       "github": "https://github.com/franciscomoretti/chatjs"
     }
+  },
+  "contextual": {
+    "options": ["copy"]
   }
 }

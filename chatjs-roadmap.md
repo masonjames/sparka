@@ -103,31 +103,25 @@ docs/
 ```md
 # Pattern Name
 
-## Problem
+> One-liner description
 
-What pain this solves
+## Overview
 
-## Solution
+What it does + why you'd want it. 2-3 sentences max.
 
-High-level approach
+## How it works
 
-## Implementation
+Concept explanation with inline snippets showing the flow.
+Sections are dynamic based on what the pattern touches (no forced backend/frontend split).
 
-### Backend
+## Code
 
-Code snippets from actual repo
+Full copy-paste blocks with file paths. Complete, working code - no ellipsis.
+Agent-ready: humans or AI can copy directly to implement.
 
-### Frontend
-
-UI components involved
-
-### Config
-
-Feature flags if applicable
-
-## Demo
-
-Link to live example in starter
+\`\`\`tsx title="components/example.tsx"
+// Complete file or standalone snippet
+\`\`\`
 
 ## Related
 
@@ -138,13 +132,14 @@ Links to other patterns
 
 ## Patterns to Document
 
-| Pattern               | Description                                             |
-| --------------------- | ------------------------------------------------------- |
-| Follow-up suggestions | Generation in route.ts + UI display + context exclusion |
-| Resumable streams     | Redis setup, reconnection logic, state recovery         |
-| Credit tracking       | Reservation before call, finalization after, budgets    |
-| Tool execution        | Backend tool definition + frontend part rendering       |
-| Chat branching        | Tree structure, parent refs, thread navigation          |
+| Pattern               | Scope          | Description                                    |
+| --------------------- | -------------- | ---------------------------------------------- |
+| Tool execution        | Full-stack     | Tool def → part renderer                       |
+| Follow-up suggestions | Full-stack     | Generation in route.ts → hook → UI             |
+| Chat layout           | Frontend       | Resizable main + secondary panel               |
+| Resumable streams     | Backend + Infra| Redis setup, reconnection, state recovery      |
+| Credit tracking       | Backend + DB   | Reservation before call, finalization after    |
+| Chat branching        | Frontend + DB  | Tree structure, parent refs, thread navigation |
 
 ---
 
