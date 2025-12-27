@@ -18,7 +18,7 @@ import { CodeExecution } from "./part/code-execution";
 import { CreateDocument } from "./part/create-document";
 import { DeepResearch } from "./part/deep-research";
 import { DynamicToolPart } from "./part/dynamic-tool";
-import { GeneratedImage } from "./part/generated-image";
+import { GenerateImage } from "./part/generate-image";
 import { ReasoningPart } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
 import { RequestSuggestions } from "./part/request-suggestions";
@@ -92,7 +92,7 @@ function ToolPart({
   }
 
   if (type === "tool-generateImage") {
-    return <GeneratedImage tool={part} />;
+    return <GenerateImage tool={part} />;
   }
 
   if (type === "tool-deepResearch") {

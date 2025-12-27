@@ -5,7 +5,7 @@ description: AI-powered image creation in your chat app
 
 ## Overview
 
-Generate images directly in chat using AI models. Supports both generation from text prompts and editing existing images.
+Generate images directly in chat using AI models. Supports both generation from text prompts and iterative editing of existing images.
 
 ## Quick Start
 
@@ -27,152 +27,129 @@ models: {
 }
 ```
 
-## How It Works
+## Modes
 
-The image generation tool operates in two modes:
+The tool operates in two modes based on context:
 
-| Mode       | Trigger                              | Behavior                          |
-| ---------- | ------------------------------------ | --------------------------------- |
-| `generate` | Text prompt only                     | Creates new image from scratch    |
-| `edit`     | Prompt + attached images or previous | Uses images as reference/input    |
+| Mode       | Trigger                                      | Behavior                        |
+| ---------- | -------------------------------------------- | ------------------------------- |
+| `generate` | Text prompt only                             | Creates new image from scratch  |
+| `edit`     | Prompt + attachments or previous generation  | Uses existing images as input   |
+
+Mode is determined automatically:
+
+```ts
+const mode = imageParts.length > 0 || lastGeneratedImage ? "edit" : "generate";
+```
+
+## Iterative Editing
+
+Users can iterate on generated images without re-uploading. The system automatically tracks the last generated image in the conversation.
+
+### How It Works
+
+1. **Extraction**: Before each request, the chat agent scans recent messages for the last generated image:
+
+```ts title="app/(chat)/api/chat/get-recent-generated-image.ts"
+export function getRecentGeneratedImage(messages: ChatMessage[]) {
+  const lastAssistantMessage = messages.findLast(
+    (message) => message.role === "assistant"
+  );
+
+  for (const part of lastAssistantMessage?.parts ?? []) {
+    if (
+      part.type === "tool-generateImage" &&
+      part.state === "output-available" &&
+      part.output?.imageUrl
+    ) {
+      return { imageUrl: part.output.imageUrl, name: "previous" };
+    }
+  }
+  return null;
+}
+```
+
+2. **Injection**: The extracted image is passed to the tool factory:
+
+```ts title="lib/ai/core-chat-agent.ts"
+const lastGeneratedImage = getRecentGeneratedImage(messages);
+
+const tools = getTools({
+  // ...other params
+  lastGeneratedImage,
+});
+```
+
+3. **Edit mode**: When `lastGeneratedImage` exists, the tool fetches it and includes it as input:
+
+```ts title="lib/ai/tools/generate-image.ts"
+const inputImages = await collectEditImages({ imageParts, lastGeneratedImage });
+promptInput = { text: prompt, images: inputImages };
+```
+
+### User Experience
+
+- User: "Generate a sunset over mountains"
+- AI: *generates image*
+- User: "Add a lake in the foreground"
+- AI: *edits previous image* (no re-upload needed)
+
+## Image Sources
+
+Edit mode combines images from multiple sources:
+
+| Source               | Description                                |
+| -------------------- | ------------------------------------------ |
+| `lastGeneratedImage` | Most recent generated image in conversation |
+| `attachments`        | User-uploaded images in current message    |
+
+Both are fetched and passed to the model:
+
+```ts
+async function collectEditImages({ imageParts, lastGeneratedImage }) {
+  return await Promise.all([
+    ...(lastGeneratedImage ? [fetchImageBuffer(lastGeneratedImage.imageUrl)] : []),
+    ...imageParts.map((p) => fetchImageBuffer(p.url)),
+  ]);
+}
+```
 
 ## Architecture
 
 Follows the [Tool Part](/patterns/tool-part) pattern:
 
 ```
-lib/ai/tools/generate-image.ts → components/part/generated-image.tsx
+lib/ai/tools/generate-image.ts → components/part/generate-image.tsx
 ```
 
-### Tool Definition
-
-```ts title="lib/ai/tools/generate-image.ts"
-import { generateImage, tool } from "ai";
-import { z } from "zod";
-import { getImageModel } from "@/lib/ai/providers";
-import { uploadFile } from "@/lib/blob";
-
-export const generateImageTool = ({
-  attachments = [],
-  lastGeneratedImage = null,
-}) =>
-  tool({
-    description: `Generate images from text descriptions...`,
-    inputSchema: z.object({
-      prompt: z.string().describe("Detailed description of the image..."),
-    }),
-    execute: async ({ prompt }) => {
-      const imageParts = attachments.filter(
-        (part) => part.mediaType?.startsWith("image/")
-      );
-
-      const mode = imageParts.length > 0 || lastGeneratedImage
-        ? "edit"
-        : "generate";
-
-      const res = await generateImage({
-        model: getImageModel(siteConfig.models.defaults.image),
-        prompt: mode === "edit"
-          ? { text: prompt, images: inputImages }
-          : prompt,
-        n: 1,
-      });
-
-      const buffer = Buffer.from(res.images[0].base64, "base64");
-      const result = await uploadFile(`generated-image-${Date.now()}.png`, buffer);
-
-      return { imageUrl: result.url, prompt };
-    },
-  });
-```
-
-### UI Component
-
-```tsx title="components/part/generated-image.tsx"
-"use client";
-
-import type { ChatMessage } from "@/lib/ai/types";
-
-export type GenerateImageTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-generateImage" }
->;
-
-export function GeneratedImage({ tool }: { tool: GenerateImageTool }) {
-  // Loading state
-  if (tool.state === "input-available") {
-    return (
-      <div className="flex flex-col items-center gap-4 rounded-lg border p-8">
-        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
-        <div className="text-muted-foreground">
-          Generating image: "{tool.input.prompt}"
-        </div>
-      </div>
-    );
-  }
-
-  // Complete state
-  const output = tool.output;
-  return (
-    <div className="flex flex-col gap-4 rounded-lg border">
-      <img alt={output.prompt} src={output.imageUrl} />
-      <p className="text-muted-foreground">
-        Generated from: "{output.prompt}"
-      </p>
-    </div>
-  );
-}
-```
-
-### Route to Component
-
-```tsx title="components/message-parts.tsx"
-import { GeneratedImage } from "./part/generated-image";
-
-function ToolPart({ part, messageId, isReadonly }) {
-  if (part.type === "tool-generateImage") {
-    return <GeneratedImage tool={part} />;
-  }
-  // ...
-}
-```
-
-## Edit Mode
-
-When images are attached or a previous generation exists, the tool automatically switches to edit mode:
+### Tool Output
 
 ```ts
-const mode = imageParts.length > 0 || lastGeneratedImage ? "edit" : "generate";
+return { imageUrl: result.url, prompt };
 ```
 
-In edit mode, the prompt and images are combined:
+The generated image is uploaded to blob storage and the URL returned.
 
-```ts
-promptInput = { text: prompt, images: inputImages };
-```
+### UI States
 
-This allows users to:
-- Upload reference images and ask for modifications
-- Iterate on previously generated images
-- Combine multiple source images
+| State               | Shows                          |
+| ------------------- | ------------------------------ |
+| `input-available`   | Skeleton + "Generating: {prompt}" |
+| `output-available`  | Image + copy button + prompt   |
 
 ## Configuration
 
 ### Image Model
 
-Set the default image model in `lib/config.ts`:
-
-```ts
+```ts title="lib/config.ts"
 models: {
   defaults: {
-    image: "openai/gpt-image-1.5", // ImageModelId
+    image: "openai/gpt-image-1.5",
   },
 }
 ```
 
-### Available Image Models
-
-Image models are separate from chat models. Configure via `ImageModelId` type in your providers.
+Image models use a separate `ImageModelId` type from chat models.
 
 ## Related
 

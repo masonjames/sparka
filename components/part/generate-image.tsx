@@ -10,7 +10,7 @@ export type GenerateImageTool = Extract<
   { type: "tool-generateImage" }
 >;
 
-export function GeneratedImage({ tool }: { tool: GenerateImageTool }) {
+export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
   if (tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
