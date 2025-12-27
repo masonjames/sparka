@@ -37,13 +37,13 @@ function extractPartTypes<UI_MESSAGE extends UIMessage>(
 export type PartsAugmentedState<UM extends UIMessage> =
   BaseChatStoreState<UM> & {
     getMessagePartTypesById: (messageId: string) => UIMessagePartType<UM>[];
-    getMessagePartsRangeCached: (
+    getMessagePartsRange: (
       messageId: string,
       startIdx: number,
       endIdx: number,
       type?: string
     ) => UIMessageParts<UM>;
-    getMessagePartByIdxCached: (
+    getMessagePartByIdx: (
       messageId: string,
       partIdx: number
     ) => UIMessageParts<UM>[number];
@@ -75,7 +75,7 @@ export const withMessageParts =
         const { types } = extractPartTypes<UI_MESSAGE>(message);
         return types as UIMessagePartType<UI_MESSAGE>[];
       },
-      getMessagePartsRangeCached: (
+      getMessagePartsRange: (
         messageId: string,
         startIdx: number,
         endIdx: number,
@@ -104,7 +104,7 @@ export const withMessageParts =
         ) as UIMessageParts<UI_MESSAGE>;
         return result as UIMessageParts<UI_MESSAGE>;
       },
-      getMessagePartByIdxCached: (messageId: string, partIdx: number) => {
+      getMessagePartByIdx: (messageId: string, partIdx: number) => {
         const state = get();
         const message = (state._throttledMessages || state.messages).find(
           (msg) => msg.id === messageId

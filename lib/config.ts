@@ -166,7 +166,7 @@ export const siteConfig: SiteConfig = {
 
   integrations: {
     sandbox: true, // Vercel-native, no key needed
-    webSearch: true, // Requires TAVILY_API_KEY or EXA_API_KEY
+    webSearch: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
     mcp: false, // Requires MCP_ENCRYPTION_KEY
     imageGeneration: true,
   },

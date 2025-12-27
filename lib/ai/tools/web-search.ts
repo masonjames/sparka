@@ -176,7 +176,7 @@ Avoid:
         })),
         options: {
           baseProviderOptions: {
-            provider: "firecrawl",
+            provider: "tavily",
           },
           topics: safeTopics,
           excludeDomains: safeExcludeDomains,

@@ -40,7 +40,7 @@ export function useMessagePartByPartIdx<
   T extends ChatMessage["parts"][number]["type"],
 >(messageId: string, partIdx: number, type?: T) {
   const part = usePartsStore((state) =>
-    state.getMessagePartByIdxCached(messageId, partIdx)
+    state.getMessagePartByIdx(messageId, partIdx)
   );
   if (type !== undefined && part.type !== type) {
     throw new Error(
@@ -72,7 +72,7 @@ export function useMessagePartsByPartRange<
 >(messageId: string, startIdx: number, endIdx: number, type?: T) {
   return usePartsStore(
     (state) =>
-      state.getMessagePartsRangeCached(
+      state.getMessagePartsRange(
         messageId,
         startIdx,
         endIdx,
