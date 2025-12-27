@@ -2,11 +2,11 @@
 
 import {
   ChevronsUpDown,
+  DollarSign,
   LogIn,
   LogOut,
   Moon,
   Settings,
-  Sparkles,
   Sun,
 } from "lucide-react";
 import Link from "next/link";
@@ -94,8 +94,8 @@ export function SidebarUserNav() {
                   {user.name || user.email}
                 </span>
                 <span className="flex items-center gap-1 truncate text-xs">
-                  <Sparkles className="size-3" />
-                  {credits ?? 0} Credits
+                  <DollarSign className="size-3" />
+                  {((credits ?? 0) / 100).toFixed(2)}
                 </span>
               </div>
               <ChevronsUpDown

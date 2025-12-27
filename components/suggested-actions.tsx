@@ -8,7 +8,7 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +28,7 @@ function PureSuggestedActions({
   className,
 }: SuggestedActionsProps) {
   const { sendMessage } = useChatActions<ChatMessage>();
+  const containerRef = useRef<HTMLDivElement>(null);
   const categories = useMemo(
     () =>
       [
@@ -48,7 +49,7 @@ function PureSuggestedActions({
           label: "Learn",
           icon: GraduationCapIcon,
           prompts: [
-            "Explain this concept like I’m smart but new to it",
+            "Explain this concept like I'm smart but new to it",
             "Quiz me on this topic (start easy, ramp up)",
             "Give me a mental model + common pitfalls",
             "Summarize this in 5 bullets + 3 key takeaways",
@@ -74,7 +75,7 @@ function PureSuggestedActions({
           prompts: [
             "Plan a simple healthy meal prep for the week",
             "Help me choose between these options (pros/cons)",
-            "Create a 30-minute daily routine I’ll stick to",
+            "Create a 30-minute daily routine I'll stick to",
             "Write a message to resolve a conflict calmly",
             "Suggest a weekend plan based on my constraints",
           ],
@@ -90,6 +91,25 @@ function PureSuggestedActions({
   const selectedCategory = selectedCategoryId
     ? categories.find((c) => c.id === selectedCategoryId)
     : null;
+
+  // Click outside to close
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setSelectedCategoryId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectedCategoryId]);
 
   const sendPrompt = (text: string) => {
     if (!sendMessage) {
@@ -127,6 +147,7 @@ function PureSuggestedActions({
     <div
       className={cn("relative flex w-full flex-col", className)}
       data-testid="suggested-actions"
+      ref={containerRef}
     >
       <Suggestions className="mx-auto gap-1.5">
         {categories.map((c, index) => {
@@ -154,7 +175,7 @@ function PureSuggestedActions({
                 variant={selected ? "default" : "outline"}
               >
                 <Icon className="size-4" />
-                <span>{c.label}</span>
+                <span className="@[500px]:inline hidden">{c.label}</span>
               </Suggestion>
             </motion.div>
           );
@@ -164,7 +185,7 @@ function PureSuggestedActions({
       {selectedCategory ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="absolute start-0 top-full w-full pt-2"
+          className="absolute start-0 @[500px]:top-full @[500px]:bottom-auto bottom-full z-20 w-full @[500px]:pt-2 @[500px]:pb-0 pb-2"
           initial={{ opacity: 0, y: 6 }}
           key={selectedCategory.id}
           transition={{ duration: 0.15 }}

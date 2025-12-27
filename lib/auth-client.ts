@@ -1,13 +1,18 @@
 import { nextCookies } from "better-auth/next-js";
 import { createAuthClient } from "better-auth/react";
 
+function getBaseURL() {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 const authClient = createAuthClient({
-  baseURL:
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000",
+  baseURL: getBaseURL(),
   plugins: [nextCookies()],
 });
 

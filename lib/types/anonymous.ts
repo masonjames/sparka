@@ -1,5 +1,5 @@
-import { siteConfig } from "../config";
 import type { ChatMessage, ToolName } from "../ai/types";
+import { siteConfig } from "../config";
 import type { DBMessage } from "../db/schema";
 import type { UIChat } from "./ui-chat";
 
