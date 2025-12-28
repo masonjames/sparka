@@ -1,8 +1,8 @@
 import type {
-  InferUITool,
-  LanguageModelUsage,
-  UIMessage,
-  UIMessageStreamWriter,
+    InferUITool,
+    LanguageModelUsage,
+    UIMessage,
+    UIMessageStreamWriter,
 } from "ai";
 import { z } from "zod";
 import type { codeExecution } from "@/lib/ai/tools/code-execution";
@@ -11,7 +11,7 @@ import type { generateImageTool as generateImageToolFactory } from "@/lib/ai/too
 import type { getWeather } from "@/lib/ai/tools/get-weather";
 import type { readDocument } from "@/lib/ai/tools/read-document";
 import type { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import type { retrieve } from "@/lib/ai/tools/retrieve";
+import type { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import type { updateDocument } from "@/lib/ai/tools/update-document";
 import type { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Suggestion } from "@/lib/db/schema";
@@ -26,7 +26,7 @@ export const toolNameSchema = z.enum([
   "updateDocument",
   "requestSuggestions",
   "readDocument",
-  "retrieve",
+  "retrieveUrl",
   "webSearch",
   "codeExecution",
   "generateImage",
@@ -71,7 +71,7 @@ type generateImageTool = InferUITool<
 >;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
 type codeExecutionTool = InferUITool<typeof codeExecution>;
-type retrieveTool = InferUITool<typeof retrieve>;
+type retrieveUrlTool = InferUITool<typeof retrieveUrl>;
 
 export type ChatTools = {
   getWeather: weatherTool;
@@ -83,7 +83,7 @@ export type ChatTools = {
   generateImage: generateImageTool;
   webSearch: webSearchTool;
   codeExecution: codeExecutionTool;
-  retrieve: retrieveTool;
+  retrieveUrl: retrieveUrlTool;
 };
 
 type FollowupSuggestions = {

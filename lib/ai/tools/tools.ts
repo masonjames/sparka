@@ -8,7 +8,7 @@ import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import { retrieve } from "@/lib/ai/tools/retrieve";
+import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Session } from "@/lib/auth";
@@ -64,7 +64,7 @@ export function getTools({
     //   session,
     //   dataStream,
     // }),
-    retrieve,
+    retrieveUrl,
     ...(siteConfig.integrations.webSearch
       ? {
           webSearch: tavilyWebSearch({

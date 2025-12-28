@@ -55,7 +55,7 @@ export async function createCoreChatAgent({
   // Filter reasoning parts (cross-model compatibility)
   const filteredMessages = filterPartsForLLM(messages.slice(-5));
 
-  // Convert to model messages, ignoring data-* parts (UI-only)
+  // Convert to model messages, ignoring data-* parts
   const modelMessages = await convertToModelMessages(filteredMessages, {
     convertDataPart: () => undefined,
   });

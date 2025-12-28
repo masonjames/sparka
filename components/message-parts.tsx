@@ -22,7 +22,7 @@ import { GenerateImage } from "./part/generate-image";
 import { ReasoningPart } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
 import { RequestSuggestions } from "./part/request-suggestions";
-import { Retrieve } from "./part/retrieve";
+import { RetrieveUrl } from "./part/retrieve-url";
 import { TextMessagePart } from "./part/text-message-part";
 import { UpdateDocument } from "./part/update-document";
 import { Weather } from "./part/weather";
@@ -79,8 +79,8 @@ function ToolPart({
     );
   }
 
-  if (type === "tool-retrieve") {
-    return <Retrieve tool={part} />;
+  if (type === "tool-retrieveUrl") {
+    return <RetrieveUrl tool={part} />;
   }
 
   if (type === "tool-readDocument") {

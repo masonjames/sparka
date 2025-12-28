@@ -28,9 +28,9 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Read the content of a document",
     cost: 0, // internal
   },
-  retrieve: {
-    name: "retrieve",
-    description: "Retrieve information from the web",
+  retrieveUrl: {
+    name: "retrieveUrl",
+    description: "Retrieve information from a URL",
     cost: 0, // internal
   },
   webSearch: {

@@ -124,7 +124,7 @@ Use for:
 - General information gathering via web search
 
 Avoid:
-- Pulling content from a single known URL (use retrieve instead)`,
+- Pulling content from a single known URL (use retrieveUrl instead)`,
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
       topics: z
@@ -205,7 +205,7 @@ Use for:
 - When you need high-quality markdown content from web pages
 
 Avoid:
-- Pulling content from a single known URL (use retrieve instead)`,
+- Pulling content from a single known URL (use retrieveUrl instead)`,
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
     }),

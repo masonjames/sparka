@@ -5,9 +5,9 @@ import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/lib/ai/types";
 
-export type RetrieveTool = Extract<
+export type RetrieveUrlTool = Extract<
   ChatMessage["parts"][number],
-  { type: "tool-retrieve" }
+  { type: "tool-retrieveUrl" }
 >;
 
 function LoadingState() {
@@ -159,7 +159,7 @@ function getErrorMessage(result: unknown, firstItem: unknown): string | null {
   return topLevelError ?? firstItemError ?? null;
 }
 
-export function Retrieve({ tool }: { tool: RetrieveTool }) {
+export function RetrieveUrl({ tool }: { tool: RetrieveUrlTool }) {
   if (tool.state === "input-available") {
     return <LoadingState />;
   }
