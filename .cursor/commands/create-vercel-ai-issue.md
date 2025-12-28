@@ -1,5 +1,5 @@
 ---
-description: Create a vercel/ai GitHub ticket via gh CLI (safe body-file workflow)
+description: Create a vercel/ai GitHub issue via gh CLI (safe body-file workflow)
 ---
 
 Use this when you need to file an issue in `vercel/ai` and your body contains backticks/code blocks (avoid shell mangling).
@@ -42,14 +42,11 @@ EOF
 # 2) create issue
 
 gh issue create -R vercel/ai \
- --title "<title>" \
- --body-file /tmp/vercel-ai-issue-body.md
+  --title "<title>" \
+  --body-file /tmp/vercel-ai-issue-body.md
 
 # 3) (optional) edit later without fighting escaping
 
 # gh issue edit -R vercel/ai <number> --body-file /tmp/vercel-ai-issue-body.md
-
-```
-
 
 ```
