@@ -37,13 +37,13 @@ const multimodalImageModelIds: Set<string> = new Set(
       (m) =>
         m.type === "language" &&
         "tags" in m &&
-        (m.tags as readonly string[] | undefined)?.includes("image-generation"),
+        (m.tags as readonly string[] | undefined)?.includes("image-generation")
     )
-    .map((m) => m.id),
+    .map((m) => m.id)
 );
 
 export function isMultimodalImageModel(
-  modelId: string,
+  modelId: string
 ): modelId is MultimodalImageModelId {
   return multimodalImageModelIds.has(modelId);
 }
