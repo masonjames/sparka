@@ -1,5 +1,5 @@
 import type { FileUIPart, ModelMessage, Tool } from "ai";
-import type { ModelId } from "@/lib/ai/app-models";
+import { DEFAULT_IMAGE_MODEL, type ModelId } from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
 import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
@@ -77,7 +77,11 @@ export function getTools({
     ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
     ...(siteConfig.integrations.openai
       ? {
-          generateImage: generateImageTool({ attachments, lastGeneratedImage }),
+          generateImage: generateImageTool({
+            attachments,
+            lastGeneratedImage,
+            modelId: DEFAULT_IMAGE_MODEL,
+          }),
         }
       : {}),
     ...(siteConfig.integrations.webSearch
