@@ -1,19 +1,11 @@
 import { unstable_cache as cache } from "next/cache";
-import {
-  type ImageModelData,
-  imageModelsData,
-} from "@/lib/models/image-models";
-import type { ImageModelId } from "../models/image-model-id";
+import type { AnyImageModelId } from "../models/image-model-id";
 import type { ModelData } from "./model-data";
 import type { ModelId } from "./models";
 import { fetchModels } from "./models";
 import { models as generatedModels } from "./models.generated";
 
 export type { ModelId } from "./models";
-
-export type ImageModelDefinition = ImageModelData & {
-  features?: never; // deprecated: use ModelExtra in base defs if needed later
-};
 
 export type AppModelId = ModelId | `${ModelId}-reasoning`;
 export type AppModelDefinition = Omit<ModelData, "id"> & {
@@ -121,30 +113,6 @@ export async function getAppModelDefinition(
   return model;
 }
 
-const allImageModels = imageModelsData;
-
-const _imageModelsByIdCache = new Map<string, ImageModelDefinition>();
-
-function getImageModelsByIdDict(): Map<string, ImageModelDefinition> {
-  if (_imageModelsByIdCache.size === 0) {
-    for (const model of allImageModels) {
-      _imageModelsByIdCache.set(model.id, model);
-    }
-  }
-  return _imageModelsByIdCache;
-}
-
-export function getImageModelDefinition(
-  modelId: ImageModelId
-): ImageModelDefinition {
-  const modelsByIdDict = getImageModelsByIdDict();
-  const model = modelsByIdDict.get(modelId);
-  if (!model) {
-    throw new Error(`Model ${modelId} not found`);
-  }
-  return model;
-}
-
 export const DEFAULT_CHAT_MODEL: ModelId = "openai/gpt-5-nano";
 export const DEFAULT_PDF_MODEL: ModelId = "openai/gpt-5-mini";
 export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
@@ -152,7 +120,7 @@ export const DEFAULT_ARTIFACT_MODEL: ModelId = "openai/gpt-5-nano";
 export const DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL: ModelId =
   "google/gemini-2.5-flash-lite";
 export const DEFAULT_ARTIFACT_SUGGESTION_MODEL: ModelId = "openai/gpt-5-mini";
-export const DEFAULT_IMAGE_MODEL: ImageModelId = "openai/gpt-image-1";
+export const DEFAULT_IMAGE_MODEL: AnyImageModelId = "google/gemini-3-pro-image";
 export const DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL: ModelId =
   "openai/gpt-4o-mini";
 export const DEFAULT_SUGGESTIONS_MODEL: ModelId = "openai/gpt-5-mini";

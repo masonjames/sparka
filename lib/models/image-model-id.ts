@@ -1,14 +1,26 @@
-import type { OpenAIProvider } from "@ai-sdk/openai";
+import type { gateway } from "@ai-sdk/gateway";
 
-type OpenAIimageModelId = Parameters<OpenAIProvider["imageModel"]>[0];
+export type ImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
 
-// Exclude the non-literal model ids
-type OpenAILiteralImageModelId = OpenAIimageModelId extends infer T
-  ? T extends string
-    ? string extends T
-      ? never
-      : T
-    : never
-  : never;
+// Multimodal language models that can generate images via generateText
+// These are language models with "image-generation" tag
+// TODO: Change for type derivation from models.generated.ts
+export type MultimodalImageModelId =
+  | "google/gemini-2.5-flash-image"
+  | "google/gemini-2.5-flash-image-preview"
+  | "google/gemini-3-pro-image";
 
-export type ImageModelId = `openai/${OpenAILiteralImageModelId}`;
+// Union of all models that can generate images
+export type AnyImageModelId = ImageModelId | MultimodalImageModelId;
+
+// Check if a model ID is a multimodal image model
+export function isMultimodalImageModel(
+  modelId: string
+): modelId is MultimodalImageModelId {
+  const multimodalModels: string[] = [
+    "google/gemini-2.5-flash-image",
+    "google/gemini-2.5-flash-image-preview",
+    "google/gemini-3-pro-image",
+  ];
+  return multimodalModels.includes(modelId);
+}

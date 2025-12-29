@@ -2,11 +2,14 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { gateway } from "@ai-sdk/gateway";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { type OpenAIResponsesProviderOptions, openai } from "@ai-sdk/openai";
+import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-import type { ImageModelId } from "../models/image-model-id";
+import type {
+  ImageModelId,
+  MultimodalImageModelId,
+} from "../models/image-model-id";
 import type { AppModelId, ModelId } from "./app-models";
-import { getAppModelDefinition, getImageModelDefinition } from "./app-models";
+import { getAppModelDefinition } from "./app-models";
 
 const _telemetryConfig = {
   telemetry: {
@@ -44,16 +47,12 @@ export const getLanguageModel = async (modelId: ModelId) => {
   });
 };
 
-export const getImageModel = (modelId: ImageModelId) => {
-  const model = getImageModelDefinition(modelId);
-  // Extract model part from "provider/model" format
-  const modelIdShort = modelId.split("/")[1];
+export const getImageModel = (modelId: ImageModelId) =>
+  gateway.imageModel(modelId);
 
-  if (model.owned_by === "openai") {
-    return openai.image(modelIdShort);
-  }
-  throw new Error(`Provider ${model.owned_by} not supported`);
-};
+// Get a multimodal language model that can generate images via generateText
+export const getMultimodalImageModel = (modelId: MultimodalImageModelId) =>
+  gateway(modelId);
 
 // Model aliases removed - use getLanguageModel directly with specific model IDs
 
