@@ -46,7 +46,7 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
   generateImage: {
     name: "generateImage",
     description: "Generate images from text descriptions",
-    cost: 4, // DALL-E 3 standard ~4¢
+    cost: 17, // Nano banana pro ~17¢
   },
   deepResearch: {
     name: "deepResearch",
