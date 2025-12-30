@@ -1,5 +1,5 @@
 import type { FileUIPart, ModelMessage, Tool } from "ai";
-import { DEFAULT_IMAGE_MODEL, type ModelId } from "@/lib/ai/app-models";
+import type { ModelId } from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
 import { codeExecution } from "@/lib/ai/tools/code-execution";
@@ -15,6 +15,7 @@ import type { Session } from "@/lib/auth";
 import { siteConfig } from "@/lib/config";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
+import { isMultimodalImageModel } from "@/lib/models/image-model-id";
 import type { StreamWriter } from "../types";
 import { deepResearch } from "./deep-research/deep-research";
 
@@ -37,6 +38,10 @@ export function getTools({
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
 }) {
+  const imageToolModelId = isMultimodalImageModel(selectedModel)
+    ? selectedModel
+    : undefined;
+
   return {
     getWeather,
     createDocument: createDocumentTool({
@@ -80,7 +85,9 @@ export function getTools({
           generateImage: generateImageTool({
             attachments,
             lastGeneratedImage,
-            modelId: DEFAULT_IMAGE_MODEL,
+            // If the currently selected chat model can generate images (multimodal),
+            // prefer it. Otherwise, the tool falls back to siteConfig.models.defaults.image.
+            modelId: imageToolModelId,
           }),
         }
       : {}),

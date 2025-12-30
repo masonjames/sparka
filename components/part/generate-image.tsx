@@ -1,5 +1,6 @@
 "use client";
 
+import { XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CopyIcon, DownloadIcon } from "@/components/icons";
@@ -10,7 +11,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { XIcon } from "lucide-react";
 import type { ChatMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
@@ -131,7 +131,7 @@ export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
         <DialogContent
-          className="h-screen w-screen max-w-none border-none bg-background/50 backdrop-blur-sm p-0 sm:max-w-none rounded-none"
+          className="h-screen w-screen max-w-none rounded-none border-none bg-background/50 p-0 backdrop-blur-sm sm:max-w-none"
           showCloseButton={false}
         >
           <DialogTitle className="sr-only">Generated Image</DialogTitle>
