@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import {
+  type ProjectDetailsData,
+  ProjectDetailsDialog,
+} from "@/components/project-details-dialog";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
 import {
   SidebarMenuButton,
@@ -45,8 +48,12 @@ export function SidebarProjects() {
     })
   );
 
-  const handleCreateProject = (name: string) => {
-    createProjectMutation.mutate({ name });
+  const handleCreateProject = (data: ProjectDetailsData) => {
+    createProjectMutation.mutate({
+      name: data.name,
+      icon: data.icon,
+      iconColor: data.color,
+    });
   };
 
   return (

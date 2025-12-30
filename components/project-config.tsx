@@ -1,6 +1,7 @@
 "use client";
 
 import { PencilEditIcon } from "@/components/icons";
+import { ProjectIcon } from "@/components/project-icon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,14 +10,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
 export function ProjectConfig({
   projectName,
+  projectIcon,
+  projectColor,
   instructions,
   onEditInstructions,
   onRenameProject,
 }: {
   projectName?: string;
+  projectIcon?: ProjectIconName;
+  projectColor?: ProjectColorName;
   instructions?: string | null;
   onEditInstructions: () => void;
   onRenameProject: () => void;
@@ -25,6 +31,9 @@ export function ProjectConfig({
     <div className="space-y-4">
       {projectName && (
         <div className="flex items-center gap-2">
+          {projectIcon && projectColor && (
+            <ProjectIcon color={projectColor} icon={projectIcon} size={24} />
+          )}
           <h1 className="font-bold text-2xl">{projectName}</h1>
           <Button
             className="h-8 w-8"

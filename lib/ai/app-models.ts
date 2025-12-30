@@ -1,10 +1,5 @@
 import { unstable_cache as cache } from "next/cache";
 import { siteConfig } from "@/lib/config";
-import {
-  type ImageModelData,
-  imageModelsData,
-} from "@/lib/models/image-models";
-import type { ImageModelId } from "../models/image-model-id";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
@@ -12,9 +7,6 @@ import { models as generatedModels } from "./models.generated";
 
 export type { AppModelId, ModelId } from "./app-model-id";
 
-export type ImageModelDefinition = ImageModelData & {
-  features?: never; // deprecated: use ModelExtra in base defs if needed later
-};
 export type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
   apiModelId: ModelId;
@@ -108,30 +100,6 @@ export async function getAppModelDefinition(
 ): Promise<AppModelDefinition> {
   const models = await fetchAllAppModels();
   const model = models.find((m) => m.id === modelId);
-  if (!model) {
-    throw new Error(`Model ${modelId} not found`);
-  }
-  return model;
-}
-
-const allImageModels = imageModelsData;
-
-const _imageModelsByIdCache = new Map<string, ImageModelDefinition>();
-
-function getImageModelsByIdDict(): Map<string, ImageModelDefinition> {
-  if (_imageModelsByIdCache.size === 0) {
-    for (const model of allImageModels) {
-      _imageModelsByIdCache.set(model.id, model);
-    }
-  }
-  return _imageModelsByIdCache;
-}
-
-export function getImageModelDefinition(
-  modelId: ImageModelId
-): ImageModelDefinition {
-  const modelsByIdDict = getImageModelsByIdDict();
-  const model = modelsByIdDict.get(modelId);
   if (!model) {
     throw new Error(`Model ${modelId} not found`);
   }

@@ -1,6 +1,5 @@
 name: Required
 on:
-  push:
   pull_request:
 
 jobs:
@@ -10,12 +9,10 @@ jobs:
       - name: Wait for required workflows
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           # ============================================
           # REQUIRED CHECKS - Add/remove check names here
           # ============================================
-          check-name: |
-            lint
-            typecheck
+          check-regexp: ^(Lint|Typecheck)$
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
