@@ -149,7 +149,40 @@ models: {
 }
 ```
 
-Image models use a separate `ImageModelId` type from chat models.
+### Model Selection Logic
+
+The tool supports two types of models:
+
+| Type | Description | Example |
+| ---- | ----------- | ------- |
+| Image model | Standalone image generation models | `openai/gpt-image-1.5` |
+| Multimodal | Language models with `image-generation` tag | `google/gemini-2.0-flash-exp` |
+
+Model selection follows this priority:
+
+```ts title="lib/ai/tools/tools.ts"
+const imageToolModelId = isMultimodalImageModel(selectedModel)
+  ? selectedModel
+  : undefined;
+```
+
+1. If the user's selected chat model can generate images (has `image-generation` tag), use it
+2. Otherwise, fall back to `siteConfig.models.defaults.image`
+
+### Image Model vs Multimodal Generation
+
+The tool uses different generation paths based on model type:
+
+**Image model** (`generateImage` from AI SDK):
+- Uses standalone image models via `getImageModel()`
+- Supports edit mode with image buffers as input
+- Returns base64-encoded images
+
+**Multimodal** (`generateText` with image output):
+- Uses language models via `getMultimodalImageModel()`
+- Passes images as URL references in message content
+- Requires `responseModalities: ["TEXT", "IMAGE"]` for Google models
+- Extracts generated image from response files
 
 ## Related
 

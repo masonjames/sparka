@@ -121,6 +121,29 @@ defaults: {
 }
 ```
 
+### Model Types
+
+Two types of models can generate images:
+
+| Type | Type Definition | Description |
+| ---- | --------------- | ----------- |
+| Image model | `ImageModelId` | Standalone image models from AI Gateway |
+| Multimodal | `MultimodalImageModelId` | Language models with `image-generation` tag |
+
+The union type `AnyImageModelId` covers both.
+
+### Multimodal Image Models
+
+Language models tagged with `image-generation` in `models.generated.ts` can generate images inline. The `generateImage` tool automatically detects these and uses `generateText` with image output modalities instead of the dedicated `generateImage` API.
+
+```ts title="lib/models/image-model-id.ts"
+export function isMultimodalImageModel(modelId: string): modelId is MultimodalImageModelId {
+  return multimodalImageModelIds.has(modelId);
+}
+```
+
+When a user's selected chat model is multimodal, it's preferred over the default image model—keeping generation within the same model context.
+
 The image model is used by the `generateImage` tool for both generation and edit modes. See [Image Generation](/features/image-generation) for details.
 
 ## Related
