@@ -60,6 +60,18 @@ const IMAGE_UPLOAD_MAX_MB = Math.round(
 );
 const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
+// Single source of truth for accepted file types
+const ACCEPTED_FILE_TYPES = {
+  "image/png": [".png"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "application/pdf": [".pdf"],
+} as const;
+
+// For HTML file input accept attribute
+const FILE_INPUT_ACCEPT = Object.entries(ACCEPTED_FILE_TYPES)
+  .flatMap(([mime, exts]) => [mime, ...exts])
+  .join(",");
+
 function PureMultimodalInput({
   chatId,
   status,
@@ -518,10 +530,7 @@ function PureMultimodalInput({
     },
     noClick: true, // Prevent click to open file dialog since we have the button
     disabled: status !== "ready",
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg"],
-      "application/pdf": [".pdf"],
-    },
+    accept: ACCEPTED_FILE_TYPES,
   });
 
   const showSuggestedActions =
@@ -534,7 +543,7 @@ function PureMultimodalInput({
   return (
     <div className="relative">
       <input
-        accept="image/*,.pdf"
+        accept={FILE_INPUT_ACCEPT}
         className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
