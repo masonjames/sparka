@@ -263,20 +263,11 @@ export const generateImageTool = ({
   modelId,
 }: GenerateImageProps = {}) =>
   tool({
-    description: `Generate images from text descriptions. Can optionally use attached images as reference.
-
-Use for:
-- Create images, artwork, illustrations from descriptive prompts
-- Generate visual content based on user requests
-- Support various art styles and subjects
-- Be as detailed as possible in the description
-- Use attached images as visual reference when available`,
+    description: `Generate an image from a text prompt. Pass the user's prompt verbatim—do not embellish, rephrase, or add style suggestions. If images are attached, they'll be used as reference.`,
     inputSchema: z.object({
       prompt: z
         .string()
-        .describe(
-          "Detailed description of the image to generate. Include style, composition, colors, mood, and any other relevant details."
-        ),
+        .describe("The user's exact prompt, passed through without modification."),
     }),
     execute: async ({ prompt }) => {
       const startMs = Date.now();
