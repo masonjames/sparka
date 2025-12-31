@@ -301,10 +301,12 @@ Use for:
       );
 
       try {
+        const effectiveModelId = modelId ?? siteConfig.models.defaults.image;
+
         // Use multimodal path for language models with image generation
-        if (modelId && isMultimodalImageModel(modelId)) {
+        if (isMultimodalImageModel(effectiveModelId)) {
           return await runGenerateImageMultimodal({
-            modelId,
+            modelId: effectiveModelId,
             mode,
             prompt,
             imageParts,
@@ -313,7 +315,7 @@ Use for:
           });
         }
 
-        // Default: traditional image generation
+        // Traditional image generation for dedicated image models
         return await runGenerateImageTraditional({
           mode,
           prompt,

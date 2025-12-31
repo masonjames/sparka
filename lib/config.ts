@@ -2,7 +2,7 @@
 // `@/components/config-provider` instead of importing `siteConfig` directly.
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import type { ImageModelId } from "@/lib/models/image-model-id";
+import type { AnyImageModelId } from "./models/image-model-id";
 
 export type PricingConfig = {
   currency?: string;
@@ -40,7 +40,7 @@ export type ModelsConfig = {
     analyzeSheet: AppModelId;
     codeEdits: AppModelId;
     chatImageCompatible: AppModelId;
-    image: ImageModelId;
+    image: AnyImageModelId;
   };
 };
 
@@ -235,7 +235,7 @@ export const siteConfig: SiteConfig = {
       analyzeSheet: "openai/gpt-5-mini",
       codeEdits: "openai/gpt-5-mini",
       chatImageCompatible: "openai/gpt-4o-mini",
-      image: "openai/gpt-image-1",
+      image: "google/gemini-3-pro-image",
     },
   },
 
