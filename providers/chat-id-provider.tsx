@@ -7,96 +7,75 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useRef,
+  useState,
 } from "react";
 import { generateUUID } from "@/lib/utils";
+import { resolveChatId } from "./resolve-chat-id";
 
 type ChatIdContextType = {
   id: string;
-  type: "chat" | "provisional" | "shared";
+  /**
+   * True when the current chatId is known to be persisted server-side (i.e. safe to query).
+   * For existing chats, this is true immediately. For provisional chats, this flips when the
+   * server confirms it saved the first user message.
+   */
+  isPersisted: boolean;
+  confirmChatId: (chatId: string) => void;
   refreshChatID: () => void;
 };
 
 const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
-type ChatId = {
-  id: string;
-  type: "chat" | "provisional" | "shared";
-};
-
-const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
-
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const provisionalChatIdRef = useRef<string>(generateUUID());
+  const [provisionalChatId, setProvisionalChatId] = useState<string>(() =>
+    generateUUID()
+  );
+  const [confirmedChatId, setConfirmedChatId] = useState<string | null>(null);
 
-  // Compute final id and type directly from pathname and state
-  const { id, type } = useMemo<ChatId>(() => {
-    // Handle shared chat paths
-    if (pathname?.startsWith("/share/")) {
-      const sharedChatId = pathname.replace("/share/", "") || null;
-      if (sharedChatId) {
-        return {
-          id: sharedChatId,
-          type: "shared",
-        };
-      }
+  const { id, isPersisted } = useMemo(() => {
+    const fromPathname = resolveChatId({
+      pathname,
+      provisionalId: provisionalChatId,
+    });
+
+    /**
+     * Precedence (no navigation, no router writes):
+     * 1) If the URL already points at a chat (/chat/:id, /project/:p/chat/:id, /share/:id),
+     *    that ID wins and is always persisted.
+     * 2) Otherwise, if the server confirms a persisted chat id during the current interaction,
+     *    use that as the active id (still without navigating).
+     * 3) Otherwise, fall back to the provisional id (not persisted).
+     */
+    if (fromPathname.isPersisted) {
+      return { id: fromPathname.id, isPersisted: true };
     }
-
-    // Handle project routes
-    const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
-    if (projectMatch) {
-      const [, _projectId, chatId] = projectMatch;
-      if (chatId) {
-        // /project/:projectId/chat/:chatId
-        return {
-          id: chatId,
-          type: "chat",
-        };
-      }
-      // /project/:projectId - provisional chat
-      return {
-        id: provisionalChatIdRef.current,
-        type: "provisional",
-      };
-    }
-
-    if (pathname === "/") {
-      return {
-        id: provisionalChatIdRef.current,
-        type: "provisional",
-      };
-    }
-
-    const urlChatId = pathname.replace("/chat/", "");
-    if (urlChatId === provisionalChatIdRef.current) {
-      // Id was provisional and now the url has been updated
-
-      // Generate a new provisional id for a potential new chat
-      provisionalChatIdRef.current = generateUUID();
-
-      return {
-        id: urlChatId,
-        type: "provisional",
-      };
+    if (confirmedChatId) {
+      return { id: confirmedChatId, isPersisted: true };
     }
     return {
-      id: urlChatId,
-      type: "chat",
+      id: fromPathname.id,
+      isPersisted: false,
     };
-  }, [pathname]);
+  }, [pathname, provisionalChatId, confirmedChatId]);
+
+  const confirmChatId = useCallback((chatId: string) => {
+    setConfirmedChatId(chatId);
+  }, []);
 
   const refreshChatID = useCallback(() => {
-    provisionalChatIdRef.current = generateUUID();
+    setProvisionalChatId(generateUUID());
+    setConfirmedChatId(null);
   }, []);
 
   const value = useMemo(
     () => ({
       id,
-      type,
+      isPersisted,
+      confirmChatId,
       refreshChatID,
     }),
-    [id, type, refreshChatID]
+    [id, isPersisted, confirmChatId, refreshChatID]
   );
 
   return (

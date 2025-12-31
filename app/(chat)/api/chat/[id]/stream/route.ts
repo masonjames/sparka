@@ -107,6 +107,7 @@ export async function GET(
   _: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // TODO: This needs to be thread aware
   const { id: chatId } = await params;
 
   const streamContext = getStreamContext();

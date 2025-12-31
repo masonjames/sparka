@@ -1,19 +1,20 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import { useChatStoreApi } from "@ai-sdk-tools/store";
+import {
+  useChatActions,
+  useChatStatus,
+  useChatStoreApi,
+} from "@ai-sdk-tools/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistance } from "date-fns";
-import equal from "fast-deep-equal";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { useDocuments, useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
-//
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { codeArtifact } from "@/lib/artifacts/code/client";
 import { sheetArtifact } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
-import type { Document, Vote } from "@/lib/db/schema";
+import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import {
@@ -44,18 +45,10 @@ export type UIArtifact = {
 };
 
 function PureArtifactPanel({
-  chatId: _chatId,
-  status,
-  stop,
-  votes: _votes,
   isReadonly,
   isAuthenticated,
   className,
 }: {
-  chatId: string;
-  votes: Vote[] | undefined;
-  status: UseChatHelpers<ChatMessage>["status"];
-  stop: UseChatHelpers<ChatMessage>["stop"];
   isReadonly: boolean;
   isAuthenticated: boolean;
   className?: string;
@@ -215,6 +208,8 @@ function PureArtifactPanel({
     }
   };
 
+  const status = useChatStatus();
+  const { stop } = useChatActions<ChatMessage>();
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
   /*
@@ -372,15 +367,6 @@ function PureArtifactPanel({
 }
 
 export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
-  if (prevProps.status !== nextProps.status) {
-    return false;
-  }
-  if (prevProps.stop !== nextProps.stop) {
-    return false;
-  }
-  if (!equal(prevProps.votes, nextProps.votes)) {
-    return false;
-  }
   if (prevProps.isReadonly !== nextProps.isReadonly) {
     return false;
   }

@@ -11,7 +11,6 @@ import type { BaseMessageProps } from "./user-message";
 
 const PureAssistantMessage = ({
   messageId,
-  vote,
   isLoading,
   isReadonly,
 }: Omit<BaseMessageProps, "parentMessageId">) => {
@@ -42,7 +41,6 @@ const PureAssistantMessage = ({
           isReadOnly={isReadonly}
           key={`action-${messageId}`}
           messageId={messageId}
-          vote={vote}
         />
         {isReadonly ? null : <FollowUpSuggestionsParts messageId={messageId} />}
       </MessageContent>
@@ -53,9 +51,6 @@ export const AssistantMessage = memo(
   PureAssistantMessage,
   (prevProps, nextProps) => {
     if (prevProps.messageId !== nextProps.messageId) {
-      return false;
-    }
-    if (prevProps.vote !== nextProps.vote) {
       return false;
     }
     if (prevProps.isLoading !== nextProps.isLoading) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronUpIcon, FilterIcon } from "lucide-react";
+import { ChevronRightIcon, ChevronUpIcon, FilterIcon } from "lucide-react";
+import Link from "next/link";
 import {
   memo,
   startTransition,
@@ -400,6 +401,21 @@ export function PureModelSelector({
                 ))}
               </CommandGroup>
             </CommandList>
+            {!isAnonymous && (
+              <div className="border-t p-2">
+                <Button
+                  asChild
+                  className="w-full justify-between"
+                  size="sm"
+                  variant="ghost"
+                >
+                  <Link aria-label="Add Models" href="/settings/models">
+                    Add Models
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </Command>
         )}
       </PopoverContent>

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const BaseStreamUpdateSchema = z.object({
   title: z.string(),
+  toolCallId: z.string(),
 });
 
 const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
