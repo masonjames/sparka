@@ -110,6 +110,6 @@ Users configure their model preferences at `/settings/models`. This page lets us
 The AI Gateway handles authentication with all providers. You do not need individual API keys for OpenAI, Anthropic, Google, etc. Instead, you authenticate with the gateway using one of these:
 
 - `VERCEL_OIDC_TOKEN` (automatically provided on Vercel deployments)
-- `AI_GATEWAY_API_KEY` (for self-hosted deployments, obtain from [Vercel AI Gateway](https://vercel.com/docs/ai-gateway))
+- `AI_GATEWAY_API_KEY` (for non-Vercel deployments, obtain from [Vercel AI Gateway](https://vercel.com/docs/ai-gateway))
 
 Without either key, the app uses the fallback model list and cannot make API calls to providers.

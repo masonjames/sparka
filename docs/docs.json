@@ -55,7 +55,7 @@
           },
           {
             "group": "Deployment",
-            "pages": ["deployment/vercel", "deployment/self-hosted"]
+            "pages": ["deployment/vercel", "deployment/other-platforms"]
           },
           {
             "group": "Reference",
