@@ -61,7 +61,7 @@ RUN bun run next build
 # Stage 3: Production Runner
 # =============================================================================
 # Use Node.js slim for production (Next.js server.js runs on Node)
-FROM node:22-slim AS runner
+FROM node:25-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
