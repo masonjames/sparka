@@ -67,10 +67,8 @@ const ACCEPTED_FILE_TYPES = {
   "application/pdf": [".pdf"],
 } as const;
 
-// For HTML file input accept attribute
-const FILE_INPUT_ACCEPT = Object.entries(ACCEPTED_FILE_TYPES)
-  .flatMap(([mime, exts]) => [mime, ...exts])
-  .join(",");
+// For HTML file input accept attribute (extensions only - MIME types trigger mobile photo picker)
+const FILE_INPUT_ACCEPT = Object.values(ACCEPTED_FILE_TYPES).flat().join(",");
 
 function PureMultimodalInput({
   chatId,
