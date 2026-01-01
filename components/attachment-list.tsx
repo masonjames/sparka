@@ -118,18 +118,17 @@ function AttachmentItem({
   attachment,
   isUploading = false,
   onRemove,
-  onImageClickAction,
+  onImageClick,
   variant = "card",
 }: {
   attachment: Attachment;
   isUploading?: boolean;
   onRemove?: () => void;
-  onImageClickAction?: (imageUrl: string, imageName?: string) => void;
+  onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
 }) {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
-  const isPdf = contentType === "application/pdf";
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
 
   const preview =
@@ -154,63 +153,61 @@ function AttachmentItem({
 
   return (
     <PromptInputHoverCard>
-      <HoverCardTrigger
-        asChild
-        onClick={() => isImage && onImageClickAction?.(url, name)}
-      >
-        {preview}
+      <HoverCardTrigger asChild>
+        <span
+          className="inline-block"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isImage && onImageClick) {
+              onImageClick(url, name);
+            }
+          }}
+        >
+          {preview}
+        </span>
       </HoverCardTrigger>
       <PromptInputHoverCardContent className="w-auto p-2">
-        <div className="w-auto space-y-3">
-          {isImage && (
-            <div className="relative flex h-96 w-96 items-center justify-center overflow-hidden rounded-md border">
-              <Image
-                alt={name || "attachment preview"}
-                className="object-contain"
-                fill
-                sizes="384px"
-                src={url}
-              />
-            </div>
-          )}
-          <div className="flex items-center gap-2.5">
-            <div className="min-w-0 flex-1 space-y-1 px-0.5">
-              <h4 className="truncate font-semibold text-sm leading-none">
-                {attachmentLabel}
-              </h4>
-              {contentType && (
-                <p className="truncate font-mono text-muted-foreground text-xs">
-                  {contentType}
-                </p>
-              )}
-            </div>
-            {isPdf && (
-              <div className="flex gap-1">
-                <Button
-                  className="size-7"
-                  onClick={() => window.open(url, "_blank")}
-                  size="icon"
-                  title="Open PDF"
-                  variant="ghost"
-                >
-                  <ExternalLink className="size-3.5" />
-                </Button>
-                <Button
-                  className="size-7"
-                  onClick={() => {
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.download = name || "document.pdf";
-                    link.click();
-                  }}
-                  size="icon"
-                  title="Download PDF"
-                  variant="ghost"
-                >
-                  <Download className="size-3.5" />
-                </Button>
-              </div>
-            )}
+        <div className="flex items-center gap-2.5">
+          <h4 className="min-w-0 flex-1 truncate px-0.5 font-semibold text-sm leading-none">
+            {attachmentLabel}
+          </h4>
+          <div className="flex gap-1">
+            <Button
+              className="size-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(url, "_blank");
+              }}
+              size="icon"
+              title="Open"
+              variant="ghost"
+            >
+              <ExternalLink className="size-3.5" />
+            </Button>
+            <Button
+              className="size-7"
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  const response = await fetch(url);
+                  const blob = await response.blob();
+                  const blobUrl = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = blobUrl;
+                  link.download = name || "file";
+                  link.click();
+                  URL.revokeObjectURL(blobUrl);
+                } catch {
+                  // Fallback: open in new tab if fetch fails
+                  window.open(url, "_blank");
+                }
+              }}
+              size="icon"
+              title="Download"
+              variant="ghost"
+            >
+              <Download className="size-3.5" />
+            </Button>
           </div>
         </div>
       </PromptInputHoverCardContent>
@@ -222,7 +219,7 @@ export function AttachmentList({
   attachments,
   uploadQueue = [],
   onRemoveAction,
-  onImageClickAction,
+  onImageClick,
   variant = "card",
   testId = "attachments",
   className,
@@ -230,7 +227,7 @@ export function AttachmentList({
   attachments: Attachment[];
   uploadQueue?: string[];
   onRemoveAction?: (attachment: Attachment) => void;
-  onImageClickAction?: (imageUrl: string, imageName?: string) => void;
+  onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
   testId?: string;
   className?: string;
@@ -248,7 +245,7 @@ export function AttachmentList({
         <AttachmentItem
           attachment={attachment}
           key={attachment.url}
-          onImageClickAction={onImageClickAction}
+          onImageClick={onImageClick}
           onRemove={
             onRemoveAction ? () => onRemoveAction(attachment) : undefined
           }

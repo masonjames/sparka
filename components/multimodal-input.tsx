@@ -38,7 +38,6 @@ import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { useConfig } from "./config-provider";
 import { ConnectorsDropdown } from "./connectors-dropdown";
-import { ImageModal } from "./image-modal";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
 import { ResponsiveTools } from "./responsive-tools";
@@ -132,15 +131,6 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
-  const [imageModal, setImageModal] = useState<{
-    isOpen: boolean;
-    imageUrl: string;
-    imageName?: string;
-  }>({
-    isOpen: false,
-    imageUrl: "",
-    imageName: undefined,
-  });
 
   // Centralized submission gating
   const submission = useMemo(():
@@ -463,25 +453,6 @@ function PureMultimodalInput({
     [setAttachments]
   );
 
-  const handleImageClick = useCallback(
-    (imageUrl: string, imageName?: string) => {
-      setImageModal({
-        isOpen: true,
-        imageUrl,
-        imageName,
-      });
-    },
-    []
-  );
-
-  const handleImageModalClose = useCallback(() => {
-    setImageModal({
-      isOpen: false,
-      imageUrl: "",
-      imageName: undefined,
-    });
-  }, []);
-
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length === 0) {
@@ -585,7 +556,6 @@ function PureMultimodalInput({
           <ContextBar
             attachments={attachments}
             className="w-full"
-            onImageClickAction={handleImageClick}
             onRemoveAction={removeAttachment}
             uploadQueue={uploadQueue}
           />
@@ -641,13 +611,6 @@ function PureMultimodalInput({
           selectedModelId={selectedModelId}
         />
       )}
-
-      <ImageModal
-        imageName={imageModal.imageName}
-        imageUrl={imageModal.imageUrl}
-        isOpen={imageModal.isOpen}
-        onClose={handleImageModalClose}
-      />
     </div>
   );
 }

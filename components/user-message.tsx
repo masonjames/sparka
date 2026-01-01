@@ -29,26 +29,10 @@ export const PureUserMessage = ({
     isOpen: boolean;
     imageUrl: string;
     imageName?: string;
-  }>({
-    isOpen: false,
-    imageUrl: "",
-    imageName: undefined,
-  });
+  }>({ isOpen: false, imageUrl: "" });
 
   const handleImageClick = (imageUrl: string, imageName?: string) => {
-    setImageModal({
-      isOpen: true,
-      imageUrl,
-      imageName,
-    });
-  };
-
-  const handleImageModalClose = () => {
-    setImageModal({
-      isOpen: false,
-      imageUrl: "",
-      imageName: undefined,
-    });
+    setImageModal({ isOpen: true, imageUrl, imageName });
   };
 
   if (!message) {
@@ -83,7 +67,7 @@ export const PureUserMessage = ({
               >
                 <AttachmentList
                   attachments={getAttachmentsFromMessage(message)}
-                  onImageClickAction={handleImageClick}
+                  onImageClick={handleImageClick}
                   testId="message-attachments"
                 />
                 <pre className="whitespace-pre-wrap font-sans">
@@ -103,7 +87,7 @@ export const PureUserMessage = ({
                 >
                   <AttachmentList
                     attachments={getAttachmentsFromMessage(message)}
-                    onImageClickAction={handleImageClick}
+                    onImageClick={handleImageClick}
                     testId="message-attachments"
                   />
                   <pre className="whitespace-pre-wrap font-sans">
@@ -142,7 +126,7 @@ export const PureUserMessage = ({
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}
         isOpen={imageModal.isOpen}
-        onClose={handleImageModalClose}
+        onClose={() => setImageModal({ isOpen: false, imageUrl: "" })}
       />
     </>
   );
