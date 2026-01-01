@@ -3,32 +3,18 @@ title: Theming
 description: Customize colors, fonts, and styling
 ---
 
-<Note>
-  This documentation is coming soon.
-</Note>
+Sparka uses standard [shadcn theming](https://ui.shadcn.com/docs/theming) with CSS variables. If you're familiar with shadcn, everything works as expected.
 
-## Overview
+## Quick start
 
-ChatJS uses Tailwind CSS 4 and Shadcn/UI for styling. Customize the look and feel by modifying CSS variables and component styles.
+1. Open `app/globals.css`
+2. Edit the CSS variables in `:root` (light) and `.dark` (dark)
+3. Key variables: `--background`, `--foreground`, `--primary`, `--secondary`, `--accent`, `--muted`
 
-## Quick Start
+## Generate a theme
 
-### Colors
+Use the [shadcn theme generator](https://ui.shadcn.com/themes) to create a palette, then copy the CSS variables into `globals.css`.
 
-Edit `app/globals.css` to change the color scheme:
+## Adding components
 
-```css
-:root {
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-  /* ... */
-}
-```
-
-### Components
-
-Shadcn/UI components in `components/ui/` can be customized directly.
-
-## Related
-
-- [Configuration](/configuration) - App-wide settings
+New shadcn components (`bunx shadcn@latest add <component>`) automatically use your theme variables. No extra config needed.

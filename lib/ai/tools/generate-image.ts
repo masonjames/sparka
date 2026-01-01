@@ -267,7 +267,9 @@ export const generateImageTool = ({
     inputSchema: z.object({
       prompt: z
         .string()
-        .describe("The user's exact prompt, passed through without modification."),
+        .describe(
+          "The user's exact prompt, passed through without modification."
+        ),
     }),
     execute: async ({ prompt }) => {
       const startMs = Date.now();
