@@ -119,6 +119,8 @@ export type ChatMessage = Omit<
 
 export type ToolName = keyof ChatTools;
 
+export type ToolOutput<T extends ToolName> = ChatTools[T]["output"];
+
 export type StreamWriter = UIMessageStreamWriter<ChatMessage>;
 
 export type Attachment = {

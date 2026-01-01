@@ -11,7 +11,12 @@ import {
   isNull,
   type SQL,
 } from "drizzle-orm";
-import type { Attachment, ChatMessage } from "@/lib/ai/types";
+import type {
+  Attachment,
+  ChatMessage,
+  ToolName,
+  ToolOutput,
+} from "@/lib/ai/types";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
 import {
   mapDBPartsToUIParts,
@@ -972,12 +977,24 @@ export async function getMessagesWithAttachments() {
   }
 }
 
+function getGeneratedImageParts() {
+  const toolName: ToolName = "generateImage";
+  return db
+    .select({ tool_output: part.tool_output })
+    .from(part)
+    .where(eq(part.tool_name, toolName));
+}
+
 export async function getAllAttachmentUrls(): Promise<string[]> {
   try {
-    const messages = await getMessagesWithAttachments();
+    const [messages, generatedImageParts] = await Promise.all([
+      getMessagesWithAttachments(),
+      getGeneratedImageParts(),
+    ]);
 
     const attachmentUrls: string[] = [];
 
+    // Collect URLs from message attachments
     for (const msg of messages) {
       if (msg.attachments && Array.isArray(msg.attachments)) {
         const attachments = msg.attachments as Attachment[];
@@ -986,6 +1003,14 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
             attachmentUrls.push(attachment.url);
           }
         }
+      }
+    }
+
+    // Collect URLs from generated images in tool outputs
+    for (const p of generatedImageParts) {
+      const output = p.tool_output as ToolOutput<"generateImage"> | null;
+      if (output?.imageUrl) {
+        attachmentUrls.push(output.imageUrl);
       }
     }
 
