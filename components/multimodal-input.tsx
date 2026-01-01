@@ -1,7 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
-import { PlusIcon } from "lucide-react";
+import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import {
   type ChangeEvent,
@@ -46,6 +46,12 @@ import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
 import { ResponsiveTools } from "./responsive-tools";
 import { SuggestedActions } from "./suggested-actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LimitDisplay } from "./upgrade-cta/limit-display";
@@ -67,12 +73,10 @@ const ACCEPTED_FILE_TYPES = {
   "application/pdf": [".pdf"],
 } as const;
 
-// For HTML file input accept attribute
-// Desktop: use extensions for filtering. Mobile: use */* to avoid photo picker lock-in
-const FILE_INPUT_ACCEPT_DESKTOP = Object.values(ACCEPTED_FILE_TYPES)
-  .flat()
-  .join(",");
-const FILE_INPUT_ACCEPT_MOBILE = "*/*";
+// Accept strings for different input modes
+const ACCEPT_IMAGES = ".png,.jpg,.jpeg";
+const ACCEPT_FILES = ".pdf";
+const ACCEPT_ALL = ".png,.jpg,.jpeg,.pdf";
 
 function PureMultimodalInput({
   chatId,
@@ -545,7 +549,7 @@ function PureMultimodalInput({
   return (
     <div className="relative">
       <input
-        accept={isMobile ? FILE_INPUT_ACCEPT_MOBILE : FILE_INPUT_ACCEPT_DESKTOP}
+        accept={ACCEPT_ALL}
         className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
@@ -669,18 +673,95 @@ function PureAttachmentsButton({
   status: UseChatHelpers<ChatMessage>["status"];
 }) {
   const { data: session } = useSession();
+  const isMobile = useIsMobile();
   const isAnonymous = !session?.user;
   const [showLoginPopover, setShowLoginPopover] = useState(false);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const triggerFileInput = useCallback(
+    (accept: string, capture?: "environment" | "user") => {
+      const input = fileInputRef.current;
+      if (!input) {
+        return;
+      }
+      input.accept = accept;
+      if (capture) {
+        input.capture = capture;
+      } else {
+        input.removeAttribute("capture");
+      }
+      input.click();
+    },
+    [fileInputRef]
+  );
+
+  const handleDesktopClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (isAnonymous) {
       setShowLoginPopover(true);
       return;
     }
-    fileInputRef.current?.click();
+    triggerFileInput(ACCEPT_ALL);
   };
 
+  // Mobile: dropdown with separate options
+  if (isMobile) {
+    if (isAnonymous) {
+      return (
+        <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
+          <PopoverTrigger asChild>
+            <PromptInputButton
+              className="size-8"
+              data-testid="attachments-button"
+              disabled={status !== "ready"}
+              onClick={() => setShowLoginPopover(true)}
+              variant="ghost"
+            >
+              <PlusIcon className="size-4" />
+            </PromptInputButton>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-80 p-0">
+            <LoginPrompt
+              description="You can attach images and PDFs to your messages for the AI to analyze."
+              title="Sign in to attach files"
+            />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <PromptInputButton
+            className="size-8"
+            data-testid="attachments-button"
+            disabled={status !== "ready"}
+            variant="ghost"
+          >
+            <PlusIcon className="size-4" />
+          </PromptInputButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => triggerFileInput(ACCEPT_IMAGES)}>
+            <ImageIcon />
+            Add photos
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => triggerFileInput(ACCEPT_IMAGES, "environment")}
+          >
+            <CameraIcon />
+            Take photo
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => triggerFileInput(ACCEPT_FILES)}>
+            <FileIcon />
+            Add files
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Desktop: single button with tooltip
   return (
     <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
       <Tooltip>
@@ -690,7 +771,7 @@ function PureAttachmentsButton({
               className="@[500px]:size-10 size-8"
               data-testid="attachments-button"
               disabled={status !== "ready"}
-              onClick={handleClick}
+              onClick={handleDesktopClick}
               variant="ghost"
             >
               <PlusIcon className="size-4" />
