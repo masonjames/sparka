@@ -60,6 +60,8 @@ export type SiteConfig = {
   githubUrl: string;
   appPrefix: string;
   appName: string;
+  appDescription: string;
+  appUrl: string;
   organization: {
     name: string;
     contact: {
@@ -132,6 +134,9 @@ export const siteConfig: SiteConfig = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
   appName: "ChatJS",
+  appDescription:
+    "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
+  appUrl: "https://chatjs.dev",
 
   organization: {
     name: "ChatJS",

@@ -12,16 +12,14 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chatjs.dev"),
-  title: "ChatJS - Production-Ready AI Chat Template",
-  description:
-    "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
+  metadataBase: new URL(siteConfig.appUrl),
+  title: siteConfig.appName,
+  description: siteConfig.appDescription,
   openGraph: {
-    siteName: "ChatJS",
-    url: "https://chatjs.dev",
-    title: "ChatJS - Production-Ready AI Chat Template",
-    description:
-      "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
+    siteName: siteConfig.appName,
+    url: siteConfig.appUrl,
+    title: siteConfig.appName,
+    description: siteConfig.appDescription,
   },
 };
 

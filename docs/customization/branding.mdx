@@ -1,0 +1,67 @@
+---
+title: Branding
+description: Replace icons, logos, and images for your app
+---
+
+## Overview
+
+To fully rebrand ChatJS, you'll need to replace several image assets and update metadata configuration.
+
+## Icons & Images
+
+### Favicon
+
+| File              | Size | Purpose          |
+| ----------------- | ---- | ---------------- |
+| `app/favicon.ico` | Any  | Browser tab icon |
+
+### App Icons (PWA/Mobile)
+
+| File                 | Size    | Purpose                        |
+| -------------------- | ------- | ------------------------------ |
+| `app/apple-icon.png` | 180x180 | iOS home screen icon           |
+| `public/icon.png`    | 512x512 | General app icon               |
+| `public/icon.svg`    | Any     | Scalable icon for PWA manifest |
+
+### Social Image
+
+| File                      | Size     | Purpose                                        |
+| ------------------------- | -------- | ---------------------------------------------- |
+| `app/opengraph-image.png` | 1200x630 | Social media previews (Facebook, Twitter, etc) |
+
+## PWA Manifest
+
+Update `app/manifest.webmanifest` with your app name and description:
+
+```json
+{
+  "name": "Your App Name",
+  "short_name": "YourApp",
+  "description": "Your app description",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
+```
+
+## Metadata
+
+Update `lib/config.ts`:
+
+```ts
+export const siteConfig: SiteConfig = {
+  appName: "Your App Name",
+  appDescription: "Your app description",
+  appUrl: "https://yourdomain.com",
+  // ...
+};
+```
+
+## Related
+
+- [Theming](/customization/theming) - Customize colors and styling
+- [Configuration](/configuration) - App-wide settings
