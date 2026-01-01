@@ -53,8 +53,9 @@ ENV R2_BUCKET="placeholder-bucket"
 ENV R2_ENDPOINT="https://placeholder.r2.cloudflarestorage.com"
 ENV R2_PUBLIC_URL="https://placeholder.example.com"
 
-# Build the application using bun
-RUN bun run build
+# Build Next.js directly (skip migrations via npm script)
+# The migrate script checks SKIP_DB_MIGRATE env var
+RUN bun run next build
 
 # =============================================================================
 # Stage 3: Production Runner
