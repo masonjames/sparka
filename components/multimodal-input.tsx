@@ -67,8 +67,12 @@ const ACCEPTED_FILE_TYPES = {
   "application/pdf": [".pdf"],
 } as const;
 
-// For HTML file input accept attribute (extensions only - MIME types trigger mobile photo picker)
-const FILE_INPUT_ACCEPT = Object.values(ACCEPTED_FILE_TYPES).flat().join(",");
+// For HTML file input accept attribute
+// Desktop: use extensions for filtering. Mobile: use */* to avoid photo picker lock-in
+const FILE_INPUT_ACCEPT_DESKTOP = Object.values(ACCEPTED_FILE_TYPES)
+  .flat()
+  .join(",");
+const FILE_INPUT_ACCEPT_MOBILE = "*/*";
 
 function PureMultimodalInput({
   chatId,
@@ -541,7 +545,7 @@ function PureMultimodalInput({
   return (
     <div className="relative">
       <input
-        accept={FILE_INPUT_ACCEPT}
+        accept={isMobile ? FILE_INPUT_ACCEPT_MOBILE : FILE_INPUT_ACCEPT_DESKTOP}
         className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
