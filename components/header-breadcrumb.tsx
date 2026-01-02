@@ -133,15 +133,15 @@ export function HeaderBreadcrumb({
 
   return (
     <>
-      <Breadcrumb className={cn("flex-1", className)}>
-        <BreadcrumbList>
+      <Breadcrumb className={cn("min-w-0", className)}>
+        <BreadcrumbList className="flex-nowrap">
           <ProjectBreadcrumb
             projectColor={project?.iconColor as ProjectColorName | undefined}
             projectIcon={project?.icon as ProjectIconName | undefined}
             projectId={resolvedProjectId}
             projectLabel={projectLabel}
           />
-          <BreadcrumbItem>
+          <BreadcrumbItem className="min-w-0">
             {
               <PureChatBreadcrumb
                 canManageChat={canManageChat}
@@ -216,11 +216,11 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="group flex max-w-[220px] items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-foreground text-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="group flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-foreground text-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             type="button"
           >
             <span className="truncate">{chatLabel}</span>
-            <ChevronDown aria-hidden className="size-4 text-muted-foreground" />
+            <ChevronDown aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
