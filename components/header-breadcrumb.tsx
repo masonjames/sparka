@@ -31,12 +31,14 @@ import type { Session } from "@/lib/auth";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
+import { ShareDialog } from "./share-button";
 
 type HeaderBreadcrumbProps = {
   chatId: string;
   projectId?: string;
   user?: Session["user"];
   isReadonly: boolean;
+  hasMessages?: boolean;
   className?: string;
 };
 
@@ -45,6 +47,7 @@ export function HeaderBreadcrumb({
   projectId: _projectId,
   user,
   isReadonly,
+  hasMessages,
   className,
 }: HeaderBreadcrumbProps) {
   const { id: chatId, isPersisted } = useChatId();
@@ -75,6 +78,7 @@ export function HeaderBreadcrumb({
   const [chatTitleDraft, setChatTitleDraft] = useState("");
   const [chatDeleteId, setChatDeleteId] = useState<string | null>(null);
   const [showChatDeleteDialog, setShowChatDeleteDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const { mutate: pinChatMutation } = usePinChat();
   const { mutateAsync: renameChatMutation } = useRenameChat();
@@ -152,8 +156,10 @@ export function HeaderBreadcrumb({
                 isChatEditing={isChatEditing}
                 isPinned={!!chat?.isPinned}
                 onChatTitleChange={(value: string) => setChatTitleDraft(value)}
+                onShare={() => setShowShareDialog(true)}
                 onTogglePin={handlePinToggle}
                 openChatDeleteDialog={openChatDeleteDialog}
+                showShare={!!hasMessages}
                 startChatRename={startChatRename}
               />
             }
@@ -165,6 +171,12 @@ export function HeaderBreadcrumb({
         deleteId={chatDeleteId}
         setShowDeleteDialog={setShowChatDeleteDialog}
         showDeleteDialog={showChatDeleteDialog}
+      />
+
+      <ShareDialog
+        chatId={chatId}
+        onOpenChange={setShowShareDialog}
+        open={showShareDialog}
       />
     </>
   );
@@ -179,8 +191,10 @@ type ChatBreadcrumbProps = {
   isChatEditing: boolean;
   isPinned: boolean;
   onChatTitleChange: (value: string) => void;
+  onShare: () => void;
   onTogglePin: () => void;
   openChatDeleteDialog: () => void;
+  showShare?: boolean;
   startChatRename: () => void;
 };
 
@@ -193,8 +207,10 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
   isChatEditing,
   isPinned,
   onChatTitleChange,
+  onShare,
   onTogglePin,
   openChatDeleteDialog,
+  showShare,
   startChatRename: startChatRenameProp,
 }: ChatBreadcrumbProps) {
   if (isChatEditing) {
@@ -220,16 +236,20 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
             type="button"
           >
             <span className="truncate">{chatLabel}</span>
-            <ChevronDown aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+            <ChevronDown
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground"
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <ChatMenuItems
-            includeShareItem={false}
             isPinned={isPinned}
             onDelete={openChatDeleteDialog}
             onRename={startChatRenameProp}
+            onShare={onShare}
             onTogglePin={onTogglePin}
+            showShare={showShare}
           />
         </DropdownMenuContent>
       </DropdownMenu>

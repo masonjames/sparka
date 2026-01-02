@@ -3,7 +3,7 @@ import { Share } from "lucide-react";
 import { memo } from "react";
 import { HeaderActions } from "@/components/header-actions";
 import { HeaderBreadcrumb } from "@/components/header-breadcrumb";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { Session } from "@/lib/auth";
 import { ShareButton } from "./share-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -21,23 +21,24 @@ function PureChatHeader({
   projectId?: string;
   user?: Session["user"];
 }) {
-  const { isMobile } = useSidebar();
-
   return (
     <header className="sticky top-0 flex h-(--header-height) items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2">
       <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
         <div className="flex min-w-0 items-center gap-2">
-          {isMobile && <SidebarTrigger />}
+          <SidebarTrigger className="md:hidden" />
           <HeaderBreadcrumb
             chatId={chatId}
             className="ml-2"
+            hasMessages={hasMessages}
             isReadonly={isReadonly}
             projectId={projectId}
             user={user}
           />
         </div>
 
-        {!isReadonly && hasMessages && <ShareButton chatId={chatId} />}
+        {!isReadonly && hasMessages && (
+          <ShareButton chatId={chatId} className="hidden md:flex" />
+        )}
         {isReadonly && (
           <Tooltip>
             <TooltipTrigger asChild>

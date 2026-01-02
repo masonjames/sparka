@@ -118,7 +118,6 @@ const PureSidebarChatItem = ({
 
         <DropdownMenuContent align="end" side="bottom">
           <ChatMenuItems
-            includeShareItem
             isPinned={chat.isPinned}
             onDelete={() => onDelete(chat.id)}
             onRename={() => {
