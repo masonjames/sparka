@@ -67,7 +67,7 @@
     "@lexical/react": "^0.32.1",
     "@lexical/rich-text": "^0.32.1",
     "@lobehub/icons": "^2.23.1",
-    "@mendable/firecrawl-js": "1.29.1",
+    "@mendable/firecrawl-js": "4.10.0",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "@opentelemetry/api-logs": "^0.200.0",
     "@opentelemetry/instrumentation": "^0.200.0",
