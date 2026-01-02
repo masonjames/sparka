@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 import { chatRouter } from "./chat.router";
 import { creditsRouter } from "./credits.router";
 import { documentRouter } from "./document.router";
+import { entitlementsRouter } from "./entitlements.router";
 import { mcpRouter } from "./mcp.router";
 import { projectRouter } from "./project.router";
 import { settingsRouter } from "./settings.router";
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   mcp: mcpRouter,
   project: projectRouter,
   settings: settingsRouter,
+  entitlements: entitlementsRouter,
 });
 
 // export type definition of API

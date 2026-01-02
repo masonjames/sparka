@@ -422,3 +422,69 @@ export const mcpOAuthSession = pgTable(
 export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
 
 export const schema = { user, session, account, verification };
+
+// ============================================================================
+// Custom: Ghost/Stripe Entitlement Integration
+// ============================================================================
+
+export const entitlement = pgTable(
+  "Entitlement",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    source: varchar("source", { length: 50 }).notNull(), // 'ghost' | 'stripe'
+    externalId: varchar("externalId", { length: 255 }).notNull(), // Ghost member ID or Stripe subscription ID
+    tier: varchar("tier", { length: 100 }), // Ghost tier slug or Stripe product/price ID
+    status: varchar("status", { length: 50 }).notNull().default("active"), // 'active' | 'canceled' | 'expired'
+    creditsGranted: integer("creditsGranted").notNull().default(0),
+    metadata: json("metadata"), // Store additional data from Ghost/Stripe
+    startDate: timestamp("startDate", { mode: "date" }),
+    endDate: timestamp("endDate", { mode: "date" }),
+    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    userIdIdx: index("entitlement_user_id_idx").on(table.userId),
+    sourceExternalIdIdx: index("entitlement_source_external_id_idx").on(
+      table.source,
+      table.externalId
+    ),
+    statusIdx: index("entitlement_status_idx").on(table.status),
+  })
+);
+
+export const webhookEvent = pgTable(
+  "WebhookEvent",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    source: varchar("source", { length: 50 }).notNull(), // 'ghost' | 'stripe'
+    eventId: varchar("eventId", { length: 255 }).notNull(), // Unique event ID from provider
+    eventType: varchar("eventType", { length: 100 }).notNull(),
+    payload: json("payload").notNull(),
+    processed: boolean("processed").notNull().default(false),
+    processedAt: timestamp("processedAt", { mode: "date" }),
+    error: text("error"),
+    retryCount: integer("retryCount").notNull().default(0),
+    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => ({
+    sourceEventIdIdx: index("webhook_event_source_event_id_idx").on(
+      table.source,
+      table.eventId
+    ),
+    processedIdx: index("webhook_event_processed_idx").on(table.processed),
+    createdAtIdx: index("webhook_event_created_at_idx").on(table.createdAt),
+  })
+);
+
+export type Entitlement = InferSelectModel<typeof entitlement>;
+export type WebhookEvent = InferSelectModel<typeof webhookEvent>;
