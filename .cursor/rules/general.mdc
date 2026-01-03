@@ -23,6 +23,13 @@ alwaysApply: true
 
 - To perform database migrations follow drizzle conventions. First make the desired changes to the schema in `lib/db/schema.ts`. Then run `bun db:generate` to generate the migration file. Then run `bun db:migrate` to apply the migration to the database.
 
+## Environment Variables
+
+- All env vars are managed in `lib/env.ts` using `@t3-oss/env-nextjs`
+- Add new vars to the `server` object with zod schema
+- Use `env.VAR_NAME` instead of `process.env.VAR_NAME`
+- Add validation in `validateConfig()` if the var is required for an enabled feature
+
 ## Behavior
 
 DO NOT GIVE ME HIGH LEVEL SHIT, IF I ASK FOR FIX OR EXPLANATION, I WANT ACTUAL CODE OR EXPLANATION!!! I DON'T WANT "Here's how you can blablabla"
