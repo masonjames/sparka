@@ -19,11 +19,23 @@ function isBaseChart(input: unknown): input is BaseChart {
   return hasType && hasTitle && hasElements;
 }
 
+type PngChart = { base64: string; format: string };
+
+function isPngChart(input: unknown): input is PngChart {
+  if (typeof input !== "object" || input === null) {
+    return false;
+  }
+  const maybe = input as Record<string, unknown>;
+  return typeof maybe.base64 === "string" && maybe.base64.length > 0;
+}
+
 export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
   const args = tool.input ?? { code: "", title: "", icon: "default" };
   const result = tool.state === "output-available" ? tool.output : null;
   const chart: BaseChart | null =
     result && isBaseChart(result.chart) ? result.chart : null;
+  const pngChart: PngChart | null =
+    result && isPngChart(result.chart) ? result.chart : null;
   const code = typeof args.code === "string" ? args.code : "";
   const title = typeof args.title === "string" ? args.title : "";
   return (
@@ -39,6 +51,16 @@ export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
       {chart && (
         <div className="pt-1">
           <InteractiveChart chart={chart} />
+        </div>
+      )}
+
+      {pngChart && (
+        <div className="pt-1">
+          <img
+            alt="Chart output"
+            className="max-w-full rounded-lg"
+            src={`data:image/png;base64,${pngChart.base64}`}
+          />
         </div>
       )}
     </div>

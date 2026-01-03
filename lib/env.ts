@@ -77,7 +77,7 @@ export function validateConfig(): void {
     const hasTokenAuth =
       env.VERCEL_TEAM_ID && env.VERCEL_PROJECT_ID && env.VERCEL_TOKEN;
 
-    if (!hasOidc && !hasTokenAuth) {
+    if (!(hasOidc || hasTokenAuth)) {
       errors.push({
         feature: "integrations.sandbox",
         missing: [
