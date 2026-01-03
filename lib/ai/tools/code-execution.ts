@@ -1,6 +1,7 @@
 import { Sandbox } from "@vercel/sandbox";
 import { tool } from "ai";
 import z from "zod";
+import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 
 const WHITESPACE_REGEX = /\s+/;
@@ -238,7 +239,7 @@ Output rules:
   execute: async ({ code, title }: { code: string; title: string }) => {
     const log = createModuleLogger("code-execution");
     const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const runtime = process.env.VERCEL_SANDBOX_RUNTIME ?? "python3.13";
+    const runtime = env.VERCEL_SANDBOX_RUNTIME ?? "python3.13";
     const basePackages = [
       "matplotlib",
       "pandas",
@@ -252,10 +253,23 @@ Output rules:
 
     try {
       log.info({ requestId, title, runtime }, "creating sandbox");
+
+      // Token auth for non-Vercel deployments (when OIDC unavailable)
+      const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
+      const tokenAuth =
+        VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN
+          ? {
+              teamId: VERCEL_TEAM_ID,
+              projectId: VERCEL_PROJECT_ID,
+              token: VERCEL_TOKEN,
+            }
+          : {};
+
       sandbox = await Sandbox.create({
         runtime,
         timeout: 5 * 60 * 1000,
         resources: { vcpus: 2 },
+        ...tokenAuth,
       });
       log.debug({ requestId }, "sandbox created");
 
