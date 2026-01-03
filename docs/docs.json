@@ -42,7 +42,8 @@
               "patterns/follow-up-questions",
               "patterns/chat-layout",
               "patterns/resumable-streams",
-              "patterns/credit-tracking"
+              "patterns/credit-tracking",
+              "patterns/dev-auth-bypass"
             ]
           },
           {

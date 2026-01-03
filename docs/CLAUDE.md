@@ -51,6 +51,11 @@
 - Commit frequently throughout development
 - NEVER skip or disable pre-commit hooks
 
+## Navigation updates
+
+- Update docs.json navigation when adding, removing, or renaming pages
+- Keep page order logical within each group
+
 ## Do not
 
 - Skip frontmatter on any MDX file
