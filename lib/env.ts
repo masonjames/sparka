@@ -32,6 +32,12 @@ export const env = createEnv({
     FIRECRAWL_API_KEY: z.string().optional(),
     MCP_ENCRYPTION_KEY: z.string().length(44).optional(),
 
+    // Sandbox (for non-Vercel deployments)
+    VERCEL_TEAM_ID: z.string().optional(),
+    VERCEL_PROJECT_ID: z.string().optional(),
+    VERCEL_TOKEN: z.string().optional(),
+    VERCEL_SANDBOX_RUNTIME: z.string().optional(),
+
     // Misc / platform
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
@@ -63,6 +69,22 @@ export function validateConfig(): void {
       feature: "integrations.mcp",
       missing: ["MCP_ENCRYPTION_KEY"],
     });
+  }
+
+  // Sandbox requires OIDC (Vercel-hosted) or token auth (self-hosted)
+  if (siteConfig.integrations.sandbox) {
+    const hasOidc = !!env.VERCEL_OIDC_TOKEN;
+    const hasTokenAuth =
+      env.VERCEL_TEAM_ID && env.VERCEL_PROJECT_ID && env.VERCEL_TOKEN;
+
+    if (!hasOidc && !hasTokenAuth) {
+      errors.push({
+        feature: "integrations.sandbox",
+        missing: [
+          "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
+        ],
+      });
+    }
   }
 
   // Validate authentication
