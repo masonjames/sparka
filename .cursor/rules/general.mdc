@@ -35,8 +35,14 @@ alwaysApply: true
 ## AI Rules (Skiller)
 
 - Rules live in `.claude/rules/<rulename>.mdc`
-- After adding or modifying rules, run `skiller:apply` to sync to `.cursor/rules/`
+- ALWAYS run `bun skiller:apply` after adding or modifying any rule
 - Rules use MDC format with frontmatter (description, globs, alwaysApply)
+
+## Browser Testing
+
+- To test authenticated features in the browser, navigate to `/api/dev-login` first
+- This creates a dev session and redirects to `/` with valid auth cookies
+- Only works in development (`NODE_ENV=development`)
 
 ## Behavior
 
