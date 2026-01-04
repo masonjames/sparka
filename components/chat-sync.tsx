@@ -28,6 +28,9 @@ export function ChatSync({
   const { stop } = useChatActions<ChatMessage>();
   const threadInitialMessages = useThreadInitialMessages();
 
+  const lastMessage = threadInitialMessages.at(-1);
+  const isLastMessagePartial = lastMessage?.metadata?.isPartial;
+
   // Backstop: if we remount ChatSync (e.g. threadEpoch changes), ensure the prior
   // in-flight stream is aborted and we don't replay old deltas.
   useEffect(
@@ -50,6 +53,7 @@ export function ChatSync({
       saveChatMessage({ message, chatId: id });
       setAutoResume(true);
     },
+    resume: isLastMessagePartial,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       fetch: fetchWithErrorHandlers,
