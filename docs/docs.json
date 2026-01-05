@@ -50,6 +50,7 @@
             "group": "Customization",
             "pages": [
               "customization/theming",
+              "customization/adding-components",
               "customization/branding",
               "customization/models",
               "customization/prompts"
