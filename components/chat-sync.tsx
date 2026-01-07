@@ -106,9 +106,7 @@ export function ChatSync({
     },
   });
 
-  useCompleteDataPart({
-    initialMessages: threadInitialMessages,
-  });
+  useCompleteDataPart();
 
   return null;
 }

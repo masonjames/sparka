@@ -43,6 +43,7 @@ import {
   saveChat,
   saveMessage,
   updateMessage,
+  updateMessageActiveStreamId,
 } from "@/lib/db/queries";
 import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
@@ -459,10 +460,25 @@ async function createChatStream({
         usage: finalUsage ?? {},
       });
     },
-    onError: () => {
+    onError: (error) => {
       clearTimeout(timeoutId);
-      // TODO: Verify if we need to clear activeStreamId immediately when stream finishes
-      log.error("onError");
+      // If the stream fails, ensure the placeholder assistant message is no longer marked resumable.
+      // Otherwise the client will try to resume a stream that no longer exists and we end up with a
+      // stuck partial placeholder on reload.
+      if (!isAnonymous) {
+        after(() =>
+          Promise.resolve(
+            updateMessageActiveStreamId({ id: messageId, activeStreamId: null })
+          ).catch((dbError) => {
+            log.error(
+              { error: dbError },
+              "Failed to clear activeStreamId on stream error"
+            );
+          })
+        );
+      }
+
+      log.error({ error }, "onError");
       return "Oops, an error occured!";
     },
   });

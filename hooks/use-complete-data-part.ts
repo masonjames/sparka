@@ -1,20 +1,15 @@
 "use client";
 
-import { useChatActions } from "@ai-sdk-tools/store";
+import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
 import { useEffect } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
 import type { ChatMessage } from "@/lib/ai/types";
 
-export type UseCompleteDataPartProps = {
-  initialMessages: ChatMessage[];
-};
-
 // Completes the first received data part into a concrete message (e.g. data-appendMessage).
-export function useCompleteDataPart({
-  initialMessages,
-}: UseCompleteDataPartProps) {
+export function useCompleteDataPart() {
   const { dataStream } = useDataStream();
   const { setMessages } = useChatActions<ChatMessage>();
+  const storeApi = useChatStoreApi<ChatMessage>();
 
   useEffect(() => {
     if (!dataStream || dataStream.length === 0) {
@@ -26,14 +21,21 @@ export function useCompleteDataPart({
       return;
     }
 
-    const message = JSON.parse(dataPart.data);
+    const message = JSON.parse(dataPart.data) as ChatMessage;
 
-    if (message.id === initialMessages.at(-1)?.id) {
-      // Replace the last message because it was the partial one.
-      setMessages([...initialMessages.slice(0, -1), message]);
+    const currentMessages = storeApi.getState().messages as ChatMessage[];
+    const existingIdx = currentMessages.findIndex((m) => m.id === message.id);
+
+    // If it exists (often last due to partial placeholder), replace in place.
+    if (existingIdx !== -1) {
+      setMessages([
+        ...currentMessages.slice(0, existingIdx),
+        message,
+        ...currentMessages.slice(existingIdx + 1),
+      ]);
       return;
     }
 
-    setMessages([...initialMessages, message]);
-  }, [dataStream, initialMessages, setMessages]);
+    setMessages([...currentMessages, message]);
+  }, [dataStream, setMessages, storeApi]);
 }
