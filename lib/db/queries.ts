@@ -411,9 +411,9 @@ export async function updateMessage({
           annotations: dbMessage.annotations,
           attachments: dbMessage.attachments,
           createdAt: dbMessage.createdAt,
-          isPartial: dbMessage.isPartial,
           parentMessageId: dbMessage.parentMessageId,
           lastContext: dbMessage.lastContext,
+          activeStreamId: dbMessage.activeStreamId,
         })
         .where(eq(message.id, id));
 
@@ -433,6 +433,16 @@ export async function updateMessage({
     console.error("Failed to update message in database", error);
     throw error;
   }
+}
+
+export function updateMessageActiveStreamId({
+  id,
+  activeStreamId,
+}: {
+  id: string;
+  activeStreamId: string | null;
+}) {
+  return db.update(message).set({ activeStreamId }).where(eq(message.id, id));
 }
 
 export async function getAllMessagesByChatId({
@@ -479,7 +489,7 @@ export async function getAllMessagesByChatId({
         parts,
         metadata: {
           createdAt: msg.createdAt,
-          isPartial: msg.isPartial,
+          activeStreamId: msg.activeStreamId,
           parentMessageId: msg.parentMessageId,
           selectedModel: (msg.selectedModel ||
             "") as ChatMessage["metadata"]["selectedModel"],
@@ -780,6 +790,53 @@ export async function getMessageById({ id }: { id: string }) {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
     console.error("Failed to get message by id from database");
+    throw error;
+  }
+}
+
+export async function getChatMessageWithPartsById({
+  id,
+}: {
+  id: string;
+}): Promise<{
+  chatId: string;
+  message: ChatMessage;
+} | null> {
+  try {
+    const [dbMessage] = await db
+      .select()
+      .from(message)
+      .where(eq(message.id, id));
+    if (!dbMessage) {
+      return null;
+    }
+
+    const dbParts = await db
+      .select()
+      .from(part)
+      .where(eq(part.messageId, id))
+      .orderBy(asc(part.order));
+
+    return {
+      chatId: dbMessage.chatId,
+      message: {
+        id: dbMessage.id,
+        role: dbMessage.role as ChatMessage["role"],
+        parts: dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [],
+        metadata: {
+          createdAt: dbMessage.createdAt,
+          activeStreamId: dbMessage.activeStreamId,
+          parentMessageId: dbMessage.parentMessageId,
+          selectedModel: (dbMessage.selectedModel ||
+            "") as ChatMessage["metadata"]["selectedModel"],
+          selectedTool: (dbMessage.selectedTool ||
+            undefined) as ChatMessage["metadata"]["selectedTool"],
+          usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Failed to get message w/ parts by id from database", error);
     throw error;
   }
 }

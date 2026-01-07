@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
+import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useThreadInitialMessages } from "@/lib/stores/hooks-threads";
@@ -27,6 +28,9 @@ export function ChatSync({
   const isAuthenticated = !!session?.user;
   const { stop } = useChatActions<ChatMessage>();
   const threadInitialMessages = useThreadInitialMessages();
+
+  const lastMessage = threadInitialMessages.at(-1);
+  const isLastMessagePartial = !!lastMessage?.metadata?.activeStreamId;
 
   // Backstop: if we remount ChatSync (e.g. threadEpoch changes), ensure the prior
   // in-flight stream is aborted and we don't replay old deltas.
@@ -50,6 +54,7 @@ export function ChatSync({
       saveChatMessage({ message, chatId: id });
       setAutoResume(true);
     },
+    resume: isLastMessagePartial,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       fetch: fetchWithErrorHandlers,
@@ -64,6 +69,14 @@ export function ChatSync({
             projectId,
             ...body,
           },
+        };
+      },
+      prepareReconnectToStreamRequest({ id: chatId }) {
+        const partialMessageId = lastMessage?.metadata?.activeStreamId
+          ? lastMessage.id
+          : null;
+        return {
+          api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${partialMessageId}` : ""}`,
         };
       },
     }),
@@ -93,11 +106,7 @@ export function ChatSync({
     },
   });
 
-  // useAutoResume({
-  //   autoResume,
-  //   initialMessages,
-  //   resumeStream: helpers.resumeStream,
-  // });
+  useCompleteDataPart();
 
   return null;
 }

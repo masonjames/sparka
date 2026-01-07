@@ -27,7 +27,7 @@ export function dbMessageToChatMessage(message: DBMessage): ChatMessage {
     role: message.role as ChatMessage["role"],
     metadata: {
       createdAt: message.createdAt,
-      isPartial: message.isPartial,
+      activeStreamId: message.activeStreamId,
       parentMessageId: message.parentMessageId,
       selectedModel: (message.selectedModel as ModelId) || ("" as ModelId),
       selectedTool: (message.selectedTool as UiToolName | null) || undefined,
@@ -41,7 +41,6 @@ export function chatMessageToDbMessage(
   chatId: string
 ): DBMessage {
   const parentMessageId = message.metadata.parentMessageId || null;
-  const isPartial = message.metadata.isPartial ?? false;
   const selectedModel = message.metadata.selectedModel;
 
   // Ensure createdAt is a Date object
@@ -64,9 +63,9 @@ export function chatMessageToDbMessage(
     lastContext: message.metadata?.usage || null,
     createdAt,
     annotations: [],
-    isPartial,
     parentMessageId,
     selectedModel,
     selectedTool: message.metadata?.selectedTool || null,
+    activeStreamId: message.metadata?.activeStreamId || null,
   };
 }

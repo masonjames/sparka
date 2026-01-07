@@ -45,6 +45,7 @@ export function FollowUpSuggestions({
           createdAt: new Date(),
           parentMessageId,
           selectedModel: selectedModelId,
+          activeStreamId: null,
           selectedTool: (selectedTool as UiToolName | null) || undefined,
         },
       };

@@ -1,180 +1,102 @@
-import { createUIMessageStream, JsonToSseTransformStream } from "ai";
-import { differenceInSeconds } from "date-fns";
+import {
+  createUIMessageStream,
+  JsonToSseTransformStream,
+  UI_MESSAGE_STREAM_HEADERS,
+} from "ai";
 import { headers } from "next/headers";
+import type { NextRequest } from "next/server";
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import { auth } from "@/lib/auth";
-import { getAllMessagesByChatId, getChatById } from "@/lib/db/queries";
-import { getRedisPublisher, getStreamContext } from "../../route";
+import { getChatById, getChatMessageWithPartsById } from "@/lib/db/queries";
+import { getStreamContext } from "../../route";
 
-async function validateChatAccess({
-  chatId,
-  userId,
-  isAuthenticated,
-}: {
-  chatId: string;
-  userId: string | null;
-  isAuthenticated: boolean;
-}): Promise<Response | null> {
-  // For authenticated users, check DB permissions first
-  if (isAuthenticated) {
-    const chat = await getChatById({ id: chatId });
-
-    if (!chat) {
-      return new ChatSDKError("not_found:chat").toResponse();
-    }
-
-    // If chat is not public, require authentication and ownership
-    if (chat.visibility !== "public" && chat.userId !== userId) {
-      console.log(
-        "RESPONSE > GET /api/chat: Unauthorized - chat ownership mismatch"
-      );
-      return new ChatSDKError("forbidden:chat").toResponse();
-    }
-  }
-  return null;
-}
-
-async function getStreamIds({
-  chatId,
-  isAuthenticated,
-  redisPublisher,
-}: {
-  chatId: string;
-  isAuthenticated: boolean;
-  redisPublisher: any;
-}): Promise<string[]> {
-  if (!redisPublisher) {
-    return [];
-  }
-
-  const keyPattern = isAuthenticated
-    ? `sparka-ai:stream:${chatId}:*`
-    : `sparka-ai:anonymous-stream:${chatId}:*`;
-
-  const keys = await redisPublisher.keys(keyPattern);
-  return keys
-    .map((key: string) => {
-      const parts = key.split(":");
-      return parts.at(-1) || "";
-    })
-    .filter(Boolean);
-}
-
-async function createRestoredStream({
-  chatId,
-  resumeRequestedAt,
-  emptyDataStream,
-}: {
-  chatId: string;
-  resumeRequestedAt: Date;
-  emptyDataStream: ReadableStream;
-}): Promise<Response> {
-  const messages = await getAllMessagesByChatId({ chatId });
-  const mostRecentMessage = messages.at(-1);
-
-  if (!mostRecentMessage) {
-    return new Response(emptyDataStream, { status: 200 });
-  }
-
-  if (mostRecentMessage.role !== "assistant") {
-    return new Response(emptyDataStream, { status: 200 });
-  }
-
-  const messageCreatedAt = new Date(mostRecentMessage.metadata.createdAt);
-
-  if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-    return new Response(emptyDataStream, { status: 200 });
-  }
-
-  const restoredStream = createUIMessageStream<ChatMessage>({
+function appendMessageResponse(message: ChatMessage) {
+  const stream = createUIMessageStream<ChatMessage>({
     execute: ({ writer }) => {
       writer.write({
+        id: crypto.randomUUID(),
         type: "data-appendMessage",
-        data: JSON.stringify(mostRecentMessage),
+        data: JSON.stringify(message),
         transient: true,
       });
     },
+    generateId: () => message.id,
   });
 
   return new Response(
-    restoredStream.pipeThrough(new JsonToSseTransformStream()),
-    { status: 200 }
+    stream
+      .pipeThrough(new JsonToSseTransformStream())
+      .pipeThrough(new TextEncoderStream()),
+    { headers: UI_MESSAGE_STREAM_HEADERS }
   );
 }
 
 export async function GET(
-  _: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // TODO: This needs to be thread aware
   const { id: chatId } = await params;
+  const messageId = request.nextUrl.searchParams.get("messageId");
 
+  if (!messageId) {
+    return new ChatSDKError("bad_request:api").toResponse();
+  }
+
+  // Get message and validate it exists with an active stream
+  const messageWithParts = await getChatMessageWithPartsById({ id: messageId });
+  if (!messageWithParts || messageWithParts.chatId !== chatId) {
+    return new ChatSDKError("not_found:stream").toResponse();
+  }
+
+  // Validate chat ownership
+  const session = await auth.api.getSession({ headers: await headers() });
+  const userId = session?.user?.id || null;
+
+  const chat = await getChatById({ id: chatId });
+  if (!chat) {
+    return new ChatSDKError("not_found:chat").toResponse();
+  }
+
+  if (chat.visibility !== "public" && chat.userId !== userId) {
+    return new ChatSDKError("forbidden:chat").toResponse();
+  }
+
+  const { message } = messageWithParts;
+
+  // Stream finished (or we lost the resumable stream) — send the finalized
+  // assistant message as a one-shot "appendMessage" data chunk.
+  if (!message.metadata.activeStreamId) {
+    if (message.role !== "assistant") {
+      return new Response(null, { status: 204 });
+    }
+
+    return appendMessageResponse(message);
+  }
+
+  // Resume the existing stream
   const streamContext = getStreamContext();
-  const resumeRequestedAt = new Date();
-
   if (!streamContext) {
     return new Response(null, { status: 204 });
   }
 
-  if (!chatId) {
-    return new ChatSDKError("bad_request:api").toResponse();
-  }
-
-  const session = await auth.api.getSession({ headers: await headers() });
-  const userId = session?.user?.id || null;
-  const isAuthenticated = userId !== null;
-
-  const validationError = await validateChatAccess({
-    chatId,
-    userId,
-    isAuthenticated,
-  });
-
-  if (validationError) {
-    return validationError;
-  }
-
-  const redisPublisher = getRedisPublisher();
-
-  // Get streams from Redis for all users
-  const streamIds = await getStreamIds({
-    chatId,
-    isAuthenticated,
-    redisPublisher,
-  });
-
-  if (!streamIds.length) {
-    return new ChatSDKError("not_found:stream").toResponse();
-  }
-
-  const recentStreamId = streamIds.at(-1);
-
-  if (!recentStreamId) {
-    return new ChatSDKError("not_found:stream").toResponse();
-  }
-
-  const emptyDataStream = createUIMessageStream<ChatMessage>({
-    execute: () => {
-      // Intentionally empty - used as a fallback stream when stream context is unavailable
-    },
-  });
-
-  const stream = await streamContext.resumableStream(recentStreamId, () =>
-    emptyDataStream.pipeThrough(new JsonToSseTransformStream())
+  const stream = await streamContext.resumeExistingStream(
+    message.metadata.activeStreamId
   );
-
-  /*
-   * For when the generation is streaming during SSR
-   * but the resumable stream has concluded at this point.
-   */
   if (!stream) {
-    return await createRestoredStream({
-      chatId,
-      resumeRequestedAt,
-      emptyDataStream,
-    });
+    // Stream missing but message might already be finalized (race vs DB update).
+    const refreshed = await getChatMessageWithPartsById({ id: messageId });
+    if (
+      refreshed &&
+      refreshed.chatId === chatId &&
+      refreshed.message.role === "assistant" &&
+      !refreshed.message.metadata.activeStreamId
+    ) {
+      return appendMessageResponse(refreshed.message);
+    }
+
+    return new Response(null, { status: 204 });
   }
 
-  return new Response(stream, { status: 200 });
+  return new Response(stream, { headers: UI_MESSAGE_STREAM_HEADERS });
 }

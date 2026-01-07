@@ -220,6 +220,7 @@ function ReadingLevelSelector({
                     selectedModel: selectedModelId,
                     createdAt: new Date(),
                     parentMessageId: storeApi.getState().getLastMessageId(),
+                    activeStreamId: null,
                   },
                 });
 
