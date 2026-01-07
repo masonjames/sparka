@@ -32,7 +32,6 @@ export function ChatSync({
   const lastMessage = threadInitialMessages.at(-1);
   const isLastMessagePartial = !!lastMessage?.metadata?.activeStreamId;
 
-  console.log("isLastMessagePartial", isLastMessagePartial);
   // Backstop: if we remount ChatSync (e.g. threadEpoch changes), ensure the prior
   // in-flight stream is aborted and we don't replay old deltas.
   useEffect(
