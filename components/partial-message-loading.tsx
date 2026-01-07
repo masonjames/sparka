@@ -1,13 +1,13 @@
 "use client";
 
+import { useChatStatus } from "@ai-sdk-tools/store";
 import { useMessageMetadataById } from "@/lib/stores/hooks-base";
-import { useMessagePartTypesById } from "@/lib/stores/hooks-message-parts";
 import { Skeleton } from "./ui/skeleton";
 
 export function PartialMessageLoading({ messageId }: { messageId: string }) {
   const metadata = useMessageMetadataById(messageId);
-  const parts = useMessagePartTypesById(messageId);
-  const isLoading = metadata?.isPartial && (parts?.length ?? 0) === 0;
+  const status = useChatStatus();
+  const isLoading = metadata.activeStreamId && status === "submitted";
 
   if (!isLoading) {
     return null;

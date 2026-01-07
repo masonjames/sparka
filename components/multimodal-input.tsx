@@ -310,6 +310,7 @@ function PureMultimodalInput({
         createdAt: new Date(),
         parentMessageId: effectiveParentMessageId,
         selectedModel: selectedModelId,
+        activeStreamId: null,
         selectedTool: selectedTool || undefined,
       },
       role: "user",

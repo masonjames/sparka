@@ -113,10 +113,10 @@ export const message = pgTable("Message", {
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
   annotations: json("annotations"),
-  isPartial: boolean("isPartial").notNull().default(false),
   selectedModel: varchar("selectedModel", { length: 256 }).default(""),
   selectedTool: varchar("selectedTool", { length: 256 }).default(""),
   lastContext: json("lastContext"),
+  activeStreamId: varchar("activeStreamId", { length: 64 }),
 });
 
 export type DBMessage = InferSelectModel<typeof message>;

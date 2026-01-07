@@ -1,6 +1,7 @@
 "use client";
-import { useChatId } from "@ai-sdk-tools/store";
+import { useChatId, useChatStatus } from "@ai-sdk-tools/store";
 import { memo } from "react";
+import { useMessageMetadataById } from "@/lib/stores/hooks-base";
 import { Message, MessageContent } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
 import { MessageActions } from "./message-actions";
@@ -15,8 +16,12 @@ const PureAssistantMessage = ({
   isReadonly,
 }: Omit<BaseMessageProps, "parentMessageId">) => {
   const chatId = useChatId();
+  const metadata = useMessageMetadataById(messageId);
+  const status = useChatStatus();
+  const isReconnectingToMessageStream =
+    metadata.activeStreamId !== null && status === "submitted";
 
-  if (!chatId) {
+  if (!chatId || isReconnectingToMessageStream) {
     return null;
   }
 

@@ -282,8 +282,8 @@ export async function runCoreChatAgentEval({
     metadata: {
       createdAt: new Date(),
       parentMessageId: userMessage.id,
-      isPartial: false,
       selectedModel: selectedModelId,
+      activeStreamId: null,
     },
   };
 

@@ -181,6 +181,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
             selectedModel: DEFAULT_POLISH_TEXT_MODEL,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
+            activeStreamId: null,
           },
         });
       },
@@ -201,6 +202,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
             selectedModel: DEFAULT_SUGGESTIONS_MODEL,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
+            activeStreamId: null,
           },
         });
       },
