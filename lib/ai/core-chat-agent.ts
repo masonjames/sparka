@@ -40,7 +40,7 @@ export async function createCoreChatAgent({
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
   mcpConnectors?: McpConnector[];
-  costAccumulator?: CostAccumulator;
+  costAccumulator: CostAccumulator;
 }) {
   const modelDefinition = await getAppModelDefinition(selectedModelId);
 

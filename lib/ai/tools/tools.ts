@@ -38,7 +38,7 @@ export function getTools({
   attachments: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
-  costAccumulator?: CostAccumulator;
+  costAccumulator: CostAccumulator;
 }) {
   return {
     getWeather,

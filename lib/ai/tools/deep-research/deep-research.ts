@@ -19,7 +19,7 @@ export const deepResearch = ({
   dataStream: StreamWriter;
   messageId: string;
   messages: ModelMessage[];
-  costAccumulator?: CostAccumulator;
+  costAccumulator: CostAccumulator;
 }) =>
   tool({
     description: `Conducts deep, autonomous research based on a conversation history. It automatically clarifies the user's intent if the request is ambiguous, breaks down the query into parallel research tasks, scours multiple web sources for information, and then synthesizes the findings into a comprehensive, well-structured report with citations. This is best for complex questions that require in-depth analysis and a detailed answer, not just a simple search. 

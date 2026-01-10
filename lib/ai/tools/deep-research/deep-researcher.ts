@@ -835,6 +835,7 @@ type FinalReportGenerationInput = {
   messageId: string;
   reportTitle: string;
   toolCallId: string;
+  costAccumulator: CostAccumulator;
 };
 
 async function finalReportGeneration(
@@ -848,6 +849,7 @@ async function finalReportGeneration(
     messageId,
     reportTitle,
     toolCallId,
+    costAccumulator,
   } = input;
   const notes = state.notes || [];
 
@@ -912,6 +914,7 @@ async function finalReportGeneration(
     messageId,
     selectedModel: config.final_report_model as ModelId,
     documentHandler: reportDocumentHandler.createDocumentHandler(),
+    costAccumulator,
   });
 
   dataStream.write({
@@ -936,7 +939,7 @@ export async function runDeepResearcher(
   input: AgentInputState,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  options: { session: Session; costAccumulator?: CostAccumulator }
+  options: { session: Session; costAccumulator: CostAccumulator }
 ): Promise<DeepResearchResult> {
   const { session, costAccumulator } = options;
   console.log("runDeepResearcher invoked", {
@@ -1044,6 +1047,7 @@ export async function runDeepResearcher(
     messageId: input.messageId,
     reportTitle,
     toolCallId: input.toolCallId,
+    costAccumulator,
   });
 
   dataStream.write({
