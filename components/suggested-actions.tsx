@@ -127,6 +127,7 @@ function PureSuggestedActions({
           selectedModel: selectedModelId,
           createdAt: new Date(),
           parentMessageId: null,
+          activeStreamId: null,
         },
       },
       {

@@ -31,12 +31,14 @@ import type { Session } from "@/lib/auth";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
+import { ShareDialog } from "./share-button";
 
 type HeaderBreadcrumbProps = {
   chatId: string;
   projectId?: string;
   user?: Session["user"];
   isReadonly: boolean;
+  hasMessages?: boolean;
   className?: string;
 };
 
@@ -45,6 +47,7 @@ export function HeaderBreadcrumb({
   projectId: _projectId,
   user,
   isReadonly,
+  hasMessages,
   className,
 }: HeaderBreadcrumbProps) {
   const { id: chatId, isPersisted } = useChatId();
@@ -75,6 +78,7 @@ export function HeaderBreadcrumb({
   const [chatTitleDraft, setChatTitleDraft] = useState("");
   const [chatDeleteId, setChatDeleteId] = useState<string | null>(null);
   const [showChatDeleteDialog, setShowChatDeleteDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const { mutate: pinChatMutation } = usePinChat();
   const { mutateAsync: renameChatMutation } = useRenameChat();
@@ -133,15 +137,15 @@ export function HeaderBreadcrumb({
 
   return (
     <>
-      <Breadcrumb className={cn("flex-1", className)}>
-        <BreadcrumbList>
+      <Breadcrumb className={cn("min-w-0", className)}>
+        <BreadcrumbList className="flex-nowrap">
           <ProjectBreadcrumb
             projectColor={project?.iconColor as ProjectColorName | undefined}
             projectIcon={project?.icon as ProjectIconName | undefined}
             projectId={resolvedProjectId}
             projectLabel={projectLabel}
           />
-          <BreadcrumbItem>
+          <BreadcrumbItem className="min-w-0">
             {
               <PureChatBreadcrumb
                 canManageChat={canManageChat}
@@ -152,8 +156,10 @@ export function HeaderBreadcrumb({
                 isChatEditing={isChatEditing}
                 isPinned={!!chat?.isPinned}
                 onChatTitleChange={(value: string) => setChatTitleDraft(value)}
+                onShare={() => setShowShareDialog(true)}
                 onTogglePin={handlePinToggle}
                 openChatDeleteDialog={openChatDeleteDialog}
+                showShare={!!hasMessages}
                 startChatRename={startChatRename}
               />
             }
@@ -165,6 +171,12 @@ export function HeaderBreadcrumb({
         deleteId={chatDeleteId}
         setShowDeleteDialog={setShowChatDeleteDialog}
         showDeleteDialog={showChatDeleteDialog}
+      />
+
+      <ShareDialog
+        chatId={chatId}
+        onOpenChange={setShowShareDialog}
+        open={showShareDialog}
       />
     </>
   );
@@ -179,8 +191,10 @@ type ChatBreadcrumbProps = {
   isChatEditing: boolean;
   isPinned: boolean;
   onChatTitleChange: (value: string) => void;
+  onShare: () => void;
   onTogglePin: () => void;
   openChatDeleteDialog: () => void;
+  showShare?: boolean;
   startChatRename: () => void;
 };
 
@@ -193,8 +207,10 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
   isChatEditing,
   isPinned,
   onChatTitleChange,
+  onShare,
   onTogglePin,
   openChatDeleteDialog,
+  showShare,
   startChatRename: startChatRenameProp,
 }: ChatBreadcrumbProps) {
   if (isChatEditing) {
@@ -216,20 +232,24 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="group flex max-w-[220px] items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-foreground text-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="group flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-foreground text-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             type="button"
           >
             <span className="truncate">{chatLabel}</span>
-            <ChevronDown aria-hidden className="size-4 text-muted-foreground" />
+            <ChevronDown
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground"
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <ChatMenuItems
-            includeShareItem={false}
             isPinned={isPinned}
             onDelete={openChatDeleteDialog}
             onRename={startChatRenameProp}
+            onShare={onShare}
             onTogglePin={onTogglePin}
+            showShare={showShare}
           />
         </DropdownMenuContent>
       </DropdownMenu>

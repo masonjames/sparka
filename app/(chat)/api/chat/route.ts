@@ -43,6 +43,7 @@ import {
   saveChat,
   saveMessage,
   updateMessage,
+  updateMessageActiveStreamId,
 } from "@/lib/db/queries";
 import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
@@ -96,14 +97,6 @@ export function getStreamContext() {
   }
 
   return globalStreamContext;
-}
-
-export function getRedisSubscriber() {
-  return redisSubscriber;
-}
-
-export function getRedisPublisher() {
-  return redisPublisher;
 }
 
 async function handleAnonymousSession({
@@ -319,31 +312,6 @@ function determineAllowedTools({
   return allowedTools;
 }
 
-async function setupStreamContext({
-  chatId,
-  streamId,
-  isAnonymous,
-  redis,
-}: {
-  chatId: string;
-  streamId: string;
-  isAnonymous: boolean;
-  redis: any;
-}): Promise<void> {
-  // Record this new stream so we can resume later - use Redis for all users
-  if (redis) {
-    const keyPrefix = isAnonymous
-      ? `${siteConfig.appPrefix}:anonymous-stream:${chatId}:${streamId}`
-      : `${siteConfig.appPrefix}:stream:${chatId}:${streamId}`;
-
-    await redis.setEx(
-      keyPrefix,
-      600, // 10 minutes TTL
-      JSON.stringify({ chatId, streamId, createdAt: Date.now() })
-    );
-  }
-}
-
 async function getSystemPrompt({
   isAnonymous,
   chatId,
@@ -378,6 +346,7 @@ async function createChatStream({
   isAnonymous,
   timeoutId,
   mcpConnectors,
+  streamId,
 }: {
   messageId: string;
   chatId: string;
@@ -392,6 +361,7 @@ async function createChatStream({
   isAnonymous: boolean;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
+  streamId: string;
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
@@ -434,11 +404,11 @@ async function createChatStream({
         mcpConnectors,
       });
 
-      const initialMetadata = {
+      const initialMetadata: ChatMessage["metadata"] = {
         createdAt: new Date(),
         parentMessageId: userMessage.id,
-        isPartial: false,
         selectedModel: selectedModelId,
+        activeStreamId: isAnonymous ? null : streamId,
       };
 
       dataStream.merge(
@@ -456,8 +426,8 @@ async function createChatStream({
               finalUsage = part.totalUsage;
               return {
                 ...initialMetadata,
-                isPartial: false,
                 usage: part.totalUsage,
+                activeStreamId: null,
               };
             }
           },
@@ -490,9 +460,25 @@ async function createChatStream({
         usage: finalUsage ?? {},
       });
     },
-    onError: () => {
+    onError: (error) => {
       clearTimeout(timeoutId);
-      log.error("onError");
+      // If the stream fails, ensure the placeholder assistant message is no longer marked resumable.
+      // Otherwise the client will try to resume a stream that no longer exists and we end up with a
+      // stuck partial placeholder on reload.
+      if (!isAnonymous) {
+        after(() =>
+          Promise.resolve(
+            updateMessageActiveStreamId({ id: messageId, activeStreamId: null })
+          ).catch((dbError) => {
+            log.error(
+              { error: dbError },
+              "Failed to clear activeStreamId on stream error"
+            );
+          })
+        );
+      }
+
+      log.error({ error }, "onError");
       return "Oops, an error occured!";
     },
   });
@@ -531,13 +517,6 @@ async function executeChatRequest({
   const messageId = generateUUID();
   const streamId = generateUUID();
 
-  await setupStreamContext({
-    chatId,
-    streamId,
-    isAnonymous,
-    redis: redisPublisher,
-  });
-
   if (!isAnonymous) {
     // Save placeholder assistant message immediately (needed for document creation)
     await saveMessage({
@@ -549,10 +528,10 @@ async function executeChatRequest({
         parts: [],
         metadata: {
           createdAt: new Date(),
-          isPartial: true,
           parentMessageId: userMessage.id,
           selectedModel: selectedModelId,
           selectedTool: undefined,
+          activeStreamId: streamId,
         },
       },
     });
@@ -573,17 +552,16 @@ async function executeChatRequest({
     isAnonymous,
     timeoutId,
     mcpConnectors,
+    streamId,
   });
 
   after(async () => {
-    // Cleanup to happen after the POST response is sent
-    // Set TTL on Redis keys to auto-expire after 10 minutes
+    // Set TTL on resumable-stream library's internal Redis keys
     if (redisPublisher) {
       try {
         const keyPattern = `${siteConfig.appPrefix}:resumable-stream:rs:sentinel:${streamId}*`;
         const keys = await redisPublisher.keys(keyPattern);
         if (keys.length > 0) {
-          // Set 5 minute expiration on all stream-related keys
           await Promise.all(
             keys.map((key: string) => redisPublisher.expire(key, 300))
           );
@@ -591,19 +569,6 @@ async function executeChatRequest({
       } catch (error) {
         log.error({ error }, "Failed to set TTL on stream keys");
       }
-    }
-
-    try {
-      // Clean up stream info from Redis for all users
-      if (redisPublisher) {
-        const keyPrefix = isAnonymous
-          ? `${siteConfig.appPrefix}:anonymous-stream:${chatId}:${streamId}`
-          : `${siteConfig.appPrefix}:stream:${chatId}:${streamId}`;
-
-        await redisPublisher.expire(keyPrefix, 300);
-      }
-    } catch (cleanupError) {
-      log.error({ cleanupError }, "Failed to cleanup stream record");
     }
   });
 
@@ -803,7 +768,13 @@ async function finalizeMessageAndCredits({
       await updateMessage({
         id: assistantMessage.id,
         chatId,
-        message: assistantMessage,
+        message: {
+          ...assistantMessage,
+          metadata: {
+            ...assistantMessage.metadata,
+            activeStreamId: null,
+          },
+        },
       });
     }
 

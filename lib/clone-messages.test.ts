@@ -20,6 +20,7 @@ function createMessage({
       createdAt: new Date("2024-01-01T00:00:00.000Z"),
       parentMessageId,
       selectedModel: "openai/gpt-4o-mini",
+      activeStreamId: null,
     },
     chatId,
   };
