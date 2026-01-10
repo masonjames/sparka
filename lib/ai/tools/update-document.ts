@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
-import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
 import type { ToolSession } from "@/lib/ai/tools/types";
+import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
 import { getDocumentById } from "@/lib/db/queries";
 import type { StreamWriter } from "../types";
 

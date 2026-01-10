@@ -2,13 +2,13 @@ import type { ModelMessage } from "ai";
 import { tool } from "ai";
 import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { artifactKinds } from "@/lib/artifacts/artifact-kind";
 import {
   type DocumentHandler,
   documentHandlersByArtifactKind,
 } from "@/lib/artifacts/server";
-import type { ToolSession } from "@/lib/ai/tools/types";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../types";
 import type { ArtifactToolResult } from "./artifact-tool-result";
