@@ -3,7 +3,7 @@ title: Resumable Streams
 description: Continue AI responses after connection interruptions
 ---
 
-Resumable streams let users reconnect and continue receiving AI responses after network interruptions, page refreshes, or tab switches. This is critical when your AI responses take 30+ seconds.
+Resumable streams let `useChat` reconnect to ongoing message generation after page reloads, network interruptions, or tab switches. Without this, users lose partial AI responses and must regenerate from scratch.
 
 ## Architecture Overview
 
@@ -209,3 +209,7 @@ sequenceDiagram
 3. **Redis pub/sub** - Enables cross-instance resumption in multi-pod deployments
 4. **appendMessage fallback** - If stream finished, send the complete message as a data chunk
 5. **Race condition handling** - Double-check DB if Redis stream is missing
+
+## Limitations
+
+Stream resumption is incompatible with abort functionality. Page refreshes trigger an abort signal that breaks resumption. Do not use `stop()` or abort controllers if you need resumable streams.
