@@ -2,20 +2,21 @@ import type { ModelMessage } from "ai";
 import { tool } from "ai";
 import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { artifactKinds } from "@/lib/artifacts/artifact-kind";
 import {
   type DocumentHandler,
   documentHandlersByArtifactKind,
 } from "@/lib/artifacts/server";
-import type { Session } from "@/lib/auth";
+
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../types";
 import type { ArtifactToolResult } from "./artifact-tool-result";
 
 type CreateDocumentProps = {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
   contextForLLM?: ModelMessage[];
   messageId: string;
@@ -127,7 +128,7 @@ export async function createDocument({
   kind: ArtifactKind;
   title: string;
   description: string;
-  session: Session;
+  session: ToolSession;
   prompt: string;
   messageId: string;
   selectedModel: ModelId;

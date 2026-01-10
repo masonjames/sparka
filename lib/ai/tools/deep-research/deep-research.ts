@@ -1,7 +1,8 @@
 import { type ModelMessage, tool } from "ai";
 import { Langfuse } from "langfuse";
 import { z } from "zod";
-import type { Session } from "@/lib/auth";
+
+import type { ToolSession } from "@/lib/ai/tools/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
@@ -15,7 +16,7 @@ export const deepResearch = ({
   messages,
   costAccumulator,
 }: {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
   messageId: string;
   messages: ModelMessage[];

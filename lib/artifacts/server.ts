@@ -1,8 +1,8 @@
 import type { ModelId } from "@/lib/ai/models";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { codeDocumentHandler } from "@/lib/artifacts/code/server";
 import { sheetDocumentHandler } from "@/lib/artifacts/sheet/server";
 import { textDocumentHandler } from "@/lib/artifacts/text/server";
-import type { Session } from "@/lib/auth";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { StreamWriter } from "../ai/types";
 import { saveDocument } from "../db/queries";
@@ -21,7 +21,7 @@ export type CreateDocumentCallbackProps = {
   id: string;
   title: string;
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   description: string;
   prompt: string;
   messageId: string;
@@ -33,7 +33,7 @@ export type UpdateDocumentCallbackProps = {
   document: Document;
   description: string;
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
   costAccumulator?: CostAccumulator;

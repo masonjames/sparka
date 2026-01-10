@@ -20,22 +20,7 @@ export default async function ChatLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const raw = await auth.api.getSession({ headers: await headers() });
-  const session = raw
-    ? {
-        user: raw.user
-          ? {
-              id: raw.user.id,
-              name: raw.user.name ?? null,
-              email: raw.user.email ?? null,
-              image: raw.user.image ?? null,
-            }
-          : undefined,
-        expires: raw.session?.expiresAt
-          ? new Date(raw.session.expiresAt).toISOString()
-          : undefined,
-      }
-    : undefined;
+  const session = await auth.api.getSession({ headers: await headers() });
   const isCollapsed = cookieStore.get("sidebar:state")?.value !== "true";
 
   const cookieModel = cookieStore.get("chat-model")?.value as AppModelId;

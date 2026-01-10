@@ -11,15 +11,17 @@ import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { retrieve } from "@/lib/ai/tools/retrieve";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
-import type { Session } from "@/lib/auth";
 import { siteConfig } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 import type { StreamWriter } from "../types";
 import { deepResearch } from "./deep-research/deep-research";
+import type { ToolSession } from "./types";
 
 const log = createModuleLogger("tools:mcp");
+
+export type { ToolSession } from "./types";
 
 export function getTools({
   dataStream,
@@ -32,7 +34,7 @@ export function getTools({
   costAccumulator,
 }: {
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
   attachments: FileUIPart[];

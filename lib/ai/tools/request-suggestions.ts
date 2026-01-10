@@ -1,6 +1,6 @@
 import { streamObject, tool } from "ai";
 import { z } from "zod";
-import type { Session } from "@/lib/auth";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { getDocumentById, saveSuggestions } from "@/lib/db/queries";
 import type { Suggestion } from "@/lib/db/schema";
 import { generateUUID } from "@/lib/utils";
@@ -9,7 +9,7 @@ import { getLanguageModel } from "../providers";
 import type { StreamWriter } from "../types";
 
 type RequestSuggestionsProps = {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
 };
 
