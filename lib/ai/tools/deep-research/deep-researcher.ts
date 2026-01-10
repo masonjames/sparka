@@ -71,12 +71,21 @@ type GenerateStatusUpdateInput = {
   requestId: string;
   messageId: string;
   context?: string;
+  costAccumulator?: CostAccumulator;
 };
 
 async function generateStatusUpdate(
   input: GenerateStatusUpdateInput
 ): Promise<{ title: string; message: string }> {
-  const { actionType, messages, config, requestId, messageId, context } = input;
+  const {
+    actionType,
+    messages,
+    config,
+    requestId,
+    messageId,
+    context,
+    costAccumulator,
+  } = input;
   const model = await getLanguageModel(config.research_model as ModelId);
 
   const messagesContent = messagesToString(messages);
@@ -115,6 +124,14 @@ async function generateStatusUpdate(
     },
   });
 
+  if (result.usage) {
+    costAccumulator?.addLLMCost(
+      config.research_model as AppModelId,
+      result.usage,
+      "deep-research-status-update"
+    );
+  }
+
   return result.object;
 }
 
@@ -129,7 +146,8 @@ function filterMessages(
 async function clarifyWithUser(
   state: ClarifyWithUserInput,
   config: DeepResearchConfig,
-  messageId: string
+  messageId: string,
+  costAccumulator?: CostAccumulator
 ): Promise<ClarificationResult> {
   if (!config.allow_clarification) {
     return { needsClarification: false };
@@ -174,6 +192,14 @@ async function clarifyWithUser(
     },
   });
 
+  if (response.usage) {
+    costAccumulator?.addLLMCost(
+      config.research_model as AppModelId,
+      response.usage,
+      "deep-research-clarify"
+    );
+  }
+
   if (response.object.need_clarification) {
     return {
       needsClarification: true,
@@ -189,12 +215,14 @@ async function writeResearchBrief({
   dataStream,
   messageId,
   toolCallId,
+  costAccumulator,
 }: {
   state: WriteResearchBriefInput;
   config: DeepResearchConfig;
   dataStream: StreamWriter;
   messageId: string;
   toolCallId: string;
+  costAccumulator?: CostAccumulator;
 }): Promise<WriteResearchBriefOutput> {
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
@@ -244,6 +272,14 @@ async function writeResearchBrief({
       },
     },
   });
+
+  if (result.usage) {
+    costAccumulator?.addLLMCost(
+      config.research_model as AppModelId,
+      result.usage,
+      "deep-research-brief"
+    );
+  }
 
   dataStream.write({
     id: dataPartId,
@@ -367,6 +403,7 @@ class ResearcherAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: `Research phase completed with ${result.response.messages.length} new messages`,
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
@@ -449,6 +486,7 @@ class ResearcherAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: `Compressed ${researcherMessages.length} messages into summary`,
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
@@ -563,6 +601,7 @@ class SupervisorAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: supervisorMessageText || "Coordinated investigation efforts",
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
@@ -705,6 +744,7 @@ class SupervisorAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: `Need research the research about the topics [${conductResearchCalls.map((c) => c.input.research_topic).join("], [")}]`,
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
@@ -923,7 +963,8 @@ export async function runDeepResearcher(
   const clarifyResult = await clarifyWithUser(
     { requestId: currentState.requestId, messages: currentState.inputMessages },
     config,
-    input.messageId
+    input.messageId,
+    costAccumulator
   );
 
   if (clarifyResult.needsClarification) {
@@ -953,6 +994,7 @@ export async function runDeepResearcher(
     dataStream,
     messageId: input.messageId,
     toolCallId: input.toolCallId,
+    costAccumulator,
   });
   currentState.research_brief = briefResult.research_brief;
   const reportTitle = briefResult.title;
