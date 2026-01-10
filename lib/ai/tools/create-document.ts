@@ -8,13 +8,13 @@ import {
   type DocumentHandler,
   documentHandlersByArtifactKind,
 } from "@/lib/artifacts/server";
-import type { Session } from "@/lib/auth";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../types";
 import type { ArtifactToolResult } from "./artifact-tool-result";
 
 type CreateDocumentProps = {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
   contextForLLM?: ModelMessage[];
   messageId: string;
@@ -122,7 +122,7 @@ export async function createDocument({
   kind: ArtifactKind;
   title: string;
   description: string;
-  session: Session;
+  session: ToolSession;
   prompt: string;
   messageId: string;
   selectedModel: ModelId;

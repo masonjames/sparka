@@ -5,7 +5,7 @@ import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
 type SessionContextValue = {
-  data: Session | undefined;
+  data: Session | null;
   isPending: boolean;
 };
 
@@ -17,12 +17,10 @@ export function SessionProvider({
   initialSession,
   children,
 }: {
-  initialSession?: Session;
+  initialSession: Session | null;
   children: React.ReactNode;
 }) {
-  const { data: clientSessionRaw, isPending } = authClient.useSession();
-
-  const clientSession = clientSessionRaw ? clientSessionRaw : undefined;
+  const { data: clientSession, isPending } = authClient.useSession();
 
   const value = useMemo<SessionContextValue>(() => {
     // Prefer server session as a fallback even after the client hook settles.

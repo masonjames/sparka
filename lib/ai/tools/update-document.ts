@@ -2,12 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
 import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
-import type { Session } from "@/lib/auth";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { getDocumentById } from "@/lib/db/queries";
 import type { StreamWriter } from "../types";
 
 type UpdateDocumentProps = {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
   messageId: string;
   selectedModel: ModelId;

@@ -5,16 +5,6 @@ import { env } from "@/lib/env";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
 
-export type Session = {
-  user?: {
-    id?: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
-  expires?: string;
-};
-
 function asOrigin(input: string): string {
   // Vercel provides hostnames (e.g. "foo.vercel.app") but Better Auth expects full origins.
   const raw = input.trim();
@@ -38,6 +28,13 @@ export const auth = betterAuth({
       : []),
   ],
   secret: env.AUTH_SECRET,
+
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes - reduces database queries for session validation
+    },
+  },
 
   socialProviders: (() => {
     const googleId = env.AUTH_GOOGLE_ID;
@@ -75,3 +72,6 @@ export const auth = betterAuth({
   })(),
   plugins: [nextCookies()],
 });
+
+// Infer session type from the auth instance for type safety
+export type Session = typeof auth.$Infer.Session;
