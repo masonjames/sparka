@@ -340,6 +340,10 @@ Output rules:
           chartPath,
           basePackages,
         });
+        costAccumulator?.addAPICost(
+          "codeInterpreter",
+          toolsDefinitions.codeInterpreter.cost
+        );
 
         return result;
       } catch (err) {
@@ -351,11 +355,6 @@ Output rules:
           chart: "",
         };
       } finally {
-        // Report API cost after sandbox creation (we're charged once sandbox is created)
-        costAccumulator?.addAPICost(
-          "codeInterpreter",
-          toolsDefinitions.codeInterpreter.cost
-        );
         if (sandbox) {
           try {
             await sandbox.stop();
