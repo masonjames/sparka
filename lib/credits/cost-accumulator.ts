@@ -25,7 +25,7 @@ type CostEntry = LLMCostEntry | APICostEntry;
  * Pass through call chain, collect at request end.
  */
 export class CostAccumulator {
-  private entries: CostEntry[] = [];
+  private readonly entries: CostEntry[] = [];
 
   /** Add LLM cost from generateText/streamText usage */
   addLLMCost(modelId: AppModelId, usage: UsageInfo, source: string): void {

@@ -338,7 +338,6 @@ async function createChatStream({
   userMessage,
   previousMessages,
   selectedModelId,
-  modelDefinition,
   selectedTool,
   userId,
   allowedTools,
@@ -353,7 +352,6 @@ async function createChatStream({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   allowedTools: ToolName[];
@@ -497,7 +495,6 @@ async function executeChatRequest({
   userMessage,
   previousMessages,
   selectedModelId,
-  modelDefinition,
   selectedTool,
   userId,
   isAnonymous,
@@ -510,7 +507,6 @@ async function executeChatRequest({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
@@ -550,7 +546,6 @@ async function executeChatRequest({
     userMessage,
     previousMessages,
     selectedModelId,
-    modelDefinition,
     selectedTool,
     userId,
     allowedTools,
@@ -805,7 +800,6 @@ async function handleRequestExecution({
   userMessage,
   previousMessages,
   selectedModelId,
-  modelDefinition,
   selectedTool,
   userId,
   isAnonymous,
@@ -818,7 +812,6 @@ async function handleRequestExecution({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
@@ -834,7 +827,6 @@ async function handleRequestExecution({
       userMessage,
       previousMessages,
       selectedModelId,
-      modelDefinition,
       selectedTool,
       userId,
       isAnonymous,
@@ -978,7 +970,6 @@ export async function POST(request: NextRequest) {
       userMessage,
       previousMessages,
       selectedModelId,
-      modelDefinition,
       selectedTool,
       userId,
       isAnonymous,

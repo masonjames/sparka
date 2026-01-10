@@ -210,6 +210,71 @@ function buildResponseMessage({
   return message;
 }
 
+async function runCodeInSandbox({
+  sandbox,
+  code,
+  title,
+  log,
+  requestId,
+  chartPath,
+  basePackages,
+}: {
+  sandbox: Sandbox;
+  code: string;
+  title: string;
+  log: ReturnType<typeof createModuleLogger>;
+  requestId: string;
+  chartPath: string;
+  basePackages: readonly string[];
+}): Promise<{
+  message: string;
+  chart: string | { base64: string; format: string };
+}> {
+  const baseInstallResult = await installBasePackages(
+    sandbox,
+    basePackages,
+    log,
+    requestId
+  );
+  if (!baseInstallResult.success && baseInstallResult.result) {
+    return baseInstallResult.result;
+  }
+
+  const { codeToRun, installResult } = await processExtraPackages(
+    code,
+    sandbox,
+    log,
+    requestId
+  );
+  if (!installResult.success && installResult.result) {
+    return installResult.result;
+  }
+
+  const wrappedCode = createWrappedCode(codeToRun, chartPath);
+
+  log.info({ requestId, title }, "executing python code");
+  const execResult = await sandbox.runCommand({
+    cmd: "python3",
+    args: ["-c", wrappedCode],
+  });
+
+  const { outputText, execInfo } = await parseExecutionOutput(execResult);
+  const chartOut = await checkForChart(sandbox, chartPath, log, requestId);
+
+  const message = buildResponseMessage({
+    outputText,
+    stderr: await execResult.stderr(),
+    execInfo,
+    log,
+    requestId,
+  });
+
+  return {
+    message: message.trim(),
+    chart: chartOut ?? "",
+  };
+}
+
 export const codeInterpreter = ({
   costAccumulator,
 }: {
@@ -266,50 +331,15 @@ Output rules:
         });
         log.debug({ requestId }, "sandbox created");
 
-        const baseInstallResult = await installBasePackages(
+        const result = await runCodeInSandbox({
           sandbox,
-          basePackages,
-          log,
-          requestId
-        );
-        if (!baseInstallResult.success) {
-          return baseInstallResult.result;
-        }
-
-        const { codeToRun, installResult } = await processExtraPackages(
           code,
-          sandbox,
-          log,
-          requestId
-        );
-        if (!installResult.success) {
-          return installResult.result;
-        }
-
-        const wrappedCode = createWrappedCode(codeToRun, chartPath);
-
-        log.info({ requestId, title }, "executing python code");
-        const execResult = await sandbox.runCommand({
-          cmd: "python3",
-          args: ["-c", wrappedCode],
-        });
-
-        const { outputText, execInfo } = await parseExecutionOutput(execResult);
-        const chartOut = await checkForChart(
-          sandbox,
-          chartPath,
-          log,
-          requestId
-        );
-
-        const message = buildResponseMessage({
-          outputText,
-          stderr: await execResult.stderr(),
-          execInfo,
+          title,
           log,
           requestId,
+          chartPath,
+          basePackages,
         });
-        const chart = chartOut ?? "";
 
         // Report API cost
         costAccumulator?.addAPICost(
@@ -317,10 +347,7 @@ Output rules:
           toolsDefinitions.codeInterpreter.cost
         );
 
-        return {
-          message: message.trim(),
-          chart,
-        };
+        return result;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
