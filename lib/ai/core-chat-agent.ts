@@ -55,9 +55,9 @@ export async function createCoreChatAgent({
   // Filter reasoning parts (cross-model compatibility)
   const filteredMessages = filterPartsForLLM(messages.slice(-5));
 
-  // Convert to model messages, ignoring data-* parts
+  // Convert to model messages, ignoring data-* parts (drop them)
   const modelMessages = await convertToModelMessages(filteredMessages, {
-    convertDataPart: (_part) => {},
+    convertDataPart: (_part): undefined => {},
   });
 
   // Replace file URLs with binary data

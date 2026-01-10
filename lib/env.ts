@@ -57,10 +57,13 @@ export function validateConfig(): void {
   const errors: ValidationError[] = [];
 
   // Validate integrations
-  if (siteConfig.integrations.webSearch && !env.TAVILY_API_KEY) {
+  if (
+    siteConfig.integrations.webSearch &&
+    !(env.TAVILY_API_KEY || env.FIRECRAWL_API_KEY)
+  ) {
     errors.push({
       feature: "integrations.webSearch",
-      missing: ["TAVILY_API_KEY"],
+      missing: ["TAVILY_API_KEY or FIRECRAWL_API_KEY"],
     });
   }
 
