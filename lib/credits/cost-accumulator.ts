@@ -1,6 +1,6 @@
-import type { AppModelId } from "../ai/app-models";
+import type { AppModelDefinition, AppModelId } from "../ai/app-models";
 import { getAppModelDefinition } from "../ai/app-models";
-import { calculateLLMCostFromModel } from "./cost-utils";
+import { calculateLLMCost } from "./cost-utils";
 
 /** Minimal usage info needed for cost calculation */
 export type UsageInfo = { inputTokens?: number; outputTokens?: number };
@@ -43,13 +43,41 @@ export class CostAccumulator {
   async getTotalCost(): Promise<number> {
     let total = 0;
 
-    for (const entry of this.entries) {
-      if (entry.type === "api") {
-        total += entry.cost;
-      } else {
-        const model = await getAppModelDefinition(entry.modelId);
-        total += calculateLLMCostFromModel(entry.usage, model);
+    const llmEntries = this.entries.filter(
+      (entry): entry is LLMCostEntry => entry.type === "llm"
+    );
+    const apiEntries = this.entries.filter(
+      (entry): entry is APICostEntry => entry.type === "api"
+    );
+
+    // Sum API costs directly
+    for (const entry of apiEntries) {
+      total += entry.cost;
+    }
+
+    if (llmEntries.length === 0) {
+      return Math.ceil(total);
+    }
+
+    // Batch model definition lookups (dedupe by modelId)
+    const uniqueModelIds = [...new Set(llmEntries.map((e) => e.modelId))];
+    const modelDefinitions = await Promise.all(
+      uniqueModelIds.map((id) => getAppModelDefinition(id).catch(() => null))
+    );
+    const modelById = new Map<AppModelId, AppModelDefinition | null>(
+      uniqueModelIds.map((id, i) => [id, modelDefinitions[i]])
+    );
+
+    // Sum LLM costs (unrounded) then ceil at the end
+    for (const entry of llmEntries) {
+      const model = modelById.get(entry.modelId);
+      if (!(model?.pricing?.input && model?.pricing?.output)) {
+        continue; // Skip unknown models
       }
+      total += calculateLLMCost(entry.usage, {
+        input: model.pricing.input,
+        output: model.pricing.output,
+      });
     }
 
     return Math.ceil(total);

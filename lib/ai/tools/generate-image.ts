@@ -1,6 +1,6 @@
 import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
-import { type AppModelId, DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
+import { DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -8,6 +8,7 @@ import { createModuleLogger } from "@/lib/logger";
 import {
   type AnyImageModelId,
   isMultimodalImageModel,
+  type MultimodalImageModelId,
 } from "@/lib/models/image-model-id";
 import { toolsDefinitions } from "./tools-definitions";
 
@@ -170,7 +171,7 @@ async function runGenerateImageMultimodal({
   startMs,
   costAccumulator,
 }: {
-  modelId: AnyImageModelId;
+  modelId: MultimodalImageModelId;
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
@@ -229,12 +230,9 @@ async function runGenerateImageMultimodal({
   });
 
   // Track LLM cost for multimodal image generation
+
   if (res.usage) {
-    costAccumulator?.addLLMCost(
-      modelId as AppModelId,
-      res.usage,
-      "generateImage-multimodal"
-    );
+    costAccumulator?.addLLMCost(modelId, res.usage, "generateImage-multimodal");
   }
 
   // Find the first image in the response files

@@ -25,7 +25,7 @@ flowchart TD
     end
 
     subgraph Tools["Tool Cost Tracking"]
-        E --> T1[webSearch: +1¢ API]
+        E --> T1[webSearch: +5¢ API]
         E --> T2[codeInterpreter: +5¢ API]
         E --> T3[generateImage: +17¢ API or LLM tokens]
         E --> T4[deepResearch: multiple LLM calls]
@@ -80,7 +80,7 @@ Fixed API costs per tool:
 
 | Tool            | Cost | Notes                        |
 | --------------- | ---- | ---------------------------- |
-| webSearch       | 1¢   | Tavily API                   |
+| webSearch       | 5¢   | Tavily/Firecrawl API         |
 | codeInterpreter | 5¢   | Sandbox execution            |
 | generateImage   | 17¢  | Traditional image gen API    |
 | deepResearch    | 0¢   | LLM calls tracked separately |
@@ -159,9 +159,9 @@ A deep research request might accumulate:
 | deep-research-supervisor | LLM  | 3¢      |
 | deep-research-researcher | LLM  | 8¢      |
 | deep-research-compress   | LLM  | 2¢      |
-| webSearch                | API  | 1¢      |
-| webSearch                | API  | 1¢      |
-| **Total**                |      | **17¢** |
+| webSearch                | API  | 5¢      |
+| webSearch                | API  | 5¢      |
+| **Total**                |      | **25¢** |
 
 ## Threading Pattern
 

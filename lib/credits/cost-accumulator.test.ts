@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AppModelId } from "../ai/app-models";
 import { CostAccumulator } from "./cost-accumulator";
 
-// Mock getAppModelDefinition
+// Mock the entire app-models module
 vi.mock("../ai/app-models", () => ({
   getAppModelDefinition: vi.fn(async (modelId: string) => ({
     name: modelId,
@@ -15,6 +14,8 @@ vi.mock("../ai/app-models", () => ({
     },
   })),
 }));
+
+type AppModelId = string;
 
 describe("CostAccumulator", () => {
   let accumulator: CostAccumulator;
@@ -134,7 +135,7 @@ describe("CostAccumulator", () => {
     });
 
     it("should sum LLM and API costs", async () => {
-      // LLM: 10000 input + 1000 output with mock pricing = ~4.5 cents -> ceil = 5
+      // LLM: 10000 input * 0.000003 + 1000 output * 0.000015 = 0.03 + 0.015 = 0.045 dollars = 4.5 cents
       accumulator.addLLMCost(
         "claude-3-5-sonnet" as AppModelId,
         { inputTokens: 10_000, outputTokens: 1000 },
@@ -146,8 +147,7 @@ describe("CostAccumulator", () => {
 
       const cost = await accumulator.getTotalCost();
       // Total = ceil(4.5 + 6) = ceil(10.5) = 11 cents
-      // But LLM cost is already ceiled per-model, so it's 5 + 6 = 11, ceil = 11
-      expect(cost).toBeGreaterThanOrEqual(10);
+      expect(cost).toBe(11);
     });
 
     it("should ceil fractional total to next cent", async () => {

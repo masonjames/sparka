@@ -202,9 +202,11 @@ Avoid:
 export const firecrawlWebSearch = ({
   dataStream,
   writeTopLevelUpdates,
+  costAccumulator,
 }: {
   dataStream: StreamWriter;
   writeTopLevelUpdates: boolean;
+  costAccumulator?: CostAccumulator;
 }) =>
   tool({
     description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
@@ -218,7 +220,7 @@ Avoid:
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
     }),
-    execute: (
+    execute: async (
       {
         search_queries,
       }: {
@@ -231,7 +233,7 @@ Avoid:
         { queriesCount: search_queries.length },
         "firecrawlWebSearch.execute"
       );
-      return executeMultiQuerySearch({
+      const result = await executeMultiQuerySearch({
         search_queries: search_queries.map((query) => ({
           query: query.query,
           maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
@@ -247,5 +249,10 @@ Avoid:
         title: "Searching with Firecrawl",
         completeTitle: "Firecrawl search complete",
       });
+
+      // Report API cost
+      costAccumulator?.addAPICost("webSearch", toolsDefinitions.webSearch.cost);
+
+      return result;
     },
   });
