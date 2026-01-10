@@ -8,6 +8,15 @@ config({
 });
 
 const runMigrate = async () => {
+  // Only run migrations on production deployments
+  // Skip for preview deployments and local development
+  if (process.env.VERCEL_ENV !== "production") {
+    console.log(
+      `⏭️  Skipping migrations (VERCEL_ENV=${process.env.VERCEL_ENV ?? "undefined"})`
+    );
+    process.exit(0);
+  }
+
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is not defined");
   }

@@ -1,11 +1,11 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { Session } from "@/lib/auth";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { getDocumentById } from "@/lib/db/queries";
 import type { StreamWriter } from "../types";
 
 type ReadDocumentProps = {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
 };
 

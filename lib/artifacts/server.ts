@@ -1,8 +1,8 @@
 import type { ModelId } from "@/lib/ai/app-model-id";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { codeDocumentHandler } from "@/lib/artifacts/code/server";
 import { sheetDocumentHandler } from "@/lib/artifacts/sheet/server";
 import { textDocumentHandler } from "@/lib/artifacts/text/server";
-import type { Session } from "@/lib/auth";
 import type { StreamWriter } from "../ai/types";
 import { saveDocument } from "../db/queries";
 import type { Document } from "../db/schema";
@@ -20,7 +20,7 @@ export type CreateDocumentCallbackProps = {
   id: string;
   title: string;
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   description: string;
   prompt: string;
   messageId: string;
@@ -31,7 +31,7 @@ export type UpdateDocumentCallbackProps = {
   document: Document;
   description: string;
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
 };

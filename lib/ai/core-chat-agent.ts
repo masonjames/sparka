@@ -73,10 +73,7 @@ export async function createCoreChatAgent({
   const baseTools = getTools({
     dataStream,
     session: {
-      user: {
-        id: userId || undefined,
-      },
-      expires: "noop",
+      user: userId ? { id: userId } : undefined,
     },
     contextForLLM,
     messageId,
