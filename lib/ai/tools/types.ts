@@ -1,6 +1,8 @@
-// Minimal session type for tools - only requires user.id for document persistence
+import type { Session } from "@/lib/auth";
+
+type SessionUser = NonNullable<Session["user"]>;
+
+// Minimal session slice for tools - derived from Better Auth Session to avoid drift
 export type ToolSession = {
-  user?: {
-    id?: string;
-  };
+  user?: Pick<SessionUser, "id">;
 };

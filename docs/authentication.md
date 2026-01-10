@@ -251,10 +251,12 @@ For tools that only need user identification, use the minimal `ToolSession` type
 
 ```typescript
 // lib/ai/tools/types.ts
+import type { Session } from "@/lib/auth";
+
+type SessionUser = NonNullable<Session["user"]>;
+
 export type ToolSession = {
-  user?: {
-    id?: string;
-  };
+  user?: Pick<SessionUser, "id">;
 };
 ```
 
