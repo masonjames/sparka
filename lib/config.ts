@@ -172,7 +172,7 @@ export const siteConfig: SiteConfig = {
   integrations: {
     sandbox: true, // Vercel-native, no key needed
     webSearch: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
-    mcp: false, // Requires MCP_ENCRYPTION_KEY
+    mcp: true, // Requires MCP_ENCRYPTION_KEY
     imageGeneration: true,
   },
 
@@ -194,9 +194,9 @@ export const siteConfig: SiteConfig = {
   },
 
   authentication: {
-    google: false, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+    google: true, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
     github: true, // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-    vercel: false, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+    vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
 
   models: {
