@@ -84,8 +84,8 @@ Fixed API costs per tool:
 | codeInterpreter | 5¢   | Sandbox execution            |
 | generateImage   | 17¢  | Traditional image gen API    |
 | deepResearch    | 0¢   | LLM calls tracked separately |
-| createDocument  | 0¢   | Internal                     |
-| updateDocument  | 0¢   | Internal                     |
+| createDocument  | 0¢   | LLM calls tracked separately |
+| updateDocument  | 0¢   | LLM calls tracked separately |
 
 ## Data Flow
 

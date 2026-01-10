@@ -20,6 +20,7 @@ export const updateDocument = ({
   dataStream,
   messageId,
   selectedModel,
+  costAccumulator,
 }: UpdateDocumentProps) =>
   tool({
     description: `Modify an existing document.
@@ -85,6 +86,7 @@ Avoid:
         session,
         messageId,
         selectedModel,
+        costAccumulator,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });
