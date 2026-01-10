@@ -33,7 +33,7 @@ import {
 import { auth } from "@/lib/auth";
 import { siteConfig } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
-import { calculateLLMCostFromModel } from "@/lib/credits/cost-utils";
+import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
   getChatById,
@@ -338,7 +338,6 @@ async function createChatStream({
   userMessage,
   previousMessages,
   selectedModelId,
-  modelDefinition,
   selectedTool,
   userId,
   allowedTools,
@@ -353,7 +352,6 @@ async function createChatStream({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   allowedTools: ToolName[];
@@ -371,8 +369,8 @@ async function createChatStream({
       ? (selectedTool as ToolName)
       : null;
 
-  // Store usage for cost calculation
-  let finalUsage: { inputTokens?: number; outputTokens?: number } | undefined;
+  // Create cost accumulator to track all LLM and API costs
+  const costAccumulator = new CostAccumulator();
 
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
@@ -402,6 +400,7 @@ async function createChatStream({
           log.error({ error }, "streamText error");
         },
         mcpConnectors,
+        costAccumulator,
       });
 
       const initialMetadata: ChatMessage["metadata"] = {
@@ -422,8 +421,14 @@ async function createChatStream({
 
             // when the message is finished, send additional information:
             if (part.type === "finish") {
-              // Capture usage for cost calculation
-              finalUsage = part.totalUsage;
+              // Add main stream LLM usage to accumulator
+              if (part.totalUsage) {
+                costAccumulator.addLLMCost(
+                  selectedModelId,
+                  part.totalUsage,
+                  "main-chat"
+                );
+              }
               return {
                 ...initialMetadata,
                 usage: part.totalUsage,
@@ -456,8 +461,7 @@ async function createChatStream({
         userId,
         isAnonymous,
         chatId,
-        modelDefinition,
-        usage: finalUsage ?? {},
+        costAccumulator,
       });
     },
     onError: (error) => {
@@ -491,7 +495,6 @@ async function executeChatRequest({
   userMessage,
   previousMessages,
   selectedModelId,
-  modelDefinition,
   selectedTool,
   userId,
   isAnonymous,
@@ -504,7 +507,6 @@ async function executeChatRequest({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
@@ -544,7 +546,6 @@ async function executeChatRequest({
     userMessage,
     previousMessages,
     selectedModelId,
-    modelDefinition,
     selectedTool,
     userId,
     allowedTools,
@@ -745,15 +746,13 @@ async function finalizeMessageAndCredits({
   userId,
   isAnonymous,
   chatId,
-  modelDefinition,
-  usage,
+  costAccumulator,
 }: {
   messages: ChatMessage[];
   userId: string | null;
   isAnonymous: boolean;
   chatId: string;
-  modelDefinition: AppModelDefinition;
-  usage: { inputTokens?: number; outputTokens?: number };
+  costAccumulator: CostAccumulator;
 }): Promise<void> {
   const log = createModuleLogger("api:chat:finalize");
 
@@ -778,28 +777,15 @@ async function finalizeMessageAndCredits({
       });
     }
 
-    // Calculate cost from actual token usage
-    const llmCost = usage
-      ? calculateLLMCostFromModel(usage, modelDefinition)
-      : 0;
+    // Get total cost from accumulator (includes all LLM calls + external API costs)
+    const totalCost = await costAccumulator.getTotalCost();
+    const entries = costAccumulator.getEntries();
 
-    // Calculate tool costs (external API fees)
-    const toolCost = messages
-      .flatMap((message) => message.parts)
-      .reduce((acc, part) => {
-        if (!part.type.startsWith("tool-")) {
-          return acc;
-        }
-        const toolName = part.type.replace("tool-", "") as ToolName;
-        const toolDef = toolsDefinitions[toolName];
-        return acc + (toolDef?.cost ?? 0);
-      }, 0);
-
-    const totalCost = llmCost + toolCost;
+    log.info({ entries }, "Cost accumulator entries");
+    log.info({ totalCost }, "Cost accumulator total cost");
 
     // Deduct credits for authenticated users
     if (userId && !isAnonymous) {
-      log.debug({ llmCost, toolCost, totalCost }, "Deducting credits");
       await deductCredits(userId, totalCost);
     }
 
@@ -814,7 +800,6 @@ async function handleRequestExecution({
   userMessage,
   previousMessages,
   selectedModelId,
-  modelDefinition,
   selectedTool,
   userId,
   isAnonymous,
@@ -827,7 +812,6 @@ async function handleRequestExecution({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  modelDefinition: AppModelDefinition;
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
@@ -843,7 +827,6 @@ async function handleRequestExecution({
       userMessage,
       previousMessages,
       selectedModelId,
-      modelDefinition,
       selectedTool,
       userId,
       isAnonymous,
@@ -987,7 +970,6 @@ export async function POST(request: NextRequest) {
       userMessage,
       previousMessages,
       selectedModelId,
-      modelDefinition,
       selectedTool,
       userId,
       isAnonymous,

@@ -3,16 +3,20 @@ import { z } from "zod";
 import { DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import {
   type AnyImageModelId,
   isMultimodalImageModel,
+  type MultimodalImageModelId,
 } from "@/lib/models/image-model-id";
+import { toolsDefinitions } from "./tools-definitions";
 
 type GenerateImageProps = {
   attachments?: FileUIPart[];
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
   modelId?: AnyImageModelId;
+  costAccumulator?: CostAccumulator;
 };
 
 const log = createModuleLogger("ai.tools.generate-image");
@@ -165,13 +169,15 @@ async function runGenerateImageMultimodal({
   imageParts,
   lastGeneratedImage,
   startMs,
+  costAccumulator,
 }: {
-  modelId: AnyImageModelId;
+  modelId: MultimodalImageModelId;
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
+  costAccumulator?: CostAccumulator;
 }): Promise<{ imageUrl: string; prompt: string }> {
   if (!isMultimodalImageModel(modelId)) {
     throw new Error(`Model ${modelId} is not a multimodal image model`);
@@ -223,6 +229,12 @@ async function runGenerateImageMultimodal({
     },
   });
 
+  // Track LLM cost for multimodal image generation
+
+  if (res.usage) {
+    costAccumulator?.addLLMCost(modelId, res.usage, "generateImage-multimodal");
+  }
+
   // Find the first image in the response files
   const imageFile = res.files?.find((f) => f.mediaType.startsWith("image/"));
   if (!imageFile) {
@@ -262,6 +274,7 @@ export const generateImageTool = ({
   attachments = [],
   lastGeneratedImage = null,
   modelId,
+  costAccumulator,
 }: GenerateImageProps = {}) =>
   tool({
     description: `Generate images from text descriptions. Can optionally use attached images as reference.
@@ -311,17 +324,26 @@ Use for:
             imageParts,
             lastGeneratedImage,
             startMs,
+            costAccumulator,
           });
         }
 
         // Default: traditional image generation
-        return await runGenerateImageTraditional({
+        const result = await runGenerateImageTraditional({
           mode,
           prompt,
           imageParts,
           lastGeneratedImage,
           startMs,
         });
+
+        // Report API cost for traditional image generation
+        costAccumulator?.addAPICost(
+          "generateImage",
+          toolsDefinitions.generateImage.cost
+        );
+
+        return result;
       } catch (error) {
         const resolvedError = await resolveError(error);
         log.error(

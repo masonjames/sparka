@@ -9,6 +9,8 @@ import {
   type DocumentHandler,
   documentHandlersByArtifactKind,
 } from "@/lib/artifacts/server";
+
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../types";
 import type { ArtifactToolResult } from "./artifact-tool-result";
@@ -19,6 +21,7 @@ type CreateDocumentProps = {
   contextForLLM?: ModelMessage[];
   messageId: string;
   selectedModel: ModelId;
+  costAccumulator?: CostAccumulator;
 };
 
 export const createDocumentTool = ({
@@ -27,6 +30,7 @@ export const createDocumentTool = ({
   contextForLLM,
   messageId,
   selectedModel,
+  costAccumulator,
 }: CreateDocumentProps) =>
   tool({
     description: `Create a persistent document (text, code, or spreadsheet).  This tool orchestrates the downstream handlers that actually generate the file based on the provided title, kind and description.
@@ -101,6 +105,7 @@ Avoid:
         messageId,
         selectedModel,
         documentHandler,
+        costAccumulator,
       });
 
       return result;
@@ -117,6 +122,7 @@ export async function createDocument({
   messageId,
   selectedModel,
   documentHandler,
+  costAccumulator,
 }: {
   dataStream: StreamWriter;
   kind: ArtifactKind;
@@ -127,6 +133,7 @@ export async function createDocument({
   messageId: string;
   selectedModel: ModelId;
   documentHandler: DocumentHandler<ArtifactKind>;
+  costAccumulator?: CostAccumulator;
 }): Promise<ArtifactToolResult> {
   const id = generateUUID();
 
@@ -169,6 +176,7 @@ export async function createDocument({
     prompt,
     messageId,
     selectedModel,
+    costAccumulator,
   });
 
   dataStream.write({ type: "data-finish", data: null, transient: true });

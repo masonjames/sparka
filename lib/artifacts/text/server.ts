@@ -1,4 +1,5 @@
 import { smoothStream, streamText } from "ai";
+import type { AppModelId } from "@/lib/ai/app-models";
 import { updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
@@ -11,10 +12,11 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     dataStream,
     prompt,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamText({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       providerOptions: {
         telemetry: { isEnabled: true },
@@ -25,7 +27,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
       prompt,
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of result.fullStream) {
       const { type } = delta;
 
       if (type === "text-delta") {
@@ -41,6 +43,13 @@ export const textDocumentHandler = createDocumentHandler<"text">({
       }
     }
 
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "createDocument-text"
+    );
+
     return draftContent;
   },
   onUpdateDocument: async ({
@@ -48,10 +57,11 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     description,
     dataStream,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamText({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content, "text"),
       experimental_transform: smoothStream({ chunking: "word" }),
@@ -70,7 +80,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
       },
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of result.fullStream) {
       const { type } = delta;
 
       if (type === "text-delta") {
@@ -84,6 +94,13 @@ export const textDocumentHandler = createDocumentHandler<"text">({
         });
       }
     }
+
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "updateDocument-text"
+    );
 
     return draftContent;
   },

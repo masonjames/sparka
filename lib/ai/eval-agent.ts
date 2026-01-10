@@ -4,6 +4,7 @@ import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
 import { generateFollowupSuggestions } from "@/lib/ai/followup-suggestions";
 import { systemPrompt } from "@/lib/ai/prompts";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
+import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 
 // No-op StreamWriter for evals - tools can write but nothing happens
@@ -74,6 +75,7 @@ async function executeAgentAndGetOutput({
     onError: (error) => {
       throw error;
     },
+    costAccumulator: new CostAccumulator(), // Discarded for evals
   });
 
   await result.consumeStream();

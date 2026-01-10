@@ -1,5 +1,6 @@
 import { streamObject } from "ai";
 import { z } from "zod";
+import type { AppModelId } from "@/lib/ai/app-models";
 import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
@@ -12,10 +13,11 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     dataStream,
     prompt,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamObject({
+    const result = streamObject({
       model: await getLanguageModel(selectedModel),
       system: codePrompt,
       prompt,
@@ -25,7 +27,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
       }),
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of result.fullStream) {
       const { type } = delta;
 
       if (type === "object") {
@@ -44,6 +46,9 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
       }
     }
 
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(selectedModel, usage, "createDocument-code");
+
     return draftContent;
   },
   onUpdateDocument: async ({
@@ -51,10 +56,11 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     description,
     dataStream,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamObject({
+    const result = streamObject({
       model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content || "", "code"),
       experimental_telemetry: { isEnabled: true },
@@ -64,7 +70,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
       }),
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of result.fullStream) {
       const { type } = delta;
 
       if (type === "object") {
@@ -82,6 +88,13 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
         }
       }
     }
+
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "updateDocument-code"
+    );
 
     return draftContent;
   },

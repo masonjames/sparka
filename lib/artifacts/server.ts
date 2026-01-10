@@ -3,6 +3,7 @@ import type { ToolSession } from "@/lib/ai/tools/types";
 import { codeDocumentHandler } from "@/lib/artifacts/code/server";
 import { sheetDocumentHandler } from "@/lib/artifacts/sheet/server";
 import { textDocumentHandler } from "@/lib/artifacts/text/server";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { StreamWriter } from "../ai/types";
 import { saveDocument } from "../db/queries";
 import type { Document } from "../db/schema";
@@ -25,6 +26,7 @@ export type CreateDocumentCallbackProps = {
   prompt: string;
   messageId: string;
   selectedModel: ModelId;
+  costAccumulator?: CostAccumulator;
 };
 
 export type UpdateDocumentCallbackProps = {
@@ -34,6 +36,7 @@ export type UpdateDocumentCallbackProps = {
   session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
+  costAccumulator?: CostAccumulator;
 };
 
 export type DocumentHandler<T = ArtifactKind> = {
