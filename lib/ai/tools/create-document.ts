@@ -9,6 +9,7 @@ import {
   documentHandlersByArtifactKind,
 } from "@/lib/artifacts/server";
 import type { Session } from "@/lib/auth";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../types";
 import type { ArtifactToolResult } from "./artifact-tool-result";
@@ -19,6 +20,7 @@ type CreateDocumentProps = {
   contextForLLM?: ModelMessage[];
   messageId: string;
   selectedModel: ModelId;
+  costAccumulator?: CostAccumulator;
 };
 
 export const createDocumentTool = ({

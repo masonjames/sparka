@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
 import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
 import type { Session } from "@/lib/auth";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { getDocumentById } from "@/lib/db/queries";
 import type { StreamWriter } from "../types";
 
@@ -11,6 +12,7 @@ type UpdateDocumentProps = {
   dataStream: StreamWriter;
   messageId: string;
   selectedModel: ModelId;
+  costAccumulator?: CostAccumulator;
 };
 
 export const updateDocument = ({

@@ -13,6 +13,7 @@ import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Session } from "@/lib/auth";
 import { siteConfig } from "@/lib/config";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 import type { StreamWriter } from "../types";
@@ -28,6 +29,7 @@ export function getTools({
   attachments = [],
   lastGeneratedImage = null,
   contextForLLM,
+  costAccumulator,
 }: {
   dataStream: StreamWriter;
   session: Session;
@@ -36,6 +38,7 @@ export function getTools({
   attachments: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
+  costAccumulator?: CostAccumulator;
 }) {
   return {
     getWeather,
@@ -45,12 +48,14 @@ export function getTools({
       contextForLLM,
       messageId,
       selectedModel,
+      costAccumulator,
     }),
     updateDocument: updateDocument({
       session,
       dataStream,
       messageId,
       selectedModel,
+      costAccumulator,
     }),
     requestSuggestions: requestSuggestions({
       session,
@@ -70,17 +75,21 @@ export function getTools({
           webSearch: tavilyWebSearch({
             dataStream,
             writeTopLevelUpdates: true,
+            costAccumulator,
           }),
         }
       : {}),
 
-    ...(siteConfig.integrations.sandbox ? { codeInterpreter } : {}),
+    ...(siteConfig.integrations.sandbox
+      ? { codeInterpreter: codeInterpreter({ costAccumulator }) }
+      : {}),
     ...(siteConfig.integrations.openai
       ? {
           generateImage: generateImageTool({
             attachments,
             lastGeneratedImage,
             modelId: DEFAULT_IMAGE_MODEL,
+            costAccumulator,
           }),
         }
       : {}),
@@ -91,6 +100,7 @@ export function getTools({
             dataStream,
             messageId,
             messages: contextForLLM,
+            costAccumulator,
           }),
         }
       : {}),

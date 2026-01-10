@@ -1,10 +1,11 @@
 import { generateObject, generateText, type ModelMessage } from "ai";
 import { z } from "zod";
-import type { ModelId } from "@/lib/ai/app-models";
+import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
 import { ReportDocumentWriter } from "@/lib/artifacts/text/report-server";
 import type { Session } from "@/lib/auth";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
 import { createDocument } from "../create-document";
@@ -262,6 +263,14 @@ async function writeResearchBrief({
   };
 }
 
+type AgentOptions = {
+  config: DeepResearchConfig;
+  dataStream: StreamWriter;
+  messageId: string;
+  toolCallId: string;
+  costAccumulator?: CostAccumulator;
+};
+
 // Agent base class
 abstract class Agent {
   protected agentId: string;
@@ -269,18 +278,15 @@ abstract class Agent {
   protected toolCallId: string;
   protected config: DeepResearchConfig;
   protected dataStream: StreamWriter;
+  protected costAccumulator?: CostAccumulator;
 
-  constructor(
-    config: DeepResearchConfig,
-    dataStream: StreamWriter,
-    messageId: string,
-    toolCallId: string
-  ) {
+  constructor(options: AgentOptions) {
     this.agentId = generateUUID();
-    this.messageId = messageId;
-    this.toolCallId = toolCallId;
-    this.config = config;
-    this.dataStream = dataStream;
+    this.messageId = options.messageId;
+    this.toolCallId = options.toolCallId;
+    this.config = options.config;
+    this.dataStream = options.dataStream;
+    this.costAccumulator = options.costAccumulator;
   }
 }
 
@@ -344,6 +350,15 @@ class ResearcherAgent extends Agent {
         },
       },
     });
+
+    // Track LLM cost
+    if (result.usage) {
+      this.costAccumulator?.addLLMCost(
+        this.config.research_model as AppModelId,
+        result.usage,
+        "deep-research-researcher"
+      );
+    }
 
     const completedUpdate = await generateStatusUpdate({
       actionType: "research_completion",
@@ -418,6 +433,15 @@ class ResearcherAgent extends Agent {
       maxRetries: 3,
     });
 
+    // Track LLM cost
+    if (response.usage) {
+      this.costAccumulator?.addLLMCost(
+        this.config.compression_model as AppModelId,
+        response.usage,
+        "deep-research-compress"
+      );
+    }
+
     const completedUpdate = await generateStatusUpdate({
       actionType: "research_compression",
       messages: truncatedMessages,
@@ -471,19 +495,9 @@ class ResearcherAgent extends Agent {
 class SupervisorAgent extends Agent {
   private readonly researcherAgent: ResearcherAgent;
 
-  constructor(
-    config: DeepResearchConfig,
-    dataStream: StreamWriter,
-    messageId: string,
-    toolCallId: string
-  ) {
-    super(config, dataStream, messageId, toolCallId);
-    this.researcherAgent = new ResearcherAgent(
-      config,
-      dataStream,
-      messageId,
-      toolCallId
-    );
+  constructor(options: AgentOptions) {
+    super(options);
+    this.researcherAgent = new ResearcherAgent(options);
   }
 
   private async supervise(state: SupervisorInput): Promise<SupervisorOutput> {
@@ -524,6 +538,15 @@ class SupervisorAgent extends Agent {
       // TODO: Do we need a stop when?
       //   stopWhen: ,
     });
+
+    // Track LLM cost
+    if (result.usage) {
+      this.costAccumulator?.addLLMCost(
+        this.config.research_model as AppModelId,
+        result.usage,
+        "deep-research-supervisor"
+      );
+    }
 
     const lastAssistantMessage = result.response.messages.find(
       (m) => m.role === "assistant"
@@ -873,8 +896,9 @@ export async function runDeepResearcher(
   input: AgentInputState,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  session: Session
+  options: { session: Session; costAccumulator?: CostAccumulator }
 ): Promise<DeepResearchResult> {
+  const { session, costAccumulator } = options;
   console.log("runDeepResearcher invoked", {
     requestId: input.requestId,
     messageId: input.messageId,
@@ -934,12 +958,13 @@ export async function runDeepResearcher(
   const reportTitle = briefResult.title;
 
   // Step 3: Research supervisor loop
-  const supervisorAgent = new SupervisorAgent(
+  const supervisorAgent = new SupervisorAgent({
     config,
     dataStream,
-    input.messageId,
-    input.toolCallId
-  );
+    messageId: input.messageId,
+    toolCallId: input.toolCallId,
+    costAccumulator,
+  });
 
   const supervisorResult = await supervisorAgent.runSupervisorGraph({
     requestId: currentState.requestId,
