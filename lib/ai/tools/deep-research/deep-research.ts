@@ -1,7 +1,7 @@
 import { type ModelMessage, tool } from "ai";
 import { Langfuse } from "langfuse";
 import { z } from "zod";
-import type { Session } from "@/lib/auth";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
 import { type DeepResearchConfig, loadConfigFromEnv } from "./configuration";
@@ -13,7 +13,7 @@ export const deepResearch = ({
   messageId,
   messages,
 }: {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
   messageId: string;
   messages: ModelMessage[];

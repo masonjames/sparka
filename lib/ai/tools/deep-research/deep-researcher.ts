@@ -3,8 +3,8 @@ import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { ReportDocumentWriter } from "@/lib/artifacts/text/report-server";
-import type { Session } from "@/lib/auth";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
 import { createDocument } from "../create-document";
@@ -768,7 +768,7 @@ type FinalReportGenerationInput = {
   state: AgentState;
   config: DeepResearchConfig;
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   messageId: string;
   reportTitle: string;
   toolCallId: string;
@@ -873,7 +873,7 @@ export async function runDeepResearcher(
   input: AgentInputState,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  session: Session
+  session: ToolSession
 ): Promise<DeepResearchResult> {
   console.log("runDeepResearcher invoked", {
     requestId: input.requestId,
