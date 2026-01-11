@@ -3,7 +3,7 @@ import { siteConfig } from "@/lib/config";
 
 // Prefer JSON in production; pretty in development.
 // We also add base bindings so child loggers inherit app metadata.
-export const logger: Logger =
+const logger: Logger =
   process.env.NODE_ENV === "production"
     ? pino({
         level: "info",

@@ -38,7 +38,7 @@ export async function fetchWithErrorHandlers(
   }
 }
 
-export function findLastArtifact(
+function findLastArtifact(
   messages: Array<ChatMessage>,
 ): { messageIndex: number; toolCallId: string } | null {
   const allArtifacts: Array<{ messageIndex: number; toolCallId: string }> = [];
@@ -62,7 +62,7 @@ export function findLastArtifact(
   return allArtifacts[allArtifacts.length - 1] || null;
 }
 
-export const fetcher = async (url: string) => {
+const fetcher = async (url: string) => {
   const res = await fetch(url);
 
   if (!res.ok) {
@@ -79,7 +79,7 @@ export const fetcher = async (url: string) => {
   return res.json();
 };
 
-export function getLocalStorage(key: string) {
+function getLocalStorage(key: string) {
   if (typeof window !== 'undefined') {
     return JSON.parse(localStorage.getItem(key) || '[]');
   }
@@ -90,12 +90,12 @@ export function generateUUID(): string {
   return uuidv7();
 }
 
-export function getMostRecentUserMessage(messages: Array<ChatMessage>) {
+function getMostRecentUserMessage(messages: Array<ChatMessage>) {
   const userMessages = messages.filter((message) => message.role === 'user');
   return userMessages.at(-1);
 }
 
-export function getDocumentTimestampByIndex(
+function getDocumentTimestampByIndex(
   documents: Array<Document>,
   index: number,
 ) {
@@ -105,7 +105,7 @@ export function getDocumentTimestampByIndex(
   return documents[index].createdAt;
 }
 
-export function getTrailingMessageId({
+function getTrailingMessageId({
   messages,
 }: {
   messages: Array<ChatMessage>;

@@ -6,10 +6,10 @@ const NON_ALPHANUMERIC_REGEX = /[^a-z0-9]/g;
 export const MCP_NAME_MAX_LENGTH = 20;
 
 /** Reserved namespace prefix for global connectors (userId = null) */
-export const GLOBAL_NAMESPACE_PREFIX = "global";
+const GLOBAL_NAMESPACE_PREFIX = "global";
 
 /** Separator between namespace and tool name (OpenAI requires ^[a-zA-Z0-9_-]+$) */
-export const TOOL_ID_SEPARATOR = "__";
+const TOOL_ID_SEPARATOR = "__";
 
 export type GenerateMcpNameIdResult =
   | { ok: true; nameId: string }

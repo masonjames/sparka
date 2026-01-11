@@ -256,7 +256,7 @@ function ReadingLevelSelector({
   );
 }
 
-export function Tools({
+function Tools({
   isToolbarVisible,
   selectedTool,
   setSelectedTool,

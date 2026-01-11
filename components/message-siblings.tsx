@@ -4,7 +4,7 @@ import { Action } from "@/components/ai-elements/actions";
 import { useMessageTree } from "@/providers/message-tree-provider";
 import { useSession } from "@/providers/session-provider";
 
-export function PureMessageSiblings({
+function PureMessageSiblings({
   messageId,
   isReadOnly: _isReadOnly,
 }: {

@@ -3,28 +3,11 @@ import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import { useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { UiToolName } from "@/lib/ai/types";
-import type { Suggestion } from "@/lib/db/schema";
 import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useSession } from "@/providers/session-provider";
 import { artifactDefinitions } from "./artifact-panel";
 import { useDataStream } from "./data-stream-provider";
-
-export type DataStreamDelta = {
-  type:
-    | "text-delta"
-    | "code-delta"
-    | "sheet-delta"
-    | "image-delta"
-    | "title"
-    | "id"
-    | "message-id"
-    | "suggestion"
-    | "clear"
-    | "finish"
-    | "kind";
-  content: string | Suggestion;
-};
 
 function handleResearchUpdate({
   delta,
@@ -34,6 +17,7 @@ function handleResearchUpdate({
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
 }): void {
   if (delta.type === "data-researchUpdate") {
+    // TODO: fix this type
     const update: any = (delta as any).data;
     if (update?.type === "completed") {
       setSelectedTool((current) =>

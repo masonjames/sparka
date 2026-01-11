@@ -151,7 +151,7 @@ const CommandItem = memo(
     prev.isSelected === next.isSelected
 );
 
-export function PureModelSelector({
+function PureModelSelector({
   selectedModelId,
   className,
   onModelChangeAction,

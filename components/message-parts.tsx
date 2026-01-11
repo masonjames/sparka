@@ -154,7 +154,7 @@ function PureMessagePart({
 
 const MessagePart = memo(PureMessagePart);
 
-export function PureMessageParts({
+function PureMessageParts({
   messageId,
   isLoading,
   isReadonly,

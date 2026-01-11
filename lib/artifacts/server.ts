@@ -9,7 +9,7 @@ import { saveDocument } from "../db/queries";
 import type { Document } from "../db/schema";
 import type { ArtifactKind } from "./artifact-kind";
 
-export type SaveDocumentProps = {
+type SaveDocumentProps = {
   id: string;
   title: string;
   kind: ArtifactKind;

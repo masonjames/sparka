@@ -37,7 +37,7 @@ const _ = toolNameSchema.options satisfies ToolName[];
 
 type ToolNameInternal = z.infer<typeof toolNameSchema>;
 
-export const frontendToolsSchema = z.enum([
+const frontendToolsSchema = z.enum([
   "webSearch",
   "deepResearch",
   "generateImage",
@@ -47,7 +47,7 @@ export const frontendToolsSchema = z.enum([
 const __ = frontendToolsSchema.options satisfies ToolNameInternal[];
 
 export type UiToolName = z.infer<typeof frontendToolsSchema>;
-export const messageMetadataSchema = z.object({
+const messageMetadataSchema = z.object({
   createdAt: z.date(),
   parentMessageId: z.string().nullable(),
   selectedModel: z.custom<AppModelId>((val) => typeof val === "string"),

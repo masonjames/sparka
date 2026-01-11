@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import type { ToolName, UiToolName } from "@/lib/ai/types";
 
-export type ToolDefinition = {
+type ToolDefinition = {
   name: string;
   description: string;
   icon: LucideIcon;

@@ -9,7 +9,7 @@ import {
   useCustomChatStoreApi,
 } from "./custom-store-provider";
 
-export function usePartsStore<T>(
+function usePartsStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
@@ -54,12 +54,12 @@ export function useMessagePartByPartIdx<
     : ChatMessage["parts"][number];
 }
 
-export function useMessagePartsByPartRange(
+function useMessagePartsByPartRange(
   messageId: string,
   startIdx: number,
   endIdx: number
 ): ChatMessage["parts"];
-export function useMessagePartsByPartRange<
+function useMessagePartsByPartRange<
   T extends ChatMessage["parts"][number]["type"],
 >(
   messageId: string,
@@ -67,7 +67,7 @@ export function useMessagePartsByPartRange<
   endIdx: number,
   type: T
 ): Extract<ChatMessage["parts"][number], { type: T }>[];
-export function useMessagePartsByPartRange<
+function useMessagePartsByPartRange<
   T extends ChatMessage["parts"][number]["type"],
 >(messageId: string, startIdx: number, endIdx: number, type?: T) {
   return usePartsStore(

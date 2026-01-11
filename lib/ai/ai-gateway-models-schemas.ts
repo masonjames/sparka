@@ -12,7 +12,7 @@ type KnownTag =
 const tagSchema = z.string() as z.ZodType<KnownTag>;
 
 // Single model schema
-export const aiGatewayModelSchema = z.object({
+const aiGatewayModelSchema = z.object({
   id: z.string(),
   object: z.literal("model"),
   created: z.number(),
@@ -44,7 +44,3 @@ export const aiGatewayModelsResponseSchema = z.object({
   object: z.literal("list"),
   data: z.array(aiGatewayModelSchema),
 });
-
-export type AiGatewayModelsResponse = z.infer<
-  typeof aiGatewayModelsResponseSchema
->;

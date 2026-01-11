@@ -201,7 +201,7 @@ function cloneDocuments<
   return clonedDocuments;
 }
 
-export async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
+async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
   try {
     // Skip if no URL is provided
     if (!part.url) {

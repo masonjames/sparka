@@ -55,7 +55,7 @@ const PureMessagesInternal = memo(
   }
 );
 
-export type MessagesProps = {
+type MessagesProps = {
   isReadonly: boolean;
   onModelChange?: (modelId: string) => void;
   className?: string;

@@ -9,7 +9,7 @@ export type MessageNode = {
 };
 
 // Get the default leaf (most recent message by timestamp)
-export function getDefaultLeafMessage<T extends MessageNode>(
+function getDefaultLeafMessage<T extends MessageNode>(
   allMessages: T[]
 ): T | null {
   if (allMessages.length === 0) {

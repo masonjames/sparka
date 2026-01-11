@@ -2,7 +2,6 @@
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ANONYMOUS_SESSION_COOKIES_KEY } from "./constants";
-import { generateUUID } from "./utils";
 
 // Client-side cookie helpers
 function getCookie(name: string): string | null {
@@ -59,14 +58,6 @@ function deleteCookie(name: string): void {
     // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=; Path=/; Max-Age=0`;
   }
-}
-
-export function createAnonymousSession(): AnonymousSession {
-  return {
-    id: generateUUID(),
-    remainingCredits: ANONYMOUS_LIMITS.CREDITS,
-    createdAt: new Date(),
-  };
 }
 
 export function getAnonymousSession(): AnonymousSession | null {

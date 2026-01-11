@@ -49,7 +49,7 @@ export type PartsAugmentedState<UM extends UIMessage> =
     ) => UIMessageParts<UM>[number];
   };
 
-export type PartsSC<UM extends UIMessage> = StateCreator<
+type PartsSC<UM extends UIMessage> = StateCreator<
   PartsAugmentedState<UM>,
   [],
   []

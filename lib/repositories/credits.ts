@@ -56,7 +56,7 @@ export async function deductCredits(
 /**
  * Add credits to user (for purchases, refunds, etc).
  */
-export async function addCredits(
+async function addCredits(
   userId: string,
   amount: number
 ): Promise<void> {

@@ -16,7 +16,7 @@ export type BaseMessageProps = {
   parentMessageId: string | null;
 };
 
-export const PureUserMessage = ({
+const PureUserMessage = ({
   messageId,
   isLoading,
   isReadonly,

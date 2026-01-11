@@ -24,7 +24,7 @@ function useChatLayoutContext() {
   return context;
 }
 
-export type ChatLayoutProps = Omit<
+type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,
   "direction"
 > & {
@@ -56,7 +56,7 @@ export const ChatLayout = ({
   );
 };
 
-export type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
+type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
 
 export const ChatLayoutMain = ({
   className,
@@ -76,7 +76,7 @@ export const ChatLayoutMain = ({
   );
 };
 
-export type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
+type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
 
 export const ChatLayoutSecondary = ({
   defaultSize = 35,
@@ -85,14 +85,16 @@ export const ChatLayoutSecondary = ({
 }: ChatLayoutSecondaryProps) => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
 
-  if (!isSecondaryPanelVisible) return null;
+  if (!isSecondaryPanelVisible) {
+    return null;
+  }
 
   return (
     <ResizablePanel defaultSize={defaultSize} minSize={minSize} {...props} />
   );
 };
 
-export type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
+type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
 
 export const ChatLayoutHandle = ({
   className,
@@ -101,7 +103,9 @@ export const ChatLayoutHandle = ({
 }: ChatLayoutHandleProps) => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
 
-  if (!isSecondaryPanelVisible) return null;
+  if (!isSecondaryPanelVisible) {
+    return null;
+  }
 
   return (
     <ResizableHandle

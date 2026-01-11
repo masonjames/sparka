@@ -199,7 +199,7 @@ export class SuggestionNode extends DecoratorNode<React.ReactElement> {
   }
 }
 
-export function createSuggestionDecorator(
+function createSuggestionDecorator(
   suggestion: UISuggestion,
   editor: LexicalEditor,
   artifactKind: ArtifactKind = "text"

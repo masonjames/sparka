@@ -8,7 +8,7 @@ import type {
 
 // Minimal utilities to download assets from URL-based parts and inline them.
 
-export type DownloadResult = {
+type DownloadResult = {
   mediaType: string | undefined;
   data: Uint8Array;
 };
@@ -48,7 +48,7 @@ function toHttpUrl(value: unknown): URL | null {
  * Collects all http(s) URLs from file/image parts in the provided messages and downloads them.
  * Returns a map keyed by the normalized URL string.
  */
-export async function downloadAssetsFromModelMessages(
+async function downloadAssetsFromModelMessages(
   messages: ModelMessage[],
   downloadImplementation: DownloadImplementation = defaultDownload
 ): Promise<Record<string, DownloadResult>> {

@@ -27,13 +27,13 @@ export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
   </div>
 );
 
-export type StepWrapperProps = {
+type StepWrapperProps = {
   update: ResearchUpdate;
   children: ReactNode;
   isLast: boolean;
 };
 
-export const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
+const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
   <div className="flex w-full flex-row items-stretch justify-start gap-2">
     <div className="flex min-h-full shrink-0 flex-col items-center justify-start px-2">
       <div className="h-1 shrink-0 bg-border/50" />
@@ -69,7 +69,7 @@ const icons: Record<ResearchUpdate["type"], React.ElementType> = {
   writing: Pencil,
 } as const;
 
-export const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
+const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
   const Icon = icons[update.type];
   return <Icon className="h-4 w-4 text-muted-foreground" />;
 };

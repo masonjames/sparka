@@ -15,7 +15,7 @@ export type MultiQuerySearchOptions = {
   excludeDomains?: string[];
 };
 
-export type MultiQuerySearchResult = {
+type MultiQuerySearchResult = {
   query: SearchQuery;
   results: Array<{
     url: string;

@@ -13,6 +13,3 @@ export function filterPartsForLLM<T extends { parts: any[] }>(
     parts: message.parts.filter((part) => part.type !== "reasoning"),
   }));
 }
-
-/** @deprecated Use filterPartsForLLM instead */
-export const filterReasoningParts = filterPartsForLLM;

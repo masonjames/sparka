@@ -4,7 +4,7 @@ import { memo } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
 import { FileIcon } from "../icons";
 
-export type ReadDocumentTool = Extract<
+type ReadDocumentTool = Extract<
   ChatMessage["parts"][number],
   { type: "tool-readDocument" }
 >;

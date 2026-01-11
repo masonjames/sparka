@@ -8,21 +8,21 @@ const providerMetadataSchema = z.unknown().optional();
  * Used to validate parts before mapping to database Part rows
  */
 
-export const textPartSchema = z.object({
+const textPartSchema = z.object({
   type: z.literal("text"),
   text: z.string(),
   state: z.enum(["streaming", "done"]).optional(),
   providerMetadata: providerMetadataSchema,
 });
 
-export const reasoningPartSchema = z.object({
+const reasoningPartSchema = z.object({
   type: z.literal("reasoning"),
   text: z.string(),
   state: z.enum(["streaming", "done"]).optional(),
   providerMetadata: providerMetadataSchema,
 });
 
-export const filePartSchema = z.object({
+const filePartSchema = z.object({
   type: z.literal("file"),
   mediaType: z.string(),
   filename: z.string().optional(),
@@ -30,7 +30,7 @@ export const filePartSchema = z.object({
   providerMetadata: providerMetadataSchema,
 });
 
-export const sourceUrlPartSchema = z.object({
+const sourceUrlPartSchema = z.object({
   type: z.literal("source-url"),
   sourceId: z.string(),
   url: z.string(),
@@ -38,7 +38,7 @@ export const sourceUrlPartSchema = z.object({
   providerMetadata: providerMetadataSchema,
 });
 
-export const sourceDocumentPartSchema = z.object({
+const sourceDocumentPartSchema = z.object({
   type: z.literal("source-document"),
   sourceId: z.string(),
   mediaType: z.string(),
@@ -47,18 +47,18 @@ export const sourceDocumentPartSchema = z.object({
   providerMetadata: providerMetadataSchema,
 });
 
-export const stepStartPartSchema = z.object({
+const stepStartPartSchema = z.object({
   type: z.literal("step-start"),
 });
 
-export const dataPartSchema = z.object({
+const dataPartSchema = z.object({
   type: z.string().startsWith("data-"),
   id: z.string().optional(),
   data: z.unknown(),
 });
 
 // Tool part schemas for different states
-export const toolPartInputStreamingSchema = z.object({
+const toolPartInputStreamingSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("input-streaming"),
@@ -69,7 +69,7 @@ export const toolPartInputStreamingSchema = z.object({
   approval: z.never().optional(),
 });
 
-export const toolPartInputAvailableSchema = z.object({
+const toolPartInputAvailableSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("input-available"),
@@ -81,7 +81,7 @@ export const toolPartInputAvailableSchema = z.object({
   approval: z.never().optional(),
 });
 
-export const toolPartApprovalRequestedSchema = z.object({
+const toolPartApprovalRequestedSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("approval-requested"),
@@ -97,7 +97,7 @@ export const toolPartApprovalRequestedSchema = z.object({
   }),
 });
 
-export const toolPartApprovalRespondedSchema = z.object({
+const toolPartApprovalRespondedSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("approval-responded"),
@@ -113,7 +113,7 @@ export const toolPartApprovalRespondedSchema = z.object({
   }),
 });
 
-export const toolPartOutputAvailableSchema = z.object({
+const toolPartOutputAvailableSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("output-available"),
@@ -132,7 +132,7 @@ export const toolPartOutputAvailableSchema = z.object({
     .optional(),
 });
 
-export const toolPartOutputErrorSchema = z.object({
+const toolPartOutputErrorSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("output-error"),
@@ -150,7 +150,7 @@ export const toolPartOutputErrorSchema = z.object({
     .optional(),
 });
 
-export const toolPartOutputDeniedSchema = z.object({
+const toolPartOutputDeniedSchema = z.object({
   type: z.string().startsWith("tool-"),
   toolCallId: z.string(),
   state: z.literal("output-denied"),
@@ -167,7 +167,7 @@ export const toolPartOutputDeniedSchema = z.object({
 });
 
 // Union schema for all tool part states
-export const toolPartSchema = z.union([
+const toolPartSchema = z.union([
   toolPartInputStreamingSchema,
   toolPartInputAvailableSchema,
   toolPartApprovalRequestedSchema,
@@ -178,7 +178,7 @@ export const toolPartSchema = z.union([
 ]);
 
 // Dynamic tool part schemas
-export const dynamicToolPartInputStreamingSchema = z.object({
+const dynamicToolPartInputStreamingSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -191,7 +191,7 @@ export const dynamicToolPartInputStreamingSchema = z.object({
   approval: z.never().optional(),
 });
 
-export const dynamicToolPartInputAvailableSchema = z.object({
+const dynamicToolPartInputAvailableSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -205,7 +205,7 @@ export const dynamicToolPartInputAvailableSchema = z.object({
   approval: z.never().optional(),
 });
 
-export const dynamicToolPartApprovalRequestedSchema = z.object({
+const dynamicToolPartApprovalRequestedSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -223,7 +223,7 @@ export const dynamicToolPartApprovalRequestedSchema = z.object({
   }),
 });
 
-export const dynamicToolPartApprovalRespondedSchema = z.object({
+const dynamicToolPartApprovalRespondedSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -241,7 +241,7 @@ export const dynamicToolPartApprovalRespondedSchema = z.object({
   }),
 });
 
-export const dynamicToolPartOutputAvailableSchema = z.object({
+const dynamicToolPartOutputAvailableSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -262,7 +262,7 @@ export const dynamicToolPartOutputAvailableSchema = z.object({
     .optional(),
 });
 
-export const dynamicToolPartOutputErrorSchema = z.object({
+const dynamicToolPartOutputErrorSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -282,7 +282,7 @@ export const dynamicToolPartOutputErrorSchema = z.object({
     .optional(),
 });
 
-export const dynamicToolPartOutputDeniedSchema = z.object({
+const dynamicToolPartOutputDeniedSchema = z.object({
   type: z.literal("dynamic-tool"),
   toolName: z.string(),
   toolCallId: z.string(),
@@ -301,7 +301,7 @@ export const dynamicToolPartOutputDeniedSchema = z.object({
 });
 
 // Union schema for all dynamic tool part states
-export const dynamicToolPartSchema = z.union([
+const dynamicToolPartSchema = z.union([
   dynamicToolPartInputStreamingSchema,
   dynamicToolPartInputAvailableSchema,
   dynamicToolPartApprovalRequestedSchema,
@@ -312,7 +312,7 @@ export const dynamicToolPartSchema = z.union([
 ]);
 
 // Union schema for all part types
-export const messagePartSchema = z.union([
+const messagePartSchema = z.union([
   textPartSchema,
   reasoningPartSchema,
   filePartSchema,

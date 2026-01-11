@@ -44,8 +44,3 @@ export async function setAnonymousSession(
     secure: process.env.NODE_ENV === "production",
   });
 }
-
-export async function clearAnonymousSession(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(ANONYMOUS_SESSION_COOKIES_KEY);
-}

@@ -10,10 +10,10 @@ export type AnonymousSession = {
 };
 
 // Anonymous chat structure matching the DB chat structure
-export interface AnonymousChat extends UIChat {}
+interface AnonymousChat extends UIChat {}
 
 // Anonymous message structure - includes parts since they're stored in localStorage
-export interface AnonymousMessage extends DBMessage {
+interface AnonymousMessage extends DBMessage {
   // Parts are stored as JSON in localStorage but use the same shape
   // as ChatMessage["parts"] for tool/document cloning.
   parts: ChatMessage["parts"];

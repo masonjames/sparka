@@ -75,10 +75,3 @@ export function extractFilenameFromUrl(url: string): string | null {
     return null;
   }
 }
-
-/**
- * Check if a URL is a blob URL with our prefix
- */
-export function isBlobUrl(url: string): boolean {
-  return url.includes(BLOB_FILE_PREFIX);
-}

@@ -1,6 +1,6 @@
 export type ChatIdType = "chat" | "provisional";
 
-export type RouteSource = "share" | "project" | "chat" | "home";
+type RouteSource = "share" | "project" | "chat" | "home";
 
 export type ParsedChatIdFromPathname =
   | {

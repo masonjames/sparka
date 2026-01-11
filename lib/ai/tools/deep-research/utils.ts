@@ -11,7 +11,7 @@ import type { DeepResearchConfig, SearchAPI } from "./configuration";
 type McpClient = Awaited<ReturnType<typeof experimental_createMCPClient>>;
 type McpToolSet = Awaited<ReturnType<McpClient["tools"]>>;
 
-export async function loadMcpTools(
+async function loadMcpTools(
   config: DeepResearchConfig,
   existingToolNames: Set<string>
 ) {
@@ -76,7 +76,7 @@ export async function loadMcpTools(
 
 // Tool Utils
 
-export function getSearchTool(
+function getSearchTool(
   searchApi: SearchAPI,
   _config: DeepResearchConfig,
   dataStream: StreamWriter,

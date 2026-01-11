@@ -4,7 +4,7 @@ import { createModuleLogger } from "@/lib/logger";
 const log = createModuleLogger("mcp-cache");
 
 // Cache tags
-export const mcpCacheTags = {
+const mcpCacheTags = {
   connectionStatus: (connectorId: string) =>
     `mcp-connection-status-${connectorId}`,
   discovery: (connectorId: string) => `mcp-discovery-${connectorId}`,
@@ -87,7 +87,7 @@ export function createCachedDiscovery(
  * Invalidate connection status cache for a connector.
  * Call this on: auth errors, disconnect, OAuth completion
  */
-export function invalidateConnectionStatus(connectorId: string) {
+function invalidateConnectionStatus(connectorId: string) {
   log.debug({ connectorId }, "Invalidating connection status cache");
   revalidateTag(mcpCacheTags.connectionStatus(connectorId), "max");
 }
@@ -96,7 +96,7 @@ export function invalidateConnectionStatus(connectorId: string) {
  * Invalidate discovery cache for a connector.
  * Call this on: disconnect, OAuth completion, refreshClient
  */
-export function invalidateDiscovery(connectorId: string) {
+function invalidateDiscovery(connectorId: string) {
   log.debug({ connectorId }, "Invalidating discovery cache");
   revalidateTag(mcpCacheTags.discovery(connectorId), "max");
 }

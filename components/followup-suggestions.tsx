@@ -13,7 +13,7 @@ import {
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 
-export function FollowUpSuggestions({
+function FollowUpSuggestions({
   suggestions,
   className,
 }: {

@@ -22,7 +22,7 @@ import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 // Query key for anonymous credits - allows invalidation after messages
-export const ANONYMOUS_CREDITS_KEY = ["anonymousCredits"] as const;
+const ANONYMOUS_CREDITS_KEY = ["anonymousCredits"] as const;
 
 function snapshotAllChatsQueries(
   qc: ReturnType<typeof useQueryClient>,
@@ -78,7 +78,7 @@ export function useGetChatMessagesQueryOptions() {
   };
 }
 
-export function useMessagesQuery() {
+function useMessagesQuery() {
   return useGetChatMessagesQueryOptions();
 }
 
@@ -284,7 +284,7 @@ export function usePinChat() {
   });
 }
 
-export function useDeleteTrailingMessages() {
+function useDeleteTrailingMessages() {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
   const trpc = useTRPC();

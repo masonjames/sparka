@@ -27,7 +27,7 @@ type McpClientStatus =
   | "authorizing"
   | "incompatible";
 
-export type { McpClientStatus };
+;
 
 function getBaseUrl(): string {
   if (env.VERCEL_PROJECT_PRODUCTION_URL) {
@@ -346,7 +346,7 @@ export async function removeMcpClient(id: string): Promise<void> {
 /**
  * Get an existing MCP client by ID.
  */
-export function getMcpClient(id: string): MCPClient | undefined {
+function getMcpClient(id: string): MCPClient | undefined {
   return clientsMap.get(id);
 }
 

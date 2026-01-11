@@ -22,7 +22,7 @@ import type { ToolSession } from "./types";
 
 const log = createModuleLogger("tools:mcp");
 
-export type { ToolSession } from "./types";
+;
 
 export function getTools({
   dataStream,

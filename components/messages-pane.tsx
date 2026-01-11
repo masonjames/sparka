@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 
-export type MessagesPaneProps = {
+type MessagesPaneProps = {
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
   isReadonly: boolean;

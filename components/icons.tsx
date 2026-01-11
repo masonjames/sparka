@@ -1,6 +1,6 @@
 import { Anthropic, Gemini, Groq, OpenAI, XAI } from "@lobehub/icons";
 
-export const BotIcon = () => (
+const BotIcon = () => (
   <svg
     height="16"
     strokeLinejoin="round"
@@ -18,7 +18,7 @@ export const BotIcon = () => (
   </svg>
 );
 
-export const UserIcon = () => (
+const UserIcon = () => (
   <svg
     data-testid="geist-icon"
     height="16"
@@ -37,7 +37,7 @@ export const UserIcon = () => (
   </svg>
 );
 
-export const AttachmentIcon = () => (
+const AttachmentIcon = () => (
   <svg
     height="16"
     strokeLinejoin="round"
@@ -55,7 +55,7 @@ export const AttachmentIcon = () => (
   </svg>
 );
 
-export const VercelIcon = ({ size = 17 }) => (
+const VercelIcon = ({ size = 17 }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -96,7 +96,7 @@ export const GitIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const BoxIcon = ({ size = 16 }: { size: number }) => (
+const BoxIcon = ({ size = 16 }: { size: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -114,7 +114,7 @@ export const BoxIcon = ({ size = 16 }: { size: number }) => (
   </svg>
 );
 
-export const HomeIcon = ({ size = 16 }: { size: number }) => (
+const HomeIcon = ({ size = 16 }: { size: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -132,7 +132,7 @@ export const HomeIcon = ({ size = 16 }: { size: number }) => (
   </svg>
 );
 
-export const GPSIcon = ({ size = 16 }: { size: number }) => (
+const GPSIcon = ({ size = 16 }: { size: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -152,7 +152,7 @@ export const GPSIcon = ({ size = 16 }: { size: number }) => (
   </svg>
 );
 
-export const InvoiceIcon = ({ size = 16 }: { size: number }) => (
+const InvoiceIcon = ({ size = 16 }: { size: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -170,31 +170,31 @@ export const InvoiceIcon = ({ size = 16 }: { size: number }) => (
   </svg>
 );
 
-export const OpenAIIcon = ({ size = 16 }: { size?: number }) => (
+const OpenAIIcon = ({ size = 16 }: { size?: number }) => (
   <OpenAI name="openai" size={size} />
 );
 
-export const GeminiIcon = ({ size = 16 }: { size?: number }) => (
+const GeminiIcon = ({ size = 16 }: { size?: number }) => (
   <Gemini.Color name="gemini" size={size} />
 );
 
-export const GroqIcon = ({ size = 16 }: { size?: number }) => (
+const GroqIcon = ({ size = 16 }: { size?: number }) => (
   <Groq name="groq" size={size} />
 );
 
-export const XAIIcon = ({ size = 16 }: { size?: number }) => (
+const XAIIcon = ({ size = 16 }: { size?: number }) => (
   <XAI name="xai" size={size} />
 );
 
-export const GoogleIcon = ({ size = 16 }: { size?: number }) => (
+const GoogleIcon = ({ size = 16 }: { size?: number }) => (
   <Gemini name="google" size={size} />
 );
 
-export const AnthropicIcon = ({ size = 16 }: { size?: number }) => (
+const AnthropicIcon = ({ size = 16 }: { size?: number }) => (
   <Anthropic name="anthropic" size={size} />
 );
 
-export const RouteIcon = ({ size = 16 }: { size?: number }) => (
+const RouteIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -304,7 +304,7 @@ export const LoaderIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const UploadIcon = ({ size = 16 }: { size?: number }) => (
+const UploadIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     data-testid="geist-icon"
     height={size}
@@ -323,7 +323,7 @@ export const UploadIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const MenuIcon = ({ size = 16 }: { size?: number }) => (
+const MenuIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -359,7 +359,7 @@ export const PencilEditIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const CheckedSquare = ({ size = 16 }: { size?: number }) => (
+const CheckedSquare = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -377,7 +377,7 @@ export const CheckedSquare = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const UncheckedSquare = ({ size = 16 }: { size?: number }) => (
+const UncheckedSquare = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -398,7 +398,7 @@ export const UncheckedSquare = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const MoreIcon = ({ size = 16 }: { size?: number }) => (
+const MoreIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -434,7 +434,7 @@ export const TrashIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const InfoIcon = ({ size = 16 }: { size?: number }) => (
+const InfoIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -487,7 +487,7 @@ export const StopIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const PaperclipIcon = ({ size = 16 }: { size?: number }) => (
+const PaperclipIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     className="-rotate-45"
     height={size}
@@ -614,7 +614,7 @@ export const RedoIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const DeltaIcon = ({ size = 16 }: { size?: number }) => (
+const DeltaIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -758,7 +758,7 @@ export const ThumbDownIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const ChevronDownIcon = ({ size = 16 }: { size?: number }) => (
+const ChevronDownIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -800,7 +800,7 @@ export const SparklesIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => (
+const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -818,7 +818,7 @@ export const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const GlobeIcon = ({ size = 16 }: { size?: number }) => (
+const GlobeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -836,7 +836,7 @@ export const GlobeIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const LockIcon = ({ size = 16 }: { size?: number }) => (
+const LockIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -854,7 +854,7 @@ export const LockIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const EyeIcon = ({ size = 16 }: { size?: number }) => (
+const EyeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -890,7 +890,7 @@ export const ShareIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const CodeIcon = ({ size = 16 }: { size?: number }) => (
+const CodeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -926,7 +926,7 @@ export const PlayIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const PythonIcon = ({ size = 16 }: { size?: number }) => (
+const PythonIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -964,7 +964,7 @@ export const TerminalWindowIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const TerminalIcon = ({ size = 16 }: { size?: number }) => (
+const TerminalIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1018,7 +1018,7 @@ export const LogsIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const ImageIcon = ({ size = 16 }: { size?: number }) => (
+const ImageIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1090,7 +1090,7 @@ export const LineChartIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const WarningIcon = ({ size = 16 }: { size?: number }) => (
+const WarningIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"

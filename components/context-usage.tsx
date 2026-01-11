@@ -72,7 +72,7 @@ function ContextIconStandalone({
   );
 }
 
-export function ContextUsage({
+function ContextUsage({
   usage,
   selectedModelId,
   iconOnly = false,

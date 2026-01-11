@@ -41,7 +41,7 @@ import {
   vote,
 } from "./schema";
 
-export async function getUserByEmail(email: string): Promise<User[]> {
+async function getUserByEmail(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
@@ -256,7 +256,7 @@ export async function deleteProject({ id }: { id: string }) {
   }
 }
 
-export async function getChatsByProjectId({
+async function getChatsByProjectId({
   projectId,
 }: {
   projectId: string;
@@ -273,7 +273,7 @@ export async function getChatsByProjectId({
   }
 }
 
-export async function moveChatToProject({
+async function moveChatToProject({
   chatId,
   projectId,
 }: {
@@ -288,7 +288,7 @@ export async function moveChatToProject({
   }
 }
 
-export async function tryGetChatById({ id }: { id: string }) {
+async function tryGetChatById({ id }: { id: string }) {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
@@ -680,7 +680,7 @@ export async function getDocumentById({ id }: { id: string }) {
   }
 }
 
-export async function deleteDocumentsByIdAfterTimestamp({
+async function deleteDocumentsByIdAfterTimestamp({
   id,
   timestamp,
 }: {
@@ -841,7 +841,7 @@ export async function getChatMessageWithPartsById({
   }
 }
 
-export async function deleteMessagesByChatIdAfterTimestamp({
+async function deleteMessagesByChatIdAfterTimestamp({
   chatId,
   timestamp,
 }: {
@@ -995,7 +995,7 @@ export async function updateChatIsPinnedById({
   }
 }
 
-export async function updateChatUpdatedAt({ chatId }: { chatId: string }) {
+async function updateChatUpdatedAt({ chatId }: { chatId: string }) {
   try {
     return await db
       .update(chat)
@@ -1022,7 +1022,7 @@ export async function getUserById({
   return users[0];
 }
 
-export async function getMessagesWithAttachments() {
+async function getMessagesWithAttachments() {
   try {
     return await db.select({ attachments: message.attachments }).from(message);
   } catch (error) {

@@ -77,7 +77,7 @@ function buildChatModels(
     });
 }
 
-export const fetchAllAppModels = cache(
+const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
     const models = await fetchModels();
     return buildAppModels(models);

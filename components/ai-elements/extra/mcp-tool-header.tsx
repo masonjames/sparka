@@ -7,7 +7,7 @@ import { ChevronDownIcon, WrenchIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { getStatusBadge } from "../tool";
 
-export type McpToolHeaderProps = {
+type McpToolHeaderProps = {
   title?: string;
   type: ToolUIPart["type"];
   state: ToolUIPart["state"];

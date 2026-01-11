@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Brain, Eye, FileText, Image, Mic, Zap } from "lucide-react";
 
-export type FeatureConfig = {
+type FeatureConfig = {
   key: string;
   name: string;
   description: string;
@@ -74,14 +74,14 @@ export const getEnabledFeatures = () =>
   Object.values(AVAILABLE_FEATURES).filter((feature) => feature.enabled);
 
 // Get enabled features by category
-export const getEnabledFeaturesByCategory = (
+const getEnabledFeaturesByCategory = (
   category: FeatureConfig["category"]
 ) => getEnabledFeatures().filter((feature) => feature.category === category);
 
 // Helper to get feature config by key
-export const getFeatureConfig = (key: string): FeatureConfig | undefined =>
+const getFeatureConfig = (key: string): FeatureConfig | undefined =>
   AVAILABLE_FEATURES[key];
 
 // Helper to check if a feature is enabled
-export const isFeatureEnabled = (key: string): boolean =>
+const isFeatureEnabled = (key: string): boolean =>
   AVAILABLE_FEATURES[key]?.enabled ?? false;

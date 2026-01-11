@@ -15,7 +15,7 @@ import { useEffect } from "react";
 
 import { createEditorConfig } from "@/lib/editor/config";
 
-export const DiffType = {
+const DiffType = {
   Unchanged: 0,
   Deleted: -1,
   Inserted: 1,

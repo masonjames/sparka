@@ -14,7 +14,7 @@ import { FeedbackActions } from "./feedback-actions";
 import { CopyIcon } from "./icons";
 import { MessageSiblings } from "./message-siblings";
 
-export function PureMessageActions({
+function PureMessageActions({
   chatId,
   messageId,
   isLoading,

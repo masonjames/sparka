@@ -8,7 +8,7 @@ import {
   useCustomChatStoreApi,
 } from "./custom-store-provider";
 
-export function useThreadStore<T>(
+function useThreadStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
@@ -25,7 +25,7 @@ export const useThreadEpoch = () =>
 export const useThreadInitialMessages = () =>
   useThreadStore((state) => state.threadInitialMessages);
 
-export const useBumpThreadEpoch = () => {
+const useBumpThreadEpoch = () => {
   const store = useCustomChatStoreApi<ChatMessage>();
   return useCallback(() => {
     store.getState().bumpThreadEpoch();

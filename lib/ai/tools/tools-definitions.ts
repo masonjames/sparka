@@ -56,7 +56,7 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
 };
 
 export const allTools = toolNameSchema.options;
-export type ToolDefinition = {
+type ToolDefinition = {
   name: string;
   description: string;
   cost: number;

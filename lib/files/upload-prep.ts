@@ -4,7 +4,7 @@ import imageCompression from "browser-image-compression";
 
 const FILE_EXTENSION_REGEX = /\.[^.]+$/;
 
-export async function compressImageIfNeeded(
+async function compressImageIfNeeded(
   file: File,
   {
     maxBytes,

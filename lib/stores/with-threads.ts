@@ -21,7 +21,7 @@ export type ThreadAugmentedState<UM extends UIMessage> =
     setMessagesWithEpoch: (messages: UM[]) => void;
   };
 
-export type ThreadSC<UM extends UIMessage> = StateCreator<
+type ThreadSC<UM extends UIMessage> = StateCreator<
   ThreadAugmentedState<UM>,
   [],
   []
