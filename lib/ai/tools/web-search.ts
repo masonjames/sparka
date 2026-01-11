@@ -100,18 +100,6 @@ async function executeMultiQuerySearch({
   return { searches: searchResults };
 }
 
-export const QueryCompletionSchema = z.object({
-  type: z.literal("query_completion"),
-  data: z.object({
-    query: z.string(),
-    index: z.number(),
-    total: z.number(),
-    status: z.literal("completed"),
-    resultsCount: z.number(),
-    imagesCount: z.number(),
-  }),
-});
-
 export const tavilyWebSearch = ({
   dataStream,
   writeTopLevelUpdates,

@@ -2,7 +2,6 @@ import FirecrawlApp, { type SearchParams } from "@mendable/firecrawl-js";
 import { type TavilySearchOptions, tavily } from "@tavily/core";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "../../../logger";
-import type { StreamWriter } from "../../types";
 
 export type SearchProvider = "tavily" | "firecrawl";
 
@@ -74,11 +73,9 @@ export async function webSearchStep({
   query,
   maxResults,
   providerOptions,
-  dataStream: _dataStream,
 }: {
   query: string;
   maxResults: number;
-  dataStream: StreamWriter;
   providerOptions: SearchProviderOptions;
 }): Promise<WebSearchResponse> {
   try {

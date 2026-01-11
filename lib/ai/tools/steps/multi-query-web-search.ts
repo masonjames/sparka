@@ -81,7 +81,6 @@ export async function multiQueryWebSearchStep({
         query: query.query,
         maxResults: query.maxResults,
         providerOptions: queryProviderOptions,
-        dataStream,
       });
 
       return {
