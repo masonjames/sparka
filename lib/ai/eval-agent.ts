@@ -221,19 +221,17 @@ async function generateSuggestions(
     ...responseMessages,
   ]);
 
-  const suggestions: string[] = [];
   const result = await followupSuggestionsResult;
-  for await (const chunk of result.partialObjectStream) {
+  let lastSuggestions: string[] = [];
+  for await (const chunk of result.partialOutputStream) {
     if (chunk.suggestions) {
-      suggestions.push(
-        ...chunk.suggestions.filter(
-          (s: string | undefined): s is string => s !== undefined
-        )
+      lastSuggestions = chunk.suggestions.filter(
+        (s: string | undefined): s is string => s !== undefined
       );
     }
   }
 
-  return suggestions.length > 0 ? suggestions.slice(-5) : [];
+  return lastSuggestions.length > 0 ? lastSuggestions.slice(-5) : [];
 }
 
 export async function runCoreChatAgentEval({

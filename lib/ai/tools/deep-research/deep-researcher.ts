@@ -1,4 +1,4 @@
-import { generateObject, generateText, type ModelMessage } from "ai";
+import { generateText, type ModelMessage, Output } from "ai";
 import { z } from "zod";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -98,19 +98,21 @@ async function generateStatusUpdate(
     contextInfo,
   });
 
-  const result = await generateObject({
+  const result = await generateText({
     model,
-    schema: z.object({
-      title: z
-        .string()
-        .describe(
-          'A specific, action-focused title reflecting what just completed (max 50 characters). Avoid generic "I\'m researching" phrases.'
-        ),
-      message: z
-        .string()
-        .describe(
-          "A concrete description of what was accomplished in this step, including specific details, numbers, or findings when available (max 200 characters)"
-        ),
+    output: Output.object({
+      schema: z.object({
+        title: z
+          .string()
+          .describe(
+            'A specific, action-focused title reflecting what just completed (max 50 characters). Avoid generic "I\'m researching" phrases.'
+          ),
+        message: z
+          .string()
+          .describe(
+            "A concrete description of what was accomplished in this step, including specific details, numbers, or findings when available (max 200 characters)"
+          ),
+      }),
     }),
     messages: [{ role: "user", content: prompt }],
     maxOutputTokens: 200,
@@ -133,7 +135,7 @@ async function generateStatusUpdate(
     );
   }
 
-  return result.object;
+  return result.output as { title: string; message: string };
 }
 
 // Helper function to filter messages by type
@@ -177,9 +179,11 @@ async function clarifyWithUser(
     clarifyModelContextWindow
   );
 
-  const response = await generateObject({
+  const response = await generateText({
     model,
-    schema: ClarifyWithUserSchema,
+    output: Output.object({
+      schema: ClarifyWithUserSchema,
+    }),
     messages: truncatedClarifyMessages,
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: {
@@ -201,10 +205,13 @@ async function clarifyWithUser(
     );
   }
 
-  if (response.object.need_clarification) {
+  const clarifyOutput = response.output as z.infer<
+    typeof ClarifyWithUserSchema
+  >;
+  if (clarifyOutput.need_clarification) {
     return {
       needsClarification: true,
-      clarificationMessage: response.object.question,
+      clarificationMessage: clarifyOutput.question,
     };
   }
   return { needsClarification: false };
@@ -258,9 +265,11 @@ async function writeResearchBrief({
     briefModelContextWindow
   );
 
-  const result = await generateObject({
+  const result = await generateText({
     model,
-    schema: ResearchQuestionSchema,
+    output: Output.object({
+      schema: ResearchQuestionSchema,
+    }),
     messages: truncatedBriefMessages,
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: {
@@ -282,21 +291,23 @@ async function writeResearchBrief({
     );
   }
 
+  const output = result.output as z.infer<typeof ResearchQuestionSchema>;
+
   dataStream.write({
     id: dataPartId,
     type: "data-researchUpdate",
     data: {
       toolCallId,
       title: "Writing research brief",
-      message: result.object.research_brief,
+      message: output.research_brief,
       type: "writing",
       status: "completed",
     },
   });
 
   return {
-    research_brief: result.object.research_brief,
-    title: result.object.title,
+    research_brief: output.research_brief,
+    title: output.title,
   };
 }
 

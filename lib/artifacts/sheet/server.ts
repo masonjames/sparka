@@ -1,4 +1,4 @@
-import { streamObject } from "ai";
+import { Output, streamText } from "ai";
 import { z } from "zod";
 import type { AppModelId } from "@/lib/ai/app-models";
 import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
@@ -17,32 +17,29 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
   }) => {
     let draftContent = "";
 
-    const result = streamObject({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: sheetPrompt,
       experimental_telemetry: { isEnabled: true },
       prompt,
-      schema: z.object({
-        csv: z.string().describe("CSV data"),
+      output: Output.object({
+        schema: z.object({
+          csv: z.string().describe("CSV data"),
+        }),
       }),
     });
 
-    for await (const delta of result.fullStream) {
-      const { type } = delta;
+    for await (const partialObject of result.partialOutputStream) {
+      const { csv } = partialObject;
 
-      if (type === "object") {
-        const { object } = delta;
-        const { csv } = object;
+      if (csv) {
+        dataStream.write({
+          type: "data-sheetDelta",
+          data: csv,
+          transient: true,
+        });
 
-        if (csv) {
-          dataStream.write({
-            type: "data-sheetDelta",
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
+        draftContent = csv;
       }
     }
 
@@ -70,32 +67,29 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
   }) => {
     let draftContent = "";
 
-    const result = streamObject({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content, "sheet"),
       experimental_telemetry: { isEnabled: true },
       prompt: description,
-      schema: z.object({
-        csv: z.string(),
+      output: Output.object({
+        schema: z.object({
+          csv: z.string(),
+        }),
       }),
     });
 
-    for await (const delta of result.fullStream) {
-      const { type } = delta;
+    for await (const partialObject of result.partialOutputStream) {
+      const { csv } = partialObject;
 
-      if (type === "object") {
-        const { object } = delta;
-        const { csv } = object;
+      if (csv) {
+        dataStream.write({
+          type: "data-sheetDelta",
+          data: csv,
+          transient: true,
+        });
 
-        if (csv) {
-          dataStream.write({
-            type: "data-sheetDelta",
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
+        draftContent = csv;
       }
     }
 

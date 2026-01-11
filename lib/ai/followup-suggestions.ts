@@ -1,4 +1,4 @@
-import { type ModelMessage, streamObject } from "ai";
+import { type ModelMessage, Output, streamText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { StreamWriter } from "@/lib/ai/types";
@@ -11,7 +11,7 @@ export async function generateFollowupSuggestions(
   const maxQuestionCount = 5;
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
-  return streamObject({
+  return streamText({
     model: await getLanguageModel(
       siteConfig.models.defaults.followupSuggestions
     ),
@@ -22,11 +22,13 @@ export async function generateFollowupSuggestions(
         content: `What question should I ask next? Return an array of suggested questions (minimum ${minQuestionCount}, maximum ${maxQuestionCount}). Each question should be no more than ${maxCharactersPerQuestion} characters.`,
       },
     ],
-    schema: z.object({
-      suggestions: z
-        .array(z.string())
-        .min(minQuestionCount)
-        .max(maxQuestionCount),
+    output: Output.object({
+      schema: z.object({
+        suggestions: z
+          .array(z.string())
+          .min(minQuestionCount)
+          .max(maxQuestionCount),
+      }),
     }),
   });
 }
@@ -41,7 +43,7 @@ export async function streamFollowupSuggestions({
   const dataPartId = generateUUID();
   const result = await followupSuggestionsResult;
 
-  for await (const chunk of result.partialObjectStream) {
+  for await (const chunk of result.partialOutputStream) {
     writer.write({
       id: dataPartId,
       type: "data-followupSuggestions",
