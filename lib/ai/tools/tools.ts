@@ -95,8 +95,7 @@ export function getTools({
           generateImage: generateImageTool({
             attachments,
             lastGeneratedImage,
-            // If the currently selected chat model can generate images (multimodal),
-            // prefer it. Otherwise, the tool falls back to siteConfig.models.defaults.image.
+
             modelId: imageToolModelId,
             costAccumulator,
           }),
