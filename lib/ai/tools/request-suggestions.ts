@@ -1,4 +1,4 @@
-import { streamObject, tool } from "ai";
+import { Output, streamText, tool } from "ai";
 import { z } from "zod";
 import type { ToolSession } from "@/lib/ai/tools/types";
 import { getDocumentById, saveSuggestions } from "@/lib/db/queries";
@@ -7,6 +7,51 @@ import { generateUUID } from "@/lib/utils";
 import { DEFAULT_ARTIFACT_SUGGESTION_MODEL } from "../app-models";
 import { getLanguageModel } from "../providers";
 import type { StreamWriter } from "../types";
+
+const writingSuggestionSchema = z.object({
+  originalSentence: z.string().describe("The original sentence"),
+  suggestedSentence: z.string().describe("The suggested sentence"),
+  description: z.string().describe("The description of the suggestion"),
+});
+
+type WritingSuggestionElement = z.infer<typeof writingSuggestionSchema>;
+
+function isCompleteWritingSuggestionElement(
+  element: Partial<WritingSuggestionElement> | undefined
+): element is WritingSuggestionElement {
+  return Boolean(
+    element?.originalSentence &&
+      element?.suggestedSentence &&
+      element?.description
+  );
+}
+
+async function streamWritingSuggestionElements({
+  partialOutputStream,
+  onElement,
+}: {
+  partialOutputStream: AsyncIterable<
+    Array<Partial<WritingSuggestionElement> | undefined>
+  >;
+  onElement: (element: WritingSuggestionElement) => void;
+}): Promise<void> {
+  const processedIndices = new Set<number>();
+  for await (const partialArray of partialOutputStream) {
+    for (let i = 0; i < partialArray.length; i++) {
+      if (processedIndices.has(i)) {
+        continue;
+      }
+
+      const element = partialArray[i];
+      if (!isCompleteWritingSuggestionElement(element)) {
+        continue;
+      }
+
+      processedIndices.add(i);
+      onElement(element);
+    }
+  }
+}
 
 type RequestSuggestionsProps = {
   session: ToolSession;
@@ -54,42 +99,41 @@ Behavior:
         "userId" | "createdAt" | "documentCreatedAt"
       >[] = [];
 
-      const { elementStream } = streamObject({
+      const result = streamText({
         model: await getLanguageModel(DEFAULT_ARTIFACT_SUGGESTION_MODEL),
         experimental_telemetry: { isEnabled: true },
-
         system:
           "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
         prompt: document.content,
-        output: "array",
-        schema: z.object({
-          originalSentence: z.string().describe("The original sentence"),
-          suggestedSentence: z.string().describe("The suggested sentence"),
-          description: z.string().describe("The description of the suggestion"),
+        output: Output.array({
+          element: writingSuggestionSchema,
         }),
       });
 
-      for await (const element of elementStream) {
-        const suggestion: Suggestion = {
-          originalText: element.originalSentence,
-          suggestedText: element.suggestedSentence,
-          description: element.description,
-          id: generateUUID(),
-          documentId,
-          isResolved: false,
-          createdAt: new Date(),
-          userId: session.user?.id ?? "",
-          documentCreatedAt: document.createdAt,
-        };
+      await streamWritingSuggestionElements({
+        partialOutputStream: result.partialOutputStream,
+        onElement: (element) => {
+          const suggestion: Suggestion = {
+            originalText: element.originalSentence,
+            suggestedText: element.suggestedSentence,
+            description: element.description,
+            id: generateUUID(),
+            documentId,
+            isResolved: false,
+            createdAt: new Date(),
+            userId: session.user?.id ?? "",
+            documentCreatedAt: document.createdAt,
+          };
 
-        dataStream.write({
-          type: "data-suggestion",
-          data: suggestion,
-          transient: true,
-        });
+          dataStream.write({
+            type: "data-suggestion",
+            data: suggestion,
+            transient: true,
+          });
 
-        suggestions.push(suggestion);
-      }
+          suggestions.push(suggestion);
+        },
+      });
 
       if (session.user?.id) {
         const userId = session.user.id;
