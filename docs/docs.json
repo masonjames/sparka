@@ -67,7 +67,8 @@
               "reference/config",
               "reference/architecture",
               "reference/routing",
-              "reference/auth-internals"
+              "reference/auth-internals",
+              "reference/evaluations"
             ]
           }
         ]

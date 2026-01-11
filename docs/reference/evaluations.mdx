@@ -1,0 +1,158 @@
+---
+title: Evaluations
+description: Test and measure AI agent quality with Evalite
+---
+
+ChatJS uses [Evalite](https://v1.evalite.dev) to evaluate AI agent outputs. Evaluations help you measure response quality, catch regressions, and iterate on prompts with confidence.
+
+## How It Works
+
+Evaluations follow a simple structure:
+
+1. **Data**: Test cases with inputs and expected outputs
+2. **Task**: The AI operation being evaluated
+3. **Scorers**: Functions that grade the output
+
+Results are stored in SQLite and displayed in a web UI at `localhost:3006`.
+
+## Running Evaluations
+
+```bash
+# Watch mode (re-runs on file changes)
+bun eval:dev
+
+# View results UI
+bun eval:serve
+```
+
+## Writing Evaluations
+
+Create files with the `.eval.ts` extension in the `evals/` directory.
+
+### Basic Example
+
+```ts
+import { evalite } from "evalite";
+import { runCoreChatAgentEval } from "@/lib/ai/eval-agent";
+import type { ChatMessage } from "@/lib/ai/types";
+import { generateUUID } from "@/lib/utils";
+
+evalite("Chat Agent Eval", {
+  data: async () => [
+    {
+      input: "What's the capital of France?",
+      expected: "Paris",
+    },
+  ],
+  task: async (input) => {
+    const userMessage: ChatMessage = {
+      id: generateUUID(),
+      role: "user",
+      parts: [{ type: "text", text: input }],
+      metadata: {
+        createdAt: new Date(),
+        parentMessageId: null,
+        selectedModel: "anthropic/claude-haiku-4.5",
+        activeStreamId: null,
+      },
+    };
+
+    const result = await runCoreChatAgentEval({
+      userMessage,
+      previousMessages: [],
+      selectedModelId: "anthropic/claude-haiku-4.5",
+      activeTools: [],
+    });
+
+    return result.finalText;
+  },
+  scorers: [
+    {
+      name: "Contains Expected",
+      description: "Checks if output contains the expected answer",
+      scorer: ({ output, expected }) => {
+        return output.toLowerCase().includes(expected.toLowerCase()) ? 1 : 0;
+      },
+    },
+  ],
+});
+```
+
+## The Eval Agent
+
+`runCoreChatAgentEval` in `lib/ai/eval-agent.ts` wraps the core chat agent for evaluation contexts. It:
+
+- Uses a no-op stream writer (tools can write but nothing happens)
+- Discards cost accumulation
+- Returns structured results including tool calls and follow-up suggestions
+
+```ts
+type EvalAgentResult = {
+  finalText: string;
+  assistantMessage: ChatMessage;
+  usage: LanguageModelUsage | undefined;
+  toolResults: Array<{
+    toolName: string;
+    type: string;
+    state?: string;
+  }>;
+  followupSuggestions: string[];
+};
+```
+
+## Custom Scorers
+
+Scorers receive the output, expected value, and input. Return a number between 0 and 1:
+
+```ts
+{
+  name: "Scorer Name",
+  description: "What this scorer checks",
+  scorer: ({ output, expected, input }) => {
+    // Your scoring logic
+    return score; // 0 to 1
+  },
+}
+```
+
+Evalite also provides built-in scorers like `exactMatch`, `answerCorrectness`, and `answerRelevancy`.
+
+## Testing with Tools
+
+Pass tools to `activeTools` to test agent behavior with specific capabilities:
+
+```ts
+const result = await runCoreChatAgentEval({
+  userMessage,
+  previousMessages: [],
+  selectedModelId: "anthropic/claude-haiku-4.5",
+  activeTools: ["webSearch", "createDocument"],
+});
+
+// Check which tools were called
+console.log(result.toolResults);
+```
+
+## Setup File
+
+The `evals/setup.ts` file configures the evaluation environment:
+
+```ts
+import { config } from "dotenv";
+import { vi } from "vitest";
+
+config({ path: ".env.local" });
+
+vi.mock("server-only", () => ({}));
+```
+
+This loads environment variables and mocks server-only imports so evaluations can run outside Next.js.
+
+## Key Files
+
+| File | Purpose |
+| --- | --- |
+| `evals/*.eval.ts` | Evaluation test files |
+| `evals/setup.ts` | Environment configuration |
+| `lib/ai/eval-agent.ts` | Eval wrapper for core chat agent |
+| `node_modules/.evalite/` | SQLite database with results |
