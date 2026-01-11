@@ -542,8 +542,7 @@ export function useGetCredits() {
   }
 
   return {
-    credits: (creditsData as { totalCredits: number } | undefined)
-      ?.totalCredits,
+    credits: creditsData?.credits,
     isLoadingCredits,
   };
 }

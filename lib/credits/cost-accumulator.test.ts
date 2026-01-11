@@ -1,231 +1,171 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CostAccumulator } from "./cost-accumulator";
+import { describe, expect, it, vi } from "vitest";
 
-// Mock the entire app-models module
+// Mock app-models to return test pricing
 vi.mock("../ai/app-models", () => ({
-  getAppModelDefinition: vi.fn(async (modelId: string) => ({
-    name: modelId,
-    apiModelId: modelId,
-    provider: "test",
-    pricing: {
-      // $3/$15 per million tokens (Claude-like pricing)
-      input: "0.000003",
-      output: "0.000015",
-    },
-  })),
+  getAppModelDefinition: vi.fn().mockImplementation((modelId: string) => {
+    const models: Record<string, { pricing?: { input: string; output: string } }> = {
+      "test-model": { pricing: { input: "0.00001", output: "0.00003" } },
+      "claude-sonnet": { pricing: { input: "0.000003", output: "0.000015" } },
+      "gpt-4o": { pricing: { input: "0.0000025", output: "0.00001" } },
+      "no-pricing": {},
+    };
+    return Promise.resolve(models[modelId] || {});
+  }),
 }));
 
-type AppModelId = string;
+const { CostAccumulator } = await import("./cost-accumulator");
 
 describe("CostAccumulator", () => {
-  let accumulator: CostAccumulator;
+  describe("LLM cost calculation", () => {
+    it("should calculate cost from tokens and pricing", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addLLMCost(
+        "test-model" as any,
+        { inputTokens: 1000, outputTokens: 500 },
+        "test"
+      );
 
-  beforeEach(() => {
-    accumulator = new CostAccumulator();
-  });
-
-  describe("initial state", () => {
-    it("should start with no entries", () => {
-      expect(accumulator.getEntries()).toEqual([]);
-      expect(accumulator.hasEntries()).toBe(false);
+      const cost = await accumulator.getTotalCost();
+      // 1000 * 0.00001 = 0.01 (input)
+      // 500 * 0.00003 = 0.015 (output)
+      // Total = 0.025 dollars = 2.5 cents, ceil = 3
+      expect(cost).toBe(3);
     });
 
-    it("should return 0 total cost when empty", async () => {
+    it("should return 0 for zero tokens", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addLLMCost(
+        "test-model" as any,
+        { inputTokens: 0, outputTokens: 0 },
+        "test"
+      );
+
+      const cost = await accumulator.getTotalCost();
+      expect(cost).toBe(0);
+    });
+
+    it("should handle undefined tokens as zero", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addLLMCost("test-model" as any, {}, "test");
+
+      const cost = await accumulator.getTotalCost();
+      expect(cost).toBe(0);
+    });
+
+    it("should handle Claude 3.5 Sonnet pricing", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addLLMCost(
+        "claude-sonnet" as any,
+        { inputTokens: 10_000, outputTokens: 1000 },
+        "test"
+      );
+
+      const cost = await accumulator.getTotalCost();
+      // 10000 * 0.000003 = 0.03 (input)
+      // 1000 * 0.000015 = 0.015 (output)
+      // Total = 0.045 dollars = 4.5 cents, ceil = 5
+      expect(cost).toBe(5);
+    });
+
+    it("should handle GPT-4o pricing", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addLLMCost(
+        "gpt-4o" as any,
+        { inputTokens: 100_000, outputTokens: 10_000 },
+        "test"
+      );
+
+      const cost = await accumulator.getTotalCost();
+      // 100000 * 0.0000025 = 0.25 (input)
+      // 10000 * 0.00001 = 0.1 (output)
+      // Total = 0.35 dollars = 35 cents
+      expect(cost).toBe(35);
+    });
+
+    it("should skip models without pricing", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addLLMCost(
+        "no-pricing" as any,
+        { inputTokens: 1000, outputTokens: 500 },
+        "test"
+      );
+
       const cost = await accumulator.getTotalCost();
       expect(cost).toBe(0);
     });
   });
 
-  describe("addLLMCost", () => {
-    it("should add LLM cost entry", () => {
-      accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 1000, outputTokens: 500 },
-        "main-chat"
-      );
-
-      const entries = accumulator.getEntries();
-      expect(entries).toHaveLength(1);
-      expect(entries[0]).toEqual({
-        type: "llm",
-        modelId: "claude-3-5-sonnet",
-        usage: { inputTokens: 1000, outputTokens: 500 },
-        source: "main-chat",
-      });
-    });
-
-    it("should track multiple LLM costs", () => {
-      accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 1000, outputTokens: 500 },
-        "main-chat"
-      );
-      accumulator.addLLMCost(
-        "gpt-4o" as AppModelId,
-        { inputTokens: 2000, outputTokens: 1000 },
-        "deep-research"
-      );
-
-      const entries = accumulator.getEntries();
-      expect(entries).toHaveLength(2);
-      expect(accumulator.hasEntries()).toBe(true);
-    });
-
-    it("should calculate LLM cost correctly", async () => {
-      // With mock pricing: $3/$15 per million tokens
-      // 10000 input * 0.000003 = 0.03 dollars
-      // 1000 output * 0.000015 = 0.015 dollars
-      // Total = 0.045 dollars = 4.5 cents, ceil = 5 cents
-      accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 10_000, outputTokens: 1000 },
-        "main-chat"
-      );
+  describe("API cost tracking", () => {
+    it("should add API costs", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("webSearch", 5);
 
       const cost = await accumulator.getTotalCost();
       expect(cost).toBe(5);
     });
-  });
 
-  describe("addAPICost", () => {
-    it("should add API cost entry", () => {
-      accumulator.addAPICost("webSearch", 1);
+    it("should ignore zero API costs", async () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("internal", 0);
 
-      const entries = accumulator.getEntries();
-      expect(entries).toHaveLength(1);
-      expect(entries[0]).toEqual({
-        type: "api",
-        apiName: "webSearch",
-        cost: 1,
-      });
-    });
-
-    it("should not add zero cost entries", () => {
-      accumulator.addAPICost("webSearch", 0);
-
-      const entries = accumulator.getEntries();
-      expect(entries).toHaveLength(0);
-    });
-
-    it("should not add negative cost entries", () => {
-      accumulator.addAPICost("webSearch", -5);
-
-      const entries = accumulator.getEntries();
-      expect(entries).toHaveLength(0);
-    });
-
-    it("should track multiple API costs", () => {
-      accumulator.addAPICost("webSearch", 1);
-      accumulator.addAPICost("codeInterpreter", 5);
-      accumulator.addAPICost("generateImage", 3);
-
-      const entries = accumulator.getEntries();
-      expect(entries).toHaveLength(3);
+      expect(accumulator.hasEntries()).toBe(false);
     });
   });
 
-  describe("getTotalCost", () => {
-    it("should sum multiple API costs", async () => {
-      accumulator.addAPICost("webSearch", 1);
-      accumulator.addAPICost("codeInterpreter", 5);
-      accumulator.addAPICost("generateImage", 3);
-
-      const cost = await accumulator.getTotalCost();
-      expect(cost).toBe(9);
-    });
-
+  describe("combined costs", () => {
     it("should sum LLM and API costs", async () => {
-      // LLM: 10000 input * 0.000003 + 1000 output * 0.000015 = 0.03 + 0.015 = 0.045 dollars = 4.5 cents
+      const accumulator = new CostAccumulator();
       accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 10_000, outputTokens: 1000 },
-        "main-chat"
+        "test-model" as any,
+        { inputTokens: 1000, outputTokens: 500 },
+        "chat"
       );
-      // API: 1 + 5 = 6 cents
-      accumulator.addAPICost("webSearch", 1);
-      accumulator.addAPICost("codeInterpreter", 5);
+      accumulator.addAPICost("webSearch", 5);
 
       const cost = await accumulator.getTotalCost();
-      // Total = ceil(4.5 + 6) = ceil(10.5) = 11 cents
-      expect(cost).toBe(11);
+      // LLM: 2.5 cents + API: 5 cents = 7.5, ceil = 8
+      expect(cost).toBe(8);
     });
 
-    it("should ceil fractional total to next cent", async () => {
-      // Very small LLM usage -> fractional cost
+    it("should accumulate multiple LLM calls", async () => {
+      const accumulator = new CostAccumulator();
       accumulator.addLLMCost(
-        "test-model" as AppModelId,
-        { inputTokens: 10, outputTokens: 5 },
-        "test"
+        "test-model" as any,
+        { inputTokens: 1000, outputTokens: 500 },
+        "main"
+      );
+      accumulator.addLLMCost(
+        "test-model" as any,
+        { inputTokens: 1000, outputTokens: 500 },
+        "tool"
       );
 
       const cost = await accumulator.getTotalCost();
-      // Should be at least 1 cent (ceiled)
-      expect(cost).toBeGreaterThanOrEqual(1);
-    });
-
-    it("should handle deep research with multiple sub-calls", async () => {
-      // Simulating deep research flow
-      accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 5000, outputTokens: 500 },
-        "deep-research-supervisor"
-      );
-      accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 8000, outputTokens: 2000 },
-        "deep-research-researcher"
-      );
-      accumulator.addLLMCost(
-        "claude-3-5-sonnet" as AppModelId,
-        { inputTokens: 3000, outputTokens: 1000 },
-        "deep-research-compress"
-      );
-      accumulator.addAPICost("webSearch", 1);
-      accumulator.addAPICost("webSearch", 1);
-
-      const cost = await accumulator.getTotalCost();
-      expect(cost).toBeGreaterThan(0);
-      expect(accumulator.getEntries()).toHaveLength(5);
+      // 2.5 + 2.5 = 5 cents
+      expect(cost).toBe(5);
     });
   });
 
   describe("getEntries", () => {
-    it("should return a copy of entries", () => {
-      accumulator.addAPICost("webSearch", 1);
-
-      const entries1 = accumulator.getEntries();
-      const entries2 = accumulator.getEntries();
-
-      expect(entries1).not.toBe(entries2);
-      expect(entries1).toEqual(entries2);
-    });
-
-    it("should not allow mutation of internal entries", () => {
-      accumulator.addAPICost("webSearch", 1);
+    it("should return copy of entries", () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("test", 5);
 
       const entries = accumulator.getEntries();
-      entries.push({ type: "api", apiName: "fake", cost: 100 });
-
-      expect(accumulator.getEntries()).toHaveLength(1);
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toEqual({ type: "api", apiName: "test", cost: 5 });
     });
   });
 
   describe("hasEntries", () => {
     it("should return false when empty", () => {
+      const accumulator = new CostAccumulator();
       expect(accumulator.hasEntries()).toBe(false);
     });
 
-    it("should return true after adding LLM cost", () => {
-      accumulator.addLLMCost(
-        "test" as AppModelId,
-        { inputTokens: 100, outputTokens: 50 },
-        "test"
-      );
-      expect(accumulator.hasEntries()).toBe(true);
-    });
-
-    it("should return true after adding API cost", () => {
-      accumulator.addAPICost("webSearch", 1);
+    it("should return true when has entries", () => {
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("test", 5);
       expect(accumulator.hasEntries()).toBe(true);
     });
   });

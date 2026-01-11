@@ -1,9 +1,22 @@
 import type { AppModelDefinition, AppModelId } from "../ai/app-models";
 import { getAppModelDefinition } from "../ai/app-models";
-import { calculateLLMCost } from "./cost-utils";
 
 /** Minimal usage info needed for cost calculation */
 export type UsageInfo = { inputTokens?: number; outputTokens?: number };
+
+/**
+ * Calculate LLM cost in CENTS from AI SDK usage data and model pricing.
+ * Pricing is per-token in dollars (e.g., "0.00000006" = $0.06 per million tokens).
+ */
+function calculateLLMCost(
+  usage: UsageInfo,
+  pricing: { input: string; output: string }
+): number {
+  const inputCost = (usage.inputTokens ?? 0) * Number.parseFloat(pricing.input);
+  const outputCost =
+    (usage.outputTokens ?? 0) * Number.parseFloat(pricing.output);
+  return (inputCost + outputCost) * 100;
+}
 
 type LLMCostEntry = {
   type: "llm";

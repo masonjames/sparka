@@ -29,7 +29,7 @@ To add cost tracking to a new tool:
 
 | File | Purpose |
 | --- | --- |
-| `lib/credits/cost-accumulator.ts` | CostAccumulator class |
-| `lib/credits/cost-utils.ts` | LLM cost calculation from token usage |
+| `lib/credits/cost-accumulator.ts` | CostAccumulator class with LLM cost calculation |
+| `lib/repositories/credits.ts` | Credit storage (getCredits, deductCredits, addCredits) |
 | `lib/ai/tools/tools-definitions.ts` | Fixed API costs per tool |
 | `app/(chat)/api/chat/route.ts` | Instantiates accumulator and finalizes costs |

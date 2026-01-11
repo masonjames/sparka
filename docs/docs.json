@@ -42,6 +42,7 @@
               "patterns/follow-up-questions",
               "patterns/chat-layout",
               "patterns/resumable-streams",
+              "patterns/provisional-chat-ids",
               "patterns/credit-tracking",
               "patterns/dev-auth-bypass"
             ]
