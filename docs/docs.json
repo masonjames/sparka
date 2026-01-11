@@ -63,7 +63,12 @@
           },
           {
             "group": "Reference",
-            "pages": ["reference/config", "reference/architecture", "reference/routing", "reference/auth-internals"]
+            "pages": [
+              "reference/config",
+              "reference/architecture",
+              "reference/routing",
+              "reference/auth-internals"
+            ]
           }
         ]
       }

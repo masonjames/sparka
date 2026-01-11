@@ -56,9 +56,7 @@ import { LoginPrompt } from "./upgrade-cta/login-prompt";
 const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
 /** Derive accept string for images only */
-function getAcceptImages(
-  acceptedTypes: Record<string, string[]>
-): string {
+function getAcceptImages(acceptedTypes: Record<string, string[]>): string {
   return Object.entries(acceptedTypes)
     .filter(([mime]) => mime.startsWith("image/"))
     .flatMap(([, exts]) => exts)
@@ -66,9 +64,7 @@ function getAcceptImages(
 }
 
 /** Derive accept string for non-image files only */
-function getAcceptFiles(
-  acceptedTypes: Record<string, string[]>
-): string {
+function getAcceptFiles(acceptedTypes: Record<string, string[]>): string {
   return Object.entries(acceptedTypes)
     .filter(([mime]) => !mime.startsWith("image/"))
     .flatMap(([, exts]) => exts)
@@ -136,10 +132,7 @@ function PureMultimodalInput({
     () => getAcceptFiles(acceptedTypes),
     [acceptedTypes]
   );
-  const acceptAll = useMemo(
-    () => getAcceptAll(acceptedTypes),
-    [acceptedTypes]
-  );
+  const acceptAll = useMemo(() => getAcceptAll(acceptedTypes), [acceptedTypes]);
 
   // Helper function to auto-switch to PDF-compatible model
   const switchToPdfCompatibleModel = useCallback(() => {

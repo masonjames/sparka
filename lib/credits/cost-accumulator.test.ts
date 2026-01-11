@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 // Mock app-models to return test pricing
 vi.mock("../ai/app-models", () => ({
   getAppModelDefinition: vi.fn().mockImplementation((modelId: string) => {
-    const models: Record<string, { pricing?: { input: string; output: string } }> = {
+    const models: Record<
+      string,
+      { pricing?: { input: string; output: string } }
+    > = {
       "test-model": { pricing: { input: "0.00001", output: "0.00003" } },
       "claude-sonnet": { pricing: { input: "0.000003", output: "0.000015" } },
       "gpt-4o": { pricing: { input: "0.0000025", output: "0.00001" } },

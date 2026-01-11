@@ -246,7 +246,10 @@ async function executeInSandbox({
   chartPath: string;
   log: ReturnType<typeof createModuleLogger>;
   requestId: string;
-}): Promise<{ message: string; chart: string | { base64: string; format: string } }> {
+}): Promise<{
+  message: string;
+  chart: string | { base64: string; format: string };
+}> {
   const baseInstallResult = await installBasePackages(
     sandbox,
     basePackages,
