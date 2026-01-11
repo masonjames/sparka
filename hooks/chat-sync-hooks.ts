@@ -354,7 +354,6 @@ export function useSaveMessageMutation() {
   const trpc = useTRPC();
   const qc = useQueryClient();
 
-  const { confirmChatId } = useChatId();
   return useMutation({
     // Message is saved in the backend by another route. This doesn't need to actually mutate
     mutationFn: (_: { message: ChatMessage; chatId: string }) =>
@@ -371,8 +370,6 @@ export function useSaveMessageMutation() {
     onSuccess: async (_data, { message, chatId }) => {
       if (message.role === "assistant") {
         if (isAuthenticated) {
-          // TODO: Move this to the data-stream-handler (earlier) once the query cache is independent of message
-          confirmChatId(chatId);
           qc.invalidateQueries({
             queryKey: trpc.credits.getAvailableCredits.queryKey(),
           });

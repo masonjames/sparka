@@ -1,10 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-
-const SHARE_ROUTE_PREFIX = /^\/share\/[^/]+(?:\/|$)/;
+import { useMemo } from "react";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 
 export function useIsSharedRoute(): boolean {
   const pathname = usePathname();
-  return Boolean(pathname && SHARE_ROUTE_PREFIX.test(pathname));
+  return useMemo(
+    () => parseChatIdFromPathname(pathname).source === "share",
+    [pathname]
+  );
 }

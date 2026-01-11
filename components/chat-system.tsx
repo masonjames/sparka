@@ -58,7 +58,7 @@ export const ChatSystem = memo(function PureChatSystem({
 }) {
   return (
     <ArtifactProvider>
-      <DataStreamProvider>
+      <DataStreamProvider key={id}>
         <CustomStoreProvider<ChatMessage>
           initialMessages={initialMessages}
           key={id}

@@ -1,8 +1,10 @@
 export type ChatIdType = "chat" | "provisional";
 
+export type RouteSource = "share" | "project" | "chat" | "home";
+
 export type ParsedChatIdFromPathname =
-  | { type: "chat"; id: string }
-  | { type: "provisional"; id: null };
+  | { type: "chat"; id: string; source: "share" | "project" | "chat"; projectId: string | null }
+  | { type: "provisional"; id: null; source: "project" | "home"; projectId: string | null };
 
 const SHARE_ROUTE_PATTERN = /^\/share\/(.+)$/;
 const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
@@ -18,26 +20,27 @@ export function parseChatIdFromPathname(
   // /share/:id → shared chat
   const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
   if (shareMatch) {
-    return { type: "chat", id: shareMatch[1] };
+    return { type: "chat", id: shareMatch[1], source: "share", projectId: null };
   }
 
   // /project/:projectId/chat/:chatId → chat
   // /project/:projectId → provisional (no chat id in path)
   const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
   if (projectMatch) {
+    const projectId = projectMatch[1];
     const chatId = projectMatch[2];
     if (chatId) {
-      return { type: "chat", id: chatId };
+      return { type: "chat", id: chatId, source: "project", projectId };
     }
-    return { type: "provisional", id: null };
+    return { type: "provisional", id: null, source: "project", projectId };
   }
 
   // /chat/:id → chat
   const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
   if (chatMatch) {
-    return { type: "chat", id: chatMatch[1] };
+    return { type: "chat", id: chatMatch[1], source: "chat", projectId: null };
   }
 
   // / or anything else → provisional
-  return { type: "provisional", id: null };
+  return { type: "provisional", id: null, source: "home", projectId: null };
 }

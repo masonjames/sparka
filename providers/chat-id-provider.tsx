@@ -27,41 +27,42 @@ const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [provisionalChatId, setProvisionalChatId] = useState<string>(() => {
-    const newId = generateUUID();
-    return newId;
-  });
+  const [{ provisionalChatId, confirmedChatId }, setChatIdState] = useState(
+    () => ({
+      provisionalChatId: generateUUID(),
+      confirmedChatId: null as string | null,
+    })
+  );
 
   const resolvedId = useMemo(
     () => parseChatIdFromPathname(pathname),
     [pathname]
   );
 
-  const [chatIsPersisted, setChatIsPersisted] = useState<boolean>(
-    resolvedId.id !== null
-  );
-
   const confirmChatIdPersisted = useCallback(
     (chatId: string) => {
       if (chatId !== provisionalChatId) {
+        console.error("Chat ID mismatch", chatId, provisionalChatId);
         throw new Error("Chat ID mismatch");
       }
-      setChatIsPersisted(true);
+      setChatIdState((prev) => ({ ...prev, confirmedChatId: chatId }));
     },
     [provisionalChatId]
   );
 
   const refreshChatID = useCallback(() => {
     const newId = generateUUID();
-    setProvisionalChatId(newId);
-    setChatIsPersisted(false);
+    setChatIdState({ provisionalChatId: newId, confirmedChatId: null });
+    window.history.pushState(null, "", "/");
   }, []);
 
   const value = useMemo(
     () => ({
       id: resolvedId.id ?? provisionalChatId,
       type: resolvedId.type,
-      isPersisted: chatIsPersisted,
+      isPersisted:
+        (resolvedId.id !== null && resolvedId.id !== provisionalChatId) ||
+        confirmedChatId === provisionalChatId,
       confirmChatId: confirmChatIdPersisted,
       refreshChatID,
     }),
@@ -69,11 +70,13 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
       resolvedId.id,
       resolvedId.type,
       provisionalChatId,
-      chatIsPersisted,
+      confirmedChatId,
       confirmChatIdPersisted,
       refreshChatID,
     ]
   );
+
+  console.log("CHAT ID PROVIDER", value);
 
   return (
     <ChatIdContext.Provider value={value}>{children}</ChatIdContext.Provider>

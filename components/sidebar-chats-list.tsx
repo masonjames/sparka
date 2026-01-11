@@ -8,6 +8,7 @@ import {
   useRenameChat,
 } from "@/hooks/chat-sync-hooks";
 import type { UIChat } from "@/lib/types/ui-chat";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { DeleteChatDialog } from "./delete-chat-dialog";
 import { SidebarChatItem } from "./sidebar-chat-item";
 import { Skeleton } from "./ui/skeleton";
@@ -20,8 +21,6 @@ type GroupedChats = {
   lastMonth: UIChat[];
   older: UIChat[];
 };
-
-const PROJECT_CHAT_REGEX = /^\/project\/[^/]+\/chat\/(.+)$/;
 
 export function SidebarChatsList() {
   const pathname = usePathname();
@@ -40,15 +39,8 @@ export function SidebarChatsList() {
 
   // Extract chatId from URL for /chat routes and /project routes
   const chatId = useMemo(() => {
-    if (pathname?.startsWith("/chat/")) {
-      return pathname.replace("/chat/", "") || null;
-    }
-    // Handle project routes: /project/:projectId/chat/:chatId
-    const projectMatch = pathname?.match(PROJECT_CHAT_REGEX);
-    if (projectMatch) {
-      return projectMatch[1] || null;
-    }
-    return null;
+    const parsed = parseChatIdFromPathname(pathname);
+    return parsed.id;
   }, [pathname]);
 
   const groupedChats = useMemo(() => {
