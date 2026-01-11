@@ -27,12 +27,13 @@ const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [{ provisionalChatId, confirmedChatId }, setChatIdState] = useState(
-    () => ({
-      provisionalChatId: generateUUID(),
-      confirmedChatId: null as string | null,
-    })
-  );
+  const [{ provisionalChatId, confirmedChatId }, setChatIdState] = useState<{
+    provisionalChatId: string;
+    confirmedChatId: string | null;
+  }>(() => ({
+    provisionalChatId: generateUUID(),
+    confirmedChatId: null,
+  }));
 
   const resolvedId = useMemo(
     () => parseChatIdFromPathname(pathname),
