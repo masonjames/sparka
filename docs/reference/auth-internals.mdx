@@ -1,48 +1,40 @@
-# Authentication
+---
+title: Auth Internals
+description: Authentication implementation details with Better Auth
+---
 
-This document explains how authentication is implemented in the codebase using [Better Auth](https://www.better-auth.com/).
-
-## Overview
-
-The application uses Better Auth for authentication with the following features:
-
-- **Social OAuth Providers**: Google, GitHub, and Vercel
-- **Database**: PostgreSQL with Drizzle ORM adapter
-- **Session Management**: Cookie-based sessions with optional caching
-- **Next.js Integration**: Full support for App Router, RSC, and Server Actions
+This page covers the internal architecture of the authentication system. For configuration, see [Authentication](/features/authentication).
 
 ## Architecture
 
 ```
 lib/
-├── auth.ts              # Server-side auth configuration
-├── auth-client.ts       # Client-side auth configuration
-├── db/
-│   └── schema.ts        # Database schema (includes auth tables)
-│
+  auth.ts              # Server-side auth configuration
+  auth-client.ts       # Client-side auth configuration
+  db/
+    schema.ts          # Database schema (includes auth tables)
+
 providers/
-├── session-provider.tsx # React context for session state
-│
+  session-provider.tsx # React context for session state
+
 app/
-├── api/auth/[...all]/
-│   └── route.ts         # Auth API route handler
-├── (auth)/
-│   ├── login/           # Login page
-│   └── register/        # Registration page
-│
-proxy.ts                 # Middleware for route protection
+  api/auth/[...all]/
+    route.ts           # Auth API route handler
+  (auth)/
+    login/             # Login page
+    register/          # Registration page
+
+proxy.ts               # Middleware for route protection
 ```
 
 ## Configuration Files
 
-### Server Configuration (`lib/auth.ts`)
+### Server Configuration
 
-The main auth configuration exports:
+The main auth configuration in `lib/auth.ts` exports:
 
 - `auth`: The Better Auth instance with all configuration
 - `Session`: TypeScript type inferred from the auth instance
-
-Key configuration options:
 
 ```typescript
 export const auth = betterAuth({
@@ -60,9 +52,9 @@ export const auth = betterAuth({
 });
 ```
 
-### Client Configuration (`lib/auth-client.ts`)
+### Client Configuration
 
-The client uses Better Auth's React integration:
+The client in `lib/auth-client.ts` uses Better Auth's React integration:
 
 ```typescript
 import { createAuthClient } from "better-auth/react";
@@ -129,9 +121,9 @@ return (
 
 ## Route Protection
 
-### Middleware (`proxy.ts`)
+### Middleware
 
-The proxy middleware protects routes using full database session validation:
+The proxy middleware in `proxy.ts` protects routes using full database session validation:
 
 ```typescript
 export async function proxy(req: NextRequest) {
@@ -150,7 +142,7 @@ export async function proxy(req: NextRequest) {
 }
 ```
 
-Public routes that don't require authentication:
+Public routes that do not require authentication:
 - `/` (home)
 - `/models`, `/compare`
 - `/share/*`
@@ -211,26 +203,6 @@ Better Auth uses these tables (defined in `lib/db/schema.ts`):
 | `session` | Active sessions (token, userId, expiresAt, etc.) |
 | `account` | OAuth provider links (providerId, accessToken, etc.) |
 | `verification` | Email/phone verification tokens |
-
-## Environment Variables
-
-Required variables for authentication:
-
-```env
-# Required
-AUTH_SECRET=         # Generate with: openssl rand -base64 32
-DATABASE_URL=        # PostgreSQL connection string
-
-# OAuth Providers (at least one required)
-AUTH_GOOGLE_ID=
-AUTH_GOOGLE_SECRET=
-
-AUTH_GITHUB_ID=
-AUTH_GITHUB_SECRET=
-
-VERCEL_APP_CLIENT_ID=
-VERCEL_APP_CLIENT_SECRET=
-```
 
 ## Session Type
 
@@ -293,9 +265,3 @@ session: {
 2. Configure the provider in `lib/auth.ts` socialProviders
 3. Add the provider toggle in `lib/config.ts`
 4. Update `components/social-auth-providers.tsx` to show the button
-
-## References
-
-- [Better Auth Documentation](https://www.better-auth.com/docs)
-- [Better Auth Next.js Integration](https://www.better-auth.com/docs/integrations/next)
-- [Better Auth Session Management](https://www.better-auth.com/docs/concepts/session-management)

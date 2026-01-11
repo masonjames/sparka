@@ -3,7 +3,33 @@ title: Credit Tracking
 description: Track and limit AI usage with credit budgets
 ---
 
-<Note>
-  This documentation is coming soon. The pattern is implemented in the starter
-  app.
-</Note>
+ChatJS includes a credit tracking system that monitors costs from LLM usage and external API calls. Credits are stored in cents and deducted after each request.
+
+## How It Works
+
+The `CostAccumulator` class collects costs throughout a request lifecycle:
+
+1. A new accumulator is created at request start
+2. The main chat stream adds LLM token costs on finish
+3. Tools report their costs after execution (either LLM tokens or fixed API costs)
+4. At request end, total cost is calculated and deducted from the user's balance
+
+The accumulator is passed through the call chain so nested operations (like deep research making multiple LLM calls) can report their costs back to the same accumulator.
+
+## Adding Cost Tracking to New Tools
+
+To add cost tracking to a new tool:
+
+1. Add `costAccumulator?: CostAccumulator` to your tool's props type
+2. Accept it in `getTools()` and pass to your tool factory
+3. After any LLM call, add: `costAccumulator?.addLLMCost(modelId, result.usage, "your-source")`
+4. For fixed API costs, add to `toolsDefinitions` and call: `costAccumulator?.addAPICost("toolName", cost)`
+
+## Key Files
+
+| File | Purpose |
+| --- | --- |
+| `lib/credits/cost-accumulator.ts` | CostAccumulator class |
+| `lib/credits/cost-utils.ts` | LLM cost calculation from token usage |
+| `lib/ai/tools/tools-definitions.ts` | Fixed API costs per tool |
+| `app/(chat)/api/chat/route.ts` | Instantiates accumulator and finalizes costs |
