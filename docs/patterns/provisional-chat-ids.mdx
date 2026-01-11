@@ -91,32 +91,12 @@ This generates a fresh provisional ID and navigates to the homepage. Because the
 
 ## The Flow
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        User Journey                             │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  1. Visit Homepage (/)                                          │
-│     └─> ChatIdProvider generates provisional ID: "abc123"       │
-│     └─> ChatSystem mounts with key="abc123"                     │
-│                                                                 │
-│  2. User Types Message                                          │
-│     └─> ChatInputProvider manages input state                   │
-│     └─> ID is still "abc123" (provisional)                      │
-│                                                                 │
-│  3. User Submits Message                                        │
-│     └─> Chat saved to database with ID "abc123"                 │
-│     └─> confirmChatId("abc123") marks it as persisted           │
-│     └─> URL updates to /chat/abc123 (no reload)                 │
-│     └─> Components stay mounted (same key)                      │
-│                                                                 │
-│  4. User Clicks "New Chat"                                      │
-│     └─> refreshChatID() generates new ID: "def456"              │
-│     └─> URL updates to / (no reload)                            │
-│     └─> ChatSystem remounts with key="def456" (fresh state)     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+1. **Visit homepage (`/`)** — `ChatIdProvider` generates provisional ID `abc123`
+2. **User types message** — ID is still `abc123` (provisional)
+3. **User submits message** — Chat saved to database with ID `abc123`
+4. **URL updates** — Changes to `/chat/abc123` via History API (no reload)
+5. **Components stay mounted** — Key unchanged, no remount
+6. **User clicks "New Chat"** — `refreshChatID` generates new ID, components remount with fresh state
 
 ## Key Components
 

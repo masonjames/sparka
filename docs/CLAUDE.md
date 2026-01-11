@@ -42,6 +42,7 @@
 - Relative paths for internal links
 - Never use em dashes (U+2014).
 - Avoid semicolons in prose. Prefer two sentences or parentheses.
+- Use Mermaid for diagrams instead of ASCII art
 
 ## Git workflow
 

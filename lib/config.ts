@@ -56,6 +56,19 @@ export type AnonymousConfig = {
   };
 };
 
+export type AttachmentsConfig = {
+  /** Max file size in bytes after compression */
+  maxBytes: number;
+  /** Max image dimension (width/height) */
+  maxDimension: number;
+  /** Accepted MIME types with their file extensions */
+  acceptedTypes: {
+    "image/png": string[];
+    "image/jpeg": string[];
+    "application/pdf": string[];
+  };
+};
+
 export type SiteConfig = {
   githubUrl: string;
   appPrefix: string;
@@ -122,6 +135,8 @@ export type SiteConfig = {
   models: ModelsConfig;
   /** Anonymous user configuration */
   anonymous: AnonymousConfig;
+  /** File attachment configuration */
+  attachments: AttachmentsConfig;
 };
 
 const isProd = process.env.NODE_ENV === "production";
@@ -250,6 +265,16 @@ export const siteConfig: SiteConfig = {
     rateLimit: {
       requestsPerMinute: isProd ? 5 : 60,
       requestsPerMonth: isProd ? 10 : 1000,
+    },
+  },
+
+  attachments: {
+    maxBytes: 1024 * 1024, // 1MB
+    maxDimension: 2048,
+    acceptedTypes: {
+      "image/png": [".png"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "application/pdf": [".pdf"],
     },
   },
 };

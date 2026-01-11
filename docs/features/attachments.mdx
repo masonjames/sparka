@@ -21,6 +21,8 @@ ChatJS supports file attachments in conversations. Files are uploaded to Vercel 
 
 ## Configuration
 
+### Environment Variables
+
 Requires `BLOB_READ_WRITE_TOKEN` from Vercel Blob:
 
 ```bash
@@ -28,6 +30,32 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_...
 ```
 
 On Vercel, this is auto-provided via the Blob integration.
+
+### Site Configuration
+
+File attachment settings are configured in `lib/config.ts` under the `attachments` key:
+
+```typescript
+attachments: {
+  maxBytes: 1024 * 1024,  // 1MB max after compression
+  maxDimension: 2048,     // Max image width/height
+  acceptedTypes: {
+    "image/png": [".png"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "application/pdf": [".pdf"],
+  },
+},
+```
+
+## Mobile Behavior
+
+On mobile devices, the attachment button shows a dropdown menu with separate options:
+
+- **Add photos** - Opens the device photo gallery
+- **Take photo** - Opens the camera directly
+- **Add files** - Opens the file browser for PDFs and documents
+
+This granular selection is intentional: some mobile platforms default to the image picker when the file input accepts both images and other file types, making it difficult for users to select non-image files like PDFs.
 
 ## Model Support
 
@@ -39,3 +67,5 @@ if (modelDefinition.input) {
   // Model supports file inputs
 }
 ```
+
+When a user attaches a file that the current model doesn't support, ChatJS automatically switches to a compatible model (configured via `config.models.defaults.pdf` and `config.models.defaults.chatImageCompatible`).

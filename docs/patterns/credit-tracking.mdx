@@ -25,6 +25,57 @@ To add cost tracking to a new tool:
 3. After any LLM call, add: `costAccumulator?.addLLMCost(modelId, result.usage, "your-source")`
 4. For fixed API costs, add to `toolsDefinitions` and call: `costAccumulator?.addAPICost("toolName", cost)`
 
+## Anonymous User Credits
+
+Anonymous users have a separate, simpler credit system stored in browser cookies instead of the database.
+
+### Why Two Systems?
+
+| Aspect | Anonymous | Authenticated |
+| --- | --- | --- |
+| Storage | Cookie (`anonymous_session`) | Database (`userCredit`) |
+| Unit | Message count | Cents (dollars × 100) |
+| Cost per request | Fixed: 1 credit | Actual LLM + API costs |
+| Deduction timing | Pre-streaming | Post-streaming |
+| Default balance | 10 (prod) / 1000 (dev) | Based on plan |
+
+The message-based system for anonymous users is intentional:
+- Easier to communicate ("10 free messages" vs explaining token costs)
+- Pre-deduction required because cookies cannot be set after response streaming begins
+- No need for database writes for unregistered users
+
+### How Anonymous Credits Work
+
+1. On first visit, a session is created with `ANONYMOUS_LIMITS.CREDITS` remaining
+2. Session is stored as JSON in the `anonymous-session` cookie
+3. Before each request, 1 credit is deducted and cookie is updated
+4. When credits reach 0, user is prompted to sign up
+
+### Configuration
+
+Anonymous limits are configured in `lib/config.ts`:
+
+```ts
+anonymous: {
+  credits: isProd ? 10 : 1000,
+  availableTools: ["createDocument", "updateDocument"],
+  rateLimit: {
+    requestsPerMinute: isProd ? 5 : 60,
+    requestsPerMonth: isProd ? 10 : 1000,
+  },
+}
+```
+
+### Anonymous Credit Files
+
+| File | Purpose |
+| --- | --- |
+| `lib/anonymous-session-client.ts` | Client-side cookie read/write |
+| `lib/anonymous-session-server.ts` | Server-side cookie read/write |
+| `lib/create-anonymous-session.ts` | Shared session factory |
+| `lib/types/anonymous.ts` | Types and `ANONYMOUS_LIMITS` |
+| `components/upgrade-cta/limit-display.tsx` | UI for remaining credits |
+
 ## Key Files
 
 | File | Purpose |
