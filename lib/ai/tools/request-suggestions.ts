@@ -8,6 +8,51 @@ import { DEFAULT_ARTIFACT_SUGGESTION_MODEL } from "../app-models";
 import { getLanguageModel } from "../providers";
 import type { StreamWriter } from "../types";
 
+const writingSuggestionSchema = z.object({
+  originalSentence: z.string().describe("The original sentence"),
+  suggestedSentence: z.string().describe("The suggested sentence"),
+  description: z.string().describe("The description of the suggestion"),
+});
+
+type WritingSuggestionElement = z.infer<typeof writingSuggestionSchema>;
+
+function isCompleteWritingSuggestionElement(
+  element: Partial<WritingSuggestionElement> | undefined
+): element is WritingSuggestionElement {
+  return Boolean(
+    element?.originalSentence &&
+      element?.suggestedSentence &&
+      element?.description
+  );
+}
+
+async function streamWritingSuggestionElements({
+  partialOutputStream,
+  onElement,
+}: {
+  partialOutputStream: AsyncIterable<
+    Array<Partial<WritingSuggestionElement> | undefined>
+  >;
+  onElement: (element: WritingSuggestionElement) => void;
+}): Promise<void> {
+  const processedIndices = new Set<number>();
+  for await (const partialArray of partialOutputStream) {
+    for (let i = 0; i < partialArray.length; i++) {
+      if (processedIndices.has(i)) {
+        continue;
+      }
+
+      const element = partialArray[i];
+      if (!isCompleteWritingSuggestionElement(element)) {
+        continue;
+      }
+
+      processedIndices.add(i);
+      onElement(element);
+    }
+  }
+}
+
 type RequestSuggestionsProps = {
   session: ToolSession;
   dataStream: StreamWriter;
@@ -54,12 +99,6 @@ Behavior:
         "userId" | "createdAt" | "documentCreatedAt"
       >[] = [];
 
-      const suggestionSchema = z.object({
-        originalSentence: z.string().describe("The original sentence"),
-        suggestedSentence: z.string().describe("The suggested sentence"),
-        description: z.string().describe("The description of the suggestion"),
-      });
-
       const result = streamText({
         model: await getLanguageModel(DEFAULT_ARTIFACT_SUGGESTION_MODEL),
         experimental_telemetry: { isEnabled: true },
@@ -67,43 +106,34 @@ Behavior:
           "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
         prompt: document.content,
         output: Output.array({
-          element: suggestionSchema,
+          element: writingSuggestionSchema,
         }),
       });
 
-      let lastLength = 0;
-      for await (const partialArray of result.partialOutputStream) {
-        // Only process new complete elements
-        if (partialArray.length > lastLength) {
-          const element = partialArray[lastLength];
-          if (
-            element?.originalSentence &&
-            element?.suggestedSentence &&
-            element?.description
-          ) {
-            lastLength = partialArray.length;
-            const suggestion: Suggestion = {
-              originalText: element.originalSentence,
-              suggestedText: element.suggestedSentence,
-              description: element.description,
-              id: generateUUID(),
-              documentId,
-              isResolved: false,
-              createdAt: new Date(),
-              userId: session.user?.id ?? "",
-              documentCreatedAt: document.createdAt,
-            };
+      await streamWritingSuggestionElements({
+        partialOutputStream: result.partialOutputStream,
+        onElement: (element) => {
+          const suggestion: Suggestion = {
+            originalText: element.originalSentence,
+            suggestedText: element.suggestedSentence,
+            description: element.description,
+            id: generateUUID(),
+            documentId,
+            isResolved: false,
+            createdAt: new Date(),
+            userId: session.user?.id ?? "",
+            documentCreatedAt: document.createdAt,
+          };
 
-            dataStream.write({
-              type: "data-suggestion",
-              data: suggestion,
-              transient: true,
-            });
+          dataStream.write({
+            type: "data-suggestion",
+            data: suggestion,
+            transient: true,
+          });
 
-            suggestions.push(suggestion);
-          }
-        }
-      }
+          suggestions.push(suggestion);
+        },
+      });
 
       if (session.user?.id) {
         const userId = session.user.id;
