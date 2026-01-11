@@ -1,4 +1,4 @@
-import { streamObject } from "ai";
+import { Output, streamText } from "ai";
 import { z } from "zod";
 import type { AppModelId } from "@/lib/ai/app-models";
 import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
@@ -17,32 +17,29 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
   }) => {
     let draftContent = "";
 
-    const result = streamObject({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: codePrompt,
       prompt,
       experimental_telemetry: { isEnabled: true },
-      schema: z.object({
-        code: z.string(),
+      output: Output.object({
+        schema: z.object({
+          code: z.string(),
+        }),
       }),
     });
 
-    for await (const delta of result.fullStream) {
-      const { type } = delta;
+    for await (const partialObject of result.partialOutputStream) {
+      const { code } = partialObject;
 
-      if (type === "object") {
-        const { object } = delta;
-        const { code } = object;
+      if (code) {
+        dataStream.write({
+          type: "data-codeDelta",
+          data: code ?? "",
+          transient: true,
+        });
 
-        if (code) {
-          dataStream.write({
-            type: "data-codeDelta",
-            data: code ?? "",
-            transient: true,
-          });
-
-          draftContent = code;
-        }
+        draftContent = code;
       }
     }
 
@@ -60,32 +57,29 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
   }) => {
     let draftContent = "";
 
-    const result = streamObject({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content || "", "code"),
       experimental_telemetry: { isEnabled: true },
       prompt: description,
-      schema: z.object({
-        code: z.string(),
+      output: Output.object({
+        schema: z.object({
+          code: z.string(),
+        }),
       }),
     });
 
-    for await (const delta of result.fullStream) {
-      const { type } = delta;
+    for await (const partialObject of result.partialOutputStream) {
+      const { code } = partialObject;
 
-      if (type === "object") {
-        const { object } = delta;
-        const { code } = object;
+      if (code) {
+        dataStream.write({
+          type: "data-codeDelta",
+          data: code ?? "",
+          transient: true,
+        });
 
-        if (code) {
-          dataStream.write({
-            type: "data-codeDelta",
-            data: code ?? "",
-            transient: true,
-          });
-
-          draftContent = code;
-        }
+        draftContent = code;
       }
     }
 

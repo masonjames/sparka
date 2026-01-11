@@ -1,4 +1,4 @@
-import { streamObject, tool } from "ai";
+import { Output, streamText, tool } from "ai";
 import { z } from "zod";
 import type { ToolSession } from "@/lib/ai/tools/types";
 import { getDocumentById, saveSuggestions } from "@/lib/db/queries";
@@ -54,41 +54,55 @@ Behavior:
         "userId" | "createdAt" | "documentCreatedAt"
       >[] = [];
 
-      const { elementStream } = streamObject({
+      const suggestionSchema = z.object({
+        originalSentence: z.string().describe("The original sentence"),
+        suggestedSentence: z.string().describe("The suggested sentence"),
+        description: z.string().describe("The description of the suggestion"),
+      });
+
+      const result = streamText({
         model: await getLanguageModel(DEFAULT_ARTIFACT_SUGGESTION_MODEL),
         experimental_telemetry: { isEnabled: true },
-
         system:
           "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
         prompt: document.content,
-        output: "array",
-        schema: z.object({
-          originalSentence: z.string().describe("The original sentence"),
-          suggestedSentence: z.string().describe("The suggested sentence"),
-          description: z.string().describe("The description of the suggestion"),
+        output: Output.array({
+          element: suggestionSchema,
         }),
       });
 
-      for await (const element of elementStream) {
-        const suggestion: Suggestion = {
-          originalText: element.originalSentence,
-          suggestedText: element.suggestedSentence,
-          description: element.description,
-          id: generateUUID(),
-          documentId,
-          isResolved: false,
-          createdAt: new Date(),
-          userId: session.user?.id ?? "",
-          documentCreatedAt: document.createdAt,
-        };
+      let lastLength = 0;
+      for await (const partialArray of result.partialOutputStream) {
+        // Only process new complete elements
+        if (partialArray.length > lastLength) {
+          const element = partialArray[lastLength];
+          if (
+            element?.originalSentence &&
+            element?.suggestedSentence &&
+            element?.description
+          ) {
+            lastLength = partialArray.length;
+            const suggestion: Suggestion = {
+              originalText: element.originalSentence,
+              suggestedText: element.suggestedSentence,
+              description: element.description,
+              id: generateUUID(),
+              documentId,
+              isResolved: false,
+              createdAt: new Date(),
+              userId: session.user?.id ?? "",
+              documentCreatedAt: document.createdAt,
+            };
 
-        dataStream.write({
-          type: "data-suggestion",
-          data: suggestion,
-          transient: true,
-        });
+            dataStream.write({
+              type: "data-suggestion",
+              data: suggestion,
+              transient: true,
+            });
 
-        suggestions.push(suggestion);
+            suggestions.push(suggestion);
+          }
+        }
       }
 
       if (session.user?.id) {
