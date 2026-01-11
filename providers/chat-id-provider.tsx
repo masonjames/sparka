@@ -77,8 +77,6 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
     ]
   );
 
-  console.log("CHAT ID PROVIDER", value);
-
   return (
     <ChatIdContext.Provider value={value}>{children}</ChatIdContext.Provider>
   );
