@@ -211,6 +211,105 @@ function buildResponseMessage({
   return message;
 }
 
+function getTokenAuth(): Record<string, string> {
+  const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
+  if (VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN) {
+    return {
+      teamId: VERCEL_TEAM_ID,
+      projectId: VERCEL_PROJECT_ID,
+      token: VERCEL_TOKEN,
+    };
+  }
+  return {};
+}
+
+function createSandbox(runtime: string): Promise<Sandbox> {
+  return Sandbox.create({
+    runtime,
+    timeout: 5 * 60 * 1000,
+    resources: { vcpus: 2 },
+    ...getTokenAuth(),
+  });
+}
+
+async function executeInSandbox({
+  sandbox,
+  code,
+  basePackages,
+  chartPath,
+  log,
+  requestId,
+}: {
+  sandbox: Sandbox;
+  code: string;
+  basePackages: readonly string[];
+  chartPath: string;
+  log: ReturnType<typeof createModuleLogger>;
+  requestId: string;
+}): Promise<{ message: string; chart: string | { base64: string; format: string } }> {
+  const baseInstallResult = await installBasePackages(
+    sandbox,
+    basePackages,
+    log,
+    requestId
+  );
+  if (!baseInstallResult.success) {
+    return baseInstallResult.result ?? { message: "Unknown error", chart: "" };
+  }
+
+  const { codeToRun, installResult } = await processExtraPackages(
+    code,
+    sandbox,
+    log,
+    requestId
+  );
+  if (!installResult.success) {
+    return installResult.result ?? { message: "Unknown error", chart: "" };
+  }
+
+  const wrappedCode = createWrappedCode(codeToRun, chartPath);
+  const execResult = await sandbox.runCommand({
+    cmd: "python3",
+    args: ["-c", wrappedCode],
+  });
+
+  const { outputText, execInfo } = await parseExecutionOutput(execResult);
+  const chartOut = await checkForChart(sandbox, chartPath, log, requestId);
+
+  const message = buildResponseMessage({
+    outputText,
+    stderr: await execResult.stderr(),
+    execInfo,
+    log,
+    requestId,
+  });
+
+  return {
+    message: message.trim(),
+    chart: chartOut ?? "",
+  };
+}
+
+async function cleanupSandbox(
+  sandbox: Sandbox | undefined,
+  log: ReturnType<typeof createModuleLogger>,
+  requestId: string
+): Promise<void> {
+  if (!sandbox) {
+    return;
+  }
+  try {
+    await sandbox.stop();
+    log.info({ requestId }, "sandbox closed");
+  } catch (closeErr) {
+    log.warn({ requestId, closeErr }, "failed to close sandbox");
+  }
+}
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : "Unknown error";
+}
+
 export const codeExecution = ({
   costAccumulator,
 }: {
@@ -260,97 +359,33 @@ Output rules:
 
       try {
         log.info({ requestId, title, runtime }, "creating sandbox");
-
-        // Token auth for non-Vercel deployments (when OIDC unavailable)
-        const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
-        const tokenAuth =
-          VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN
-            ? {
-                teamId: VERCEL_TEAM_ID,
-                projectId: VERCEL_PROJECT_ID,
-                token: VERCEL_TOKEN,
-              }
-            : {};
-
-        sandbox = await Sandbox.create({
-          runtime,
-          timeout: 5 * 60 * 1000,
-          resources: { vcpus: 2 },
-          ...tokenAuth,
-        });
+        sandbox = await createSandbox(runtime);
         log.debug({ requestId }, "sandbox created");
 
-        const baseInstallResult = await installBasePackages(
-          sandbox,
-          basePackages,
-          log,
-          requestId
-        );
-        if (!baseInstallResult.success) {
-          return baseInstallResult.result;
-        }
-
-        const { codeToRun, installResult } = await processExtraPackages(
-          code,
-          sandbox,
-          log,
-          requestId
-        );
-        if (!installResult.success) {
-          return installResult.result;
-        }
-
-        const wrappedCode = createWrappedCode(codeToRun, chartPath);
-
         log.info({ requestId, title }, "executing python code");
-        const execResult = await sandbox.runCommand({
-          cmd: "python3",
-          args: ["-c", wrappedCode],
-        });
-
-        const { outputText, execInfo } = await parseExecutionOutput(execResult);
-        const chartOut = await checkForChart(
+        const result = await executeInSandbox({
           sandbox,
+          code,
+          basePackages,
           chartPath,
-          log,
-          requestId
-        );
-
-        const message = buildResponseMessage({
-          outputText,
-          stderr: await execResult.stderr(),
-          execInfo,
           log,
           requestId,
         });
-        const chart = chartOut ?? "";
 
         costAccumulator?.addAPICost(
           "codeExecution",
           toolsDefinitions.codeExecution.cost
         );
 
-        return {
-          message: message.trim(),
-          chart,
-        };
+        return result;
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Unknown error";
         log.error({ err, requestId }, "code execution failed");
         return {
-          message: `Sandbox execution failed: ${errorMessage}`,
+          message: `Sandbox execution failed: ${getErrorMessage(err)}`,
           chart: "",
         };
       } finally {
-        if (sandbox) {
-          try {
-            await sandbox.stop();
-            log.info({ requestId }, "sandbox closed");
-          } catch (closeErr) {
-            log.warn({ requestId, closeErr }, "failed to close sandbox");
-          }
-        }
+        await cleanupSandbox(sandbox, log, requestId);
       }
     },
   });
