@@ -14,9 +14,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
-
-const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)/;
 
 export function SidebarProjects() {
   const pathname = usePathname();
@@ -30,10 +29,10 @@ export function SidebarProjects() {
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
   // Auto-expand project if we're on a project route
-  const currentProjectId = useMemo(() => {
-    const match = pathname?.match(PROJECT_ROUTE_REGEX);
-    return match ? match[1] : null;
-  }, [pathname]);
+  const currentProjectId = useMemo(
+    () => parseChatIdFromPathname(pathname).projectId,
+    [pathname]
+  );
 
   const createProjectMutation = useMutation(
     trpc.project.create.mutationOptions({
