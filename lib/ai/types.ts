@@ -70,7 +70,7 @@ type generateImageTool = InferUITool<
   ReturnType<typeof generateImageToolFactory>
 >;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
-type codeExecutionTool = InferUITool<typeof codeExecution>;
+type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 type retrieveUrlTool = InferUITool<typeof retrieveUrl>;
 
 export type ChatTools = {

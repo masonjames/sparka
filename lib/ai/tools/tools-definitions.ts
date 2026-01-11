@@ -36,7 +36,7 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
   webSearch: {
     name: "webSearch",
     description: "Search the web",
-    cost: 1, // Tavily API ~1¢
+    cost: 5, // Tavily API ~5¢
   },
   codeExecution: {
     name: "codeExecution",

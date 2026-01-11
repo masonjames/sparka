@@ -1,7 +1,9 @@
 import { type ModelMessage, tool } from "ai";
 import { Langfuse } from "langfuse";
 import { z } from "zod";
+
 import type { ToolSession } from "@/lib/ai/tools/types";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
 import { type DeepResearchConfig, loadConfigFromEnv } from "./configuration";
@@ -12,11 +14,13 @@ export const deepResearch = ({
   dataStream,
   messageId,
   messages,
+  costAccumulator,
 }: {
   session: ToolSession;
   dataStream: StreamWriter;
   messageId: string;
   messages: ModelMessage[];
+  costAccumulator: CostAccumulator;
 }) =>
   tool({
     description: `Conducts deep, autonomous research based on a conversation history. It automatically clarifies the user's intent if the request is ambiguous, breaks down the query into parallel research tasks, scours multiple web sources for information, and then synthesizes the findings into a comprehensive, well-structured report with citations. This is best for complex questions that require in-depth analysis and a detailed answer, not just a simple search. 
@@ -52,7 +56,7 @@ Use for:
           },
           smallConfig,
           dataStream,
-          session
+          { session, costAccumulator }
         );
 
         // Flush the Langfuse trace right after the run

@@ -1,5 +1,6 @@
 import { streamObject } from "ai";
 import { z } from "zod";
+import type { AppModelId } from "@/lib/ai/app-models";
 import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
@@ -12,10 +13,11 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     dataStream,
     prompt,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamObject({
+    const result = streamObject({
       model: await getLanguageModel(selectedModel),
       system: sheetPrompt,
       experimental_telemetry: { isEnabled: true },
@@ -25,7 +27,7 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
       }),
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of result.fullStream) {
       const { type } = delta;
 
       if (type === "object") {
@@ -50,6 +52,13 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
       transient: true,
     });
 
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "createDocument-sheet"
+    );
+
     return draftContent;
   },
   onUpdateDocument: async ({
@@ -57,10 +66,11 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     description,
     dataStream,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamObject({
+    const result = streamObject({
       model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content, "sheet"),
       experimental_telemetry: { isEnabled: true },
@@ -70,7 +80,7 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
       }),
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of result.fullStream) {
       const { type } = delta;
 
       if (type === "object") {
@@ -88,6 +98,13 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
         }
       }
     }
+
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "updateDocument-sheet"
+    );
 
     return draftContent;
   },

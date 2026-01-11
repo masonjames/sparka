@@ -7,6 +7,7 @@ import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
 import { getMcpTools, getTools } from "@/lib/ai/tools/tools";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
 import { determineExplicitlyRequestedTools } from "./determine-explicitly-requested-tools";
@@ -24,6 +25,7 @@ export async function createCoreChatAgent({
   dataStream,
   onError,
   mcpConnectors = [],
+  costAccumulator,
 }: {
   system: string;
   userMessage: ChatMessage;
@@ -38,6 +40,7 @@ export async function createCoreChatAgent({
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
   mcpConnectors?: McpConnector[];
+  costAccumulator: CostAccumulator;
 }) {
   const modelDefinition = await getAppModelDefinition(selectedModelId);
 
@@ -80,6 +83,7 @@ export async function createCoreChatAgent({
     selectedModel: modelDefinition.apiModelId,
     attachments: userMessage.parts.filter((part) => part.type === "file"),
     lastGeneratedImage,
+    costAccumulator,
   });
 
   // Merge base tools with MCP tools

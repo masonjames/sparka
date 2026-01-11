@@ -12,6 +12,7 @@ import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import { siteConfig } from "@/lib/config";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 import { isMultimodalImageModel } from "@/lib/models/image-model-id";
@@ -31,6 +32,7 @@ export function getTools({
   attachments = [],
   lastGeneratedImage = null,
   contextForLLM,
+  costAccumulator,
 }: {
   dataStream: StreamWriter;
   session: ToolSession;
@@ -39,6 +41,7 @@ export function getTools({
   attachments: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
+  costAccumulator: CostAccumulator;
 }) {
   const imageToolModelId = isMultimodalImageModel(selectedModel)
     ? selectedModel
@@ -52,12 +55,14 @@ export function getTools({
       contextForLLM,
       messageId,
       selectedModel,
+      costAccumulator,
     }),
     updateDocument: updateDocument({
       session,
       dataStream,
       messageId,
       selectedModel,
+      costAccumulator,
     }),
     requestSuggestions: requestSuggestions({
       session,
@@ -77,11 +82,14 @@ export function getTools({
           webSearch: tavilyWebSearch({
             dataStream,
             writeTopLevelUpdates: true,
+            costAccumulator,
           }),
         }
       : {}),
 
-    ...(siteConfig.integrations.sandbox ? { codeExecution } : {}),
+    ...(siteConfig.integrations.sandbox
+      ? { codeExecution: codeExecution({ costAccumulator }) }
+      : {}),
     ...(siteConfig.integrations.imageGeneration
       ? {
           generateImage: generateImageTool({
@@ -90,6 +98,7 @@ export function getTools({
             // If the currently selected chat model can generate images (multimodal),
             // prefer it. Otherwise, the tool falls back to siteConfig.models.defaults.image.
             modelId: imageToolModelId,
+            costAccumulator,
           }),
         }
       : {}),
@@ -100,6 +109,7 @@ export function getTools({
             dataStream,
             messageId,
             messages: contextForLLM,
+            costAccumulator,
           }),
         }
       : {}),

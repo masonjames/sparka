@@ -1,8 +1,10 @@
 import { Sandbox } from "@vercel/sandbox";
 import { tool } from "ai";
 import z from "zod";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
+import { toolsDefinitions } from "./tools-definitions";
 
 const WHITESPACE_REGEX = /\s+/;
 
@@ -209,8 +211,13 @@ function buildResponseMessage({
   return message;
 }
 
-export const codeExecution = tool({
-  description: `Python-only sandbox for calculations, data analysis & simple visualisations.
+export const codeExecution = ({
+  costAccumulator,
+}: {
+  costAccumulator?: CostAccumulator;
+}) =>
+  tool({
+    description: `Python-only sandbox for calculations, data analysis & simple visualisations.
 
 Use for:
 - Execute Python (matplotlib, pandas, numpy, sympy, yfinance pre-installed)
@@ -228,111 +235,122 @@ Output rules:
 - Print the values you want returned (e.g. 'print(df.head())' or 'print(answer)')
 - Or assign to a variable named 'result' or 'results' and we'll print it automatically
 - Don't rely on implicit REPL last-expression output`,
-  inputSchema: z.object({
-    title: z.string().describe("The title of the code snippet."),
-    code: z
-      .string()
-      .describe(
-        "The Python code to execute. Print anything you want to return. Optionally assign to 'result' or 'results' to auto-print."
-      ),
-  }),
-  execute: async ({ code, title }: { code: string; title: string }) => {
-    const log = createModuleLogger("code-execution");
-    const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const runtime = env.VERCEL_SANDBOX_RUNTIME ?? "python3.13";
-    const basePackages = [
-      "matplotlib",
-      "pandas",
-      "numpy",
-      "sympy",
-      "yfinance",
-    ] as const;
-    const chartPath = "/tmp/chart.png";
+    inputSchema: z.object({
+      title: z.string().describe("The title of the code snippet."),
+      code: z
+        .string()
+        .describe(
+          "The Python code to execute. Print anything you want to return. Optionally assign to 'result' or 'results' to auto-print."
+        ),
+    }),
+    execute: async ({ code, title }: { code: string; title: string }) => {
+      const log = createModuleLogger("code-execution");
+      const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const runtime = env.VERCEL_SANDBOX_RUNTIME ?? "python3.13";
+      const basePackages = [
+        "matplotlib",
+        "pandas",
+        "numpy",
+        "sympy",
+        "yfinance",
+      ] as const;
+      const chartPath = "/tmp/chart.png";
 
-    let sandbox: Sandbox | undefined;
+      let sandbox: Sandbox | undefined;
 
-    try {
-      log.info({ requestId, title, runtime }, "creating sandbox");
+      try {
+        log.info({ requestId, title, runtime }, "creating sandbox");
 
-      // Token auth for non-Vercel deployments (when OIDC unavailable)
-      const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
-      const tokenAuth =
-        VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN
-          ? {
-              teamId: VERCEL_TEAM_ID,
-              projectId: VERCEL_PROJECT_ID,
-              token: VERCEL_TOKEN,
-            }
-          : {};
+        // Token auth for non-Vercel deployments (when OIDC unavailable)
+        const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
+        const tokenAuth =
+          VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN
+            ? {
+                teamId: VERCEL_TEAM_ID,
+                projectId: VERCEL_PROJECT_ID,
+                token: VERCEL_TOKEN,
+              }
+            : {};
 
-      sandbox = await Sandbox.create({
-        runtime,
-        timeout: 5 * 60 * 1000,
-        resources: { vcpus: 2 },
-        ...tokenAuth,
-      });
-      log.debug({ requestId }, "sandbox created");
+        sandbox = await Sandbox.create({
+          runtime,
+          timeout: 5 * 60 * 1000,
+          resources: { vcpus: 2 },
+          ...tokenAuth,
+        });
+        log.debug({ requestId }, "sandbox created");
 
-      const baseInstallResult = await installBasePackages(
-        sandbox,
-        basePackages,
-        log,
-        requestId
-      );
-      if (!baseInstallResult.success) {
-        return baseInstallResult.result;
-      }
+        const baseInstallResult = await installBasePackages(
+          sandbox,
+          basePackages,
+          log,
+          requestId
+        );
+        if (!baseInstallResult.success) {
+          return baseInstallResult.result;
+        }
 
-      const { codeToRun, installResult } = await processExtraPackages(
-        code,
-        sandbox,
-        log,
-        requestId
-      );
-      if (!installResult.success) {
-        return installResult.result;
-      }
+        const { codeToRun, installResult } = await processExtraPackages(
+          code,
+          sandbox,
+          log,
+          requestId
+        );
+        if (!installResult.success) {
+          return installResult.result;
+        }
 
-      const wrappedCode = createWrappedCode(codeToRun, chartPath);
+        const wrappedCode = createWrappedCode(codeToRun, chartPath);
 
-      log.info({ requestId, title }, "executing python code");
-      const execResult = await sandbox.runCommand({
-        cmd: "python3",
-        args: ["-c", wrappedCode],
-      });
+        log.info({ requestId, title }, "executing python code");
+        const execResult = await sandbox.runCommand({
+          cmd: "python3",
+          args: ["-c", wrappedCode],
+        });
 
-      const { outputText, execInfo } = await parseExecutionOutput(execResult);
-      const chartOut = await checkForChart(sandbox, chartPath, log, requestId);
+        const { outputText, execInfo } = await parseExecutionOutput(execResult);
+        const chartOut = await checkForChart(
+          sandbox,
+          chartPath,
+          log,
+          requestId
+        );
 
-      const message = buildResponseMessage({
-        outputText,
-        stderr: await execResult.stderr(),
-        execInfo,
-        log,
-        requestId,
-      });
-      const chart = chartOut ?? "";
+        const message = buildResponseMessage({
+          outputText,
+          stderr: await execResult.stderr(),
+          execInfo,
+          log,
+          requestId,
+        });
+        const chart = chartOut ?? "";
 
-      return {
-        message: message.trim(),
-        chart,
-      };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      log.error({ err, requestId }, "code execution failed");
-      return {
-        message: `Sandbox execution failed: ${errorMessage}`,
-        chart: "",
-      };
-    } finally {
-      if (sandbox) {
-        try {
-          await sandbox.stop();
-          log.info({ requestId }, "sandbox closed");
-        } catch (closeErr) {
-          log.warn({ requestId, closeErr }, "failed to close sandbox");
+        costAccumulator?.addAPICost(
+          "codeExecution",
+          toolsDefinitions.codeExecution.cost
+        );
+
+        return {
+          message: message.trim(),
+          chart,
+        };
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        log.error({ err, requestId }, "code execution failed");
+        return {
+          message: `Sandbox execution failed: ${errorMessage}`,
+          chart: "",
+        };
+      } finally {
+        if (sandbox) {
+          try {
+            await sandbox.stop();
+            log.info({ requestId }, "sandbox closed");
+          } catch (closeErr) {
+            log.warn({ requestId, closeErr }, "failed to close sandbox");
+          }
         }
       }
-    }
-  },
-});
+    },
+  });
