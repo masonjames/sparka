@@ -37,19 +37,6 @@
             ]
           },
           {
-            "group": "Patterns",
-            "pages": [
-              "patterns/overview",
-              "patterns/tool-part",
-              "patterns/follow-up-questions",
-              "patterns/chat-layout",
-              "patterns/resumable-streams",
-              "patterns/provisional-chat-ids",
-              "patterns/credit-tracking",
-              "patterns/dev-auth-bypass"
-            ]
-          },
-          {
             "group": "Customization",
             "pages": [
               "customization/theming",
@@ -73,7 +60,6 @@
               "reference/config",
               "reference/database",
               "reference/routing",
-              "reference/auth-internals",
               "reference/evaluations"
             ]
           },
@@ -84,6 +70,44 @@
               "roadmap/sharing",
               "roadmap/branching",
               "roadmap/projects"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Cookbook",
+        "groups": [
+          {
+            "group": "Cookbook",
+            "pages": ["cookbook/index"]
+          },
+          {
+            "group": "Streaming",
+            "pages": [
+              "cookbook/streaming/resumable-streams",
+              "cookbook/streaming/tool-part"
+            ]
+          },
+          {
+            "group": "Data",
+            "pages": [
+              "cookbook/data/provisional-ids",
+              "cookbook/data/credit-tracking",
+              "cookbook/data/neon-branching"
+            ]
+          },
+          {
+            "group": "Auth",
+            "pages": [
+              "cookbook/auth/better-auth-setup",
+              "cookbook/auth/dev-auth-bypass"
+            ]
+          },
+          {
+            "group": "AI UX",
+            "pages": [
+              "cookbook/ai-ux/follow-up-questions",
+              "cookbook/ai-ux/chat-layout"
             ]
           }
         ]

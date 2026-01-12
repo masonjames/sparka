@@ -1,0 +1,73 @@
+---
+title: Cookbook
+description: Reusable patterns to copy into any project
+---
+
+The Cookbook contains self-contained, portable patterns you can copy into any AI chat application. Unlike the main docs which focus on ChatJS installation and configuration, these recipes work independently of ChatJS.
+
+## How to Use
+
+Each recipe follows a consistent structure:
+
+1. **Problem** - What you're solving
+2. **Solution** - The approach and why it works
+3. **Implementation** - Self-contained code you can copy
+4. **Usage** - How to integrate it
+5. **Considerations** - Trade-offs and alternatives
+
+## Recipes by Category
+
+### Streaming
+
+Patterns for handling real-time AI response streams.
+
+<CardGroup cols={2}>
+  <Card title="Resumable Streams" href="/cookbook/streaming/resumable-streams">
+    Continue AI responses after connection interruptions using Redis pub/sub
+  </Card>
+  <Card title="Tool Part" href="/cookbook/streaming/tool-part">
+    Connect backend tools to frontend UI components with loading states
+  </Card>
+</CardGroup>
+
+### Data
+
+Database patterns and state management.
+
+<CardGroup cols={2}>
+  <Card title="Provisional IDs" href="/cookbook/data/provisional-ids">
+    Seamless client-side navigation without page reloads using pre-generated UUIDs
+  </Card>
+  <Card title="Credit Tracking" href="/cookbook/data/credit-tracking">
+    Track and limit AI usage with credit budgets
+  </Card>
+  <Card title="Neon Branching" href="/cookbook/data/neon-branching">
+    Isolated database environments for schema development
+  </Card>
+</CardGroup>
+
+### Auth
+
+Authentication patterns for AI applications.
+
+<CardGroup cols={2}>
+  <Card title="Better Auth Setup" href="/cookbook/auth/better-auth-setup">
+    Better Auth configuration with Next.js and social providers
+  </Card>
+  <Card title="Dev Auth Bypass" href="/cookbook/auth/dev-auth-bypass">
+    Auto-authenticate AI agents for browser testing
+  </Card>
+</CardGroup>
+
+### AI UX
+
+User experience patterns for chat interfaces.
+
+<CardGroup cols={2}>
+  <Card title="Follow-up Questions" href="/cookbook/ai-ux/follow-up-questions">
+    Generate contextual follow-up suggestions after AI responses
+  </Card>
+  <Card title="Chat Layout" href="/cookbook/ai-ux/chat-layout">
+    Resizable split-panel layout with collapsible secondary panel
+  </Card>
+</CardGroup>

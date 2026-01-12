@@ -35,47 +35,7 @@ bun db:push
 
 ## Neon Branching
 
-When working on schema changes, use Neon branching to avoid affecting production data.
-
-### Setup
-
-```bash
-# Authenticate with Neon CLI
-bunx neonctl auth
-
-# Set your project context
-bunx neonctl set-context --project-id <your-project-id>
-```
-
-### Development Workflow
-
-```bash
-# Create a dev branch and switch to it
-bun db:branch:start
-
-# Develop with the branch database
-bun dev
-
-# Make schema changes
-bun db:generate
-bun db:migrate
-
-# When done, delete branch and switch back to main
-bun db:branch:stop
-```
-
-### Branch Commands
-
-| Command                       | Description                   |
-| ----------------------------- | ----------------------------- |
-| `bun db:branch:start [name]`  | Create and switch to branch   |
-| `bun db:branch:stop [name]`   | Delete branch, switch to main |
-| `bun db:branch:use [name]`    | Switch to branch              |
-| `bun db:branch:create [name]` | Create branch only            |
-| `bun db:branch:delete [name]` | Delete branch only            |
-| `bun db:branch:list`          | List all branches             |
-
-Default branch name is `dev-local` if not specified.
+When working on schema changes, use Neon branching to avoid affecting production data. See the [Neon Branching recipe](/cookbook/data/neon-branching) for setup and usage.
 
 ## Drizzle Studio
 

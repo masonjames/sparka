@@ -1,0 +1,331 @@
+---
+title: Better Auth Setup
+description: Configure Better Auth with Next.js and social providers
+---
+
+## Problem
+
+Setting up authentication in Next.js requires handling sessions, OAuth providers, database storage, and middleware protection. Better Auth provides a type-safe solution but requires proper configuration for both server and client.
+
+## Solution
+
+Configure Better Auth with Drizzle ORM for database storage, social providers for OAuth, and middleware for route protection. Use cookie caching for performance and proper session handling across server components, client components, and API routes.
+
+## Implementation
+
+### Files
+
+```
+lib/
+  auth.ts              # Server-side auth configuration
+  auth-client.ts       # Client-side auth hooks
+  db/
+    schema.ts          # Auth tables (user, session, account)
+
+providers/
+  session-provider.tsx # React context for session state
+
+app/
+  api/auth/[...all]/
+    route.ts           # Auth API route handler
+
+middleware.ts          # Route protection
+```
+
+### Server Configuration
+
+```ts title="lib/auth.ts"
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { db } from "@/lib/db/client";
+import * as schema from "@/lib/db/schema";
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: "pg", schema }),
+  secret: process.env.AUTH_SECRET!,
+  trustedOrigins: [
+    "http://localhost:3000",
+    process.env.NEXT_PUBLIC_APP_URL!,
+  ].filter(Boolean),
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes - reduces DB queries
+    },
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    },
+  },
+  plugins: [nextCookies()],
+});
+
+export type Session = typeof auth.$Infer.Session;
+```
+
+### Client Configuration
+
+```ts title="lib/auth-client.ts"
+import { createAuthClient } from "better-auth/react";
+import { nextCookies } from "better-auth/next-js";
+
+const authClient = createAuthClient({
+  plugins: [nextCookies()],
+});
+
+export default authClient;
+
+// Re-export hooks for convenience
+export const { useSession, signIn, signOut } = authClient;
+```
+
+<Note>
+The `nextCookies()` plugin is required on both server and client for proper cookie handling in Next.js Server Actions.
+</Note>
+
+### API Route Handler
+
+```ts title="app/api/auth/[...all]/route.ts"
+import { auth } from "@/lib/auth";
+import { toNextJsHandler } from "better-auth/next-js";
+
+export const { GET, POST } = toNextJsHandler(auth.handler);
+```
+
+### Session Provider
+
+```tsx title="providers/session-provider.tsx"
+"use client";
+
+import {
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
+import { useSession as useBetterAuthSession } from "@/lib/auth-client";
+import type { Session } from "@/lib/auth";
+
+type SessionContextValue = {
+  data: Session | null;
+  isPending: boolean;
+};
+
+const SessionContext = createContext<SessionContextValue | null>(null);
+
+export function SessionProvider({
+  children,
+  initialSession,
+}: {
+  children: ReactNode;
+  initialSession: Session | null;
+}) {
+  const { data, isPending } = useBetterAuthSession();
+
+  // Use initial session for SSR, then hydrate with client state
+  const value = {
+    data: data ?? initialSession,
+    isPending,
+  };
+
+  return (
+    <SessionContext.Provider value={value}>
+      {children}
+    </SessionContext.Provider>
+  );
+}
+
+export function useSession() {
+  const context = useContext(SessionContext);
+  if (!context) {
+    throw new Error("useSession must be used within SessionProvider");
+  }
+  return context;
+}
+```
+
+### Database Schema
+
+```ts title="lib/db/schema.ts"
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+```
+
+### Middleware Protection
+
+```ts title="middleware.ts"
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
+
+const publicRoutes = ["/", "/login", "/register", "/api/auth"];
+
+function isPublicRoute(pathname: string) {
+  return publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Skip public routes
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Validate session
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session?.user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+## Usage
+
+### Server-Side Session
+
+```ts
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+
+// In Server Components, API routes, or Server Actions
+const session = await auth.api.getSession({
+  headers: await headers(),
+});
+
+if (session?.user) {
+  const userId = session.user.id;
+}
+```
+
+### Client-Side Session
+
+```tsx
+import { useSession } from "@/providers/session-provider";
+
+function ProfileButton() {
+  const { data: session, isPending } = useSession();
+
+  if (isPending) return <Skeleton />;
+  if (!session?.user) return <LoginButton />;
+
+  return <span>Welcome, {session.user.name}</span>;
+}
+```
+
+### Sign In / Sign Out
+
+```tsx
+import authClient from "@/lib/auth-client";
+
+// Social sign-in
+await authClient.signIn.social({
+  provider: "google", // or "github"
+});
+
+// Sign out
+await authClient.signOut();
+window.location.href = "/";
+```
+
+### Layout with Session Provider
+
+```tsx title="app/layout.tsx"
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { SessionProvider } from "@/providers/session-provider";
+
+export default async function RootLayout({ children }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  return (
+    <html>
+      <body>
+        <SessionProvider initialSession={session}>
+          {children}
+        </SessionProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+## Considerations
+
+**Performance:**
+- Cookie caching reduces database queries but revoked sessions persist for `maxAge` seconds
+- Use `initialSession` prop for SSR hydration to avoid layout shift
+
+**Security:**
+- Always use HTTPS in production
+- Keep `AUTH_SECRET` secure and random
+- Use `trustedOrigins` to prevent CSRF attacks
+
+**Adding Providers:**
+1. Get OAuth credentials from provider (Google Cloud Console, GitHub Developer Settings, etc.)
+2. Add environment variables
+3. Add provider config to `socialProviders` in `lib/auth.ts`
+4. Add login button to your UI
