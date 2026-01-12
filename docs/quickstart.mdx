@@ -116,32 +116,9 @@ These work on all platforms:
 bun db:migrate
 ```
 
-<Accordion title="Development with Neon Branching">
-  When working on schema changes, use Neon branching to avoid affecting production:
-
-```bash
-# First time: authenticate
-bunx neonctl auth
-bunx neonctl set-context --project-id <your-project-id>
-
-# Quick workflow
-bun db:branch:start    # Create dev-local branch
-bun dev                # Uses branch DB
-bun db:generate
-bun db:migrate
-bun db:branch:stop     # Delete branch, switch to main
-```
-
-| Command                       | Description                   |
-| ----------------------------- | ----------------------------- |
-| `bun db:branch:start [name]`  | Create and switch to branch   |
-| `bun db:branch:stop [name]`   | Delete branch, switch to main |
-| `bun db:branch:use [name]`    | Switch to branch              |
-| `bun db:branch:create [name]` | Create branch only            |
-| `bun db:branch:delete [name]` | Delete branch only            |
-| `bun db:branch:list`          | List all branches             |
-
-</Accordion>
+<Note>
+  For schema development workflows like Neon branching, see the [Database reference](/reference/database).
+</Note>
 
 ## Run Development Server
 
@@ -154,10 +131,10 @@ Open [http://localhost:3000](http://localhost:3000) to start building.
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Configuration" icon="gear" href="/configuration">
+  <Card title="Configuration" icon="gear" href="/core/configuration">
     Learn how to customize features via lib/config.ts
   </Card>
-  <Card title="Features" icon="sparkles" href="/features/index">
-    Explore all built-in features
+  <Card title="AI Capabilities" icon="sparkles" href="/capabilities/overview">
+    Explore built-in AI tools and capabilities
   </Card>
 </CardGroup>

@@ -15,23 +15,25 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": ["index", "quickstart", "configuration"]
+            "pages": ["index", "quickstart", "project-structure"]
           },
           {
-            "group": "Features",
+            "group": "Core Concepts",
             "pages": [
-              "features/overview",
-              "features/multi-model",
-              "features/authentication",
-              "features/attachments",
-              "features/image-generation",
-              "features/code-execution",
-              "features/web-search",
-              "features/canvas",
-              "features/sharing",
-              "features/branching",
-              "features/projects",
-              "features/mcp"
+              "core/configuration",
+              "core/authentication",
+              "core/multi-model"
+            ]
+          },
+          {
+            "group": "AI Capabilities",
+            "pages": [
+              "capabilities/overview",
+              "capabilities/web-search",
+              "capabilities/code-execution",
+              "capabilities/image-generation",
+              "capabilities/attachments",
+              "capabilities/mcp"
             ]
           },
           {
@@ -51,24 +53,37 @@
             "group": "Customization",
             "pages": [
               "customization/theming",
-              "customization/adding-components",
               "customization/branding",
+              "customization/component-registries",
               "customization/models",
               "customization/prompts"
             ]
           },
           {
             "group": "Deployment",
-            "pages": ["deployment/vercel", "deployment/other-platforms"]
+            "pages": [
+              "deployment/vercel",
+              "deployment/docker",
+              "deployment/self-hosted"
+            ]
           },
           {
             "group": "Reference",
             "pages": [
               "reference/config",
-              "reference/architecture",
+              "reference/database",
               "reference/routing",
               "reference/auth-internals",
               "reference/evaluations"
+            ]
+          },
+          {
+            "group": "Roadmap",
+            "pages": [
+              "roadmap/canvas",
+              "roadmap/sharing",
+              "roadmap/branching",
+              "roadmap/projects"
             ]
           }
         ]

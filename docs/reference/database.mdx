@@ -1,0 +1,88 @@
+---
+title: Database
+description: Database setup, migrations, and development workflows
+---
+
+ChatJS uses PostgreSQL with Drizzle ORM for type-safe database access.
+
+## Schema
+
+The database schema is defined in `lib/db/schema.ts`. Key tables:
+
+| Table | Purpose |
+|-------|---------|
+| `user` | User accounts |
+| `session` | Active sessions |
+| `account` | OAuth provider links |
+| `chat` | Chat conversations |
+| `message` | Chat messages |
+| `document` | Artifact documents |
+
+## Migrations
+
+Generate and run migrations with:
+
+```bash
+# Generate migration from schema changes
+bun db:generate
+
+# Run pending migrations
+bun db:migrate
+
+# Push schema directly (dev only, no migration file)
+bun db:push
+```
+
+## Neon Branching
+
+When working on schema changes, use Neon branching to avoid affecting production data.
+
+### Setup
+
+```bash
+# Authenticate with Neon CLI
+bunx neonctl auth
+
+# Set your project context
+bunx neonctl set-context --project-id <your-project-id>
+```
+
+### Development Workflow
+
+```bash
+# Create a dev branch and switch to it
+bun db:branch:start
+
+# Develop with the branch database
+bun dev
+
+# Make schema changes
+bun db:generate
+bun db:migrate
+
+# When done, delete branch and switch back to main
+bun db:branch:stop
+```
+
+### Branch Commands
+
+| Command                       | Description                   |
+| ----------------------------- | ----------------------------- |
+| `bun db:branch:start [name]`  | Create and switch to branch   |
+| `bun db:branch:stop [name]`   | Delete branch, switch to main |
+| `bun db:branch:use [name]`    | Switch to branch              |
+| `bun db:branch:create [name]` | Create branch only            |
+| `bun db:branch:delete [name]` | Delete branch only            |
+| `bun db:branch:list`          | List all branches             |
+
+Default branch name is `dev-local` if not specified.
+
+## Drizzle Studio
+
+Inspect your database with Drizzle Studio:
+
+```bash
+bun db:studio
+```
+
+Opens a web UI at `https://local.drizzle.studio` for browsing and editing data.
