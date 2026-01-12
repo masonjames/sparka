@@ -93,7 +93,7 @@ export type SiteConfig = {
    * Validated at server startup via validateConfig().
    */
   integrations: {
-    /** Code sandbox execution (E2B) */
+    /** Code sandbox execution (Vercel-native) */
     sandbox: boolean;
     /** Web search (requires TAVILY_API_KEY) */
     webSearch: boolean;

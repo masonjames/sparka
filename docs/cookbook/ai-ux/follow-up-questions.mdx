@@ -23,7 +23,7 @@ File convention: `lib/ai/followup-suggestions.ts` → `components/followup-sugge
 ### 1. Generate & Stream Suggestions
 
 ```ts title="lib/ai/followup-suggestions.ts"
-import { type ModelMessage, streamObject } from "ai";
+import { type ModelMessage, Output, streamText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { StreamWriter } from "@/lib/ai/types";
@@ -33,7 +33,7 @@ import { generateUUID } from "@/lib/utils";
 export async function generateFollowupSuggestions(
   modelMessages: ModelMessage[]
 ) {
-  return streamObject({
+  return streamText({
     model: await getLanguageModel(
       siteConfig.models.defaults.followupSuggestions
     ),
@@ -45,8 +45,10 @@ export async function generateFollowupSuggestions(
           "What question should I ask next? Return an array of 3-5 suggestions, max 80 chars each.",
       },
     ],
-    schema: z.object({
-      suggestions: z.array(z.string()).min(3).max(5),
+    output: Output.object({
+      schema: z.object({
+        suggestions: z.array(z.string()).min(3).max(5),
+      }),
     }),
   });
 }
@@ -61,7 +63,7 @@ export async function streamFollowupSuggestions({
   const dataPartId = generateUUID();
   const result = await followupSuggestionsResult;
 
-  for await (const chunk of result.partialObjectStream) {
+  for await (const chunk of result.partialOutputStream) {
     writer.write({
       id: dataPartId,
       type: "data-followupSuggestions", // data-* = UI-only, filtered from LLM context

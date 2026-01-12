@@ -8,7 +8,8 @@ description: Full lib/config.ts API reference
 `lib/config.ts` exports `siteConfig`, the central configuration hub for ChatJS. Toggle features, configure providers, and customize behavior.
 
 <Note>
-  In client components, use `useConfig()` from `@/components/config-provider` instead of importing `siteConfig` directly.
+  In client components, use `useConfig()` from `@/components/config-provider`
+  instead of importing `siteConfig` directly.
 </Note>
 
 ## Access patterns
@@ -84,6 +85,19 @@ export type AnonymousConfig = {
   };
 };
 
+export type AttachmentsConfig = {
+  /** Max file size in bytes after compression */
+  maxBytes: number;
+  /** Max image dimension (width/height) */
+  maxDimension: number;
+  /** Accepted MIME types with their file extensions */
+  acceptedTypes: {
+    "image/png": string[];
+    "image/jpeg": string[];
+    "application/pdf": string[];
+  };
+};
+
 export type SiteConfig = {
   githubUrl: string;
   appPrefix: string;
@@ -111,7 +125,7 @@ export type SiteConfig = {
    * Validated at server startup via validateConfig().
    */
   integrations: {
-    /** Code sandbox execution (E2B) */
+    /** Code sandbox execution (Vercel-native) */
     sandbox: boolean;
     /** Web search */
     webSearch: boolean;
@@ -158,6 +172,8 @@ export type SiteConfig = {
   models: ModelsConfig;
   /** Anonymous user configuration */
   anonymous: AnonymousConfig;
+  /** File attachment configuration */
+  attachments: AttachmentsConfig;
 };
 ```
 
@@ -170,8 +186,8 @@ Feature flags live under `integrations` and `authentication`. They’re validate
 
 ### Integrations
 
-- **`integrations.sandbox`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) *or* `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
-- **`integrations.webSearch`**: requires `TAVILY_API_KEY` *or* `FIRECRAWL_API_KEY`
+- **`integrations.sandbox`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) _or_ `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
+- **`integrations.webSearch`**: requires `TAVILY_API_KEY` _or_ `FIRECRAWL_API_KEY`
 - **`integrations.mcp`**: requires `MCP_ENCRYPTION_KEY`
 - **`integrations.imageGeneration`**: no required env vars
 

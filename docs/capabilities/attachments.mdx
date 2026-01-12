@@ -59,12 +59,14 @@ This granular selection is intentional: some mobile platforms default to the ima
 
 ## Model Support
 
-Not all models support attachments. Check `modelDefinition.input` for capability:
+Not all models support attachments. Check `model.input` for capability:
 
 ```typescript
-const modelDefinition = await getAppModelDefinition(modelId);
-if (modelDefinition.input) {
-  // Model supports file inputs
+if (model.input?.image) {
+  // Model supports image inputs
+}
+if (model.input?.pdf) {
+  // Model supports PDF inputs
 }
 ```
 

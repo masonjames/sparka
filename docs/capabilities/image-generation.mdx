@@ -22,7 +22,7 @@ Configure the default image model:
 ```ts
 models: {
   defaults: {
-    image: "openai/gpt-image-1.5",
+    image: "google/gemini-3-pro-image",
   },
 }
 ```
@@ -51,20 +51,28 @@ Users can iterate on generated images without re-uploading. The system automatic
 1. **Extraction**: Before each request, the chat agent scans recent messages for the last generated image:
 
 ```ts title="app/(chat)/api/chat/get-recent-generated-image.ts"
-export function getRecentGeneratedImage(messages: ChatMessage[]) {
+export function getRecentGeneratedImage(
+  messages: ChatMessage[]
+): { imageUrl: string; name: string } | null {
   const lastAssistantMessage = messages.findLast(
     (message) => message.role === "assistant"
   );
 
-  for (const part of lastAssistantMessage?.parts ?? []) {
-    if (
-      part.type === "tool-generateImage" &&
-      part.state === "output-available" &&
-      part.output?.imageUrl
-    ) {
-      return { imageUrl: part.output.imageUrl, name: "previous" };
+  if (lastAssistantMessage?.parts && lastAssistantMessage.parts.length > 0) {
+    for (const part of lastAssistantMessage.parts) {
+      if (
+        part.type === "tool-generateImage" &&
+        part.state === "output-available" &&
+        part.output?.imageUrl
+      ) {
+        return {
+          imageUrl: part.output.imageUrl,
+          name: `generated-image-${part.toolCallId}.png`,
+        };
+      }
     }
   }
+
   return null;
 }
 ```
@@ -134,7 +142,7 @@ The generated image is uploaded to blob storage and the URL returned.
 
 | State               | Shows                          |
 | ------------------- | ------------------------------ |
-| `input-available`   | Skeleton + "Generating: {prompt}" |
+| `input-available`   | Skeleton + "Generating image: {prompt}" |
 | `output-available`  | Image + copy button + prompt   |
 
 ## Configuration
@@ -144,7 +152,7 @@ The generated image is uploaded to blob storage and the URL returned.
 ```ts title="lib/config.ts"
 models: {
   defaults: {
-    image: "openai/gpt-image-1.5",
+    image: "google/gemini-3-pro-image",
   },
 }
 ```
@@ -155,8 +163,8 @@ The tool supports two types of models:
 
 | Type | Description | Example |
 | ---- | ----------- | ------- |
-| Image model | Standalone image generation models | `openai/gpt-image-1.5` |
-| Multimodal | Language models with `image-generation` tag | `google/gemini-2.0-flash-exp` |
+| Image model | Standalone image generation models | `google/gemini-3-pro-image` |
+| Multimodal | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
 
 Model selection follows this priority:
 
@@ -166,7 +174,7 @@ const imageToolModelId = isMultimodalImageModel(selectedModel)
   : undefined;
 ```
 
-1. If the user's selected chat model can generate images (has `image-generation` tag), use it
+1. If the user's selected chat model can generate images (is a multimodal image model), use it
 2. Otherwise, fall back to `siteConfig.models.defaults.image`
 
 ### Image Model vs Multimodal Generation

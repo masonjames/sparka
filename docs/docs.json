@@ -33,7 +33,9 @@
               "capabilities/code-execution",
               "capabilities/image-generation",
               "capabilities/attachments",
-              "capabilities/mcp"
+              "capabilities/mcp",
+              "capabilities/canvas",
+              "capabilities/sharing"
             ]
           },
           {
@@ -66,10 +68,9 @@
           {
             "group": "Roadmap",
             "pages": [
-              "roadmap/canvas",
-              "roadmap/sharing",
               "roadmap/branching",
-              "roadmap/projects"
+              "roadmap/projects",
+              "roadmap/sandbox"
             ]
           }
         ]
@@ -122,7 +123,7 @@
         },
         {
           "anchor": "Demo",
-          "href": "https://chatjs.dev",
+          "href": "/",
           "icon": "sparkles"
         }
       ]
@@ -136,7 +137,7 @@
     "links": [
       {
         "label": "Demo",
-        "href": "https://chatjs.dev"
+        "href": "/"
       }
     ],
     "primary": {

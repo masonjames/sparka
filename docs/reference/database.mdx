@@ -14,9 +14,18 @@ The database schema is defined in `lib/db/schema.ts`. Key tables:
 | `user` | User accounts |
 | `session` | Active sessions |
 | `account` | OAuth provider links |
+| `verification` | Email verification tokens |
+| `userCredit` | User credit balances |
+| `userModelPreference` | Per-user model enable/disable preferences |
+| `project` | Project folders for organizing chats |
 | `chat` | Chat conversations |
 | `message` | Chat messages |
+| `part` | Normalized message parts (text, tools, files) |
+| `vote` | Message upvote/downvote feedback |
 | `document` | Artifact documents |
+| `suggestion` | AI-generated document suggestions |
+| `mcpConnector` | MCP server connections |
+| `mcpOAuthSession` | OAuth sessions for MCP servers |
 
 ## Migrations
 

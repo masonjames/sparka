@@ -41,7 +41,7 @@ const result = parseChatIdFromPathname(pathname);
 
 ## Related Hooks
 
-- **`useChatId()`** - Returns the current chat ID context (uses `parseChatIdFromPathname` internally)
-- **`useIsSharedRoute()`** - Returns `true` if on a `/share/:id` route
+- **`useChatId()`** from `@/providers/chat-id-provider` - Returns the current chat ID context (uses `parseChatIdFromPathname` internally)
+- **`useIsSharedRoute()`** from `@/hooks/use-is-shared-route` - Returns `true` if on a `/share/:id` route
 
 See [Provisional Chat IDs](/cookbook/data/provisional-ids) for how chat IDs enable seamless client-side navigation.
