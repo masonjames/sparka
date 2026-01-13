@@ -185,7 +185,7 @@ export const siteConfig: SiteConfig = {
   },
 
   integrations: {
-    sandbox: process.env.VERCEL_ENV !== "preview", // Vercel-native through OIDC, not in pre
+    sandbox: true, // Vercel-native, no key needed
     webSearch: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
     mcp: true, // Requires MCP_ENCRYPTION_KEY
     imageGeneration: true,
