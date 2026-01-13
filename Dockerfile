@@ -83,6 +83,10 @@ USER nextjs
 
 EXPOSE 3000
 
+# Health check - verify port is listening
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 || r.statusCode === 302 ? 0 : 1)).on('error', () => process.exit(1))"
+
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
