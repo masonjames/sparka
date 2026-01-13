@@ -1,7 +1,7 @@
 "use client";
 
 import { useChatActions, useChatReset } from "@ai-sdk-tools/store";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import {
   createContext,
@@ -9,9 +9,15 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from "react";
+import { useDataStream } from "@/components/data-stream-provider";
+import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import type { ChatMessage } from "@/lib/ai/types";
+import {
+  useResetThreadEpoch,
+  useSetMessagesWithEpoch,
+  useThreadEpoch,
+} from "@/lib/stores/hooks-threads";
 import {
   buildThreadFromLeaf,
   findLeafDfsToRightFromMessageId,
@@ -27,6 +33,7 @@ type MessageSiblingInfo = {
 type MessageTreeContextType = {
   getMessageSiblingInfo: (messageId: string) => MessageSiblingInfo | null;
   navigateToSibling: (messageId: string, direction: "prev" | "next") => void;
+  threadEpoch: number;
 };
 
 const MessageTreeContext = createContext<MessageTreeContextType | undefined>(
@@ -38,84 +45,37 @@ type MessageTreeProviderProps = {
 };
 
 export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
-  const { id, type } = useChatId();
+  const { id, isPersisted } = useChatId();
+  const isShared = useIsSharedRoute();
   const pathname = usePathname();
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
-  const { setMessages } = useChatActions<ChatMessage>();
+  const setMessagesWithEpoch = useSetMessagesWithEpoch();
   const reset = useChatReset();
+  const { stop } = useChatActions<ChatMessage>();
+  const { setDataStream } = useDataStream();
+  const threadEpoch = useThreadEpoch();
+  const resetThreadEpoch = useResetThreadEpoch();
 
-  // Select the appropriate chat ID based on isShared flag
-  // Subscribe to query cache changes for the specific chat messages query
+  const messagesQuery = useQuery({
+    ...(isShared
+      ? trpc.chat.getPublicChatMessages.queryOptions({ chatId: id })
+      : trpc.chat.getChatMessages.queryOptions({ chatId: id })),
+    enabled: !!id && isPersisted && pathname !== "/",
+  });
+
+  const allMessages = (messagesQuery.data ?? []) as ChatMessage[];
+
   useEffect(() => {
-    // TODO: IS this effect still needed or can it be replaced with a useQuery ?
-    if (type === "provisional" && pathname === "/") {
-      // New chat
-      setAllMessages([]);
+    if (!isPersisted && pathname === "/") {
       reset();
+      setDataStream([]);
+      resetThreadEpoch();
     }
-
-    const queryKey =
-      type === "shared"
-        ? trpc.chat.getPublicChatMessages.queryKey({ chatId: id })
-        : trpc.chat.getChatMessages.queryKey({ chatId: id });
-
-    // Get initial data
-    const initialData = queryClient.getQueryData<ChatMessage[]>(queryKey);
-    if (initialData) {
-      console.log("initialData", initialData);
-      setAllMessages(initialData);
-    }
-
-    const handleCacheUpdate = (event: {
-      type: string;
-      query: {
-        queryKey?: unknown;
-        state: { data?: unknown };
-      };
-    }) => {
-      if (event.type !== "updated" || !event.query.queryKey) {
-        return;
-      }
-
-      const eventQueryKey = event.query.queryKey;
-      const currentQueryKey =
-        type === "shared"
-          ? trpc.chat.getPublicChatMessages.queryKey({ chatId: id })
-          : trpc.chat.getChatMessages.queryKey({ chatId: id });
-
-      if (JSON.stringify(eventQueryKey) === JSON.stringify(currentQueryKey)) {
-        console.log("event.query.state.data", event.query.state.data);
-        const newData = event.query.state.data as ChatMessage[] | undefined;
-        if (newData) {
-          setAllMessages(newData);
-        }
-      }
-    };
-
-    // Subscribe to cache changes
-    const unsubscribe = queryClient
-      .getQueryCache()
-      .subscribe(handleCacheUpdate);
-
-    return unsubscribe;
-  }, [
-    id,
-    type,
-    pathname,
-    trpc.chat.getChatMessages,
-    trpc.chat.getPublicChatMessages,
-    queryClient,
-    reset,
-  ]);
+  }, [isPersisted, pathname, reset, setDataStream, resetThreadEpoch]);
 
   // Build parent->children mapping once
   const childrenMap = useMemo(() => {
     const map = new Map<string | null, ChatMessage[]>();
-    if (!allMessages) {
-      return map;
-    }
     for (const message of allMessages) {
       const parentId = message.metadata?.parentMessageId || null;
 
@@ -142,9 +102,6 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
 
   const getMessageSiblingInfo = useCallback(
     (messageId: string): MessageSiblingInfo | null => {
-      if (!allMessages) {
-        return null;
-      }
       const message = allMessages.find((m) => m.id === messageId);
       if (!message) {
         return null;
@@ -164,13 +121,18 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
 
   const navigateToSibling = useCallback(
     (messageId: string, direction: "prev" | "next") => {
-      if (!(allMessages && id)) {
+      if (!allMessages.length) {
         return;
       }
       const siblingInfo = getMessageSiblingInfo(messageId);
       if (!siblingInfo || siblingInfo.siblings.length <= 1) {
         return;
       }
+
+      // Thread switch must hard-disconnect the current stream + clear buffered deltas,
+      // otherwise the new DataStreamHandler can replay old deltas after remount.
+      stop?.();
+      setDataStream([]);
 
       const { siblings, siblingIndex } = siblingInfo;
       const nextIndex =
@@ -188,17 +150,25 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
         leaf ? leaf.id : targetSibling.id
       );
 
-      setMessages(newThread);
+      setMessagesWithEpoch(newThread);
     },
-    [allMessages, getMessageSiblingInfo, childrenMap, id, setMessages]
+    [
+      allMessages,
+      childrenMap,
+      getMessageSiblingInfo,
+      setDataStream,
+      setMessagesWithEpoch,
+      stop,
+    ]
   );
 
   const value = useMemo(
     () => ({
       getMessageSiblingInfo,
       navigateToSibling,
+      threadEpoch,
     }),
-    [getMessageSiblingInfo, navigateToSibling]
+    [getMessageSiblingInfo, navigateToSibling, threadEpoch]
   );
 
   return (

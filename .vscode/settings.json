@@ -12,7 +12,6 @@
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.preferTypeOnlyAutoImports": true,
-  "typescript.referencesCodeLens.enabled": true,
   "editor.wordWrap": "on",
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit",

@@ -25,9 +25,12 @@ export function SessionProvider({
   const clientSession = clientSessionRaw ? clientSessionRaw : undefined;
 
   const value = useMemo<SessionContextValue>(() => {
+    // Prefer server session as a fallback even after the client hook settles.
+    // This avoids "split brain" when client session fetch is blocked/misconfigured
+    // (e.g. trustedOrigins mismatch) but the server can still read the cookies.
     const effective = isPending
       ? (initialSession ?? clientSession)
-      : clientSession;
+      : (clientSession ?? initialSession);
     return { data: effective, isPending };
   }, [clientSession, initialSession, isPending]);
 

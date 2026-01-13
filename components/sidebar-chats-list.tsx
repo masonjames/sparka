@@ -25,7 +25,7 @@ const PROJECT_CHAT_REGEX = /^\/project\/[^/]+\/chat\/(.+)$/;
 
 export function SidebarChatsList() {
   const pathname = usePathname();
-  const { data: allChats, isLoading } = useGetAllChats(50);
+  const { data: allChats, isLoading } = useGetAllChats({ limit: 50 });
   const { setOpenMobile } = useSidebar();
   const { mutate: renameChatMutation } = useRenameChat();
   const { mutate: pinChatMutation } = usePinChat();
@@ -120,6 +120,14 @@ export function SidebarChatsList() {
     );
   }
 
+  const prefetchLimit = 10;
+  let renderedChatsCount = 0;
+  const shouldPrefetchNextChat = () => {
+    const shouldPrefetch = renderedChatsCount < prefetchLimit;
+    renderedChatsCount += 1;
+    return shouldPrefetch;
+  };
+
   return (
     <>
       {groupedChats.pinned.length > 0 && (
@@ -142,6 +150,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -170,6 +179,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -196,6 +206,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -222,6 +233,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -248,6 +260,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -274,6 +287,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}

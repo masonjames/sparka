@@ -17,7 +17,7 @@ export function NewChatButton() {
   }, []);
 
   return (
-    <SidebarMenuButton asChild className="mt-4">
+    <SidebarMenuButton asChild className="mt-4" tooltip="New Chat">
       <Link
         className="flex w-full items-center gap-2"
         href="/"
@@ -26,7 +26,7 @@ export function NewChatButton() {
           refreshChatID();
         }}
       >
-        <PlusIcon />
+        <PlusIcon aria-label="New Chat" />
         <span>New Chat</span>
         <span className="ml-auto text-muted-foreground text-xs">
           {shortcutText}

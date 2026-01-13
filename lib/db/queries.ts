@@ -30,7 +30,9 @@ import {
   type Suggestion,
   suggestion,
   type User,
+  type UserModelPreference,
   user,
+  userModelPreference,
   vote,
 } from "./schema";
 
@@ -161,11 +163,15 @@ export async function createProject({
   userId,
   name,
   instructions = "",
+  icon,
+  iconColor,
 }: {
   id: string;
   userId: string;
   name: string;
   instructions?: string;
+  icon?: string;
+  iconColor?: string;
 }) {
   try {
     return await db.insert(project).values({
@@ -173,6 +179,8 @@ export async function createProject({
       userId,
       name,
       instructions,
+      ...(icon && { icon }),
+      ...(iconColor && { iconColor }),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -213,7 +221,12 @@ export async function updateProject({
   updates,
 }: {
   id: string;
-  updates: Partial<{ name: string; instructions: string }>;
+  updates: Partial<{
+    name: string;
+    instructions: string;
+    icon: string;
+    iconColor: string;
+  }>;
 }) {
   try {
     return await db
@@ -959,12 +972,23 @@ export async function getMessagesWithAttachments() {
   }
 }
 
+function getGeneratedImageParts() {
+  return db
+    .select({ tool_output: part.tool_output })
+    .from(part)
+    .where(eq(part.tool_name, "generate-image"));
+}
+
 export async function getAllAttachmentUrls(): Promise<string[]> {
   try {
-    const messages = await getMessagesWithAttachments();
+    const [messages, generatedImageParts] = await Promise.all([
+      getMessagesWithAttachments(),
+      getGeneratedImageParts(),
+    ]);
 
     const attachmentUrls: string[] = [];
 
+    // Collect URLs from message attachments
     for (const msg of messages) {
       if (msg.attachments && Array.isArray(msg.attachments)) {
         const attachments = msg.attachments as Attachment[];
@@ -973,6 +997,14 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
             attachmentUrls.push(attachment.url);
           }
         }
+      }
+    }
+
+    // Collect URLs from generated images in tool outputs
+    for (const p of generatedImageParts) {
+      const output = p.tool_output as { imageUrl?: string } | null;
+      if (output?.imageUrl) {
+        attachmentUrls.push(output.imageUrl);
       }
     }
 
@@ -1005,5 +1037,53 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
     console.error("Failed to delete attachments from R2:", error);
     // Don't throw here - we still want to proceed with message deletion
     // even if blob cleanup fails
+  }
+}
+
+export async function getUserModelPreferences({
+  userId,
+}: {
+  userId: string;
+}): Promise<UserModelPreference[]> {
+  try {
+    return await db
+      .select()
+      .from(userModelPreference)
+      .where(eq(userModelPreference.userId, userId));
+  } catch (error) {
+    console.error("Failed to get user model preferences from database", error);
+    throw error;
+  }
+}
+
+export async function upsertUserModelPreference({
+  userId,
+  modelId,
+  enabled,
+}: {
+  userId: string;
+  modelId: string;
+  enabled: boolean;
+}): Promise<void> {
+  try {
+    await db
+      .insert(userModelPreference)
+      .values({
+        userId,
+        modelId,
+        enabled,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [userModelPreference.userId, userModelPreference.modelId],
+        set: {
+          enabled,
+          updatedAt: new Date(),
+        },
+      });
+  } catch (error) {
+    console.error("Failed to upsert user model preference in database", error);
+    throw error;
   }
 }

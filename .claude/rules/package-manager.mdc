@@ -1,0 +1,41 @@
+---
+description: Always use Bun as the package manager
+alwaysApply: true
+---
+
+# Package Manager: Bun
+
+This project uses [Bun](https://bun.sh) as the package manager and runtime.
+
+## Rules
+
+- Always use `bun install` instead of `npm install` or `yarn`
+- Always use `bun run <script>` instead of `npm run` or `yarn`
+- Use `bun.lock` (not `package-lock.json` or `yarn.lock`)
+- The Dockerfile uses Bun for builds
+
+## Common Commands
+
+```bash
+# Install dependencies
+bun install
+
+# Run dev server
+bun run dev
+
+# Build for production
+bun run build
+
+# Run type checking
+bun run typecheck
+
+# Run linting
+bun run lint
+```
+
+## Why Bun?
+
+- Faster dependency installation
+- Consistent with upstream (FranciscoMoretti/sparka)
+- Native TypeScript support
+- Better performance for Next.js builds

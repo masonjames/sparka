@@ -44,6 +44,7 @@ export function SearchChatsButton() {
       <SidebarMenuButton
         className="w-full justify-start"
         onClick={() => setOpen(true)}
+        tooltip="Search chats"
       >
         <SearchIcon className="h-4 w-4" />
         <span>Search chats</span>

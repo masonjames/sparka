@@ -1,16 +1,10 @@
 "use client";
-import { useMessageIds } from "@ai-sdk-tools/store";
 import { ChevronDown } from "lucide-react";
-import {
-  type KeyboardEvent,
-  memo,
-  type ReactNode,
-  useEffect,
-  useState,
-} from "react";
+import { type KeyboardEvent, memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { DeleteChatDialog } from "@/components/delete-chat-dialog";
+import { ProjectIcon } from "@/components/project-icon";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,8 +25,10 @@ import {
   useProject,
   useRenameChat,
 } from "@/hooks/chat-sync-hooks";
+import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import { usePublicChat } from "@/hooks/use-shared-chat";
 import type { Session } from "@/lib/auth";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
 
@@ -51,16 +47,15 @@ export function HeaderBreadcrumb({
   isReadonly,
   className,
 }: HeaderBreadcrumbProps) {
-  const { type, id: chatId } = useChatId();
-  const messageIds = useMessageIds();
+  const { id: chatId, isPersisted } = useChatId();
+  const isShared = useIsSharedRoute();
   const isAuthenticated = !!user;
 
-  const provisionalChatSaved = type === "provisional" && messageIds.length >= 2;
   const { data: chat } = useGetChatById(chatId, {
-    enabled: type === "chat" || provisionalChatSaved,
+    enabled: !isShared && isPersisted,
   });
   const { data: publicChat } = usePublicChat(chatId, {
-    enabled: type === "shared",
+    enabled: isShared,
   });
 
   const resolvedProjectId = chat?.projectId ?? publicChat?.projectId ?? null;
@@ -76,7 +71,6 @@ export function HeaderBreadcrumb({
   const projectLabel = resolvedProjectId
     ? (project?.name ?? (isProjectLoading ? "Loading project…" : undefined))
     : undefined;
-
   const [isChatEditing, setIsChatEditing] = useState(false);
   const [chatTitleDraft, setChatTitleDraft] = useState("");
   const [chatDeleteId, setChatDeleteId] = useState<string | null>(null);
@@ -91,7 +85,7 @@ export function HeaderBreadcrumb({
     value: chat?.title,
   });
 
-  if (!provisionalChatSaved) {
+  if (!(chat || publicChat)) {
     return null;
   }
 
@@ -137,16 +131,16 @@ export function HeaderBreadcrumb({
     return null;
   }
 
-  const projectBreadcrumb = renderProjectBreadcrumb({
-    projectLabel,
-    projectId: resolvedProjectId,
-  });
-
   return (
     <>
       <Breadcrumb className={cn("flex-1", className)}>
         <BreadcrumbList>
-          {projectBreadcrumb}
+          <ProjectBreadcrumb
+            projectColor={project?.iconColor as ProjectColorName | undefined}
+            projectIcon={project?.icon as ProjectIconName | undefined}
+            projectId={resolvedProjectId}
+            projectLabel={projectLabel}
+          />
           <BreadcrumbItem>
             {
               <PureChatBreadcrumb
@@ -318,13 +312,17 @@ function useSyncDraftValue({
   }, [isEditing, setDraft, value]);
 }
 
-function renderProjectBreadcrumb({
+function ProjectBreadcrumb({
   projectLabel,
   projectId,
+  projectIcon,
+  projectColor,
 }: {
   projectLabel?: string;
   projectId: string | null;
-}): ReactNode {
+  projectIcon?: ProjectIconName;
+  projectColor?: ProjectColorName;
+}) {
   if (!(projectLabel && projectId)) {
     return null;
   }
@@ -332,8 +330,17 @@ function renderProjectBreadcrumb({
   return (
     <>
       <BreadcrumbItem>
-        <BreadcrumbLink href={`/project/${projectId}`}>
-          {projectLabel}
+        <BreadcrumbLink
+          aria-label={projectLabel}
+          className="flex items-center"
+          href={`/project/${projectId}`}
+          title={projectLabel}
+        >
+          {projectIcon && projectColor ? (
+            <ProjectIcon color={projectColor} icon={projectIcon} size={16} />
+          ) : (
+            projectLabel
+          )}
         </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator />
