@@ -1,26 +1,32 @@
 "use client";
 
-import { useChatStoreApi } from "@ai-sdk-tools/store";
+import type { ToolUIPart } from "ai";
+import {
+  isDataUIPart,
+  isReasoningUIPart,
+  isStaticToolUIPart,
+  isTextUIPart,
+  isToolUIPart,
+} from "ai";
 import { memo } from "react";
-import type { ChatMessage } from "@/lib/ai/types";
+import type { ChatTools } from "@/lib/ai/types";
 import {
   useMessagePartByPartIdx,
-  useMessagePartsByPartRange,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
-import { isLastArtifact } from "./is-last-artifact";
-import { CodeInterpreterMessage } from "./part/code-interpreter";
-import { DocumentToolResult } from "./part/document-common";
-import { DocumentPreview } from "./part/document-preview";
+import { CodeInterpreter } from "./part/code-interpreter";
+import { CreateDocument } from "./part/create-document";
+import { DeepResearch } from "./part/deep-research";
+import { DynamicToolPart } from "./part/dynamic-tool";
 import { GeneratedImage } from "./part/generated-image";
-import { ResearchUpdates } from "./part/message-annotations";
-import { MessageReasoning } from "./part/message-reasoning";
+import { ReasoningPart } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
-import { RequestSuggestionsMessage } from "./part/request-suggestions-message";
+import { RequestSuggestions } from "./part/request-suggestions";
 import { Retrieve } from "./part/retrieve";
 import { TextMessagePart } from "./part/text-message-part";
-import { UpdateDocumentMessage } from "./part/update-document-message";
+import { UpdateDocument } from "./part/update-document";
 import { Weather } from "./part/weather";
+import { WebSearch } from "./part/web-search";
 
 type MessagePartsProps = {
   messageId: string;
@@ -28,128 +34,75 @@ type MessagePartsProps = {
   isReadonly: boolean;
 };
 
-// TODO: Transform this
-function useResearchUpdates(
-  messageId: string,
-  partIdx: number,
-  type: ChatMessage["parts"][number]["type"]
-) {
-  const types = useMessagePartTypesById(messageId);
-  const startIdx = partIdx;
-  const nextIdx = types.findIndex(
-    (t, i) =>
-      i > startIdx && (t === "tool-deepResearch" || t === "tool-webSearch")
-  );
-
-  // If not a research tool, constrain the range to empty to minimize work
-  let sliceEnd = nextIdx === -1 ? types.length - 1 : nextIdx - 1;
-  if (type !== "tool-deepResearch" && type !== "tool-webSearch") {
-    sliceEnd = startIdx;
-  }
-
-  const range = useMessagePartsByPartRange(messageId, startIdx + 1, sliceEnd);
-
-  if (type !== "tool-deepResearch" && type !== "tool-webSearch") {
-    return [] as Extract<
-      ChatMessage["parts"][number],
-      { type: "data-researchUpdate" }
-    >["data"][];
-  }
-
-  return range
-    .filter((p) => p.type === "data-researchUpdate")
-    .map(
-      (u) =>
-        (
-          u as Extract<
-            ChatMessage["parts"][number],
-            { type: "data-researchUpdate" }
-          >
-        ).data
-    );
-}
-
-// Handle deep research rendering
-function renderDeepResearchPart({
+function ToolPart({
   part,
-  researchUpdates,
-  chatStore,
   messageId,
   isReadonly,
 }: {
-  part: Extract<ChatMessage["parts"][number], { type: "tool-deepResearch" }>;
-  researchUpdates: Extract<
-    ChatMessage["parts"][number],
-    { type: "data-researchUpdate" }
-  >["data"][];
-  chatStore: ReturnType<typeof useChatStoreApi<ChatMessage>>;
+  part: ToolUIPart<ChatTools>;
   messageId: string;
   isReadonly: boolean;
 }) {
-  const { toolCallId, state } = part;
+  const type = part.type;
 
-  if (state === "input-available") {
+  if (type === "tool-getWeather") {
+    return <Weather tool={part} />;
+  }
+
+  if (type === "tool-createDocument") {
     return (
-      <div className="flex w-full flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates} />
-      </div>
+      <CreateDocument
+        isReadonly={isReadonly}
+        messageId={messageId}
+        tool={part}
+      />
     );
   }
-  if (state === "output-available") {
-    const { output, input } = part;
-    const shouldShowFullPreview = isLastArtifact(
-      chatStore.getState().messages,
-      toolCallId
-    );
 
-    if (output.format === "report") {
-      return (
-        <div key={toolCallId}>
-          <div className="mb-2">
-            <ResearchUpdates updates={researchUpdates} />
-          </div>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          )}
-        </div>
-      );
-    }
-  }
-  return null;
-}
-
-// Handle web search rendering
-function renderWebSearchPart({
-  part,
-  researchUpdates,
-}: {
-  part: Extract<ChatMessage["parts"][number], { type: "tool-webSearch" }>;
-  researchUpdates: Extract<
-    ChatMessage["parts"][number],
-    { type: "data-researchUpdate" }
-  >["data"][];
-}) {
-  const { toolCallId, state } = part;
-
-  if (state === "input-available" || state === "output-available") {
+  if (type === "tool-updateDocument") {
     return (
-      <div className="flex flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates} />
-      </div>
+      <UpdateDocument
+        isReadonly={isReadonly}
+        messageId={messageId}
+        tool={part}
+      />
     );
+  }
+
+  if (type === "tool-requestSuggestions") {
+    return (
+      <RequestSuggestions
+        isReadonly={isReadonly}
+        messageId={messageId}
+        tool={part}
+      />
+    );
+  }
+
+  if (type === "tool-retrieve") {
+    return <Retrieve tool={part} />;
+  }
+
+  if (type === "tool-readDocument") {
+    return <ReadDocument tool={part} />;
+  }
+
+  if (type === "tool-codeInterpreter") {
+    return <CodeInterpreter tool={part} />;
+  }
+
+  if (type === "tool-generateImage") {
+    return <GeneratedImage tool={part} />;
+  }
+
+  if (type === "tool-deepResearch") {
+    return (
+      <DeepResearch isReadonly={isReadonly} messageId={messageId} part={part} />
+    );
+  }
+
+  if (type === "tool-webSearch") {
+    return <WebSearch messageId={messageId} part={part} />;
   }
   return null;
 }
@@ -160,149 +113,47 @@ function PureMessagePart({
   messageId,
   partIdx,
   isReadonly,
+  isLoading,
 }: {
   messageId: string;
   partIdx: number;
   isReadonly: boolean;
+  isLoading: boolean;
 }) {
   const part = useMessagePartByPartIdx(messageId, partIdx);
-  const { type } = part;
-  const researchUpdates = useResearchUpdates(messageId, partIdx, type);
-  const chatStore = useChatStoreApi<ChatMessage>();
 
-  if (part.type === "tool-getWeather") {
-    return <Weather key={part.toolCallId} tool={part} />;
+  if (isTextUIPart(part)) {
+    return <TextMessagePart isLoading={isLoading} text={part.text} />;
   }
 
-  if (type === "tool-createDocument") {
-    const { toolCallId, state } = part;
-    if (state === "input-available") {
-      const { input } = part;
+  if (isReasoningUIPart(part)) {
+    return <ReasoningPart content={part.text} isLoading={isLoading} />;
+  }
+
+  if (isDataUIPart(part)) {
+    return null;
+  }
+
+  if (isToolUIPart(part)) {
+    if (isStaticToolUIPart(part)) {
       return (
-        <div key={toolCallId}>
-          <DocumentPreview
-            args={input}
-            isReadonly={isReadonly}
-            messageId={messageId}
-          />
-        </div>
+        <ToolPart isReadonly={isReadonly} messageId={messageId} part={part} />
       );
     }
-
-    if (state === "output-available") {
-      const { output, input } = part;
-      const shouldShowFullPreview = isLastArtifact(
-        chatStore.getState().getInternalMessages(),
-        toolCallId
-      );
-
-      if ("error" in output) {
-        return (
-          <div className="rounded border p-2 text-red-500" key={toolCallId}>
-            Error: {String(output.error)}
-          </div>
-        );
-      }
-
-      return (
-        <div key={toolCallId}>
-          {shouldShowFullPreview ? (
-            <DocumentPreview
-              args={input}
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          ) : (
-            <DocumentToolResult
-              isReadonly={isReadonly}
-              messageId={messageId}
-              result={output}
-              type="create"
-            />
-          )}
-        </div>
-      );
-    }
-  }
-
-  if (part.type === "tool-updateDocument") {
+    // At this point it's a Dynamic Tool, tools are handled beforehand by the ToolPart component
     return (
-      <UpdateDocumentMessage
+      <DynamicToolPart
         isReadonly={isReadonly}
-        key={part.toolCallId}
         messageId={messageId}
-        tool={part}
+        part={part}
       />
     );
-  }
-
-  if (part.type === "tool-requestSuggestions") {
-    return (
-      <RequestSuggestionsMessage
-        isReadonly={isReadonly}
-        key={part.toolCallId}
-        messageId={messageId}
-        tool={part}
-      />
-    );
-  }
-
-  if (part.type === "tool-retrieve") {
-    return <Retrieve key={part.toolCallId} tool={part} />;
-  }
-
-  if (part.type === "tool-readDocument") {
-    return <ReadDocument key={part.toolCallId} tool={part} />;
-  }
-
-  if (part.type === "tool-codeInterpreter") {
-    return <CodeInterpreterMessage key={part.toolCallId} tool={part} />;
-  }
-
-  if (part.type === "tool-generateImage") {
-    return <GeneratedImage key={part.toolCallId} tool={part} />;
-  }
-
-  if (type === "tool-deepResearch") {
-    return renderDeepResearchPart({
-      part,
-      researchUpdates,
-      chatStore,
-      messageId,
-      isReadonly,
-    });
-  }
-
-  if (type === "tool-webSearch") {
-    return renderWebSearchPart({ part, researchUpdates });
   }
 
   return null;
 }
 
 const MessagePart = memo(PureMessagePart);
-
-// Render a single reasoning part by index
-function PureReasoningPart({
-  messageId,
-  isLoading,
-  partIdx,
-}: {
-  messageId: string;
-  isLoading: boolean;
-  partIdx: number;
-}) {
-  const part = useMessagePartByPartIdx(messageId, partIdx);
-  if (part.type !== "reasoning") {
-    return null;
-  }
-
-  return <MessageReasoning content={part.text} isLoading={isLoading} />;
-}
-
-const ReasoningPart = memo(PureReasoningPart);
 
 export function PureMessageParts({
   messageId,
@@ -312,29 +163,12 @@ export function PureMessageParts({
   const types = useMessagePartTypesById(messageId);
 
   return types.map((t, i) => {
-    if (t === "reasoning") {
-      const key = `message-${messageId}-reasoning-${i}`;
-      const isLast = i === types.length - 1;
-      return (
-        <ReasoningPart
-          isLoading={isLoading && isLast}
-          key={key}
-          messageId={messageId}
-          partIdx={i}
-        />
-      );
-    }
-
-    if (t === "text") {
-      const key = `message-${messageId}-text-${i}`;
-      return <TextMessagePart key={key} messageId={messageId} partIdx={i} />;
-    }
-
-    const key = `message-${messageId}-part-${i}-${t}`;
     return (
       <MessagePart
+        isLoading={isLoading && i === types.length - 1}
         isReadonly={isReadonly}
-        key={key}
+        // biome-ignore lint/suspicious/noArrayIndexKey: we only have index at this point
+        key={`message-${messageId}-${t}-${i}`}
         messageId={messageId}
         partIdx={i}
       />

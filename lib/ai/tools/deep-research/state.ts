@@ -68,6 +68,7 @@ export type ResearchQuestion = z.infer<typeof ResearchQuestionSchema>;
 export type AgentInputState = {
   requestId: string;
   messageId: string;
+  toolCallId: string;
   messages: ModelMessage[];
 };
 
@@ -81,6 +82,7 @@ export type AgentState = {
   final_report: string;
   reportResult: ArtifactToolResult;
   clarificationMessage?: string;
+  toolCallId: string;
 };
 
 export type DeepResearchResult =

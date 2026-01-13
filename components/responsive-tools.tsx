@@ -5,19 +5,19 @@ import {
   type SetStateAction,
   useState,
 } from "react";
-import type { UiToolName } from "@/lib/ai/types";
-import { useChatModels } from "@/providers/chat-models-provider";
-import { useSession } from "@/providers/session-provider";
-import { enabledTools, toolDefinitions } from "./chat-features-definitions";
-import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import type { UiToolName } from "@/lib/ai/types";
+import { useChatModels } from "@/providers/chat-models-provider";
+import { useSession } from "@/providers/session-provider";
+import { enabledTools, toolDefinitions } from "./chat-features-definitions";
+import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Separator } from "./ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
@@ -69,18 +69,18 @@ export function ResponsiveTools({
   };
 
   return (
-    <div className="flex items-center @[400px]:gap-2 gap-1">
+    <div className="flex items-center @[500px]:gap-2 gap-1">
       {isAnonymous ? (
         <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
           <Tooltip>
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <Button
-                  className="@[400px]:h-10 h-8 @[400px]:gap-2 gap-1 p-1.5"
+                  className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5"
                   variant="ghost"
                 >
                   <Settings2 size={14} />
-                  <span className="@[400px]:inline hidden">Tools</span>
+                  <span className="@[500px]:inline hidden">Tools</span>
                 </Button>
               </PopoverTrigger>
             </TooltipTrigger>
@@ -99,12 +99,12 @@ export function ResponsiveTools({
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="@[400px]:h-10 h-8 @[400px]:gap-2 gap-1 p-1.5 px-2.5"
+                  className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
                   size="sm"
                   variant="ghost"
                 >
                   <Settings2 size={14} />
-                  <span className="@[400px]:inline hidden">Tools</span>
+                  <span className="@[500px]:inline hidden">Tools</span>
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
@@ -160,7 +160,7 @@ export function ResponsiveTools({
             orientation="vertical"
           />
           <Button
-            className="@[400px]:h-10 h-8 @[400px]:gap-2 gap-1 rounded-full text-primary hover:text-primary/80"
+            className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 rounded-full text-primary hover:text-primary/80"
             onClick={() => setTool(null)}
             size="sm"
             variant="ghost"

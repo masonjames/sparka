@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils";
 export function ContextBar({
   attachments,
   uploadQueue,
-  onRemove,
-  onImageClick,
+  onRemoveAction,
+  onImageClickAction,
   className,
 }: {
   attachments: Attachment[];
   uploadQueue: string[];
-  onRemove: (attachment: Attachment) => void;
-  onImageClick: (url: string, name?: string) => void;
+  onRemoveAction: (attachment: Attachment) => void;
+  onImageClickAction: (url: string, name?: string) => void;
   className?: string;
 }) {
   const hasBarContent = attachments.length > 0 || uploadQueue.length > 0;
@@ -29,8 +29,8 @@ export function ContextBar({
       {(attachments.length > 0 || uploadQueue.length > 0) && (
         <AttachmentList
           attachments={attachments}
-          onImageClick={onImageClick}
-          onRemove={onRemove}
+          onImageClickAction={onImageClickAction}
+          onRemoveAction={onRemoveAction}
           testId="attachments-preview"
           uploadQueue={uploadQueue}
         />

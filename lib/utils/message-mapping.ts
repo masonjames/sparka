@@ -1,7 +1,11 @@
-import { isDataUIPart, isToolUIPart } from "ai";
+import type { DynamicToolUIPart } from "ai";
+import { isDataUIPart, isToolOrDynamicToolUIPart, isToolUIPart } from "ai";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Part } from "@/lib/db/schema";
-import { validateToolPart } from "./message-part-validators";
+import {
+  validateDynamicToolPart,
+  validateToolPart,
+} from "./message-part-validators";
 
 function createBasePart(
   messageId: string,
@@ -71,6 +75,44 @@ function handleToolPartToDB(
   return basePart;
 }
 
+function handleDynamicToolPartToDB(
+  part: ChatMessage["parts"][number],
+  basePart: Omit<Part, "id" | "createdAt">
+): Omit<Part, "id" | "createdAt"> | null {
+  const validationResult = validateDynamicToolPart(part);
+  if (!validationResult.success) {
+    return null;
+  }
+
+  const dynamicPart = validationResult.data;
+  basePart.tool_name = dynamicPart.toolName;
+  basePart.tool_toolCallId = dynamicPart.toolCallId;
+  basePart.tool_state = dynamicPart.state;
+
+  const hasInputStates = [
+    "input-available",
+    "output-available",
+    "output-error",
+    "input-streaming",
+    "approval-requested",
+    "approval-responded",
+    "output-denied",
+  ];
+  if (hasInputStates.includes(dynamicPart.state)) {
+    basePart.tool_input = dynamicPart.input ?? null;
+  }
+
+  if (dynamicPart.state === "output-available") {
+    basePart.tool_output = dynamicPart.output ?? null;
+  }
+
+  if (dynamicPart.state === "output-error") {
+    basePart.tool_errorText = dynamicPart.errorText ?? null;
+  }
+
+  return basePart;
+}
+
 function handleDefaultPartToDB(
   part: ChatMessage["parts"][number],
   basePart: Omit<Part, "id" | "createdAt">
@@ -79,8 +121,11 @@ function handleDefaultPartToDB(
     return null;
   }
 
-  if (isToolUIPart(part)) {
-    return handleToolPartToDB(part, basePart);
+  if (isToolOrDynamicToolUIPart(part)) {
+    if (isToolUIPart(part)) {
+      return handleToolPartToDB(part, basePart);
+    }
+    return handleDynamicToolPartToDB(part, basePart);
   }
 
   if (isDataUIPart(part)) {
@@ -243,6 +288,65 @@ function mapToolPartToUI(part: Part): ChatMessage["parts"][number] | null {
   return null;
 }
 
+function mapDynamicToolPartToUI(
+  part: Part
+): ChatMessage["parts"][number] | null {
+  if (!(part.tool_toolCallId && part.tool_state && part.tool_name)) {
+    return null;
+  }
+
+  const base = {
+    type: "dynamic-tool" as const,
+    toolName: part.tool_name,
+    toolCallId: part.tool_toolCallId,
+  };
+
+  if (part.tool_state === "input-streaming") {
+    return {
+      ...base,
+      state: "input-streaming" as const,
+      input: part.tool_input,
+    } as DynamicToolUIPart;
+  }
+
+  if (part.tool_state === "input-available") {
+    return {
+      ...base,
+      state: "input-available" as const,
+      input: part.tool_input,
+      ...(part.providerMetadata
+        ? { callProviderMetadata: part.providerMetadata }
+        : {}),
+    } as DynamicToolUIPart;
+  }
+
+  if (part.tool_state === "output-available") {
+    return {
+      ...base,
+      state: "output-available" as const,
+      input: part.tool_input,
+      output: part.tool_output,
+      ...(part.providerMetadata
+        ? { callProviderMetadata: part.providerMetadata }
+        : {}),
+    } as DynamicToolUIPart;
+  }
+
+  if (part.tool_state === "output-error") {
+    return {
+      ...base,
+      state: "output-error" as const,
+      input: part.tool_input,
+      errorText: part.tool_errorText ?? "",
+      ...(part.providerMetadata
+        ? { callProviderMetadata: part.providerMetadata }
+        : {}),
+    } as DynamicToolUIPart;
+  }
+
+  return null;
+}
+
 function mapDataPartToUI(part: Part): ChatMessage["parts"][number] | null {
   if (part.data_type && part.data_blob) {
     return {
@@ -327,6 +431,9 @@ function mapDBPartToUIPart(part: Part): ChatMessage["parts"][number] | null {
       return {
         type: "step-start" as const,
       };
+
+    case "dynamic-tool":
+      return mapDynamicToolPartToUI(part);
 
     default:
       if (part.type.startsWith("tool-")) {

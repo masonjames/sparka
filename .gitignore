@@ -53,3 +53,11 @@ evals/db/
 
 # Neon
 .neon
+
+/.skillz
+/AGENTS.md
+/AGENTS.md.bak
+/CLAUDE.md
+/CLAUDE.md.bak
+# END Skiller Generated Files
+.devtools

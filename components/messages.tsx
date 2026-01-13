@@ -2,24 +2,22 @@ import { useChatId, useChatStatus } from "@ai-sdk-tools/store";
 import { memo } from "react";
 import {
   Conversation,
-  ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-// import { ConversationContent } from "@/components/ai-elements/extra/conversation-content";
-import type { Vote } from "@/lib/db/schema";
-import { useMessageIds } from "@/lib/stores/hooks";
+import { ConversationContent } from "@/components/ai-elements/extra/conversation-content-scroll-area";
+import { useMessageIds } from "@/lib/stores/hooks-base";
+import { cn } from "@/lib/utils";
 import { Greeting } from "./greeting";
 import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
 import { ThinkingMessage } from "./thinking-message";
 
 type PureMessagesInternalProps = {
-  votes: Vote[] | undefined;
   isReadonly: boolean;
 };
 
 const PureMessagesInternal = memo(
-  ({ votes, isReadonly }: PureMessagesInternalProps) => {
+  ({ isReadonly }: PureMessagesInternalProps) => {
     const chatId = useChatId();
     const status = useChatStatus();
     const messageIds = useMessageIds();
@@ -43,11 +41,6 @@ const PureMessagesInternal = memo(
             key={messageId}
             messageId={messageId}
             parentMessageId={index > 0 ? messageIds[index - 1] : null}
-            vote={
-              votes
-                ? votes.find((vote) => vote.messageId === messageId)
-                : undefined
-            }
           />
         ))}
 
@@ -63,23 +56,21 @@ const PureMessagesInternal = memo(
 );
 
 export type MessagesProps = {
-  votes: Vote[] | undefined;
   isReadonly: boolean;
-  isVisible: boolean;
   onModelChange?: (modelId: string) => void;
+  className?: string;
 };
 
-function PureMessages({
-  votes,
-  isReadonly,
-  isVisible: _isVisible,
-}: MessagesProps) {
+function PureMessages({ isReadonly, className }: MessagesProps) {
   return (
-    //   <Conversation className="">
-    // <ConversationContent className="">
-    <Conversation className="h-full flex-1 overflow-y-hidden">
-      <ConversationContent className="container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl">
-        <PureMessagesInternal isReadonly={isReadonly} votes={votes} />
+    <Conversation className={cn("h-full", className)}>
+      <ConversationContent
+        className={cn(
+          "container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl",
+          className
+        )}
+      >
+        <PureMessagesInternal isReadonly={isReadonly} />
       </ConversationContent>
       <ConversationScrollButton />
     </Conversation>
@@ -87,14 +78,7 @@ function PureMessages({
 }
 
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
-  if (prevProps.votes !== nextProps.votes) {
-    return false;
-  }
   if (prevProps.isReadonly !== nextProps.isReadonly) {
-    return false;
-  }
-  // NOTE: isVisible avoids re-renders when the messages aren't visible
-  if (prevProps.isVisible !== nextProps.isVisible) {
     return false;
   }
 

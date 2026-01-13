@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ProjectIconPicker } from "@/components/project-icon-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,39 +12,77 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+import {
+  DEFAULT_PROJECT_COLOR,
+  DEFAULT_PROJECT_ICON,
+} from "@/lib/project-icons";
+
+export type ProjectDetailsData = {
+  name: string;
+  icon: ProjectIconName;
+  color: ProjectColorName;
+};
 
 export function ProjectDetailsDialog({
   open,
   onOpenChange,
   mode,
-  initialValue,
+  initialName,
+  initialIcon,
+  initialColor,
   onSubmit,
   isLoading,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
-  initialValue?: string;
-  onSubmit: (value: string) => void | Promise<void>;
+  initialName?: string;
+  initialIcon?: ProjectIconName;
+  initialColor?: ProjectColorName;
+  onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
 }) {
-  const [value, setValue] = useState(initialValue ?? "");
+  const [name, setName] = useState(initialName ?? "");
+  const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
+  const [color, setColor] = useState<ProjectColorName | null>(
+    initialColor ?? null
+  );
 
   useEffect(() => {
     if (open) {
-      setValue(initialValue ?? "");
+      setName(initialName ?? "");
+      setIcon(initialIcon ?? null);
+      setColor(initialColor ?? null);
     }
-  }, [open, initialValue]);
+  }, [open, initialName, initialIcon, initialColor]);
+
+  // Computed values for submission
+  const finalIcon = icon ?? DEFAULT_PROJECT_ICON;
+  const finalColor = color ?? DEFAULT_PROJECT_COLOR;
 
   const handleSubmit = async () => {
-    const trimmedValue = value.trim();
+    const trimmedName = name.trim();
+
     if (mode === "create") {
-      if (trimmedValue) {
-        onSubmit(trimmedValue);
-        setValue("");
+      if (trimmedName) {
+        onSubmit({ name: trimmedName, icon: finalIcon, color: finalColor });
+        setName("");
+        setIcon(null);
+        setColor(null);
       }
-    } else if (trimmedValue && trimmedValue !== initialValue) {
-      await onSubmit(trimmedValue);
+    } else if (trimmedName) {
+      const hasChanges =
+        trimmedName !== initialName ||
+        finalIcon !== (initialIcon ?? DEFAULT_PROJECT_ICON) ||
+        finalColor !== (initialColor ?? DEFAULT_PROJECT_COLOR);
+      if (hasChanges) {
+        await onSubmit({
+          name: trimmedName,
+          icon: finalIcon,
+          color: finalColor,
+        });
+      }
       onOpenChange(false);
     } else {
       onOpenChange(false);
@@ -52,23 +91,27 @@ export function ProjectDetailsDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setValue(initialValue ?? "");
+      setName(initialName ?? "");
+      setIcon(initialIcon ?? null);
+      setColor(initialColor ?? null);
     }
     onOpenChange(newOpen);
   };
 
-  const isDisabled =
-    mode === "create"
-      ? !value.trim() || isLoading
-      : !value.trim() || value.trim() === initialValue || isLoading;
+  const hasName = Boolean(name.trim());
+  const isUnchanged =
+    name.trim() === initialName &&
+    finalIcon === initialIcon &&
+    finalColor === initialColor;
 
-  const title = mode === "create" ? "New Project" : "Rename Project";
+  const isDisabled = !hasName || isLoading || (mode === "edit" && isUnchanged);
+
+  const title = mode === "create" ? "New Project" : "Edit Project";
   const description =
     mode === "create"
       ? "Create a new project to organize your chats."
-      : "Enter a new name for this project.";
+      : "Update project details.";
   const buttonText = mode === "create" ? "Create" : "Save";
-  const placeholder = "Project name";
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
@@ -77,20 +120,27 @@ export function ProjectDetailsDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="py-4">
+        <div className="flex items-center gap-2 py-4">
+          <ProjectIconPicker
+            color={color}
+            icon={icon}
+            onColorChange={setColor}
+            onIconChange={setIcon}
+          />
           <Input
             autoFocus
+            className="flex-1"
             maxLength={255}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !isDisabled) {
                 handleSubmit();
               } else if (e.key === "Escape") {
                 handleOpenChange(false);
               }
             }}
-            placeholder={placeholder}
-            value={value}
+            placeholder="Project name"
+            value={name}
           />
         </div>
         <DialogFooter>
