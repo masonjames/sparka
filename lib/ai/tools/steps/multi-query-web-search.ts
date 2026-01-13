@@ -33,10 +33,12 @@ export async function multiQueryWebSearchStep({
   queries,
   options,
   dataStream,
+  toolCallId,
 }: {
   queries: SearchQuery[];
   options: MultiQuerySearchOptions;
   dataStream: StreamWriter;
+  toolCallId: string;
 }): Promise<MultiQuerySearchResponse> {
   const updateId = generateUUID();
   try {
@@ -47,6 +49,7 @@ export async function multiQueryWebSearchStep({
       type: "data-researchUpdate",
       id: updateId,
       data: {
+        toolCallId,
         title: `Executing ${queries.length} searches`,
         type: "web",
         status: "running",
@@ -101,6 +104,7 @@ export async function multiQueryWebSearchStep({
       type: "data-researchUpdate",
       id: updateId,
       data: {
+        toolCallId,
         title: `Executing ${queries.length} searches`,
         type: "web",
         status: "completed",
@@ -123,6 +127,7 @@ export async function multiQueryWebSearchStep({
       type: "data-researchUpdate",
       id: updateId,
       data: {
+        toolCallId,
         title: `Executing ${queries.length} searches`,
         type: "web",
         status: "completed",

@@ -1,11 +1,15 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { gateway } from "@ai-sdk/gateway";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { type OpenAIResponsesProviderOptions, openai } from "@ai-sdk/openai";
+import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-import type { ImageModelId } from "../models/image-model-id";
+import type {
+  ImageModelId,
+  MultimodalImageModelId,
+} from "../models/image-model-id";
 import type { AppModelId, ModelId } from "./app-models";
-import { getAppModelDefinition, getImageModelDefinition } from "./app-models";
+import { getAppModelDefinition } from "./app-models";
 
 const _telemetryConfig = {
   telemetry: {
@@ -18,28 +22,37 @@ export const getLanguageModel = async (modelId: ModelId) => {
   const model = await getAppModelDefinition(modelId);
   const languageProvider = gateway(model.id);
 
-  // Wrap with reasoning middleware if the model supports reasoning
+  const middlewares: Parameters<typeof wrapLanguageModel>[0]["middleware"][] =
+    [];
+
+  // Add devtools middleware in development
+  if (process.env.NODE_ENV === "development") {
+    middlewares.push(devToolsMiddleware());
+  }
+
+  // Add reasoning middleware if the model supports reasoning
   if (model.reasoning && model.owned_by === "xai") {
     console.log("Wrapping reasoning middleware for", model.id);
-    return wrapLanguageModel({
-      model: languageProvider,
-      middleware: extractReasoningMiddleware({ tagName: "think" }),
-    });
+    middlewares.push(extractReasoningMiddleware({ tagName: "think" }));
   }
 
-  return languageProvider;
-};
-
-export const getImageModel = (modelId: ImageModelId) => {
-  const model = getImageModelDefinition(modelId);
-  // Extract model part from "provider/model" format
-  const modelIdShort = modelId.split("/")[1];
-
-  if (model.owned_by === "openai") {
-    return openai.image(modelIdShort);
+  if (middlewares.length === 0) {
+    return languageProvider;
   }
-  throw new Error(`Provider ${model.owned_by} not supported`);
+
+  return wrapLanguageModel({
+    model: languageProvider,
+    // @ts-expect-error - Version of LanguageModel don't match
+    middleware: middlewares,
+  });
 };
+
+export const getImageModel = (modelId: ImageModelId) =>
+  gateway.imageModel(modelId);
+
+// Get a multimodal language model that can generate images via generateText
+export const getMultimodalImageModel = (modelId: MultimodalImageModelId) =>
+  gateway(modelId);
 
 // Model aliases removed - use getLanguageModel directly with specific model IDs
 

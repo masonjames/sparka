@@ -14,9 +14,10 @@ import {
   type PartsAugmentedState,
   withMessageParts,
 } from "./with-message-parts";
+import { type ThreadAugmentedState, withThreads } from "./with-threads";
 
 export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
-  PartsAugmentedState<UI_MESSAGE>; // & OtherAugmentedState<UI_MESSAGE> to extend
+  PartsAugmentedState<UI_MESSAGE> & ThreadAugmentedState<UI_MESSAGE>;
 
 export function createChatStore<TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = []
@@ -24,7 +25,9 @@ export function createChatStore<TMessage extends UIMessage = UIMessage>(
   return createStore<CustomChatStoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(
-        withMessageParts(createChatStoreCreator<TMessage>(initialMessages))
+        withThreads(
+          withMessageParts(createChatStoreCreator<TMessage>(initialMessages))
+        )
       ),
       { name: "chat-store" }
     )

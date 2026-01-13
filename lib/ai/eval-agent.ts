@@ -67,7 +67,7 @@ async function executeAgentAndGetOutput({
     selectedModelId,
     selectedTool,
     userId,
-    activeTools,
+    budgetAllowedTools: activeTools,
     abortSignal,
     messageId,
     dataStream: noOpStreamWriter,

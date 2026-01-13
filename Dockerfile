@@ -1,15 +1,14 @@
 # Dockerfile for Sparka AI Chat
 # Multi-stage build optimized for Next.js standalone output
-# Used by GitHub Actions to build and push to GHCR
+# Uses Bun for fast dependency installation and builds
 #
-# NOTE: Uses node:22-slim (Debian/glibc) throughout, NOT Alpine (musl).
-# This ensures native modules like better-sqlite3 work correctly.
-# Bun is not used because better-sqlite3 prebuild-install is unsupported.
+# NOTE: Uses official Bun image (Debian-based) throughout.
+# better-sqlite3 requires native compilation, handled by Bun.
 
 # =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
-FROM node:22-slim AS deps
+FROM oven/bun:1 AS deps
 WORKDIR /app
 
 # Install build dependencies for native modules (better-sqlite3)
@@ -19,18 +18,16 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files (use package-lock.json for npm)
-COPY package.json package-lock.json* ./
+# Copy lockfile and package.json
+COPY package.json bun.lock* ./
 
-# Install dependencies with npm (includes devDependencies for build)
-# --legacy-peer-deps required due to @ai-sdk beta version peer conflicts
-# --ignore-scripts is NOT used since better-sqlite3 needs postinstall
-RUN npm ci --legacy-peer-deps
+# Install dependencies with bun
+RUN bun install --frozen-lockfile
 
 # =============================================================================
 # Stage 2: Builder
 # =============================================================================
-FROM node:22-slim AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
 
 # Copy dependencies from deps stage
@@ -56,21 +53,21 @@ ENV R2_BUCKET="placeholder-bucket"
 ENV R2_ENDPOINT="https://placeholder.r2.cloudflarestorage.com"
 ENV R2_PUBLIC_URL="https://placeholder.example.com"
 
-# Build the application using npm (not bun - see header note)
-RUN npm run build
+# Build Next.js directly (skip migrations via npm script)
+# The migrate script checks SKIP_DB_MIGRATE env var
+RUN bun run next build
 
 # =============================================================================
 # Stage 3: Production Runner
 # =============================================================================
-# Use Debian slim, NOT Alpine - native modules (better-sqlite3) compiled on
-# Debian (glibc) are incompatible with Alpine (musl)
+# Use Node.js slim for production (Next.js server.js runs on Node)
 FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security (Debian syntax)
+# Create non-root user for security
 RUN groupadd --system --gid 1001 nodejs && \
     useradd --system --uid 1001 --gid nodejs nextjs
 

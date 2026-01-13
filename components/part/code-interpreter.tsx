@@ -1,6 +1,6 @@
 import type { ChatMessage } from "@/lib/ai/types";
 import InteractiveChart, { type BaseChart } from "../interactive-charts";
-import { Sandbox } from "../sandbox";
+import { SandboxComposed } from "../sandbox";
 
 export type CodeInterpreterTool = Extract<
   ChatMessage["parts"][number],
@@ -19,11 +19,7 @@ function isBaseChart(input: unknown): input is BaseChart {
   return hasType && hasTitle && hasElements;
 }
 
-export function CodeInterpreterMessage({
-  tool,
-}: {
-  tool: CodeInterpreterTool;
-}) {
+export function CodeInterpreter({ tool }: { tool: CodeInterpreterTool }) {
   const args = tool.input ?? { code: "", title: "", icon: "default" };
   const result = tool.state === "output-available" ? tool.output : null;
   const chart: BaseChart | null =
@@ -32,7 +28,7 @@ export function CodeInterpreterMessage({
   const title = typeof args.title === "string" ? args.title : "";
   return (
     <div className="space-y-6">
-      <Sandbox
+      <SandboxComposed
         code={code}
         language="python"
         output={result?.message}
