@@ -26,13 +26,11 @@ export function useAutoResume({
     }
 
     const mostRecentMessage = initialMessages.at(-1);
-    console.log("mostRecentMessage", mostRecentMessage);
     if (
       mostRecentMessage?.role === "user" ||
       (mostRecentMessage?.role === "assistant" &&
         mostRecentMessage.metadata?.isPartial)
     ) {
-      console.log("Running experimental_resume");
       resumeStream();
     }
     // we intentionally run this once

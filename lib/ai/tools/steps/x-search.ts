@@ -36,6 +36,7 @@ export async function xSearchStep({
   dataStream,
   stepId,
   annotate = true,
+  toolCallId,
 }: {
   query: string;
   type: "neural" | "keyword";
@@ -43,6 +44,7 @@ export async function xSearchStep({
   dataStream: StreamWriter;
   stepId: string;
   annotate?: boolean;
+  toolCallId: string;
 }): Promise<XSearchResponse> {
   try {
     // Send running status
@@ -51,6 +53,7 @@ export async function xSearchStep({
         type: "data-researchUpdate",
         id: stepId,
         data: {
+          toolCallId,
           title: `Searching for "${query}"`,
           type: "web",
           status: "running",
@@ -92,6 +95,7 @@ export async function xSearchStep({
         type: "data-researchUpdate",
         id: stepId,
         data: {
+          toolCallId,
           title: `Searching for "${query}"`,
           type: "web",
           status: "completed",
@@ -111,6 +115,7 @@ export async function xSearchStep({
         type: "data-researchUpdate",
         id: stepId,
         data: {
+          toolCallId,
           title: `Searching for "${query}"`,
           type: "web",
           status: "completed",

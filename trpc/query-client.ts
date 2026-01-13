@@ -23,6 +23,9 @@ export const makeQueryClient = () => {
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === "pending",
+        // Don't redact Next.js server errors; Next relies on them to detect dynamic pages.
+        // Next will redact errors with better digests automatically.
+        shouldRedactErrors: () => false,
       },
       hydrate: {
         deserializeData: SuperJSON.deserialize,

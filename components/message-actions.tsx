@@ -1,6 +1,4 @@
-import { useChatStoreApi, useMessageById } from "@ai-sdk-tools/store";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import equal from "fast-deep-equal";
+import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { Pencil, PencilOff } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
@@ -10,19 +8,15 @@ import {
   MessageActions as Actions,
 } from "@/components/ai-elements/message";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { ChatMessage } from "@/lib/ai/types";
-import type { Vote } from "@/lib/db/schema";
-import { useMessageRoleById } from "@/lib/stores/hooks";
-import { useSession } from "@/providers/session-provider";
-import { useTRPC } from "@/trpc/react";
-import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { useMessageRoleById } from "@/lib/stores/hooks-base";
+import { useChatVotes } from "./chat/use-chat-votes";
+import { FeedbackActions } from "./feedback-actions";
+import { CopyIcon } from "./icons";
 import { MessageSiblings } from "./message-siblings";
-import { RetryButton } from "./retry-button";
-import { Tag } from "./tag";
+
 export function PureMessageActions({
   chatId,
   messageId,
-  vote,
   isLoading,
   isReadOnly,
   isEditing,
@@ -31,7 +25,6 @@ export function PureMessageActions({
 }: {
   chatId: string;
   messageId: string;
-  vote: Vote | undefined;
   isLoading: boolean;
   isReadOnly: boolean;
   isEditing?: boolean;
@@ -39,24 +32,13 @@ export function PureMessageActions({
   onCancelEdit?: () => void;
 }) {
   const storeApi = useChatStoreApi();
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const [_, copyToClipboard] = useCopyToClipboard();
-  const { data: session } = useSession();
   const role = useMessageRoleById(messageId);
 
-  const isAuthenticated = !!session?.user;
   const isMobile = useIsMobile();
 
-  const voteMessageMutation = useMutation(
-    trpc.vote.voteMessage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.vote.getVotes.queryKey({ chatId }),
-        });
-      },
-    })
-  );
+  const { data: votes } = useChatVotes(chatId, { isReadonly: isReadOnly });
+  const vote = votes?.find((v) => v.messageId === messageId);
 
   // Version selector and model tag handled by MessageVersionAndModel component
 
@@ -92,6 +74,9 @@ export function PureMessageActions({
             <Pencil className="h-3.5 w-3.5" />
           </Action>
         ))}
+
+      <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
+
       <Action
         className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         onClick={async () => {
@@ -121,79 +106,21 @@ export function PureMessageActions({
         <CopyIcon size={14} />
       </Action>
 
-      <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
-
-      {role === "assistant" && !isReadOnly && isAuthenticated && (
-        <>
-          <Action
-            className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            data-testid="message-upvote"
-            disabled={vote?.isUpvoted || !isAuthenticated}
-            onClick={() => {
-              toast.promise(
-                voteMessageMutation.mutateAsync({
-                  chatId,
-                  messageId,
-                  type: "up" as const,
-                }),
-                {
-                  loading: "Upvoting Response...",
-                  success: "Upvoted Response!",
-                  error: "Failed to upvote response.",
-                }
-              );
-            }}
-            tooltip="Upvote Response"
-          >
-            <ThumbUpIcon size={14} />
-          </Action>
-
-          <Action
-            className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            data-testid="message-downvote"
-            disabled={(vote && !vote.isUpvoted) || !session?.user}
-            onClick={() => {
-              toast.promise(
-                voteMessageMutation.mutateAsync({
-                  chatId,
-                  messageId,
-                  type: "down" as const,
-                }),
-                {
-                  loading: "Downvoting Response...",
-                  success: "Downvoted Response!",
-                  error: "Failed to downvote response.",
-                }
-              );
-            }}
-            tooltip="Downvote Response"
-          >
-            <ThumbDownIcon size={14} />
-          </Action>
-
-          {!isReadOnly && <RetryButton messageId={messageId} />}
-          <SelectedModelId messageId={messageId} />
-        </>
+      {role === "assistant" && !isReadOnly && (
+        <FeedbackActions
+          chatId={chatId}
+          isReadOnly={isReadOnly}
+          messageId={messageId}
+          vote={vote}
+        />
       )}
     </Actions>
   );
 }
 
-function SelectedModelId({ messageId }: { messageId: string }) {
-  const message = useMessageById<ChatMessage>(messageId);
-  return message?.metadata?.selectedModel ? (
-    <div className="ml-2 flex items-center">
-      <Tag>{message.metadata.selectedModel}</Tag>
-    </div>
-  ) : null;
-}
-
 export const MessageActions = memo(
   PureMessageActions,
   (prevProps, nextProps) => {
-    if (!equal(prevProps.vote, nextProps.vote)) {
-      return false;
-    }
     if (prevProps.chatId !== nextProps.chatId) {
       return false;
     }

@@ -33,6 +33,7 @@ async function executeMultiQuerySearch({
   search_queries,
   options,
   dataStream,
+  toolCallId,
   writeTopLevelUpdates,
   title,
   completeTitle,
@@ -40,6 +41,7 @@ async function executeMultiQuerySearch({
   search_queries: Array<{ query: string; maxResults: number }>;
   options: MultiQuerySearchOptions;
   dataStream: StreamWriter;
+  toolCallId: string;
   writeTopLevelUpdates: boolean;
   title: string;
   completeTitle: string;
@@ -53,6 +55,7 @@ async function executeMultiQuerySearch({
     dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId,
         title,
         timestamp: Date.now(),
         type: "started",
@@ -66,6 +69,7 @@ async function executeMultiQuerySearch({
   const { searches: searchResults, error } = await multiQueryWebSearchStep({
     queries: search_queries,
     options,
+    toolCallId,
     dataStream,
   });
   if (error) {
@@ -80,6 +84,7 @@ async function executeMultiQuerySearch({
     dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId,
         title: completeTitle,
         timestamp: Date.now(),
         type: "completed",
@@ -135,17 +140,20 @@ Avoid:
         .describe("A list of domains to exclude from all search results.")
         .nullable(),
     }),
-    execute: ({
-      search_queries,
-      topics,
-      searchDepth,
-      exclude_domains,
-    }: {
-      search_queries: { query: string; maxResults: number | null }[];
-      topics: ("general" | "news")[] | null;
-      searchDepth: "basic" | "advanced" | null;
-      exclude_domains: string[] | null;
-    }) => {
+    execute: (
+      {
+        search_queries,
+        topics,
+        searchDepth,
+        exclude_domains,
+      }: {
+        search_queries: { query: string; maxResults: number | null }[];
+        topics: ("general" | "news")[] | null;
+        searchDepth: "basic" | "advanced" | null;
+        exclude_domains: string[] | null;
+      },
+      { toolCallId }: { toolCallId: string }
+    ) => {
       const log = createModuleLogger("tools/web-search");
       log.debug(
         {
@@ -174,6 +182,7 @@ Avoid:
           excludeDomains: safeExcludeDomains,
         },
         dataStream,
+        toolCallId,
         writeTopLevelUpdates,
         title: "Searching",
         completeTitle: "Search complete",
@@ -200,11 +209,14 @@ Avoid:
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
     }),
-    execute: ({
-      search_queries,
-    }: {
-      search_queries: { query: string; maxResults: number | null }[];
-    }) => {
+    execute: (
+      {
+        search_queries,
+      }: {
+        search_queries: { query: string; maxResults: number | null }[];
+      },
+      { toolCallId }: { toolCallId: string }
+    ) => {
       const log = createModuleLogger("tools/web-search");
       log.debug(
         { queriesCount: search_queries.length },
@@ -221,6 +233,7 @@ Avoid:
           },
         },
         dataStream,
+        toolCallId,
         writeTopLevelUpdates,
         title: "Searching with Firecrawl",
         completeTitle: "Firecrawl search complete",

@@ -7,9 +7,9 @@
       "!components/ui",
       "!components/ai-elements",
       "!components/streamdown",
+      "!components/stick-to-bottom",
       "!lib/utils.ts",
-      "!hooks/use-mobile.ts",
-      "!lib/ai/models.generated.ts"
+      "!hooks/use-mobile.ts"
     ]
   },
   "linter": {
