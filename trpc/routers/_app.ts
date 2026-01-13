@@ -3,7 +3,9 @@ import { chatRouter } from "./chat.router";
 import { creditsRouter } from "./credits.router";
 import { documentRouter } from "./document.router";
 import { entitlementsRouter } from "./entitlements.router";
+import { mcpRouter } from "./mcp.router";
 import { projectRouter } from "./project.router";
+import { settingsRouter } from "./settings.router";
 import { voteRouter } from "./vote.router";
 
 /**
@@ -17,8 +19,10 @@ export const appRouter = createTRPCRouter({
   credits: creditsRouter,
   vote: voteRouter,
   document: documentRouter,
+  mcp: mcpRouter,
   project: projectRouter,
   entitlements: entitlementsRouter,
+  settings: settingsRouter,
 });
 
 // export type definition of API

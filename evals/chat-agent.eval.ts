@@ -29,6 +29,7 @@ evalite("Chat Agent Eval", {
         createdAt: new Date(),
         parentMessageId: null,
         selectedModel: "anthropic/claude-haiku-4.5",
+        activeStreamId: null,
       },
     };
 

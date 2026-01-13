@@ -4,6 +4,7 @@ import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
 import { generateFollowupSuggestions } from "@/lib/ai/followup-suggestions";
 import { systemPrompt } from "@/lib/ai/prompts";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
+import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 
 // No-op StreamWriter for evals - tools can write but nothing happens
@@ -67,13 +68,14 @@ async function executeAgentAndGetOutput({
     selectedModelId,
     selectedTool,
     userId,
-    activeTools,
+    budgetAllowedTools: activeTools,
     abortSignal,
     messageId,
     dataStream: noOpStreamWriter,
     onError: (error) => {
       throw error;
     },
+    costAccumulator: new CostAccumulator(), // Discarded for evals
   });
 
   await result.consumeStream();
@@ -219,19 +221,17 @@ async function generateSuggestions(
     ...responseMessages,
   ]);
 
-  const suggestions: string[] = [];
   const result = await followupSuggestionsResult;
-  for await (const chunk of result.partialObjectStream) {
+  let lastSuggestions: string[] = [];
+  for await (const chunk of result.partialOutputStream) {
     if (chunk.suggestions) {
-      suggestions.push(
-        ...chunk.suggestions.filter(
-          (s: string | undefined): s is string => s !== undefined
-        )
+      lastSuggestions = chunk.suggestions.filter(
+        (s: string | undefined): s is string => s !== undefined
       );
     }
   }
 
-  return suggestions.length > 0 ? suggestions.slice(-5) : [];
+  return lastSuggestions.length > 0 ? lastSuggestions.slice(-5) : [];
 }
 
 export async function runCoreChatAgentEval({
@@ -282,8 +282,8 @@ export async function runCoreChatAgentEval({
     metadata: {
       createdAt: new Date(),
       parentMessageId: userMessage.id,
-      isPartial: false,
       selectedModel: selectedModelId,
+      activeStreamId: null,
     },
   };
 

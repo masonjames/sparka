@@ -282,6 +282,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
             selectedModel: DEFAULT_CODE_EDITS_MODEL,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
+            activeStreamId: null,
           },
         });
       },
@@ -302,6 +303,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
             selectedModel: DEFAULT_CODE_EDITS_MODEL,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
+            activeStreamId: null,
           },
         });
       },

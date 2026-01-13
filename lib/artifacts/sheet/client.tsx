@@ -109,6 +109,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
             selectedModel: DEFAULT_FORMAT_AND_CLEAN_SHEET_MODEL,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
+            activeStreamId: null,
           },
         });
       },
@@ -129,6 +130,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
             selectedModel: DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
+            activeStreamId: null,
           },
         });
       },

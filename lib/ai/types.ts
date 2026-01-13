@@ -7,7 +7,7 @@ import type {
 import { z } from "zod";
 import type { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import type { deepResearch } from "@/lib/ai/tools/deep-research/deep-research";
-import type { generateImage } from "@/lib/ai/tools/generate-image";
+import type { generateImageTool as generateImageToolFactory } from "@/lib/ai/tools/generate-image";
 import type { getWeather } from "@/lib/ai/tools/get-weather";
 import type { readDocument } from "@/lib/ai/tools/read-document";
 import type { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
@@ -51,7 +51,7 @@ export const messageMetadataSchema = z.object({
   createdAt: z.date(),
   parentMessageId: z.string().nullable(),
   selectedModel: z.custom<AppModelId>((val) => typeof val === "string"),
-  isPartial: z.boolean().optional(),
+  activeStreamId: z.string().nullable(),
   selectedTool: frontendToolsSchema.optional(),
   usage: z.custom<LanguageModelUsage | undefined>((_val) => true).optional(),
 });
@@ -66,9 +66,11 @@ type requestSuggestionsTool = InferUITool<
 >;
 type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
 type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
-type generateImageTool = InferUITool<ReturnType<typeof generateImage>>;
+type generateImageTool = InferUITool<
+  ReturnType<typeof generateImageToolFactory>
+>;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
-type codeInterpreterTool = InferUITool<typeof codeInterpreter>;
+type codeInterpreterTool = InferUITool<ReturnType<typeof codeInterpreter>>;
 type retrieveTool = InferUITool<typeof retrieve>;
 
 export type ChatTools = {
@@ -101,6 +103,9 @@ export type CustomUIDataTypes = {
   kind: ArtifactKind;
   clear: null;
   finish: null;
+  chatConfirmed: {
+    chatId: string;
+  };
   researchUpdate: ResearchUpdate;
   followupSuggestions: FollowupSuggestions;
 };
@@ -113,6 +118,8 @@ export type ChatMessage = Omit<
 };
 
 export type ToolName = keyof ChatTools;
+
+export type ToolOutput<T extends ToolName> = ChatTools[T]["output"];
 
 export type StreamWriter = UIMessageStreamWriter<ChatMessage>;
 

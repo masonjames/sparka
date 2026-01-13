@@ -1,10 +1,12 @@
-import { generateObject, generateText, type ModelMessage } from "ai";
+import { generateText, type ModelMessage, Output } from "ai";
 import { z } from "zod";
-import type { ModelId } from "@/lib/ai/app-models";
+import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
+import type { ToolSession } from "@/lib/ai/tools/types";
 import { ReportDocumentWriter } from "@/lib/artifacts/text/report-server";
-import type { Session } from "@/lib/auth";
+
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
 import { createDocument } from "../create-document";
@@ -70,12 +72,21 @@ type GenerateStatusUpdateInput = {
   requestId: string;
   messageId: string;
   context?: string;
+  costAccumulator?: CostAccumulator;
 };
 
 async function generateStatusUpdate(
   input: GenerateStatusUpdateInput
 ): Promise<{ title: string; message: string }> {
-  const { actionType, messages, config, requestId, messageId, context } = input;
+  const {
+    actionType,
+    messages,
+    config,
+    requestId,
+    messageId,
+    context,
+    costAccumulator,
+  } = input;
   const model = await getLanguageModel(config.research_model as ModelId);
 
   const messagesContent = messagesToString(messages);
@@ -87,19 +98,21 @@ async function generateStatusUpdate(
     contextInfo,
   });
 
-  const result = await generateObject({
+  const result = await generateText({
     model,
-    schema: z.object({
-      title: z
-        .string()
-        .describe(
-          'A specific, action-focused title reflecting what just completed (max 50 characters). Avoid generic "I\'m researching" phrases.'
-        ),
-      message: z
-        .string()
-        .describe(
-          "A concrete description of what was accomplished in this step, including specific details, numbers, or findings when available (max 200 characters)"
-        ),
+    output: Output.object({
+      schema: z.object({
+        title: z
+          .string()
+          .describe(
+            'A specific, action-focused title reflecting what just completed (max 50 characters). Avoid generic "I\'m researching" phrases.'
+          ),
+        message: z
+          .string()
+          .describe(
+            "A concrete description of what was accomplished in this step, including specific details, numbers, or findings when available (max 200 characters)"
+          ),
+      }),
     }),
     messages: [{ role: "user", content: prompt }],
     maxOutputTokens: 200,
@@ -114,7 +127,15 @@ async function generateStatusUpdate(
     },
   });
 
-  return result.object;
+  if (result.usage) {
+    costAccumulator?.addLLMCost(
+      config.research_model as AppModelId,
+      result.usage,
+      "deep-research-status-update"
+    );
+  }
+
+  return result.output as { title: string; message: string };
 }
 
 // Helper function to filter messages by type
@@ -128,7 +149,8 @@ function filterMessages(
 async function clarifyWithUser(
   state: ClarifyWithUserInput,
   config: DeepResearchConfig,
-  messageId: string
+  messageId: string,
+  costAccumulator?: CostAccumulator
 ): Promise<ClarificationResult> {
   if (!config.allow_clarification) {
     return { needsClarification: false };
@@ -157,9 +179,11 @@ async function clarifyWithUser(
     clarifyModelContextWindow
   );
 
-  const response = await generateObject({
+  const response = await generateText({
     model,
-    schema: ClarifyWithUserSchema,
+    output: Output.object({
+      schema: ClarifyWithUserSchema,
+    }),
     messages: truncatedClarifyMessages,
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: {
@@ -173,27 +197,48 @@ async function clarifyWithUser(
     },
   });
 
-  if (response.object.need_clarification) {
+  if (response.usage) {
+    costAccumulator?.addLLMCost(
+      config.research_model as AppModelId,
+      response.usage,
+      "deep-research-clarify"
+    );
+  }
+
+  const clarifyOutput = response.output as z.infer<
+    typeof ClarifyWithUserSchema
+  >;
+  if (clarifyOutput.need_clarification) {
     return {
       needsClarification: true,
-      clarificationMessage: response.object.question,
+      clarificationMessage: clarifyOutput.question,
     };
   }
   return { needsClarification: false };
 }
 
-async function writeResearchBrief(
-  state: WriteResearchBriefInput,
-  config: DeepResearchConfig,
-  dataStream: StreamWriter,
-  messageId: string
-): Promise<WriteResearchBriefOutput> {
+async function writeResearchBrief({
+  state,
+  config,
+  dataStream,
+  messageId,
+  toolCallId,
+  costAccumulator,
+}: {
+  state: WriteResearchBriefInput;
+  config: DeepResearchConfig;
+  dataStream: StreamWriter;
+  messageId: string;
+  toolCallId: string;
+  costAccumulator?: CostAccumulator;
+}): Promise<WriteResearchBriefOutput> {
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
   dataStream.write({
     id: dataPartId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing research brief",
       type: "writing",
       status: "running",
@@ -220,9 +265,11 @@ async function writeResearchBrief(
     briefModelContextWindow
   );
 
-  const result = await generateObject({
+  const result = await generateText({
     model,
-    schema: ResearchQuestionSchema,
+    output: Output.object({
+      schema: ResearchQuestionSchema,
+    }),
     messages: truncatedBriefMessages,
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: {
@@ -236,39 +283,58 @@ async function writeResearchBrief(
     },
   });
 
+  if (result.usage) {
+    costAccumulator?.addLLMCost(
+      config.research_model as AppModelId,
+      result.usage,
+      "deep-research-brief"
+    );
+  }
+
+  const output = result.output as z.infer<typeof ResearchQuestionSchema>;
+
   dataStream.write({
     id: dataPartId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing research brief",
-      message: result.object.research_brief,
+      message: output.research_brief,
       type: "writing",
       status: "completed",
     },
   });
 
   return {
-    research_brief: result.object.research_brief,
-    title: result.object.title,
+    research_brief: output.research_brief,
+    title: output.title,
   };
 }
+
+type AgentOptions = {
+  config: DeepResearchConfig;
+  dataStream: StreamWriter;
+  messageId: string;
+  toolCallId: string;
+  costAccumulator?: CostAccumulator;
+};
 
 // Agent base class
 abstract class Agent {
   protected agentId: string;
   protected messageId: string;
+  protected toolCallId: string;
   protected config: DeepResearchConfig;
   protected dataStream: StreamWriter;
+  protected costAccumulator?: CostAccumulator;
 
-  constructor(
-    config: DeepResearchConfig,
-    dataStream: StreamWriter,
-    messageId: string
-  ) {
+  constructor(options: AgentOptions) {
     this.agentId = generateUUID();
-    this.messageId = messageId;
-    this.config = config;
-    this.dataStream = dataStream;
+    this.messageId = options.messageId;
+    this.toolCallId = options.toolCallId;
+    this.config = options.config;
+    this.dataStream = options.dataStream;
+    this.costAccumulator = options.costAccumulator;
   }
 }
 
@@ -297,6 +363,7 @@ class ResearcherAgent extends Agent {
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: "Starting research on topic",
         message: state.research_topic,
         type: "thoughts",
@@ -332,6 +399,15 @@ class ResearcherAgent extends Agent {
       },
     });
 
+    // Track LLM cost
+    if (result.usage) {
+      this.costAccumulator?.addLLMCost(
+        this.config.research_model as AppModelId,
+        result.usage,
+        "deep-research-researcher"
+      );
+    }
+
     const completedUpdate = await generateStatusUpdate({
       actionType: "research_completion",
       messages: [...researcherMessages, ...result.response.messages],
@@ -339,11 +415,13 @@ class ResearcherAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: `Research phase completed with ${result.response.messages.length} new messages`,
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         type: "thoughts",
         message: completedUpdate.message,
@@ -404,6 +482,15 @@ class ResearcherAgent extends Agent {
       maxRetries: 3,
     });
 
+    // Track LLM cost
+    if (response.usage) {
+      this.costAccumulator?.addLLMCost(
+        this.config.compression_model as AppModelId,
+        response.usage,
+        "deep-research-compress"
+      );
+    }
+
     const completedUpdate = await generateStatusUpdate({
       actionType: "research_compression",
       messages: truncatedMessages,
@@ -411,11 +498,13 @@ class ResearcherAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: `Compressed ${researcherMessages.length} messages into summary`,
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         type: "thoughts",
         message: completedUpdate.message,
@@ -456,13 +545,9 @@ class ResearcherAgent extends Agent {
 class SupervisorAgent extends Agent {
   private readonly researcherAgent: ResearcherAgent;
 
-  constructor(
-    config: DeepResearchConfig,
-    dataStream: StreamWriter,
-    messageId: string
-  ) {
-    super(config, dataStream, messageId);
-    this.researcherAgent = new ResearcherAgent(config, dataStream, messageId);
+  constructor(options: AgentOptions) {
+    super(options);
+    this.researcherAgent = new ResearcherAgent(options);
   }
 
   private async supervise(state: SupervisorInput): Promise<SupervisorOutput> {
@@ -504,6 +589,15 @@ class SupervisorAgent extends Agent {
       //   stopWhen: ,
     });
 
+    // Track LLM cost
+    if (result.usage) {
+      this.costAccumulator?.addLLMCost(
+        this.config.research_model as AppModelId,
+        result.usage,
+        "deep-research-supervisor"
+      );
+    }
+
     const lastAssistantMessage = result.response.messages.find(
       (m) => m.role === "assistant"
     );
@@ -519,11 +613,13 @@ class SupervisorAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: supervisorMessageText || "Coordinated investigation efforts",
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         message: completedUpdate.message,
         type: "thoughts",
@@ -660,11 +756,13 @@ class SupervisorAgent extends Agent {
       requestId: state.requestId,
       messageId: this.messageId,
       context: `Need research the research about the topics [${conductResearchCalls.map((c) => c.input.research_topic).join("], [")}]`,
+      costAccumulator: this.costAccumulator,
     });
 
     this.dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId: this.toolCallId,
         title: completedUpdate.title,
         message: completedUpdate.message,
         type: "thoughts",
@@ -745,15 +843,26 @@ type FinalReportGenerationInput = {
   state: AgentState;
   config: DeepResearchConfig;
   dataStream: StreamWriter;
-  session: Session;
+  session: ToolSession;
   messageId: string;
   reportTitle: string;
+  toolCallId: string;
+  costAccumulator: CostAccumulator;
 };
 
 async function finalReportGeneration(
   input: FinalReportGenerationInput
 ): Promise<Pick<AgentState, "final_report" | "reportResult">> {
-  const { state, config, dataStream, session, messageId, reportTitle } = input;
+  const {
+    state,
+    config,
+    dataStream,
+    session,
+    messageId,
+    reportTitle,
+    toolCallId,
+    costAccumulator,
+  } = input;
   const notes = state.notes || [];
 
   const model = await getLanguageModel(config.final_report_model as ModelId);
@@ -770,6 +879,7 @@ async function finalReportGeneration(
     id: finalReportUpdateId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing final report",
       type: "writing",
       status: "running",
@@ -816,12 +926,14 @@ async function finalReportGeneration(
     messageId,
     selectedModel: config.final_report_model as ModelId,
     documentHandler: reportDocumentHandler.createDocumentHandler(),
+    costAccumulator,
   });
 
   dataStream.write({
     id: finalReportUpdateId,
     type: "data-researchUpdate",
     data: {
+      toolCallId,
       title: "Writing final report",
       type: "writing",
       status: "completed",
@@ -839,8 +951,12 @@ export async function runDeepResearcher(
   input: AgentInputState,
   config: DeepResearchConfig,
   dataStream: StreamWriter,
-  session: Session
+  options: {
+    session: ToolSession;
+    costAccumulator: CostAccumulator;
+  }
 ): Promise<DeepResearchResult> {
+  const { session, costAccumulator } = options;
   console.log("runDeepResearcher invoked", {
     requestId: input.requestId,
     messageId: input.messageId,
@@ -858,13 +974,15 @@ export async function runDeepResearcher(
       kind: "text",
       content: "",
     },
+    toolCallId: input.toolCallId,
   };
 
   // Step 1: Clarify with user
   const clarifyResult = await clarifyWithUser(
     { requestId: currentState.requestId, messages: currentState.inputMessages },
     config,
-    input.messageId
+    input.messageId,
+    costAccumulator
   );
 
   if (clarifyResult.needsClarification) {
@@ -877,6 +995,7 @@ export async function runDeepResearcher(
   dataStream.write({
     type: "data-researchUpdate",
     data: {
+      toolCallId: input.toolCallId,
       title: "Starting research",
       type: "started",
       timestamp: Date.now(),
@@ -884,21 +1003,28 @@ export async function runDeepResearcher(
   });
 
   // Step 2: Write research brief
-  const briefResult = await writeResearchBrief(
-    { requestId: currentState.requestId, messages: currentState.inputMessages },
+  const briefResult = await writeResearchBrief({
+    state: {
+      requestId: currentState.requestId,
+      messages: currentState.inputMessages,
+    },
     config,
     dataStream,
-    input.messageId
-  );
+    messageId: input.messageId,
+    toolCallId: input.toolCallId,
+    costAccumulator,
+  });
   currentState.research_brief = briefResult.research_brief;
   const reportTitle = briefResult.title;
 
   // Step 3: Research supervisor loop
-  const supervisorAgent = new SupervisorAgent(
+  const supervisorAgent = new SupervisorAgent({
     config,
     dataStream,
-    input.messageId
-  );
+    messageId: input.messageId,
+    toolCallId: input.toolCallId,
+    costAccumulator,
+  });
 
   const supervisorResult = await supervisorAgent.runSupervisorGraph({
     requestId: currentState.requestId,
@@ -935,11 +1061,14 @@ export async function runDeepResearcher(
     session,
     messageId: input.messageId,
     reportTitle,
+    toolCallId: input.toolCallId,
+    costAccumulator,
   });
 
   dataStream.write({
     type: "data-researchUpdate",
     data: {
+      toolCallId: input.toolCallId,
       title: "Research complete",
       type: "completed",
       timestamp: Date.now(),

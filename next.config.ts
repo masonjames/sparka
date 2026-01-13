@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
 
   experimental: {
-    turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
@@ -44,6 +43,7 @@ const nextConfig: NextConfig = {
         // R2 assets domain
         hostname: "assets.chat.masonjames.com",
       },
+      { hostname: "www.google.com" },
       {
         hostname: "models.dev",
       },

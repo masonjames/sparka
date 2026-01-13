@@ -11,10 +11,10 @@ type MessageReasoningProps = {
   content: string;
 };
 
-function PureMessageReasoning({ isLoading, content }: MessageReasoningProps) {
+function PureReasoningPart({ isLoading, content }: MessageReasoningProps) {
   return (
     <Reasoning className="mb-2" isStreaming={isLoading}>
-      <ReasoningTrigger data-testid="message-reasoning-toggle " />
+      <ReasoningTrigger data-testid="message-reasoning-toggle" />
       <ReasoningContent data-testid="message-reasoning">
         {content}
       </ReasoningContent>
@@ -22,4 +22,4 @@ function PureMessageReasoning({ isLoading, content }: MessageReasoningProps) {
   );
 }
 
-export const MessageReasoning = memo(PureMessageReasoning);
+export const ReasoningPart = memo(PureReasoningPart);

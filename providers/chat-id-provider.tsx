@@ -7,96 +7,74 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useRef,
+  useState,
 } from "react";
 import { generateUUID } from "@/lib/utils";
+import {
+  type ChatIdType,
+  parseChatIdFromPathname,
+} from "./parse-chat-id-from-pathname";
 
 type ChatIdContextType = {
   id: string;
-  type: "chat" | "provisional" | "shared";
+  type: ChatIdType;
+  isPersisted: boolean;
+  confirmChatId: (chatId: string) => void;
   refreshChatID: () => void;
 };
 
 const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 
-type ChatId = {
-  id: string;
-  type: "chat" | "provisional" | "shared";
-};
-
-const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
-
 export function ChatIdProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const provisionalChatIdRef = useRef<string>(generateUUID());
+  const [{ provisionalChatId, confirmedChatId }, setChatIdState] = useState<{
+    provisionalChatId: string;
+    confirmedChatId: string | null;
+  }>(() => ({
+    provisionalChatId: generateUUID(),
+    confirmedChatId: null,
+  }));
 
-  // Compute final id and type directly from pathname and state
-  const { id, type } = useMemo<ChatId>(() => {
-    // Handle shared chat paths
-    if (pathname?.startsWith("/share/")) {
-      const sharedChatId = pathname.replace("/share/", "") || null;
-      if (sharedChatId) {
-        return {
-          id: sharedChatId,
-          type: "shared",
-        };
+  const resolvedId = useMemo(
+    () => parseChatIdFromPathname(pathname),
+    [pathname]
+  );
+
+  const confirmChatIdPersisted = useCallback(
+    (chatId: string) => {
+      if (chatId !== provisionalChatId) {
+        console.error("Chat ID mismatch", chatId, provisionalChatId);
+        throw new Error("Chat ID mismatch");
       }
-    }
-
-    // Handle project routes
-    const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
-    if (projectMatch) {
-      const [, _projectId, chatId] = projectMatch;
-      if (chatId) {
-        // /project/:projectId/chat/:chatId
-        return {
-          id: chatId,
-          type: "chat",
-        };
-      }
-      // /project/:projectId - provisional chat
-      return {
-        id: provisionalChatIdRef.current,
-        type: "provisional",
-      };
-    }
-
-    if (pathname === "/") {
-      return {
-        id: provisionalChatIdRef.current,
-        type: "provisional",
-      };
-    }
-
-    const urlChatId = pathname.replace("/chat/", "");
-    if (urlChatId === provisionalChatIdRef.current) {
-      // Id was provisional and now the url has been updated
-
-      // Generate a new provisional id for a potential new chat
-      provisionalChatIdRef.current = generateUUID();
-
-      return {
-        id: urlChatId,
-        type: "provisional",
-      };
-    }
-    return {
-      id: urlChatId,
-      type: "chat",
-    };
-  }, [pathname]);
+      setChatIdState((prev) => ({ ...prev, confirmedChatId: chatId }));
+    },
+    [provisionalChatId]
+  );
 
   const refreshChatID = useCallback(() => {
-    provisionalChatIdRef.current = generateUUID();
+    const newId = generateUUID();
+    setChatIdState({ provisionalChatId: newId, confirmedChatId: null });
+    window.history.pushState(null, "", "/");
   }, []);
 
   const value = useMemo(
     () => ({
-      id,
-      type,
+      id: resolvedId.id ?? provisionalChatId,
+      type: resolvedId.type,
+      isPersisted:
+        (resolvedId.id !== null && resolvedId.id !== provisionalChatId) ||
+        confirmedChatId === provisionalChatId,
+      confirmChatId: confirmChatIdPersisted,
       refreshChatID,
     }),
-    [id, type, refreshChatID]
+    [
+      resolvedId.id,
+      resolvedId.type,
+      provisionalChatId,
+      confirmedChatId,
+      confirmChatIdPersisted,
+      refreshChatID,
+    ]
   );
 
   return (

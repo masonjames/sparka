@@ -8,6 +8,7 @@ import {
   useRenameChat,
 } from "@/hooks/chat-sync-hooks";
 import type { UIChat } from "@/lib/types/ui-chat";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { DeleteChatDialog } from "./delete-chat-dialog";
 import { SidebarChatItem } from "./sidebar-chat-item";
 import { Skeleton } from "./ui/skeleton";
@@ -21,11 +22,9 @@ type GroupedChats = {
   older: UIChat[];
 };
 
-const PROJECT_CHAT_REGEX = /^\/project\/[^/]+\/chat\/(.+)$/;
-
 export function SidebarChatsList() {
   const pathname = usePathname();
-  const { data: allChats, isLoading } = useGetAllChats(50);
+  const { data: allChats, isLoading } = useGetAllChats({ limit: 50 });
   const { setOpenMobile } = useSidebar();
   const { mutate: renameChatMutation } = useRenameChat();
   const { mutate: pinChatMutation } = usePinChat();
@@ -40,15 +39,8 @@ export function SidebarChatsList() {
 
   // Extract chatId from URL for /chat routes and /project routes
   const chatId = useMemo(() => {
-    if (pathname?.startsWith("/chat/")) {
-      return pathname.replace("/chat/", "") || null;
-    }
-    // Handle project routes: /project/:projectId/chat/:chatId
-    const projectMatch = pathname?.match(PROJECT_CHAT_REGEX);
-    if (projectMatch) {
-      return projectMatch[1] || null;
-    }
-    return null;
+    const parsed = parseChatIdFromPathname(pathname);
+    return parsed.id;
   }, [pathname]);
 
   const groupedChats = useMemo(() => {
@@ -120,6 +112,14 @@ export function SidebarChatsList() {
     );
   }
 
+  const prefetchLimit = 10;
+  let renderedChatsCount = 0;
+  const shouldPrefetchNextChat = () => {
+    const shouldPrefetch = renderedChatsCount < prefetchLimit;
+    renderedChatsCount += 1;
+    return shouldPrefetch;
+  };
+
   return (
     <>
       {groupedChats.pinned.length > 0 && (
@@ -142,6 +142,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -170,6 +171,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -196,6 +198,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -222,6 +225,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -248,6 +252,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}
@@ -274,6 +279,7 @@ export function SidebarChatsList() {
               onRename={(id, title) => {
                 renameChatMutation({ chatId: id, title });
               }}
+              prefetch={shouldPrefetchNextChat()}
               setOpenMobile={setOpenMobile}
             />
           ))}

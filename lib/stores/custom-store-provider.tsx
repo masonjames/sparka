@@ -14,17 +14,25 @@ import {
   type PartsAugmentedState,
   withMessageParts,
 } from "./with-message-parts";
+import { type ThreadAugmentedState, withThreads } from "./with-threads";
+import { withTracing } from "./with-tracing";
 
 export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
-  PartsAugmentedState<UI_MESSAGE>; // & OtherAugmentedState<UI_MESSAGE> to extend
+  PartsAugmentedState<UI_MESSAGE> & ThreadAugmentedState<UI_MESSAGE>;
 
+const ENABLE_TRACING_ON_DEV = false;
 export function createChatStore<TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = []
 ) {
   return createStore<CustomChatStoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(
-        withMessageParts(createChatStoreCreator<TMessage>(initialMessages))
+        withTracing(
+          withThreads(
+            withMessageParts(createChatStoreCreator<TMessage>(initialMessages))
+          ),
+          process.env.NODE_ENV === "development" && ENABLE_TRACING_ON_DEV
+        )
       ),
       { name: "chat-store" }
     )

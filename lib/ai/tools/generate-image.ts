@@ -1,131 +1,135 @@
-import { experimental_generateImage, type FileUIPart, tool } from "ai";
-import OpenAI, { toFile } from "openai";
+import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
 import { DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
-import { getImageModel } from "@/lib/ai/providers";
+import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
-import { env } from "@/lib/env";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
+import {
+  type AnyImageModelId,
+  isMultimodalImageModel,
+  type MultimodalImageModelId,
+} from "@/lib/models/image-model-id";
+import { toolsDefinitions } from "./tools-definitions";
 
 type GenerateImageProps = {
   attachments?: FileUIPart[];
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
+  modelId?: AnyImageModelId;
+  costAccumulator?: CostAccumulator;
 };
-
-const openaiClient: OpenAI | null = env.OPENAI_API_KEY
-  ? new OpenAI({
-      apiKey: env.OPENAI_API_KEY,
-    })
-  : null;
 
 const log = createModuleLogger("ai.tools.generate-image");
 
-async function prepareInputImages({
-  imageParts,
-  lastGeneratedImage,
-}: {
-  imageParts: FileUIPart[];
-  lastGeneratedImage: { imageUrl: string; name: string } | null;
-}): Promise<File[]> {
-  const inputImages = [] as File[];
+type ImageMode = "edit" | "generate";
 
-  if (lastGeneratedImage) {
-    const response = await fetch(lastGeneratedImage.imageUrl);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const lastGenImage = await toFile(buffer, lastGeneratedImage.name, {
-      type: "image/png",
-    });
-    inputImages.push(lastGenImage);
-  }
-
-  const partImages = await Promise.all(
-    imageParts.map(async (part) => {
-      const response = await fetch(part.url);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      return await toFile(buffer, part.filename || "image.png", {
-        type: part.mediaType || "image/png",
-      });
-    })
-  );
-
-  inputImages.push(...partImages);
-  return inputImages;
+async function fetchImageBuffer(url: string): Promise<Buffer> {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
-async function executeEditMode({
-  prompt,
+async function collectEditImages({
   imageParts,
   lastGeneratedImage,
-  hasLastGeneratedImage,
-  startMs,
 }: {
-  prompt: string;
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
-  hasLastGeneratedImage: boolean;
-  startMs: number;
-}): Promise<{ imageUrl: string; prompt: string }> {
-  log.debug(
-    {
-      note: "OpenAI edit mode",
-      lastGeneratedCount: hasLastGeneratedImage ? 1 : 0,
-      attachmentCount: imageParts.length,
-    },
-    "generateImage: preparing edit images"
-  );
+}): Promise<Buffer[]> {
+  return await Promise.all([
+    ...(lastGeneratedImage
+      ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
+      : []),
+    ...imageParts.map((p) => fetchImageBuffer(p.url)),
+  ]);
+}
 
-  const inputImages = await prepareInputImages({
-    imageParts,
-    lastGeneratedImage,
-  });
-
-  if (!openaiClient) {
-    log.warn(
-      { missingKey: true },
-      "generateImage: edit requested but OPENAI_API_KEY is not set"
-    );
-    throw new Error("OPENAI_API_KEY is required for image edits");
+function serializeError(err: unknown): {
+  name?: string;
+  message: string;
+  stack?: string;
+  raw?: unknown;
+} {
+  if (err instanceof Error) {
+    return { name: err.name, message: err.message, stack: err.stack };
   }
 
-  const rsp = await openaiClient.images.edit({
-    model: "gpt-image-1",
-    image: inputImages,
-    prompt,
-  });
+  // Handle Promise-like objects (shouldn't happen but does sometimes)
+  if (err && typeof err === "object" && "then" in err) {
+    return { message: "Error was a Promise - check raw", raw: err };
+  }
 
-  const buffer = Buffer.from(rsp.data?.[0]?.b64_json || "", "base64");
-  const timestamp = Date.now();
-  const filename = `generated-image-${timestamp}.png`;
-  const result = await uploadFile(filename, buffer);
+  // Handle objects with message property
+  if (err && typeof err === "object" && "message" in err) {
+    const e = err as { message: unknown; name?: unknown };
+    return {
+      message: String(e.message),
+      name: e.name ? String(e.name) : undefined,
+    };
+  }
 
-  log.info(
-    {
-      mode: "edit",
-      ms: Date.now() - startMs,
-      imageUrl: result.url,
-      uploadedFilename: filename,
-    },
-    "generateImage: success"
-  );
+  return { message: String(err), raw: err };
+}
 
+async function resolveError(error: unknown): Promise<unknown> {
+  if (error && typeof error === "object" && "then" in error) {
+    return await (error as Promise<unknown>).catch((e) => e);
+  }
+  return error;
+}
+
+function getErrorDebugInfo(err: unknown) {
   return {
-    imageUrl: result.url,
-    prompt,
+    errorType: typeof err,
+    errorConstructor: (err as { constructor?: { name?: string } })?.constructor
+      ?.name,
+    errorKeys: err && typeof err === "object" ? Object.keys(err) : [],
   };
 }
 
-async function executeGenerateMode({
+async function runGenerateImageTraditional({
+  mode,
   prompt,
+  imageParts,
+  lastGeneratedImage,
   startMs,
 }: {
+  mode: ImageMode;
   prompt: string;
+  imageParts: FileUIPart[];
+  lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
 }): Promise<{ imageUrl: string; prompt: string }> {
-  const res = await experimental_generateImage({
+  let promptInput:
+    | string
+    | {
+        text: string;
+        images: Buffer[];
+      };
+
+  if (mode === "edit") {
+    log.debug(
+      {
+        note: "OpenAI edit mode",
+        lastGeneratedCount: lastGeneratedImage ? 1 : 0,
+        attachmentCount: imageParts.length,
+      },
+      "generateImage: preparing edit images"
+    );
+
+    const inputImages = await collectEditImages({
+      imageParts,
+      lastGeneratedImage,
+    });
+    promptInput = { text: prompt, images: inputImages };
+  } else {
+    promptInput = prompt;
+  }
+
+  const res = await generateImage({
+    // For edits, OpenAI expects `gpt-image-1` and accepts input images via prompt.images
     model: getImageModel(DEFAULT_IMAGE_MODEL),
-    prompt,
+    prompt: promptInput,
     n: 1,
     providerOptions: {
       telemetry: { isEnabled: true },
@@ -134,7 +138,7 @@ async function executeGenerateMode({
 
   log.debug(
     {
-      mode: "generate",
+      mode,
       base64Length: res.images?.[0]?.base64?.length ?? 0,
     },
     "generateImage: provider response received"
@@ -147,7 +151,7 @@ async function executeGenerateMode({
 
   log.info(
     {
-      mode: "generate",
+      mode,
       ms: Date.now() - startMs,
       imageUrl: result.url,
       uploadedFilename: filename,
@@ -155,15 +159,122 @@ async function executeGenerateMode({
     "generateImage: success"
   );
 
-  return {
-    imageUrl: result.url,
-    prompt,
-  };
+  return { imageUrl: result.url, prompt };
 }
 
-export const generateImage = ({
+async function runGenerateImageMultimodal({
+  modelId,
+  mode,
+  prompt,
+  imageParts,
+  lastGeneratedImage,
+  startMs,
+  costAccumulator,
+}: {
+  modelId: MultimodalImageModelId;
+  mode: ImageMode;
+  prompt: string;
+  imageParts: FileUIPart[];
+  lastGeneratedImage: { imageUrl: string; name: string } | null;
+  startMs: number;
+  costAccumulator?: CostAccumulator;
+}): Promise<{ imageUrl: string; prompt: string }> {
+  if (!isMultimodalImageModel(modelId)) {
+    throw new Error(`Model ${modelId} is not a multimodal image model`);
+  }
+
+  // Build messages with image context if in edit mode
+  type ImageContent = { type: "image"; image: URL };
+  type TextContent = { type: "text"; text: string };
+  const userContent: Array<TextContent | ImageContent> = [];
+
+  // Add reference images if in edit mode
+  if (mode === "edit") {
+    if (lastGeneratedImage) {
+      userContent.push({
+        type: "image",
+        image: new URL(lastGeneratedImage.imageUrl),
+      });
+    }
+    for (const part of imageParts) {
+      userContent.push({ type: "image", image: new URL(part.url) });
+    }
+  }
+
+  // Add the prompt with instruction to generate image
+  userContent.push({
+    type: "text",
+    text:
+      mode === "edit"
+        ? `Based on the provided image(s), ${prompt}`
+        : `Generate an image: ${prompt}`,
+  });
+
+  log.debug(
+    {
+      modelId,
+      mode,
+      imageCount: userContent.filter((c) => c.type === "image").length,
+    },
+    "generateImage: using multimodal model"
+  );
+
+  const res = await generateText({
+    model: getMultimodalImageModel(modelId),
+    messages: [{ role: "user", content: userContent }],
+    providerOptions: {
+      google: {
+        responseModalities: ["TEXT", "IMAGE"],
+      },
+    },
+  });
+
+  // Track LLM cost for multimodal image generation
+
+  if (res.usage) {
+    costAccumulator?.addLLMCost(modelId, res.usage, "generateImage-multimodal");
+  }
+
+  // Find the first image in the response files
+  const imageFile = res.files?.find((f) => f.mediaType.startsWith("image/"));
+  if (!imageFile) {
+    throw new Error("No image generated by multimodal model");
+  }
+
+  log.debug(
+    {
+      mode,
+      mediaType: imageFile.mediaType,
+      hasBase64: !!imageFile.base64,
+    },
+    "generateImage: multimodal response received"
+  );
+
+  const buffer = Buffer.from(imageFile.uint8Array);
+  const timestamp = Date.now();
+  const ext = imageFile.mediaType.split("/")[1] || "png";
+  const filename = `generated-image-${timestamp}.${ext}`;
+  const result = await uploadFile(filename, buffer);
+
+  log.info(
+    {
+      mode,
+      modelId,
+      ms: Date.now() - startMs,
+      imageUrl: result.url,
+      uploadedFilename: filename,
+    },
+    "generateImage: multimodal success"
+  );
+
+  return { imageUrl: result.url, prompt };
+}
+
+export const generateImageTool = ({
   attachments = [],
   lastGeneratedImage = null,
+  modelId,
+  costAccumulator,
 }: GenerateImageProps = {}) =>
   tool({
     description: `Generate images from text descriptions. Can optionally use attached images as reference.
@@ -187,52 +298,65 @@ Use for:
         (part) => part.type === "file" && part.mediaType?.startsWith("image/")
       );
 
-      const hasLastGeneratedImage = lastGeneratedImage !== null;
-      const isEdit = imageParts.length > 0 || hasLastGeneratedImage;
+      const mode: ImageMode =
+        imageParts.length > 0 || lastGeneratedImage !== null
+          ? "edit"
+          : "generate";
 
       log.info(
         {
-          mode: isEdit ? "edit" : "generate",
+          mode,
+          modelId,
           attachmentCount: imageParts.length,
-          hasLastGeneratedImage,
+          hasLastGeneratedImage: lastGeneratedImage !== null,
           promptLength: prompt.length,
         },
         "generateImage: start"
       );
 
       try {
-        if (isEdit) {
-          return await executeEditMode({
+        // Use multimodal path for language models with image generation
+        if (modelId && isMultimodalImageModel(modelId)) {
+          return await runGenerateImageMultimodal({
+            modelId,
+            mode,
             prompt,
             imageParts,
             lastGeneratedImage,
-            hasLastGeneratedImage,
             startMs,
+            costAccumulator,
           });
         }
 
-        return await executeGenerateMode({
+        // Default: traditional image generation
+        const result = await runGenerateImageTraditional({
+          mode,
           prompt,
+          imageParts,
+          lastGeneratedImage,
           startMs,
         });
+
+        // Report API cost for traditional image generation
+        costAccumulator?.addAPICost(
+          "generateImage",
+          toolsDefinitions.generateImage.cost
+        );
+
+        return result;
       } catch (error) {
-        const err = error as unknown;
+        const resolvedError = await resolveError(error);
         log.error(
           {
-            mode: isEdit ? "edit" : "generate",
+            mode,
+            modelId,
             ms: Date.now() - startMs,
-            error:
-              err && typeof err === "object"
-                ? {
-                    name: (err as Error).name,
-                    message: (err as Error).message,
-                    stack: (err as Error).stack,
-                  }
-                : { message: String(err) },
+            error: serializeError(resolvedError),
+            ...getErrorDebugInfo(resolvedError),
           },
           "generateImage: failure"
         );
-        throw error;
+        throw resolvedError;
       }
     },
   });

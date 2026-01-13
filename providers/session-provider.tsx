@@ -5,7 +5,7 @@ import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
 type SessionContextValue = {
-  data: Session | undefined;
+  data: Session | null;
   isPending: boolean;
 };
 
@@ -17,19 +17,21 @@ export function SessionProvider({
   initialSession,
   children,
 }: {
-  initialSession?: Session;
+  initialSession?: Session | null;
   children: React.ReactNode;
 }) {
-  const { data: clientSessionRaw, isPending } = authClient.useSession();
-
-  const clientSession = clientSessionRaw ? clientSessionRaw : undefined;
+  const { data: clientSession, isPending } = authClient.useSession();
+  const serverSession = initialSession ?? null;
 
   const value = useMemo<SessionContextValue>(() => {
+    // Prefer server session as a fallback even after the client hook settles.
+    // This avoids "split brain" when client session fetch is blocked/misconfigured
+    // (e.g. trustedOrigins mismatch) but the server can still read the cookies.
     const effective = isPending
-      ? (initialSession ?? clientSession)
-      : clientSession;
+      ? (serverSession ?? clientSession)
+      : (clientSession ?? serverSession);
     return { data: effective, isPending };
-  }, [clientSession, initialSession, isPending]);
+  }, [clientSession, serverSession, isPending]);
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

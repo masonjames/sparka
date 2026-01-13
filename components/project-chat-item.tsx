@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDistance } from "date-fns";
+import Link from "next/link";
 import { useState } from "react";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import {
@@ -15,11 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ActionContainer,
-  ActionContainerLink,
-  ActionContainerTop,
-} from "@/components/ui/extra/action-container";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import type { UIChat } from "@/lib/types/ui-chat";
 export function ProjectChatItem({
@@ -39,55 +36,60 @@ export function ProjectChatItem({
     await onRename(chat.id, title);
   };
 
+  const lastMessageText = `${formatDistance(
+    new Date(chat.updatedAt),
+    new Date(),
+    { addSuffix: true }
+  )}`;
+
   return (
     <>
-      <ActionContainer className="flex flex-col gap-1">
-        <ActionContainerLink
-          // @ts-expect-error - TODO: fix this next route type
-          href={chatHref}
-        />
-        <div className="pr-12">
-          <div className="font-medium text-sm">{chat.title}</div>
-          <div className="text-muted-foreground text-xs">
-            {new Date(chat.updatedAt).toLocaleDateString()}
+      <div className="group relative">
+        <div className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
+          <Link className="absolute inset-0 z-10" href={chatHref} />
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium text-sm">{chat.title}</div>
+            <div className="text-muted-foreground text-xs">
+              {lastMessageText}
+            </div>
+          </div>
+          <div className="z-20">
+            <DropdownMenu modal={true}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <MoreHorizontalIcon />
+                  <span className="sr-only">More</span>
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" side="bottom">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => setRenameDialogOpen(true)}
+                >
+                  <PencilEditIcon />
+                  <span>Rename</span>
+                </DropdownMenuItem>
+
+                <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
+
+                <DropdownMenuItem
+                  className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
+                  onSelect={() => onDelete(chat.id)}
+                >
+                  <TrashIcon />
+                  <span>Delete</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-        <ActionContainerTop>
-          <DropdownMenu modal={true}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="absolute top-3 right-3 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                <MoreHorizontalIcon />
-                <span className="sr-only">More</span>
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" side="bottom">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => setRenameDialogOpen(true)}
-              >
-                <PencilEditIcon />
-                <span>Rename</span>
-              </DropdownMenuItem>
-
-              <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
-
-              <DropdownMenuItem
-                className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
-                onSelect={() => onDelete(chat.id)}
-              >
-                <TrashIcon />
-                <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </ActionContainerTop>
-      </ActionContainer>
+      </div>
       {shareDialogOpen && (
         <ShareDialog
           chatId={chat.id}

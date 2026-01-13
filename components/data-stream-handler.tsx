@@ -4,6 +4,7 @@ import { useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { UiToolName } from "@/lib/ai/types";
 import type { Suggestion } from "@/lib/db/schema";
+import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useSession } from "@/providers/session-provider";
 import { artifactDefinitions } from "./artifact-panel";
@@ -149,6 +150,8 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
   const lastProcessedIndex = useRef(-1);
   const { data: session } = useSession();
   const { setSelectedTool } = useChatInput();
+
+  const { confirmChatId } = useChatId();
   const saveDocumentMutation = useSaveDocument(
     artifact.documentId,
     artifact.messageId
@@ -164,6 +167,10 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
     lastProcessedIndex.current = dataStream.length - 1;
 
     for (const delta of newDeltas) {
+      if (delta.type === "data-chatConfirmed" && isAuthenticated) {
+        confirmChatId(delta.data.chatId);
+      }
+
       handleResearchUpdate({ delta, setSelectedTool });
 
       processArtifactStreamPart({
@@ -190,6 +197,7 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
     saveDocumentMutation,
     isAuthenticated,
     setSelectedTool,
+    confirmChatId,
   ]);
 
   return null;

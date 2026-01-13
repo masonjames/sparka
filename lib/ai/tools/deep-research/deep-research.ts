@@ -1,7 +1,9 @@
 import { type ModelMessage, tool } from "ai";
 import { Langfuse } from "langfuse";
 import { z } from "zod";
-import type { Session } from "@/lib/auth";
+
+import type { ToolSession } from "@/lib/ai/tools/types";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
 import { type DeepResearchConfig, loadConfigFromEnv } from "./configuration";
@@ -12,11 +14,13 @@ export const deepResearch = ({
   dataStream,
   messageId,
   messages,
+  costAccumulator,
 }: {
-  session: Session;
+  session: ToolSession;
   dataStream: StreamWriter;
   messageId: string;
   messages: ModelMessage[];
+  costAccumulator: CostAccumulator;
 }) =>
   tool({
     description: `Conducts deep, autonomous research based on a conversation history. It automatically clarifies the user's intent if the request is ambiguous, breaks down the query into parallel research tasks, scours multiple web sources for information, and then synthesizes the findings into a comprehensive, well-structured report with citations. This is best for complex questions that require in-depth analysis and a detailed answer, not just a simple search. 
@@ -32,7 +36,7 @@ Use for:
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
     inputSchema: z.object({}),
-    execute: async () => {
+    execute: async (_, { toolCallId }: { toolCallId: string }) => {
       const smallConfig: DeepResearchConfig = loadConfigFromEnv();
 
       try {
@@ -47,11 +51,12 @@ Use for:
           {
             requestId,
             messageId,
+            toolCallId,
             messages,
           },
           smallConfig,
           dataStream,
-          session
+          { session, costAccumulator }
         );
 
         // Flush the Langfuse trace right after the run
@@ -73,6 +78,16 @@ Use for:
         }
       } catch (error) {
         console.error("Deep research error:", error);
+        dataStream.write({
+          id: generateUUID(),
+          type: "data-researchUpdate",
+          data: {
+            toolCallId,
+            timestamp: Date.now(),
+            title: "Deep research failed",
+            type: "completed",
+          },
+        });
         return {
           answer: `Deep research failed with error: ${error instanceof Error ? error.message : String(error)}`,
           format: "problem" as const,

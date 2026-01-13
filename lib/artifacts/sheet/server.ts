@@ -1,5 +1,6 @@
-import { streamObject } from "ai";
+import { Output, streamText } from "ai";
 import { z } from "zod";
+import type { AppModelId } from "@/lib/ai/app-models";
 import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
@@ -12,35 +13,33 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     dataStream,
     prompt,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamObject({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: sheetPrompt,
       experimental_telemetry: { isEnabled: true },
       prompt,
-      schema: z.object({
-        csv: z.string().describe("CSV data"),
+      output: Output.object({
+        schema: z.object({
+          csv: z.string().describe("CSV data"),
+        }),
       }),
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    for await (const partialObject of result.partialOutputStream) {
+      const { csv } = partialObject;
 
-      if (type === "object") {
-        const { object } = delta;
-        const { csv } = object;
+      if (csv) {
+        dataStream.write({
+          type: "data-sheetDelta",
+          data: csv,
+          transient: true,
+        });
 
-        if (csv) {
-          dataStream.write({
-            type: "data-sheetDelta",
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
+        draftContent = csv;
       }
     }
 
@@ -50,6 +49,13 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
       transient: true,
     });
 
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "createDocument-sheet"
+    );
+
     return draftContent;
   },
   onUpdateDocument: async ({
@@ -57,37 +63,42 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     description,
     dataStream,
     selectedModel,
+    costAccumulator,
   }) => {
     let draftContent = "";
 
-    const { fullStream } = streamObject({
+    const result = streamText({
       model: await getLanguageModel(selectedModel),
       system: updateDocumentPrompt(document.content, "sheet"),
       experimental_telemetry: { isEnabled: true },
       prompt: description,
-      schema: z.object({
-        csv: z.string(),
+      output: Output.object({
+        schema: z.object({
+          csv: z.string(),
+        }),
       }),
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    for await (const partialObject of result.partialOutputStream) {
+      const { csv } = partialObject;
 
-      if (type === "object") {
-        const { object } = delta;
-        const { csv } = object;
+      if (csv) {
+        dataStream.write({
+          type: "data-sheetDelta",
+          data: csv,
+          transient: true,
+        });
 
-        if (csv) {
-          dataStream.write({
-            type: "data-sheetDelta",
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
+        draftContent = csv;
       }
     }
+
+    const usage = await result.usage;
+    costAccumulator?.addLLMCost(
+      selectedModel as AppModelId,
+      usage,
+      "updateDocument-sheet"
+    );
 
     return draftContent;
   },

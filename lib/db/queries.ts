@@ -1,5 +1,4 @@
 import "server-only";
-import { deleteFilesByUrls } from "@/lib/blob";
 import {
   and,
   asc,
@@ -11,7 +10,13 @@ import {
   isNull,
   type SQL,
 } from "drizzle-orm";
-import type { Attachment, ChatMessage } from "@/lib/ai/types";
+import type {
+  Attachment,
+  ChatMessage,
+  ToolName,
+  ToolOutput,
+} from "@/lib/ai/types";
+import { deleteFilesByUrls } from "@/lib/blob";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
 import {
   mapDBPartsToUIParts,
@@ -30,7 +35,9 @@ import {
   type Suggestion,
   suggestion,
   type User,
+  type UserModelPreference,
   user,
+  userModelPreference,
   vote,
 } from "./schema";
 
@@ -161,11 +168,15 @@ export async function createProject({
   userId,
   name,
   instructions = "",
+  icon,
+  iconColor,
 }: {
   id: string;
   userId: string;
   name: string;
   instructions?: string;
+  icon?: string;
+  iconColor?: string;
 }) {
   try {
     return await db.insert(project).values({
@@ -173,6 +184,8 @@ export async function createProject({
       userId,
       name,
       instructions,
+      ...(icon && { icon }),
+      ...(iconColor && { iconColor }),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -213,7 +226,12 @@ export async function updateProject({
   updates,
 }: {
   id: string;
-  updates: Partial<{ name: string; instructions: string }>;
+  updates: Partial<{
+    name: string;
+    instructions: string;
+    icon: string;
+    iconColor: string;
+  }>;
 }) {
   try {
     return await db
@@ -393,9 +411,9 @@ export async function updateMessage({
           annotations: dbMessage.annotations,
           attachments: dbMessage.attachments,
           createdAt: dbMessage.createdAt,
-          isPartial: dbMessage.isPartial,
           parentMessageId: dbMessage.parentMessageId,
           lastContext: dbMessage.lastContext,
+          activeStreamId: dbMessage.activeStreamId,
         })
         .where(eq(message.id, id));
 
@@ -415,6 +433,16 @@ export async function updateMessage({
     console.error("Failed to update message in database", error);
     throw error;
   }
+}
+
+export function updateMessageActiveStreamId({
+  id,
+  activeStreamId,
+}: {
+  id: string;
+  activeStreamId: string | null;
+}) {
+  return db.update(message).set({ activeStreamId }).where(eq(message.id, id));
 }
 
 export async function getAllMessagesByChatId({
@@ -461,7 +489,7 @@ export async function getAllMessagesByChatId({
         parts,
         metadata: {
           createdAt: msg.createdAt,
-          isPartial: msg.isPartial,
+          activeStreamId: msg.activeStreamId,
           parentMessageId: msg.parentMessageId,
           selectedModel: (msg.selectedModel ||
             "") as ChatMessage["metadata"]["selectedModel"],
@@ -766,6 +794,53 @@ export async function getMessageById({ id }: { id: string }) {
   }
 }
 
+export async function getChatMessageWithPartsById({
+  id,
+}: {
+  id: string;
+}): Promise<{
+  chatId: string;
+  message: ChatMessage;
+} | null> {
+  try {
+    const [dbMessage] = await db
+      .select()
+      .from(message)
+      .where(eq(message.id, id));
+    if (!dbMessage) {
+      return null;
+    }
+
+    const dbParts = await db
+      .select()
+      .from(part)
+      .where(eq(part.messageId, id))
+      .orderBy(asc(part.order));
+
+    return {
+      chatId: dbMessage.chatId,
+      message: {
+        id: dbMessage.id,
+        role: dbMessage.role as ChatMessage["role"],
+        parts: dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [],
+        metadata: {
+          createdAt: dbMessage.createdAt,
+          activeStreamId: dbMessage.activeStreamId,
+          parentMessageId: dbMessage.parentMessageId,
+          selectedModel: (dbMessage.selectedModel ||
+            "") as ChatMessage["metadata"]["selectedModel"],
+          selectedTool: (dbMessage.selectedTool ||
+            undefined) as ChatMessage["metadata"]["selectedTool"],
+          usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Failed to get message w/ parts by id from database", error);
+    throw error;
+  }
+}
+
 export async function deleteMessagesByChatIdAfterTimestamp({
   chatId,
   timestamp,
@@ -959,12 +1034,24 @@ export async function getMessagesWithAttachments() {
   }
 }
 
+function getGeneratedImageParts() {
+  const toolName: ToolName = "generateImage";
+  return db
+    .select({ tool_output: part.tool_output })
+    .from(part)
+    .where(eq(part.tool_name, toolName));
+}
+
 export async function getAllAttachmentUrls(): Promise<string[]> {
   try {
-    const messages = await getMessagesWithAttachments();
+    const [messages, generatedImageParts] = await Promise.all([
+      getMessagesWithAttachments(),
+      getGeneratedImageParts(),
+    ]);
 
     const attachmentUrls: string[] = [];
 
+    // Collect URLs from message attachments
     for (const msg of messages) {
       if (msg.attachments && Array.isArray(msg.attachments)) {
         const attachments = msg.attachments as Attachment[];
@@ -973,6 +1060,14 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
             attachmentUrls.push(attachment.url);
           }
         }
+      }
+    }
+
+    // Collect URLs from generated images in tool outputs
+    for (const p of generatedImageParts) {
+      const output = p.tool_output as ToolOutput<"generateImage"> | null;
+      if (output?.imageUrl) {
+        attachmentUrls.push(output.imageUrl);
       }
     }
 
@@ -1005,5 +1100,53 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
     console.error("Failed to delete attachments from R2:", error);
     // Don't throw here - we still want to proceed with message deletion
     // even if blob cleanup fails
+  }
+}
+
+export async function getUserModelPreferences({
+  userId,
+}: {
+  userId: string;
+}): Promise<UserModelPreference[]> {
+  try {
+    return await db
+      .select()
+      .from(userModelPreference)
+      .where(eq(userModelPreference.userId, userId));
+  } catch (error) {
+    console.error("Failed to get user model preferences from database", error);
+    throw error;
+  }
+}
+
+export async function upsertUserModelPreference({
+  userId,
+  modelId,
+  enabled,
+}: {
+  userId: string;
+  modelId: string;
+  enabled: boolean;
+}): Promise<void> {
+  try {
+    await db
+      .insert(userModelPreference)
+      .values({
+        userId,
+        modelId,
+        enabled,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [userModelPreference.userId, userModelPreference.modelId],
+        set: {
+          enabled,
+          updatedAt: new Date(),
+        },
+      });
+  } catch (error) {
+    console.error("Failed to upsert user model preference in database", error);
+    throw error;
   }
 }

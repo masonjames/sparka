@@ -10,7 +10,34 @@ import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
-import { MessageTreeProvider } from "@/providers/message-tree-provider";
+import {
+  MessageTreeProvider,
+  useMessageTree,
+} from "@/providers/message-tree-provider";
+
+function StreamBoundary({
+  id,
+  projectId,
+  withHandler,
+}: {
+  id: string;
+  projectId?: string;
+  withHandler: boolean;
+}) {
+  const { threadEpoch } = useMessageTree();
+  return (
+    <>
+      <ChatSync
+        id={id}
+        key={`chat-sync:${id}:${threadEpoch}`}
+        projectId={projectId}
+      />
+      {withHandler ? (
+        <DataStreamHandler id={id} key={`stream:${id}:${threadEpoch}`} />
+      ) : null}
+    </>
+  );
+}
 
 export const ChatSystem = memo(function PureChatSystem({
   id,
@@ -31,18 +58,20 @@ export const ChatSystem = memo(function PureChatSystem({
 }) {
   return (
     <ArtifactProvider>
-      <DataStreamProvider>
-        <CustomStoreProvider<ChatMessage> initialMessages={initialMessages}>
+      <DataStreamProvider key={id}>
+        <CustomStoreProvider<ChatMessage>
+          initialMessages={initialMessages}
+          key={id}
+        >
           <MessageTreeProvider>
             {isReadonly ? (
               <>
-                <ChatSync
+                <StreamBoundary
                   id={id}
-                  initialMessages={initialMessages}
                   projectId={projectId}
+                  withHandler={false}
                 />
                 <Chat
-                  disableSuggestedActions={isProjectPage}
                   id={id}
                   initialMessages={initialMessages}
                   isProjectPage={isProjectPage}
@@ -53,17 +82,17 @@ export const ChatSystem = memo(function PureChatSystem({
               </>
             ) : (
               <ChatInputProvider
+                disableSuggestedActions={isProjectPage}
                 initialTool={initialTool ?? null}
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >
-                <ChatSync
+                <StreamBoundary
                   id={id}
-                  initialMessages={initialMessages}
                   projectId={projectId}
+                  withHandler={true}
                 />
                 <Chat
-                  disableSuggestedActions={isProjectPage}
                   id={id}
                   initialMessages={initialMessages}
                   isProjectPage={isProjectPage}
@@ -71,7 +100,6 @@ export const ChatSystem = memo(function PureChatSystem({
                   key={id}
                   projectId={projectId}
                 />
-                <DataStreamHandler id={id} />
               </ChatInputProvider>
             )}
           </MessageTreeProvider>

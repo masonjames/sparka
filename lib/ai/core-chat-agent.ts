@@ -5,9 +5,12 @@ import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-genera
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
-import { getTools } from "@/lib/ai/tools/tools";
+import { getMcpTools, getTools } from "@/lib/ai/tools/tools";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
+import type { McpConnector } from "@/lib/db/schema";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
+import { determineExplicitlyRequestedTools } from "./determine-explicitly-requested-tools";
 
 export async function createCoreChatAgent({
   system,
@@ -16,11 +19,13 @@ export async function createCoreChatAgent({
   selectedModelId,
   selectedTool,
   userId,
-  activeTools,
+  budgetAllowedTools,
   abortSignal,
   messageId,
   dataStream,
   onError,
+  mcpConnectors = [],
+  costAccumulator,
 }: {
   system: string;
   userMessage: ChatMessage;
@@ -28,11 +33,14 @@ export async function createCoreChatAgent({
   selectedModelId: AppModelId;
   selectedTool: ToolName | null;
   userId: string | null;
-  activeTools: ToolName[];
+  /** Budget-allowed base tools from route.ts (static ToolNames only) */
+  budgetAllowedTools: ToolName[];
   abortSignal?: AbortSignal;
   messageId: string;
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
+  mcpConnectors?: McpConnector[];
+  costAccumulator: CostAccumulator;
 }) {
   const modelDefinition = await getAppModelDefinition(selectedModelId);
 
@@ -42,36 +50,74 @@ export async function createCoreChatAgent({
   // Process conversation history
   const lastGeneratedImage = getRecentGeneratedImage(messages);
 
-  let explicitlyRequestedTools: ToolName[] | null = null;
-  if (selectedTool === "deepResearch") {
-    explicitlyRequestedTools = ["deepResearch"];
-  } else if (selectedTool === "webSearch") {
-    explicitlyRequestedTools = ["webSearch"];
-  } else if (selectedTool === "generateImage") {
-    explicitlyRequestedTools = ["generateImage"];
-  } else if (selectedTool === "createDocument") {
-    explicitlyRequestedTools = ["createDocument", "updateDocument"];
-  }
+  const explicitlyRequestedTools =
+    determineExplicitlyRequestedTools(selectedTool);
 
-  addExplicitToolRequestToMessages(
-    messages,
-    activeTools,
-    explicitlyRequestedTools
-  );
+  addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
 
   // Filter out reasoning parts to ensure compatibility between different models
   const messagesWithoutReasoning = filterReasoningParts(messages.slice(-5));
 
   // Convert to model messages
-  const modelMessages = convertToModelMessages(messagesWithoutReasoning);
+  const modelMessages = await convertToModelMessages(messagesWithoutReasoning);
 
   // Replace file URLs with binary data
   const contextForLLM =
     await replaceFilePartUrlByBinaryDataInMessages(modelMessages);
 
+  // Get MCP tools if connectors are configured
+  const { tools: mcpTools, cleanup: mcpCleanup } = await getMcpTools({
+    connectors: mcpConnectors,
+  });
+
+  // Get base tools
+  const baseTools = getTools({
+    dataStream,
+    session: {
+      user: userId ? { id: userId } : undefined,
+    },
+    contextForLLM,
+    messageId,
+    selectedModel: modelDefinition.apiModelId,
+    attachments: userMessage.parts.filter((part) => part.type === "file"),
+    lastGeneratedImage,
+    costAccumulator,
+  });
+
+  // Merge base tools with MCP tools
+  const allTools = {
+    ...baseTools,
+    ...mcpTools,
+  };
+
+  // Compute final activeTools for streamText:
+  // 1. Filter budget-allowed base tools to only those that actually exist in baseTools
+  const existingBaseActiveTools = budgetAllowedTools.filter(
+    (toolName) => toolName in baseTools
+  );
+  // 2. Always allow all MCP tools that exist at runtime
+  const mcpToolNames = Object.keys(mcpTools);
+  // 3. Build the final activeTools list (cast needed because MCP tools are dynamic)
+  const activeTools = [
+    ...new Set([...existingBaseActiveTools, ...mcpToolNames]),
+  ] as (keyof typeof allTools)[];
+
+  // Resolve async model config before streamText to ensure cleanup on failure
+  let model: Awaited<ReturnType<typeof getLanguageModel>>;
+  let providerOptions: Awaited<ReturnType<typeof getModelProviderOptions>>;
+  try {
+    [model, providerOptions] = await Promise.all([
+      getLanguageModel(modelDefinition.apiModelId),
+      getModelProviderOptions(selectedModelId),
+    ]);
+  } catch (error) {
+    await mcpCleanup();
+    throw error;
+  }
+
   // Create the streamText result
   const result = streamText({
-    model: await getLanguageModel(modelDefinition.apiModelId),
+    model,
     system,
     messages: contextForLLM,
     stopWhen: [
@@ -95,28 +141,22 @@ export async function createCoreChatAgent({
       isEnabled: true,
       functionId: "chat-response",
     },
-    tools: getTools({
-      dataStream,
-      session: {
-        user: {
-          id: userId || undefined,
-        },
-        expires: "noop",
-      },
-      contextForLLM,
-      messageId,
-      selectedModel: modelDefinition.apiModelId,
-      attachments: userMessage.parts.filter((part) => part.type === "file"),
-      lastGeneratedImage,
-    }),
-    onError,
+    tools: allTools,
+    onError: (error) => {
+      onError?.(error);
+    },
     abortSignal,
-    providerOptions: await getModelProviderOptions(selectedModelId),
+    providerOptions,
+    onFinish: async () => {
+      // Clean up MCP clients when streaming is done (onFinish runs for both success and error)
+      await mcpCleanup();
+    },
   });
 
   return {
     result,
     contextForLLM,
     modelDefinition,
+    mcpCleanup,
   };
 }

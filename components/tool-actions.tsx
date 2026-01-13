@@ -1,5 +1,6 @@
 import { FileText } from "lucide-react";
 import type { WebSearchUpdate } from "@/lib/ai/tools/research-updates-schema";
+import { getGoogleFaviconUrl } from "./get-google-favicon-url";
 import {
   ToolActionContainer,
   ToolActionContent,
@@ -21,7 +22,7 @@ export const WebToolAction = ({
     return null;
   }
 
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(result.url).hostname}&sz=128`;
+  const faviconUrl = getGoogleFaviconUrl(result.url);
 
   return (
     <ToolActionContainer href={result.url}>

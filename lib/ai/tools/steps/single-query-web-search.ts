@@ -11,11 +11,13 @@ export async function singleQueryWebSearchStep({
   maxResults,
   providerOptions,
   dataStream,
+  toolCallId,
 }: {
   query: string;
   maxResults: number;
   dataStream: StreamWriter;
   providerOptions: SearchProviderOptions;
+  toolCallId: string;
 }): Promise<WebSearchResponse> {
   const updateId = generateUUID();
   try {
@@ -24,6 +26,7 @@ export async function singleQueryWebSearchStep({
       type: "data-researchUpdate",
       id: updateId,
       data: {
+        toolCallId,
         title: `Searching for "${query}"`,
         type: "web",
         status: "running",
@@ -44,6 +47,7 @@ export async function singleQueryWebSearchStep({
       type: "data-researchUpdate",
       id: updateId,
       data: {
+        toolCallId,
         title: `Searching for "${query}"`,
         type: "web",
         status: "completed",
@@ -61,6 +65,7 @@ export async function singleQueryWebSearchStep({
       type: "data-researchUpdate",
       id: updateId,
       data: {
+        toolCallId,
         title: `Searching for "${query}"`,
         type: "web",
         status: "completed",

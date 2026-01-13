@@ -1,11 +1,13 @@
 import { tool } from "ai";
 import { z } from "zod";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "../../logger";
 import type { StreamWriter } from "../types";
 import {
   type MultiQuerySearchOptions,
   multiQueryWebSearchStep,
 } from "./steps/multi-query-web-search";
+import { toolsDefinitions } from "./tools-definitions";
 
 const DEFAULT_MAX_RESULTS = 5;
 
@@ -33,6 +35,7 @@ async function executeMultiQuerySearch({
   search_queries,
   options,
   dataStream,
+  toolCallId,
   writeTopLevelUpdates,
   title,
   completeTitle,
@@ -40,6 +43,7 @@ async function executeMultiQuerySearch({
   search_queries: Array<{ query: string; maxResults: number }>;
   options: MultiQuerySearchOptions;
   dataStream: StreamWriter;
+  toolCallId: string;
   writeTopLevelUpdates: boolean;
   title: string;
   completeTitle: string;
@@ -53,6 +57,7 @@ async function executeMultiQuerySearch({
     dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId,
         title,
         timestamp: Date.now(),
         type: "started",
@@ -66,6 +71,7 @@ async function executeMultiQuerySearch({
   const { searches: searchResults, error } = await multiQueryWebSearchStep({
     queries: search_queries,
     options,
+    toolCallId,
     dataStream,
   });
   if (error) {
@@ -80,6 +86,7 @@ async function executeMultiQuerySearch({
     dataStream.write({
       type: "data-researchUpdate",
       data: {
+        toolCallId,
         title: completeTitle,
         timestamp: Date.now(),
         type: "completed",
@@ -108,9 +115,11 @@ export const QueryCompletionSchema = z.object({
 export const tavilyWebSearch = ({
   dataStream,
   writeTopLevelUpdates,
+  costAccumulator,
 }: {
   dataStream: StreamWriter;
   writeTopLevelUpdates: boolean;
+  costAccumulator?: CostAccumulator;
 }) =>
   tool({
     description: `Multi-query web search (supports depth, topic & result limits). Always cite sources inline.
@@ -135,17 +144,20 @@ Avoid:
         .describe("A list of domains to exclude from all search results.")
         .nullable(),
     }),
-    execute: ({
-      search_queries,
-      topics,
-      searchDepth,
-      exclude_domains,
-    }: {
-      search_queries: { query: string; maxResults: number | null }[];
-      topics: ("general" | "news")[] | null;
-      searchDepth: "basic" | "advanced" | null;
-      exclude_domains: string[] | null;
-    }) => {
+    execute: async (
+      {
+        search_queries,
+        topics,
+        searchDepth,
+        exclude_domains,
+      }: {
+        search_queries: { query: string; maxResults: number | null }[];
+        topics: ("general" | "news")[] | null;
+        searchDepth: "basic" | "advanced" | null;
+        exclude_domains: string[] | null;
+      },
+      { toolCallId }: { toolCallId: string }
+    ) => {
       const log = createModuleLogger("tools/web-search");
       log.debug(
         {
@@ -161,7 +173,7 @@ Avoid:
       const _safeSearchDepth = searchDepth ?? "basic";
       const safeExcludeDomains = exclude_domains ?? [];
 
-      return executeMultiQuerySearch({
+      const result = await executeMultiQuerySearch({
         search_queries: search_queries.map((query) => ({
           query: query.query,
           maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
@@ -174,19 +186,27 @@ Avoid:
           excludeDomains: safeExcludeDomains,
         },
         dataStream,
+        toolCallId,
         writeTopLevelUpdates,
         title: "Searching",
         completeTitle: "Search complete",
       });
+
+      // Report API cost
+      costAccumulator?.addAPICost("webSearch", toolsDefinitions.webSearch.cost);
+
+      return result;
     },
   });
 
 export const firecrawlWebSearch = ({
   dataStream,
   writeTopLevelUpdates,
+  costAccumulator,
 }: {
   dataStream: StreamWriter;
   writeTopLevelUpdates: boolean;
+  costAccumulator?: CostAccumulator;
 }) =>
   tool({
     description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
@@ -200,17 +220,20 @@ Avoid:
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
     }),
-    execute: ({
-      search_queries,
-    }: {
-      search_queries: { query: string; maxResults: number | null }[];
-    }) => {
+    execute: async (
+      {
+        search_queries,
+      }: {
+        search_queries: { query: string; maxResults: number | null }[];
+      },
+      { toolCallId }: { toolCallId: string }
+    ) => {
       const log = createModuleLogger("tools/web-search");
       log.debug(
         { queriesCount: search_queries.length },
         "firecrawlWebSearch.execute"
       );
-      return executeMultiQuerySearch({
+      const result = await executeMultiQuerySearch({
         search_queries: search_queries.map((query) => ({
           query: query.query,
           maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
@@ -221,9 +244,15 @@ Avoid:
           },
         },
         dataStream,
+        toolCallId,
         writeTopLevelUpdates,
         title: "Searching with Firecrawl",
         completeTitle: "Firecrawl search complete",
       });
+
+      // Report API cost
+      costAccumulator?.addAPICost("webSearch", toolsDefinitions.webSearch.cost);
+
+      return result;
     },
   });

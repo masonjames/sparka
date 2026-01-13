@@ -11,7 +11,7 @@ type ChatMenuItemsProps = {
   onTogglePin: () => void;
   onDelete: () => void;
   onShare?: () => void;
-  includeShareItem?: boolean;
+  showShare?: boolean;
 };
 
 export function ChatMenuItems({
@@ -20,7 +20,7 @@ export function ChatMenuItems({
   onTogglePin,
   onDelete,
   onShare,
-  includeShareItem = true,
+  showShare = true,
 }: ChatMenuItemsProps) {
   return (
     <>
@@ -34,16 +34,7 @@ export function ChatMenuItems({
         <span>{isPinned ? "Unpin" : "Pin"}</span>
       </DropdownMenuItem>
 
-      {includeShareItem && (
-        <ShareMenuItem
-          onShare={
-            onShare ??
-            (() => {
-              /* noop */
-            })
-          }
-        />
-      )}
+      {showShare && onShare && <ShareMenuItem onShare={onShare} />}
 
       <DropdownMenuItem
         className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
