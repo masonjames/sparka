@@ -3,8 +3,18 @@ export type ChatIdType = "chat" | "provisional";
 export type RouteSource = "share" | "project" | "chat" | "home";
 
 export type ParsedChatIdFromPathname =
-  | { type: "chat"; id: string; source: "share" | "project" | "chat"; projectId: string | null }
-  | { type: "provisional"; id: null; source: "project" | "home"; projectId: string | null };
+  | {
+      type: "chat";
+      id: string;
+      source: "share" | "project" | "chat";
+      projectId: string | null;
+    }
+  | {
+      type: "provisional";
+      id: null;
+      source: "project" | "home";
+      projectId: string | null;
+    };
 
 const SHARE_ROUTE_PATTERN = /^\/share\/(.+)$/;
 const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/(.+))?$/;
@@ -20,7 +30,12 @@ export function parseChatIdFromPathname(
   // /share/:id → shared chat
   const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
   if (shareMatch) {
-    return { type: "chat", id: shareMatch[1], source: "share", projectId: null };
+    return {
+      type: "chat",
+      id: shareMatch[1],
+      source: "share",
+      projectId: null,
+    };
   }
 
   // /project/:projectId/chat/:chatId → chat

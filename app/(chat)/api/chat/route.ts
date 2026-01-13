@@ -199,17 +199,22 @@ async function handleChatValidation({
   userId: string;
   userMessage: ChatMessage;
   projectId?: string;
-}): Promise<Response | null> {
+}): Promise<{ error: Response | null; isNewChat: boolean }> {
   const log = createModuleLogger("api:chat:validation");
 
   const chat = await getChatById({ id: chatId });
+  let isNewChat = false;
 
   if (chat) {
     if (chat.userId !== userId) {
       log.warn("Unauthorized - chat ownership mismatch");
-      return new Response("Unauthorized", { status: 401 });
+      return {
+        error: new Response("Unauthorized", { status: 401 }),
+        isNewChat,
+      };
     }
   } else {
+    isNewChat = true;
     const title = await generateTitleFromUserMessage({
       message: userMessage,
     });
@@ -221,7 +226,7 @@ async function handleChatValidation({
 
   if (existentMessage && existentMessage.chatId !== chatId) {
     log.warn("Unauthorized - message chatId mismatch");
-    return new Response("Unauthorized", { status: 401 });
+    return { error: new Response("Unauthorized", { status: 401 }), isNewChat };
   }
 
   if (!existentMessage) {
@@ -233,7 +238,7 @@ async function handleChatValidation({
     });
   }
 
-  return null;
+  return { error: null, isNewChat };
 }
 
 async function checkUserCanSpend({
@@ -343,6 +348,7 @@ async function createChatStream({
   allowedTools,
   abortController,
   isAnonymous,
+  isNewChat,
   timeoutId,
   mcpConnectors,
   streamId,
@@ -357,6 +363,7 @@ async function createChatStream({
   allowedTools: ToolName[];
   abortController: AbortController;
   isAnonymous: boolean;
+  isNewChat: boolean;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
@@ -375,8 +382,8 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Confirm chat persistence ASAP (chat + user message are persisted before streaming begins)
-      if (!isAnonymous) {
+      // Confirm chat persistence on first message (chat + user message are persisted before streaming begins)
+      if (isNewChat) {
         dataStream.write({
           id: generateUUID(),
           type: "data-chatConfirmed",
@@ -498,6 +505,7 @@ async function executeChatRequest({
   selectedTool,
   userId,
   isAnonymous,
+  isNewChat,
   allowedTools,
   abortController,
   timeoutId,
@@ -510,6 +518,7 @@ async function executeChatRequest({
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
+  isNewChat: boolean;
   allowedTools: ToolName[];
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
@@ -551,6 +560,7 @@ async function executeChatRequest({
     allowedTools,
     abortController,
     isAnonymous,
+    isNewChat,
     timeoutId,
     mcpConnectors,
     streamId,
@@ -803,6 +813,7 @@ async function handleRequestExecution({
   selectedTool,
   userId,
   isAnonymous,
+  isNewChat,
   allowedTools,
   abortController,
   timeoutId,
@@ -815,6 +826,7 @@ async function handleRequestExecution({
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
+  isNewChat: boolean;
   allowedTools: ToolName[];
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
@@ -830,6 +842,7 @@ async function handleRequestExecution({
       selectedTool,
       userId,
       isAnonymous,
+      isNewChat,
       allowedTools,
       abortController,
       timeoutId,
@@ -900,6 +913,7 @@ export async function POST(request: NextRequest) {
 
     // Extract selectedTool from user message metadata
     const selectedTool = userMessage.metadata.selectedTool || null;
+    let isNewChat = false;
     // Skip database operations for anonymous users
     if (!isAnonymous) {
       if (!userId) {
@@ -909,16 +923,17 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const validationError = await handleChatValidation({
+      const validationResult = await handleChatValidation({
         chatId,
         userId,
         userMessage,
         projectId,
       });
 
-      if (validationError) {
-        return validationError;
+      if (validationResult.error) {
+        return validationResult.error;
       }
+      isNewChat = validationResult.isNewChat;
     }
 
     const explicitlyRequestedTools =
@@ -973,6 +988,7 @@ export async function POST(request: NextRequest) {
       selectedTool,
       userId,
       isAnonymous,
+      isNewChat,
       allowedTools,
       abortController,
       timeoutId,
@@ -985,5 +1001,3 @@ export async function POST(request: NextRequest) {
     });
   }
 }
-
-// DELETE moved to tRPC chat.deleteChat mutation
