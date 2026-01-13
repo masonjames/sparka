@@ -28,6 +28,7 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
+import { useAutoFocus } from "@/hooks/use-auto-focus";
 import { cn } from "@/lib/utils";
 
 // Plugin to handle Enter key submissions
@@ -124,6 +125,8 @@ export const LexicalChatInput = ({
   ref?: RefObject<LexicalChatInputRef | null>;
 }) => {
   const [editor, setEditor] = useState<LexicalEditor | null>(null);
+
+  useAutoFocus({ autoFocus, editor });
 
   const initialConfig: InitialConfigType = {
     namespace: "LexicalChatInput",
@@ -238,7 +241,6 @@ export const LexicalChatInput = ({
         />
         <OnChangePlugin onChange={handleChange} />
         <HistoryPlugin />
-        {/* {autoFocus && <AutoFocusPlugin />} */}
         <EditorRefPlugin setEditor={setEditor} />
         <EnterKeySubmitPlugin onEnterSubmit={onEnterSubmit} />
       </div>

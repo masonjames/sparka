@@ -32,7 +32,7 @@ Use for:
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
     inputSchema: z.object({}),
-    execute: async () => {
+    execute: async (_, { toolCallId }: { toolCallId: string }) => {
       const smallConfig: DeepResearchConfig = loadConfigFromEnv();
 
       try {
@@ -47,6 +47,7 @@ Use for:
           {
             requestId,
             messageId,
+            toolCallId,
             messages,
           },
           smallConfig,
@@ -73,6 +74,16 @@ Use for:
         }
       } catch (error) {
         console.error("Deep research error:", error);
+        dataStream.write({
+          id: generateUUID(),
+          type: "data-researchUpdate",
+          data: {
+            toolCallId,
+            timestamp: Date.now(),
+            title: "Deep research failed",
+            type: "completed",
+          },
+        });
         return {
           answer: `Deep research failed with error: ${error instanceof Error ? error.message : String(error)}`,
           format: "problem" as const,

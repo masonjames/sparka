@@ -9,6 +9,7 @@ import {
   memo,
   type SetStateAction,
   useCallback,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -25,20 +26,21 @@ import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
+import type { AppModelId } from "@/lib/ai/app-models";
 import {
   DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL,
-  DEFAULT_CHAT_MODEL,
   DEFAULT_PDF_MODEL,
 } from "@/lib/ai/app-models";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks";
+import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn, generateUUID } from "@/lib/utils";
+import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+import { ConnectorsDropdown } from "./connectors-dropdown";
 import { ImageModal } from "./image-modal";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
@@ -58,6 +60,18 @@ const IMAGE_UPLOAD_MAX_MB = Math.round(
 );
 const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
+// Single source of truth for accepted file types
+const ACCEPTED_FILE_TYPES = {
+  "image/png": [".png"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "application/pdf": [".pdf"],
+} as const;
+
+// For HTML file input accept attribute
+const FILE_INPUT_ACCEPT = Object.entries(ACCEPTED_FILE_TYPES)
+  .flatMap(([mime, exts]) => [mime, ...exts])
+  .join(",");
+
 function PureMultimodalInput({
   chatId,
   status,
@@ -65,8 +79,6 @@ function PureMultimodalInput({
   isEditMode = false,
   parentMessageId,
   onSendMessage,
-  disableSuggestedActions = false,
-  emptyStateOverride,
 }: {
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -74,13 +86,12 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
-  disableSuggestedActions?: boolean;
-  emptyStateOverride?: React.ReactNode;
 }) {
   const storeApi = useChatStoreApi<ChatMessage>();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
+  useChatId();
   const messageIds = useMessageIds();
   const { setMessages, sendMessage } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
@@ -97,6 +108,7 @@ function PureMultimodalInput({
     getInitialInput,
     isEmpty,
     handleSubmit,
+    disableSuggestedActions,
   } = useChatInput();
 
   const isAnonymous = !session?.user;
@@ -141,34 +153,32 @@ function PureMultimodalInput({
   });
 
   // Centralized submission gating
-
-  const _selectedModelDef: AppModelDefinition | undefined =
-    getModelById(selectedModelId) ?? getModelById(DEFAULT_CHAT_MODEL);
-  const submission: { enabled: false; message: string } | { enabled: true } =
-    (() => {
-      if (isModelDisallowedForAnonymous) {
-        return { enabled: false, message: "Log in to use this model" };
-      }
-      if (status !== "ready" && status !== "error") {
-        return {
-          enabled: false,
-          message: "Please wait for the model to finish its response!",
-        };
-      }
-      if (uploadQueue.length > 0) {
-        return {
-          enabled: false,
-          message: "Please wait for files to finish uploading!",
-        };
-      }
-      if (isEmpty) {
-        return {
-          enabled: false,
-          message: "Please enter a message before sending!",
-        };
-      }
-      return { enabled: true };
-    })();
+  const submission = useMemo(():
+    | { enabled: false; message: string }
+    | { enabled: true } => {
+    if (isModelDisallowedForAnonymous) {
+      return { enabled: false, message: "Log in to use this model" };
+    }
+    if (status !== "ready" && status !== "error") {
+      return {
+        enabled: false,
+        message: "Please wait for the model to finish its response!",
+      };
+    }
+    if (uploadQueue.length > 0) {
+      return {
+        enabled: false,
+        message: "Please wait for files to finish uploading!",
+      };
+    }
+    if (isEmpty) {
+      return {
+        enabled: false,
+        message: "Please enter a message before sending!",
+      };
+    }
+    return { enabled: true };
+  }, [isEmpty, isModelDisallowedForAnonymous, status, uploadQueue.length]);
 
   // Helper function to process and validate files
   const processFiles = useCallback(
@@ -520,39 +530,20 @@ function PureMultimodalInput({
     },
     noClick: true, // Prevent click to open file dialog since we have the button
     disabled: status !== "ready",
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg"],
-      "application/pdf": [".pdf"],
-    },
+    accept: ACCEPTED_FILE_TYPES,
   });
 
-  const showEmptyState =
+  const showSuggestedActions =
+    !disableSuggestedActions &&
     messageIds.length === 0 &&
     attachments.length === 0 &&
     uploadQueue.length === 0 &&
     !isEditMode;
 
-  let emptyStateContent: React.ReactNode = null;
-  if (showEmptyState) {
-    if (emptyStateOverride) {
-      emptyStateContent = emptyStateOverride;
-    } else if (!disableSuggestedActions) {
-      emptyStateContent = (
-        <SuggestedActions
-          chatId={chatId}
-          className="mb-4"
-          selectedModelId={selectedModelId}
-        />
-      );
-    }
-  }
-
   return (
     <div className="relative">
-      {emptyStateContent}
-
       <input
-        accept="image/*,.pdf"
+        accept={FILE_INPUT_ACCEPT}
         className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
@@ -601,8 +592,8 @@ function PureMultimodalInput({
           <ContextBar
             attachments={attachments}
             className="w-full"
-            onImageClick={handleImageClick}
-            onRemove={removeAttachment}
+            onImageClickAction={handleImageClick}
+            onRemoveAction={removeAttachment}
             uploadQueue={uploadQueue}
           />
 
@@ -639,7 +630,6 @@ function PureMultimodalInput({
 
           <ChatInputBottomControls
             fileInputRef={fileInputRef}
-            isEmpty={isEmpty}
             onModelChange={handleModelChange}
             parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
@@ -648,10 +638,16 @@ function PureMultimodalInput({
             status={status}
             submission={submission}
             submitForm={submitForm}
-            uploadQueue={uploadQueue}
           />
         </PromptInput>
       </div>
+      {showSuggestedActions && (
+        <SuggestedActions
+          chatId={chatId}
+          className="mt-4"
+          selectedModelId={selectedModelId}
+        />
+      )}
 
       <ImageModal
         imageName={imageModal.imageName}
@@ -689,7 +685,7 @@ function PureAttachmentsButton({
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <PromptInputButton
-              className="@[400px]:size-10 size-8"
+              className="@[500px]:size-10 size-8"
               data-testid="attachments-button"
               disabled={status !== "ready"}
               onClick={handleClick}
@@ -720,9 +716,7 @@ function PureChatInputBottomControls({
   setSelectedTool,
   fileInputRef,
   status,
-  isEmpty: _isEmpty,
   submitForm,
-  uploadQueue: _uploadQueue,
   submission,
   parentMessageId,
 }: {
@@ -732,22 +726,21 @@ function PureChatInputBottomControls({
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
-  isEmpty: boolean;
   submitForm: () => void;
-  uploadQueue: string[];
   submission: { enabled: boolean; message?: string };
   parentMessageId: string | null;
 }) {
   const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
-    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[400px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
-      <PromptInputTools className="flex min-w-0 items-center @[400px]:gap-2 gap-1">
+    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
+      <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
         <ModelSelector
-          className="@[400px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[400px]:px-3 px-2 @[400px]:text-sm text-xs"
+          className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
           onModelChangeAction={onModelChange}
           selectedModelId={selectedModelId}
         />
+        <ConnectorsDropdown />
         <ResponsiveTools
           selectedModelId={selectedModelId}
           setTools={setSelectedTool}
@@ -756,13 +749,13 @@ function PureChatInputBottomControls({
       </PromptInputTools>
       <div className="flex items-center gap-1">
         <ContextUsageFromParent
-          className="@[400px]:block hidden"
+          className="@[500px]:block hidden"
           iconOnly
           parentMessageId={parentMessageId}
           selectedModelId={selectedModelId}
         />
         <PromptInputSubmit
-          className={"@[400px]:size-10 size-8 shrink-0"}
+          className={"@[500px]:size-10 size-8 shrink-0"}
           disabled={status === "ready" && !submission.enabled}
           onClick={(e) => {
             e.preventDefault();
@@ -785,48 +778,7 @@ function PureChatInputBottomControls({
   );
 }
 
-const ChatInputBottomControls = memo(
-  PureChatInputBottomControls,
-  (prevProps, nextProps) => {
-    if (prevProps.selectedModelId !== nextProps.selectedModelId) {
-      return false;
-    }
-    if (prevProps.onModelChange !== nextProps.onModelChange) {
-      return false;
-    }
-    if (prevProps.selectedTool !== nextProps.selectedTool) {
-      return false;
-    }
-    if (prevProps.setSelectedTool !== nextProps.setSelectedTool) {
-      return false;
-    }
-    if (prevProps.fileInputRef !== nextProps.fileInputRef) {
-      return false;
-    }
-    if (prevProps.status !== nextProps.status) {
-      return false;
-    }
-    if (prevProps.isEmpty !== nextProps.isEmpty) {
-      return false;
-    }
-    if (prevProps.submitForm !== nextProps.submitForm) {
-      return false;
-    }
-    if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length) {
-      return false;
-    }
-    if (prevProps.submission.enabled !== nextProps.submission.enabled) {
-      return false;
-    }
-    if (prevProps.submission.message !== nextProps.submission.message) {
-      return false;
-    }
-    if (prevProps.parentMessageId !== nextProps.parentMessageId) {
-      return false;
-    }
-    return true;
-  }
-);
+const ChatInputBottomControls = memo(PureChatInputBottomControls);
 
 export const MultimodalInput = memo(
   PureMultimodalInput,

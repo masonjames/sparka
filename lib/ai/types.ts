@@ -7,7 +7,7 @@ import type {
 import { z } from "zod";
 import type { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
 import type { deepResearch } from "@/lib/ai/tools/deep-research/deep-research";
-import type { generateImage } from "@/lib/ai/tools/generate-image";
+import type { generateImageTool as generateImageToolFactory } from "@/lib/ai/tools/generate-image";
 import type { getWeather } from "@/lib/ai/tools/get-weather";
 import type { readDocument } from "@/lib/ai/tools/read-document";
 import type { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
@@ -66,7 +66,9 @@ type requestSuggestionsTool = InferUITool<
 >;
 type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
 type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
-type generateImageTool = InferUITool<ReturnType<typeof generateImage>>;
+type generateImageTool = InferUITool<
+  ReturnType<typeof generateImageToolFactory>
+>;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
 type codeInterpreterTool = InferUITool<typeof codeInterpreter>;
 type retrieveTool = InferUITool<typeof retrieve>;
@@ -101,6 +103,9 @@ export type CustomUIDataTypes = {
   kind: ArtifactKind;
   clear: null;
   finish: null;
+  chatConfirmed: {
+    chatId: string;
+  };
   researchUpdate: ResearchUpdate;
   followupSuggestions: FollowupSuggestions;
 };

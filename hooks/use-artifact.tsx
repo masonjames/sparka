@@ -49,8 +49,6 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     any
   > | null>(initialArtifactData);
 
-  console.log("metadataStore", metadataStore);
-
   const setArtifact = useCallback(
     (updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)) => {
       setArtifactState((currentArtifact) => {
