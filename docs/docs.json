@@ -43,7 +43,6 @@
             "pages": [
               "customization/theming",
               "customization/branding",
-              "customization/component-registries",
               "customization/models",
               "customization/prompts"
             ]
@@ -110,6 +109,10 @@
               "cookbook/ai-ux/follow-up-questions",
               "cookbook/ai-ux/chat-layout"
             ]
+          },
+          {
+            "group": "UI",
+            "pages": ["cookbook/ui/component-registries"]
           }
         ]
       }
