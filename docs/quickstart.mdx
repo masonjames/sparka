@@ -3,88 +3,83 @@ title: "Quickstart"
 description: "Get ChatJS running in minutes"
 ---
 
-## Create Your Project
-
-<Tabs>
-  <Tab title="GitHub Template (Recommended)">
-    Click **"Use this template"** on the [ChatJS repo](https://github.com/franciscomoretti/chatjs) to create your own copy.
-
-    Then clone your new repo:
-    ```bash
-    git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-    cd YOUR_REPO
-    bun install
-    ```
-  </Tab>
-  <Tab title="CLI">
-    ```bash
-    bunx degit franciscomoretti/chatjs my-chat-app
-    cd my-chat-app
-    git init
-    bun install
-    ```
-  </Tab>
-</Tabs>
-
-### Cleanup
-
-Remove the docs folder (you won't need it):
-
-```bash
-rm -rf docs
-```
-
-## Environment Setup
-
-```bash
-cp .env.example .env.local
-```
-
 <Tabs>
   <Tab title="Vercel (Recommended)">
+    ## Deploy to Vercel
+
     [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/franciscomoretti/chatjs)
 
-    After deploy, pull environment variables locally:
+    This creates a new repo in your GitHub account and deploys it to Vercel.
 
-    ```bash
-    vercel link
-    vercel env pull .env.local
-    ```
+    ### Configure Environment Variables
 
-    ### Provided Automatically
-    | Variable | Source |
-    |----------|--------|
-    | `VERCEL_OIDC_TOKEN` | Replaces `AI_GATEWAY_API_KEY` |
-    | `DATABASE_URL` | Vercel Postgres |
-    | `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
-    | `VERCEL_URL` | System |
-    | `VERCEL_PROJECT_PRODUCTION_URL` | System |
+    In the Vercel dashboard, add these variables:
 
-    ### Required
     | Variable | Description |
     |----------|-------------|
     | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
 
-    ### Auth Provider (choose one pair)
+    **Auth Provider (choose one pair):**
     | Provider | Variables |
     |----------|-----------|
     | GitHub | `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` |
     | Google | `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` |
     | Vercel | `VERCEL_APP_CLIENT_ID` + `VERCEL_APP_CLIENT_SECRET` |
 
+    <Note>
+      Vercel automatically provides `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `VERCEL_OIDC_TOKEN`, and other system variables.
+    </Note>
+
+    ### Local Development
+
+    Clone your new repo and pull environment variables:
+
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+    cd YOUR_REPO
+    bun install
+    vercel link
+    vercel env pull .env.local
+    ```
+
+    Remove the docs folder (you won't need it):
+
+    ```bash
+    rm -rf docs
+    ```
+
   </Tab>
-  <Tab title="Other Platforms">
-    ### Required
+  <Tab title="Manual Setup">
+    ## Create Your Project
+
+    Click **"Use this template"** on the [ChatJS repo](https://github.com/franciscomoretti/chatjs), then clone your new repo:
+
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+    cd YOUR_REPO
+    bun install
+    ```
+
+    Remove the docs folder (you won't need it):
+
+    ```bash
+    rm -rf docs
+    ```
+
+    ### Configure Environment Variables
+
+    ```bash
+    cp .env.example .env.local
+    ```
+
     | Variable | Description |
     |----------|-------------|
     | `DATABASE_URL` | PostgreSQL connection string |
     | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token |
     | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
-    | `AI_GATEWAY_API_KEY` | Or use `VERCEL_OIDC_TOKEN` |
-    | `VERCEL_URL` | Your deployment URL |
-    | `VERCEL_PROJECT_PRODUCTION_URL` | Production URL |
+    | `AI_GATEWAY_API_KEY` | AI Gateway API key |
 
-    ### Auth Provider (choose one pair)
+    **Auth Provider (choose one pair):**
     | Provider | Variables |
     |----------|-----------|
     | GitHub | `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` |
@@ -95,8 +90,6 @@ cp .env.example .env.local
 </Tabs>
 
 ### Optional Variables
-
-These work on all platforms:
 
 | Variable              | Description          |
 | --------------------- | -------------------- |
