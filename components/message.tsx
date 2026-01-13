@@ -1,5 +1,4 @@
 "use client";
-import equal from "fast-deep-equal";
 import { memo } from "react";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
 import { AssistantMessage } from "./assistant-message";
@@ -7,7 +6,6 @@ import { type BaseMessageProps, UserMessage } from "./user-message";
 
 const PurePreviewMessage = ({
   messageId,
-  vote,
   isLoading,
   isReadonly,
   parentMessageId,
@@ -25,14 +23,12 @@ const PurePreviewMessage = ({
           isReadonly={isReadonly}
           messageId={messageId}
           parentMessageId={parentMessageId}
-          vote={vote}
         />
       ) : (
         <AssistantMessage
           isLoading={isLoading}
           isReadonly={isReadonly}
           messageId={messageId}
-          vote={vote}
         />
       )}
     </>
@@ -46,9 +42,6 @@ export const PreviewMessage = memo(
       return false;
     }
     if (prevProps.messageId !== nextProps.messageId) {
-      return false;
-    }
-    if (!equal(prevProps.vote, nextProps.vote)) {
       return false;
     }
     if (prevProps.parentMessageId !== nextProps.parentMessageId) {

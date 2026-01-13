@@ -11,9 +11,11 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { encryptedJson, encryptedText } from "./encrypted-text";
 
 export type User = InferSelectModel<typeof user>;
 
@@ -22,23 +24,52 @@ export const userCredit = pgTable("UserCredit", {
     .primaryKey()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  credits: integer("credits").notNull().default(100),
-  reservedCredits: integer("reservedCredits").notNull().default(0),
+  /** Balance in cents. Default = $0.50 */
+  credits: integer("credits").notNull().default(50),
 });
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
+
+export const userModelPreference = pgTable(
+  "UserModelPreference",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    modelId: varchar("modelId", { length: 256 }).notNull(),
+    enabled: boolean("enabled").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.modelId] }),
+    UserModelPreference_user_id_idx: index(
+      "UserModelPreference_user_id_idx"
+    ).on(t.userId),
+  })
+);
+
+export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
 export const project = pgTable(
   "Project",
   {
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     instructions: text("instructions").notNull().default(""),
+    icon: varchar("icon", { length: 64 }).notNull().default("folder"),
+    iconColor: varchar("iconColor", { length: 32 }).notNull().default("gray"),
   },
   (t) => ({
     Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
@@ -50,7 +81,10 @@ export type Project = InferSelectModel<typeof project>;
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   title: text("title").notNull(),
   userId: text("userId")
     .notNull()
@@ -325,73 +359,66 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
-export const entitlement = pgTable(
-  "Entitlement",
+export const mcpConnector = pgTable(
+  "McpConnector",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text("userId")
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: text("userId").references(() => user.id, { onDelete: "cascade" }), // null = global
+    name: varchar("name", { length: 256 }).notNull(),
+    nameId: varchar("nameId", { length: 256 }).notNull(), // unique per user, used as namespace for tool IDs
+    url: encryptedText("url").notNull(),
+    type: varchar("type", { enum: ["http", "sse"] })
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    source: varchar("source", { length: 50 }).notNull(), // 'ghost' | 'stripe'
-    externalId: varchar("externalId", { length: 255 }).notNull(), // Ghost member ID or Stripe subscription ID
-    tier: varchar("tier", { length: 100 }), // Ghost tier slug or Stripe product/price ID
-    status: varchar("status", { length: 50 }).notNull().default("active"), // 'active' | 'canceled' | 'expired'
-    creditsGranted: integer("creditsGranted").notNull().default(0),
-    metadata: json("metadata"), // Store additional data from Ghost/Stripe
-    startDate: timestamp("startDate", { mode: "date" }),
-    endDate: timestamp("endDate", { mode: "date" }),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .default("http"),
+    oauthClientId: text("oauthClientId"),
+    oauthClientSecret: encryptedText("oauthClientSecret"),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => ({
-    userIdIdx: index("entitlement_user_id_idx").on(table.userId),
-    sourceExternalIdIdx: index("entitlement_source_external_id_idx").on(
-      table.source,
-      table.externalId
+  (t) => ({
+    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(t.userId),
+    McpConnector_user_name_id_idx: index("McpConnector_user_name_id_idx").on(
+      t.userId,
+      t.nameId
     ),
-    statusIdx: index("entitlement_status_idx").on(table.status),
+    McpConnector_user_name_id_unique: uniqueIndex(
+      "McpConnector_user_name_id_unique"
+    ).on(t.userId, t.nameId),
   })
 );
 
-export const webhookEvent = pgTable(
-  "WebhookEvent",
+export type McpConnector = InferSelectModel<typeof mcpConnector>;
+
+export const mcpOAuthSession = pgTable(
+  "McpOAuthSession",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    source: varchar("source", { length: 50 }).notNull(), // 'ghost' | 'stripe'
-    eventId: varchar("eventId", { length: 255 }).notNull(), // Unique event ID from provider
-    eventType: varchar("eventType", { length: 100 }).notNull(),
-    payload: json("payload").notNull(),
-    processed: boolean("processed").notNull().default(false),
-    processedAt: timestamp("processedAt", { mode: "date" }),
-    error: text("error"),
-    retryCount: integer("retryCount").notNull().default(0),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    mcpConnectorId: uuid("mcpConnectorId")
+      .notNull()
+      .references(() => mcpConnector.id, { onDelete: "cascade" }),
+    serverUrl: text("serverUrl").notNull(),
+    clientInfo: encryptedJson<Record<string, unknown>>()("clientInfo"), // OAuthClientInformationFull from MCP SDK
+    tokens: encryptedJson<Record<string, unknown>>()("tokens"), // OAuthTokens from MCP SDK
+    codeVerifier: encryptedText("codeVerifier"), // PKCE verifier
+    state: text("state").unique(), // OAuth state param (unique for security)
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
-  (table) => ({
-    sourceEventIdIdx: index("webhook_event_source_event_id_idx").on(
-      table.source,
-      table.eventId
+  (t) => ({
+    McpOAuthSession_connector_idx: index("McpOAuthSession_connector_idx").on(
+      t.mcpConnectorId
     ),
-    processedIdx: index("webhook_event_processed_idx").on(table.processed),
-    createdAtIdx: index("webhook_event_created_at_idx").on(table.createdAt),
+    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(t.state),
   })
 );
 
-export type Entitlement = InferSelectModel<typeof entitlement>;
-export type WebhookEvent = InferSelectModel<typeof webhookEvent>;
+export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
 
-export const schema = {
-  user,
-  session,
-  account,
-  verification,
-  entitlement,
-  webhookEvent,
-};
+export const schema = { user, session, account, verification };

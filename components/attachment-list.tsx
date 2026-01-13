@@ -13,6 +13,7 @@ import {
   PromptInputHoverCard,
   PromptInputHoverCardContent,
 } from "@/components/ai-elements/prompt-input";
+import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
 import { HoverCardTrigger } from "@/components/ui/hover-card";
 import type { Attachment } from "@/lib/ai/types";
@@ -117,38 +118,47 @@ function AttachmentItem({
   attachment,
   isUploading = false,
   onRemove,
-  onImageClick,
+  onImageClickAction,
+  variant = "card",
 }: {
   attachment: Attachment;
   isUploading?: boolean;
   onRemove?: () => void;
-  onImageClick?: (imageUrl: string, imageName?: string) => void;
+  onImageClickAction?: (imageUrl: string, imageName?: string) => void;
+  variant?: "card" | "pill";
 }) {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
 
-  const pill = (
-    <AttachmentPill
-      attachment={attachment}
-      isUploading={isUploading}
-      onRemove={onRemove}
-    />
-  );
+  const preview =
+    variant === "pill" ? (
+      <AttachmentPill
+        attachment={attachment}
+        isUploading={isUploading}
+        onRemove={onRemove}
+      />
+    ) : (
+      <AttachmentCard
+        attachment={attachment}
+        isUploading={isUploading}
+        onRemove={onRemove}
+      />
+    );
 
-  // For uploading items or items without URL, just return the pill
+  // For uploading items or items without URL, just return the preview
   if (isUploading || !url) {
-    return pill;
+    return preview;
   }
 
   return (
     <PromptInputHoverCard>
       <HoverCardTrigger
         asChild
-        onClick={() => isImage && onImageClick?.(url, name)}
+        onClick={() => isImage && onImageClickAction?.(url, name)}
       >
-        {pill}
+        {preview}
       </HoverCardTrigger>
       <PromptInputHoverCardContent className="w-auto p-2">
         <div className="w-auto space-y-3">
@@ -211,15 +221,17 @@ function AttachmentItem({
 export function AttachmentList({
   attachments,
   uploadQueue = [],
-  onRemove,
-  onImageClick,
+  onRemoveAction,
+  onImageClickAction,
+  variant = "card",
   testId = "attachments",
   className,
 }: {
   attachments: Attachment[];
   uploadQueue?: string[];
-  onRemove?: (attachment: Attachment) => void;
-  onImageClick?: (imageUrl: string, imageName?: string) => void;
+  onRemoveAction?: (attachment: Attachment) => void;
+  onImageClickAction?: (imageUrl: string, imageName?: string) => void;
+  variant?: "card" | "pill";
   testId?: string;
   className?: string;
 }) {
@@ -236,8 +248,11 @@ export function AttachmentList({
         <AttachmentItem
           attachment={attachment}
           key={attachment.url}
-          onImageClick={onImageClick}
-          onRemove={onRemove ? () => onRemove(attachment) : undefined}
+          onImageClickAction={onImageClickAction}
+          onRemove={
+            onRemoveAction ? () => onRemoveAction(attachment) : undefined
+          }
+          variant={variant}
         />
       ))}
 
@@ -250,6 +265,7 @@ export function AttachmentList({
           }}
           isUploading={true}
           key={filename}
+          variant={variant}
         />
       ))}
     </div>

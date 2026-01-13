@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Sandbox } from "./sandbox";
+import { SandboxComposed } from "./sandbox";
 
-const meta: Meta<typeof Sandbox> = {
+const meta: Meta<typeof SandboxComposed> = {
   title: "Components/AI/Sandbox",
-  component: Sandbox,
+  component: SandboxComposed,
 };
 
 export default meta;
 
-type Story = StoryObj<typeof Sandbox>;
+type Story = StoryObj<typeof SandboxComposed>;
 
 export const Default: Story = {
   args: {

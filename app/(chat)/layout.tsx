@@ -1,4 +1,3 @@
-import { AIDevtools } from "@ai-sdk-tools/devtools";
 import { cookies, headers } from "next/headers";
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -11,6 +10,7 @@ import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider } from "@/providers/session-provider";
 
 import { TRPCReactProvider } from "@/trpc/react";
+import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 import { auth } from "../../lib/auth";
 import { ChatProviders } from "./chat-providers";
 
@@ -56,31 +56,43 @@ export default async function ChatLayout({
 
   const chatModels = await getChatModels();
 
+  // Prefetch model preferences for authenticated users
+  if (session?.user?.id) {
+    const queryClient = getQueryClient();
+    // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
+    queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
+    queryClient.prefetchQuery(trpc.project.list.queryOptions());
+    queryClient.prefetchQuery(
+      trpc.chat.getAllChats.queryOptions({ projectId: null })
+    );
+  }
+
   return (
     <TRPCReactProvider>
-      <SessionProvider initialSession={session}>
-        <ChatProviders user={session?.user}>
-          <SidebarProvider defaultOpen={!isCollapsed}>
-            <AppSidebar />
-            <SidebarInset
-              style={
-                {
-                  "--header-height": "calc(var(--spacing) * 13)",
-                } as React.CSSProperties
-              }
-            >
-              <ChatModelsProvider models={chatModels}>
-                <DefaultModelProvider defaultModel={defaultModel}>
-                  <KeyboardShortcuts />
+      <HydrateClient>
+        <SessionProvider initialSession={session}>
+          <ChatProviders>
+            <SidebarProvider defaultOpen={!isCollapsed}>
+              <AppSidebar />
+              <SidebarInset
+                style={
+                  {
+                    "--header-height": "calc(var(--spacing) * 13)",
+                  } as React.CSSProperties
+                }
+              >
+                <ChatModelsProvider models={chatModels}>
+                  <DefaultModelProvider defaultModel={defaultModel}>
+                    <KeyboardShortcuts />
 
-                  {children}
-                </DefaultModelProvider>
-              </ChatModelsProvider>
-            </SidebarInset>
-          </SidebarProvider>
-        </ChatProviders>
-      </SessionProvider>
-      {process.env.NODE_ENV === "development" && <AIDevtools />}
+                    {children}
+                  </DefaultModelProvider>
+                </ChatModelsProvider>
+              </SidebarInset>
+            </SidebarProvider>
+          </ChatProviders>
+        </SessionProvider>
+      </HydrateClient>
     </TRPCReactProvider>
   );
 }
