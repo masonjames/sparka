@@ -27,8 +27,6 @@ type McpClientStatus =
   | "authorizing"
   | "incompatible";
 
-;
-
 function getBaseUrl(): string {
   if (env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;

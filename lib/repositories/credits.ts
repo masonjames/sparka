@@ -56,10 +56,7 @@ export async function deductCredits(
 /**
  * Add credits to user (for purchases, refunds, etc).
  */
-async function addCredits(
-  userId: string,
-  amount: number
-): Promise<void> {
+async function addCredits(userId: string, amount: number): Promise<void> {
   await ensureUserCreditRow(userId);
   await db
     .update(userCredit)

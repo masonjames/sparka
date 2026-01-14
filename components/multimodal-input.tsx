@@ -542,7 +542,7 @@ function PureMultimodalInput({
     <div className="relative">
       <input
         accept={acceptAll}
-        className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
+        className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
         ref={fileInputRef}

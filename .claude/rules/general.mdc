@@ -29,7 +29,7 @@ alwaysApply: true
 - Add new vars to the `server` object with zod schema
 - Use `env.VAR_NAME` instead of `process.env.VAR_NAME`
 - Feature flags live in `lib/config.ts` (integrations, authentication)
-- When a feature is enabled in config, its required env vars must be validated in `validateConfig()`
+- When a feature is enabled in config, its required env vars must be validated in `scripts/check-env.ts`
 - Pattern: check `siteConfig.feature && !env.REQUIRED_VAR` then push to errors array
 
 ## AI Rules (Skiller)

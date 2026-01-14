@@ -90,7 +90,7 @@ export type SiteConfig = {
   /**
    * Feature flags for optional integrations.
    * Set to true to enable - requires corresponding env vars.
-   * Validated at server startup via validateConfig().
+   * Validated at build time via scripts/check-env.ts.
    */
   integrations: {
     /** Code sandbox execution (Vercel-native) */
@@ -121,7 +121,7 @@ export type SiteConfig = {
   /**
    * Auth provider toggles.
    * Set to true to enable - requires corresponding env vars.
-   * Validated at server startup via validateConfig().
+   * Validated at build time via scripts/check-env.ts.
    */
   authentication: {
     /** Google OAuth (requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET) */

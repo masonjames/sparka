@@ -4,8 +4,8 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "",
-    "dev": "bun run skiller:apply && bash scripts/with-db.sh next dev",
+    "prebuild": "bun run check-env",
+    "dev": "bun run check-env && bun run skiller:apply && bash scripts/with-db.sh next dev",
     "dev:inspect": "bun run skiller:apply && bash scripts/with-db.sh next dev --inspect",
     "build": "tsx lib/db/migrate && next build",
     "analyze": "next experimental-analyze",
@@ -14,6 +14,7 @@
     "lint": "bunx ultracite check",
     "format": "bunx ultracite fix",
     "storybook": "storybook dev -p 6006",
+    "check-env": "bun scripts/check-env.ts",
     "build:storybook": "storybook build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bash scripts/with-db.sh bunx tsx lib/db/migrate.ts",

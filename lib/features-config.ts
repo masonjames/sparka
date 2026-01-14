@@ -74,9 +74,8 @@ export const getEnabledFeatures = () =>
   Object.values(AVAILABLE_FEATURES).filter((feature) => feature.enabled);
 
 // Get enabled features by category
-const getEnabledFeaturesByCategory = (
-  category: FeatureConfig["category"]
-) => getEnabledFeatures().filter((feature) => feature.category === category);
+const getEnabledFeaturesByCategory = (category: FeatureConfig["category"]) =>
+  getEnabledFeatures().filter((feature) => feature.category === category);
 
 // Helper to get feature config by key
 const getFeatureConfig = (key: string): FeatureConfig | undefined =>

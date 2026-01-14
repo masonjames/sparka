@@ -8,12 +8,10 @@ import type { StateCreator } from "zustand";
 
 // Helper types to safely derive the message part and part.type types from UI_MESSAGE
 type UIMessageParts<UI_MSG> = UI_MSG extends { parts: infer P } ? P : never;
-type UIMessagePart<UI_MSG> = UIMessageParts<UI_MSG> extends Array<infer I>
-  ? I
-  : never;
-type UIMessagePartType<UI_MSG> = UIMessagePart<UI_MSG> extends { type: infer T }
-  ? T
-  : never;
+type UIMessagePart<UI_MSG> =
+  UIMessageParts<UI_MSG> extends Array<infer I> ? I : never;
+type UIMessagePartType<UI_MSG> =
+  UIMessagePart<UI_MSG> extends { type: infer T } ? T : never;
 
 function extractPartTypes<UI_MESSAGE extends UIMessage>(
   message: UI_MESSAGE

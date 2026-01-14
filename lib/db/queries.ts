@@ -256,11 +256,7 @@ export async function deleteProject({ id }: { id: string }) {
   }
 }
 
-async function getChatsByProjectId({
-  projectId,
-}: {
-  projectId: string;
-}) {
+async function getChatsByProjectId({ projectId }: { projectId: string }) {
   try {
     return await db
       .select()
