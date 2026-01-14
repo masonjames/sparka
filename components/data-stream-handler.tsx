@@ -128,7 +128,7 @@ function saveArtifactForAnonymousUser({
   }
 }
 
-export function DataStreamHandler({ id: _id }: { id: string }) {
+export function DataStreamHandler({ id }: { id: string }) {
   const { dataStream } = useDataStream();
   const { artifact, setArtifact, setMetadata } = useArtifact();
   const lastProcessedIndex = useRef(-1);
@@ -151,7 +151,11 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
     lastProcessedIndex.current = dataStream.length - 1;
 
     for (const delta of newDeltas) {
-      if (delta.type === "data-chatConfirmed" && isAuthenticated) {
+      if (
+        delta.type === "data-chatConfirmed" &&
+        isAuthenticated &&
+        id === delta.data.chatId
+      ) {
         confirmChatId(delta.data.chatId);
       }
 
@@ -182,6 +186,7 @@ export function DataStreamHandler({ id: _id }: { id: string }) {
     isAuthenticated,
     setSelectedTool,
     confirmChatId,
+    id,
   ]);
 
   return null;
