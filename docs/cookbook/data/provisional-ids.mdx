@@ -89,14 +89,44 @@ const refreshChatID = useCallback(() => {
 
 This generates a fresh provisional ID and navigates to the homepage. Because the ID changed, components keyed by the ID remount with fresh state.
 
+### 5. Server Confirms Persistence
+
+On new chat creation, the server emits a `data-chatConfirmed` event:
+
+```typescript
+// Only sent when isNewChat is true
+if (isNewChat) {
+  dataStream.write({
+    id: generateUUID(),
+    type: "data-chatConfirmed",
+    data: { chatId },
+    transient: true,
+  });
+}
+```
+
+The `DataStreamHandler` only confirms the chat ID if it matches the current provisional ID, preventing stale confirmations from affecting newer chats:
+
+```typescript
+if (
+  delta.type === "data-chatConfirmed" &&
+  isAuthenticated &&
+  id === delta.data.chatId
+) {
+  confirmChatId(delta.data.chatId);
+}
+```
+
 ## The Flow
 
 1. **Visit homepage (`/`)** — `ChatIdProvider` generates provisional ID `abc123`
 2. **User types message** — ID is still `abc123` (provisional)
 3. **User submits message** — Chat saved to database with ID `abc123`
-4. **URL updates** — Changes to `/chat/abc123` via History API (no reload)
-5. **Components stay mounted** — Key unchanged, no remount
-6. **User clicks "New Chat"** — `refreshChatID` generates new ID, components remount with fresh state
+4. **Server confirms** — `data-chatConfirmed` event emitted (only on new chats)
+5. **Client validates** — `DataStreamHandler` checks `chatId` matches current provisional ID before confirming
+6. **URL updates** — Changes to `/chat/abc123` via History API (no reload)
+7. **Components stay mounted** — Key unchanged, no remount
+8. **User clicks "New Chat"** — `refreshChatID` generates new ID, components remount with fresh state
 
 ## Key Components
 
@@ -104,6 +134,7 @@ This generates a fresh provisional ID and navigates to the homepage. Because the
 |-----------|----------------|
 | `ChatIdProvider` | Generates and manages provisional/confirmed chat IDs |
 | `ChatSystem` | Uses ID as React key to control component lifecycle |
+| `DataStreamHandler` | Listens for `data-chatConfirmed` and validates ID match before confirming |
 | `ChatInputProvider` | Manages input state with localStorage persistence |
 | `NewChatButton` | Calls `refreshChatID` to start fresh |
 | `SidebarTopRow` | Calls `refreshChatID` when logo is clicked |
