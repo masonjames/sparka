@@ -54,10 +54,7 @@ The `ChatSystem` component uses the chat ID as React keys for its providers:
 
 ```tsx
 <DataStreamProvider key={id}>
-  <CustomStoreProvider<ChatMessage>
-    initialMessages={initialMessages}
-    key={id}
-  >
+  <CustomStoreProvider<ChatMessage> initialMessages={initialMessages} key={id}>
     {/* ... */}
   </CustomStoreProvider>
 </DataStreamProvider>
@@ -130,14 +127,14 @@ if (
 
 ## Key Components
 
-| Component | Responsibility |
-|-----------|----------------|
-| `ChatIdProvider` | Generates and manages provisional/confirmed chat IDs |
-| `ChatSystem` | Uses ID as React key to control component lifecycle |
+| Component           | Responsibility                                                            |
+| ------------------- | ------------------------------------------------------------------------- |
+| `ChatIdProvider`    | Generates and manages provisional/confirmed chat IDs                      |
+| `ChatSystem`        | Uses ID as React key to control component lifecycle                       |
 | `DataStreamHandler` | Listens for `data-chatConfirmed` and validates ID match before confirming |
-| `ChatInputProvider` | Manages input state with localStorage persistence |
-| `NewChatButton` | Calls `refreshChatID` to start fresh |
-| `SidebarTopRow` | Calls `refreshChatID` when logo is clicked |
+| `ChatInputProvider` | Manages input state with localStorage persistence                         |
+| `NewChatButton`     | Calls `refreshChatID` to start fresh                                      |
+| `SidebarTopRow`     | Calls `refreshChatID` when logo is clicked                                |
 
 ## Benefits
 
