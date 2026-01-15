@@ -6,7 +6,6 @@ import {
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { after } from "next/server";
-import type { Redis } from "redis";
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -100,7 +99,7 @@ async function handleAnonymousSession({
   selectedModelId,
 }: {
   request: NextRequest;
-  redis: Redis | null;
+  redis: ReturnType<typeof import("redis").createClient> | null;
   selectedModelId: AppModelId;
 }): Promise<AnonymousSessionResult> {
   const log = createModuleLogger("api:chat:anonymous");
