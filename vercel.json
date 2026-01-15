@@ -11,11 +11,11 @@
   "rewrites": [
     {
       "source": "/docs",
-      "destination": "https://chatjs.mintlify.app"
+      "destination": "https://chatjs.mintlify.dev"
     },
     {
       "source": "/docs/:match*",
-      "destination": "https://chatjs.mintlify.app/:match*"
+      "destination": "https://chatjs.mintlify.dev/:match*"
     }
   ]
 }
