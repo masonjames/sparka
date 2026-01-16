@@ -21,6 +21,34 @@
 - Check existing patterns for consistency
 - Start by making the smallest reasonable changes
 
+## Docs organization (separation of concerns)
+
+Keep pages single-purpose. If you need both "what/how-to-use" and "how-it's-built", split into a concept page + cookbook recipe and link between them.
+
+### Core Concepts (`docs/core/*`)
+
+- Explain **what** the feature is, **what to expect**, **how to use it**, and **what knobs exist** at a user/operator level.
+- Keep implementation details light. Prefer behavior, invariants, and contracts over file-level walkthroughs.
+- Include "Manual update / troubleshooting" when it’s part of operating the feature.
+- Link to cookbook for the implementation recipe when readers need to change code.
+
+### Cookbook (`docs/cookbook/*`)
+
+- Explain **how it works under the hood** and **how to implement/modify it**.
+- Show concrete code paths, file locations, and the sequence of steps to build the pattern.
+- Prefer "Problem → Solution → How it works → Flow → Key files" structure.
+- It’s fine to be opinionated and repo-specific here.
+
+### Reference (`docs/reference/*`)
+
+- Exhaustive, lookup-style docs: config keys, env vars, schemas, endpoints, DB tables.
+- Avoid narrative. Prefer tables, signatures, defaults, constraints, and examples.
+
+### Linking rule
+
+- If you mention a non-trivial implementation detail in a concept page, add a "Related" link to the cookbook recipe.
+- If the cookbook relies on a conceptual model, link back to the Core Concepts page first.
+
 ## docs.json
 
 - Refer to the [docs.json schema](https://mintlify.com/docs.json) when building the docs.json file and site navigation
