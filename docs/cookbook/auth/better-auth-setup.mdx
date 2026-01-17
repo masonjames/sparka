@@ -9,7 +9,7 @@ Setting up authentication in Next.js requires handling sessions, OAuth providers
 
 ## Solution
 
-Configure Better Auth with Drizzle ORM for database storage, social providers for OAuth, and middleware for route protection. Use cookie caching for performance and proper session handling across server components, client components, and API routes.
+Configure Better Auth with Drizzle ORM for database storage, social providers for OAuth (conditionally enabled via env vars), and middleware for route protection. Use cookie caching for performance and proper session handling across server components, client components, and API routes.
 
 ## Implementation
 
@@ -38,32 +38,66 @@ middleware.ts          # Route protection
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { db } from "@/lib/db/client";
-import * as schema from "@/lib/db/schema";
+import { env } from "@/lib/env";
+import { db } from "./db/client";
+import { schema } from "./db/schema";
+import { siteConfig } from "./config";
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: "pg", schema }),
-  secret: process.env.AUTH_SECRET!,
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
+  }),
   trustedOrigins: [
     "http://localhost:3000",
-    process.env.NEXT_PUBLIC_APP_URL!,
-  ].filter(Boolean),
+    // Vercel URL for preview branches
+    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+    siteConfig.appUrl,
+  ],
+  secret: env.AUTH_SECRET,
+
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes - reduces DB queries
+      maxAge: 60 * 5, // 5 minutes - reduces database queries
     },
   },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    },
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    },
-  },
+
+  // Social providers are conditionally enabled based on env vars
+  socialProviders: (() => {
+    const googleId = env.AUTH_GOOGLE_ID;
+    const googleSecret = env.AUTH_GOOGLE_SECRET;
+    const githubId = env.AUTH_GITHUB_ID;
+    const githubSecret = env.AUTH_GITHUB_SECRET;
+    const vercelId = env.VERCEL_APP_CLIENT_ID;
+    const vercelSecret = env.VERCEL_APP_CLIENT_SECRET;
+
+    const google =
+      typeof googleId === "string" &&
+      googleId.length > 0 &&
+      typeof googleSecret === "string" &&
+      googleSecret.length > 0
+        ? { clientId: googleId, clientSecret: googleSecret }
+        : undefined;
+
+    const github =
+      typeof githubId === "string" &&
+      githubId.length > 0 &&
+      typeof githubSecret === "string" &&
+      githubSecret.length > 0
+        ? { clientId: githubId, clientSecret: githubSecret }
+        : undefined;
+
+    const vercel =
+      typeof vercelId === "string" &&
+      vercelId.length > 0 &&
+      typeof vercelSecret === "string" &&
+      vercelSecret.length > 0
+        ? { clientId: vercelId, clientSecret: vercelSecret }
+        : undefined;
+
+    return { google, github, vercel } as const;
+  })(),
   plugins: [nextCookies()],
 });
 
@@ -73,21 +107,21 @@ export type Session = typeof auth.$Infer.Session;
 ### Client Configuration
 
 ```ts title="lib/auth-client.ts"
-import { createAuthClient } from "better-auth/react";
 import { nextCookies } from "better-auth/next-js";
+import { createAuthClient } from "better-auth/react";
 
+// Better Auth auto-detects the base URL from window.location.origin on client
+// and uses relative URLs for SSR, so we don't need to specify baseURL
 const authClient = createAuthClient({
   plugins: [nextCookies()],
 });
 
 export default authClient;
-
-// Re-export hooks for convenience
-export const { useSession, signIn, signOut } = authClient;
 ```
 
 <Note>
-The `nextCookies()` plugin is required on both server and client for proper cookie handling in Next.js Server Actions.
+  The `nextCookies()` plugin is required on both server and client for proper
+  cookie handling in Next.js Server Actions.
 </Note>
 
 ### API Route Handler
@@ -104,11 +138,7 @@ export const { GET, POST } = toNextJsHandler(auth.handler);
 ```tsx title="providers/session-provider.tsx"
 "use client";
 
-import {
-  createContext,
-  useContext,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useSession as useBetterAuthSession } from "@/lib/auth-client";
 import type { Session } from "@/lib/auth";
 
@@ -135,9 +165,7 @@ export function SessionProvider({
   };
 
   return (
-    <SessionContext.Provider value={value}>
-      {children}
-    </SessionContext.Provider>
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
   );
 }
 
@@ -281,7 +309,7 @@ import authClient from "@/lib/auth-client";
 
 // Social sign-in
 await authClient.signIn.social({
-  provider: "google", // or "github"
+  provider: "google", // or "github", "vercel"
 });
 
 // Sign out
@@ -304,9 +332,7 @@ export default async function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <SessionProvider initialSession={session}>
-          {children}
-        </SessionProvider>
+        <SessionProvider initialSession={session}>{children}</SessionProvider>
       </body>
     </html>
   );
@@ -316,16 +342,19 @@ export default async function RootLayout({ children }) {
 ## Considerations
 
 **Performance:**
+
 - Cookie caching reduces database queries but revoked sessions persist for `maxAge` seconds
 - Use `initialSession` prop for SSR hydration to avoid layout shift
 
 **Security:**
+
 - Always use HTTPS in production
 - Keep `AUTH_SECRET` secure and random
 - Use `trustedOrigins` to prevent CSRF attacks
 
 **Adding Providers:**
-1. Get OAuth credentials from provider (Google Cloud Console, GitHub Developer Settings, etc.)
-2. Add environment variables
-3. Add provider config to `socialProviders` in `lib/auth.ts`
-4. Add login button to your UI
+
+1. Get OAuth credentials from provider (Google Cloud Console, GitHub Developer Settings, Vercel Integrations, etc.)
+2. Add environment variables to `lib/env.ts`
+3. Enable the provider in `lib/config.ts`
+4. Add login button to your UI (see `components/social-auth-providers.tsx`)

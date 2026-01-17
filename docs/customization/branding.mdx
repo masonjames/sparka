@@ -20,8 +20,7 @@ To fully rebrand ChatJS, you'll need to replace several image assets and update 
 | File                 | Size    | Purpose                        |
 | -------------------- | ------- | ------------------------------ |
 | `app/apple-icon.png` | 180x180 | iOS home screen icon           |
-| `public/icon.png`    | 512x512 | General app icon               |
-| `public/icon.svg`    | Any     | Scalable icon for PWA manifest |
+| `public/icon.svg`    | Any     | Scalable icon |
 
 ### Social Image
 
@@ -29,24 +28,6 @@ To fully rebrand ChatJS, you'll need to replace several image assets and update 
 | ------------------------- | -------- | ---------------------------------------------- |
 | `app/opengraph-image.png` | 1200x630 | Social media previews (Facebook, Twitter, etc) |
 
-## PWA Manifest
-
-Update `app/manifest.webmanifest` with your app name and description:
-
-```json
-{
-  "name": "Your App Name",
-  "short_name": "YourApp",
-  "description": "Your app description",
-  "icons": [
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    }
-  ]
-}
-```
 
 ## Metadata
 
