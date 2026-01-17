@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { siteConfig } from "@/lib/config";
 import { env } from "@/lib/env";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
@@ -15,6 +16,22 @@ function asOrigin(input: string): string {
   return new URL(withScheme).origin;
 }
 
+function originVariants(input: string): string[] {
+  const origin = asOrigin(input);
+  const url = new URL(origin);
+  const host = url.hostname;
+
+  const variants = new Set<string>([origin]);
+  if (host.startsWith("www.")) {
+    url.hostname = host.slice(4);
+    variants.add(url.origin);
+  } else {
+    url.hostname = `www.${host}`;
+    variants.add(url.origin);
+  }
+  return [...variants];
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -22,9 +39,10 @@ export const auth = betterAuth({
   }),
   trustedOrigins: [
     "http://localhost:3000",
-    ...(env.VERCEL_URL ? [asOrigin(env.VERCEL_URL)] : []),
+    ...originVariants(siteConfig.appUrl),
+    ...(env.VERCEL_URL ? originVariants(env.VERCEL_URL) : []),
     ...(env.VERCEL_PROJECT_PRODUCTION_URL
-      ? [asOrigin(env.VERCEL_PROJECT_PRODUCTION_URL)]
+      ? originVariants(env.VERCEL_PROJECT_PRODUCTION_URL)
       : []),
   ],
   secret: env.AUTH_SECRET,
