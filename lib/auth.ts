@@ -20,13 +20,13 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  trustedOrigins: [
-    "http://localhost:3000",
-    ...(env.VERCEL_URL ? [asOrigin(env.VERCEL_URL)] : []),
-    ...(env.VERCEL_PROJECT_PRODUCTION_URL
-      ? [asOrigin(env.VERCEL_PROJECT_PRODUCTION_URL)]
-      : []),
-  ],
+  // trustedOrigins: [
+  //   "http://localhost:3000",
+  //   ...(env.VERCEL_URL ? [asOrigin(env.VERCEL_URL)] : []),
+  //   ...(env.VERCEL_PROJECT_PRODUCTION_URL
+  //     ? [asOrigin(env.VERCEL_PROJECT_PRODUCTION_URL)]
+  //     : []),
+  // ],
   secret: env.AUTH_SECRET,
 
   session: {
