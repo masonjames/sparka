@@ -15,18 +15,17 @@ function asOrigin(input: string): string {
   return new URL(withScheme).origin;
 }
 
+console.log("VERCEL_URL", env.VERCEL_URL);
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
   }),
-  // trustedOrigins: [
-  //   "http://localhost:3000",
-  //   ...(env.VERCEL_URL ? [asOrigin(env.VERCEL_URL)] : []),
-  //   ...(env.VERCEL_PROJECT_PRODUCTION_URL
-  //     ? [asOrigin(env.VERCEL_PROJECT_PRODUCTION_URL)]
-  //     : []),
-  // ],
+  trustedOrigins: [
+    "http://localhost:3000", 
+    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+  ],
   secret: env.AUTH_SECRET,
 
   session: {
