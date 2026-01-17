@@ -18,12 +18,6 @@ Ship AI chat apps 10x faster with battle-tested patterns and a production-ready 
 
 <br />
 
-## Two Ways to Use ChatJS
-
-1. **Patterns** — Reusable solutions for complex AI chat functionality. Copy-paste implementations for tools, streaming, branching, and more.
-
-2. **Start** — Full-featured starter app. Clone, configure, deploy. Auth, 120+ models, attachments, and tools included.
-
 ## Features
 
 - 🤖 **120+ AI Models** — Claude, GPT, Gemini, Grok via Vercel AI Gateway
