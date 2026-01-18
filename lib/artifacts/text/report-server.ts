@@ -14,6 +14,7 @@ export class ReportDocumentWriter {
     this.reportContent = "";
   }
 
+  // TODO: Turn this into a tool call and merge with the stream
   createDocumentHandler = () =>
     createDocumentHandler<"text">({
       kind: "text",
