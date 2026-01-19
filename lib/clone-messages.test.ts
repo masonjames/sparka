@@ -110,35 +110,32 @@ describe("cloneMessagesWithDocuments", () => {
     // Shapes match the actual tool output types so the test type-checks.
     messageWithDoc.parts = [
       {
-        type: "tool-createDocument",
+        type: "tool-createTextDocument",
         toolCallId: "call-create",
         state: "output-available",
         input: {
           title: "Doc title",
-          description: "desc",
-          kind: "text",
+          content: "The document content",
         },
         output: {
-          id: "doc-1",
-          title: "Doc title",
-          kind: "text",
-          content: "A document was created and is now visible to the user.",
+          status: "success",
+          documentId: "doc-1",
+          result: "A document was created and is now visible to the user.",
         },
       },
       {
-        type: "tool-updateDocument",
+        type: "tool-editTextDocument",
         toolCallId: "call-update",
         state: "output-available",
         input: {
-          id: "doc-1",
-          description: "desc",
+          documentId: "doc-1",
+          title: "Doc title",
+          content: "Updated content",
         },
         output: {
-          id: "doc-1",
-          title: "Doc title",
-          kind: "text",
-          content: "The document has been updated successfully.",
-          success: true,
+          status: "success",
+          documentId: "doc-1",
+          result: "The document was updated and is now visible to the user.",
         },
       },
       {
@@ -147,11 +144,10 @@ describe("cloneMessagesWithDocuments", () => {
         state: "output-available",
         input: {},
         output: {
-          id: "doc-1",
-          title: "Doc title",
-          kind: "text",
-          content: "Deep research report content",
           format: "report",
+          status: "success",
+          documentId: "doc-1",
+          result: "Deep research report content",
         },
       },
     ];
@@ -196,14 +192,18 @@ describe("cloneMessagesWithDocuments", () => {
     // All tool parts in the cloned message should reference the new document id
     for (const part of clonedMessage.parts) {
       if (
-        (part.type === "tool-createDocument" ||
-          part.type === "tool-updateDocument" ||
+        (part.type === "tool-createTextDocument" ||
+          part.type === "tool-createCodeDocument" ||
+          part.type === "tool-createSheetDocument" ||
+          part.type === "tool-editTextDocument" ||
+          part.type === "tool-editCodeDocument" ||
+          part.type === "tool-editSheetDocument" ||
           part.type === "tool-deepResearch") &&
         part.state === "output-available" &&
         part.output &&
-        "id" in part.output
+        "documentId" in part.output
       ) {
-        assert.equal(part.output.id, newDocumentId);
+        assert.equal(part.output.documentId, newDocumentId);
       }
     }
   });

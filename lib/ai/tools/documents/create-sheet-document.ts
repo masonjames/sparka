@@ -1,18 +1,13 @@
-import { Output, streamText, tool } from "ai";
+import { tool } from "ai";
 import { z } from "zod";
-import type { AppModelId } from "@/lib/ai/app-models";
-import { sheetPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
 import { saveDocument } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
-import type { DocumentToolProps, DocumentToolResult } from "./types";
+import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const createSheetDocumentTool = ({
   session,
   messageId,
-  selectedModel,
-  costAccumulator,
-}: DocumentToolProps) =>
+}: DocumentToolContext) =>
   tool({
     description: `Create a spreadsheet document in CSV format.
 
@@ -25,46 +20,11 @@ Use for:
 The spreadsheet will be created with proper column headers and data.`,
     inputSchema: z.object({
       title: z.string().describe("Spreadsheet title"),
-      description: z
-        .string()
-        .describe("A detailed description of the data and columns needed"),
+      content: z.string().describe("The full CSV content of the spreadsheet"),
     }),
-    async *execute({
-      title,
-      description,
-    }): AsyncGenerator<DocumentToolResult, DocumentToolResult, unknown> {
+
+    async execute({ title, content }): Promise<DocumentToolResult> {
       const id = generateUUID();
-
-      yield { status: "streaming", id, title, kind: "sheet", content: "" };
-
-      const result = streamText({
-        model: await getLanguageModel(selectedModel),
-        system: sheetPrompt,
-        prompt: `Title: ${title}\nDescription: ${description}`,
-        experimental_telemetry: { isEnabled: true },
-        output: Output.object({
-          schema: z.object({
-            csv: z.string().describe("CSV data"),
-          }),
-        }),
-      });
-
-      let content = "";
-
-      for await (const partialObject of result.partialOutputStream) {
-        const { csv } = partialObject;
-        if (csv) {
-          content = csv;
-          yield { status: "streaming", id, title, kind: "sheet", content };
-        }
-      }
-
-      const usage = await result.usage;
-      costAccumulator?.addLLMCost(
-        selectedModel as AppModelId,
-        usage,
-        "createSheetDocument"
-      );
 
       if (session.user?.id) {
         await saveDocument({
@@ -77,6 +37,10 @@ The spreadsheet will be created with proper column headers and data.`,
         });
       }
 
-      return { status: "complete", id, title, kind: "sheet", content };
+      return {
+        status: "success",
+        documentId: id,
+        result: "A document was created and is now visible to the user.",
+      };
     },
   });

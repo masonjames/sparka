@@ -1,105 +1,46 @@
-import { smoothStream, streamText, tool } from "ai";
+import { tool } from "ai";
 import { z } from "zod";
-import type { AppModelId } from "@/lib/ai/app-models";
-import { updateDocumentPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
 import { getDocumentById, saveDocument } from "@/lib/db/queries";
-import type { DocumentToolProps, DocumentToolResult } from "./types";
+import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const editTextDocumentTool = ({
   session,
   messageId,
-  selectedModel,
-  costAccumulator,
-}: DocumentToolProps) =>
+}: DocumentToolContext) =>
   tool({
-    description: `Edit an existing text document.
+    description: `Edit an existing text document with markdown support.
 
-Use for:
-- Rewriting the whole document for major changes
-- Making targeted edits for isolated changes
-- Following user instructions about which parts to modify
+Use for editing:
+- Essays, articles, blog posts, reports
+- Documentation, guides, tutorials
+- Emails, letters, formal writing
+
+Important: You must first read the document content before editing.
 
 Avoid:
 - Updating immediately after a document was just created
 - Using this if there is no previous document in the conversation`,
     inputSchema: z.object({
-      id: z.string().describe("The ID of the document to edit"),
-      description: z
-        .string()
-        .describe("Description of the changes that need to be made"),
+      documentId: z.string().describe("The ID of the document to edit"),
+      title: z.string().describe("Document title"),
+      content: z.string().describe("The full updated markdown content"),
     }),
-    async *execute({
-      id,
-      description,
-    }): AsyncGenerator<
-      DocumentToolResult,
-      DocumentToolResult | { error: string },
-      unknown
-    > {
-      const document = await getDocumentById({ id });
+
+    async execute({ documentId, title, content }): Promise<DocumentToolResult> {
+      const document = await getDocumentById({ id: documentId });
 
       if (!document) {
-        return { error: "Document not found" };
+        return { status: "error", error: "Document not found" };
       }
 
       if (document.kind !== "text") {
-        return { error: "Document is not a text document" };
+        return { status: "error", error: "Document is not a text document" };
       }
-
-      yield {
-        status: "streaming",
-        id,
-        title: document.title,
-        kind: "text",
-        content: "",
-      };
-
-      const result = streamText({
-        model: await getLanguageModel(selectedModel),
-        system: updateDocumentPrompt(document.content, "text"),
-        prompt: description,
-        experimental_transform: smoothStream({ chunking: "word" }),
-        experimental_telemetry: {
-          isEnabled: true,
-          functionId: "editTextDocument",
-        },
-        providerOptions: {
-          openai: {
-            prediction: {
-              type: "content",
-              content: document.content,
-            },
-          },
-        },
-      });
-
-      let content = "";
-
-      for await (const delta of result.fullStream) {
-        if (delta.type === "text-delta") {
-          content += delta.text;
-          yield {
-            status: "streaming",
-            id,
-            title: document.title,
-            kind: "text",
-            content,
-          };
-        }
-      }
-
-      const usage = await result.usage;
-      costAccumulator?.addLLMCost(
-        selectedModel as AppModelId,
-        usage,
-        "editTextDocument"
-      );
 
       if (session.user?.id) {
         await saveDocument({
-          id,
-          title: document.title,
+          id: documentId,
+          title,
           content,
           kind: "text",
           userId: session.user.id,
@@ -108,11 +49,9 @@ Avoid:
       }
 
       return {
-        status: "complete",
-        id,
-        title: document.title,
-        kind: "text",
-        content,
+        status: "success",
+        documentId,
+        result: "The document was updated and is now visible to the user.",
       };
     },
   });

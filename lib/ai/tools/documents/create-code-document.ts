@@ -1,18 +1,13 @@
-import { Output, streamText, tool } from "ai";
+import { tool } from "ai";
 import { z } from "zod";
-import type { AppModelId } from "@/lib/ai/app-models";
-import { codePrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
 import { saveDocument } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
-import type { DocumentToolProps, DocumentToolResult } from "./types";
+import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const createCodeDocumentTool = ({
   session,
   messageId,
-  selectedModel,
-  costAccumulator,
-}: DocumentToolProps) =>
+}: DocumentToolContext) =>
   tool({
     description: `Create a code document/file.
 
@@ -29,46 +24,11 @@ This extension determines syntax highlighting.`,
         .describe(
           'Filename with extension (e.g., "script.py", "component.tsx", "utils.js")'
         ),
-      description: z
-        .string()
-        .describe("A detailed description of what the code should do"),
+      content: z.string().describe("The full code content of the document"),
     }),
-    async *execute({
-      title,
-      description,
-    }): AsyncGenerator<DocumentToolResult, DocumentToolResult, unknown> {
+
+    async execute({ title, content }): Promise<DocumentToolResult> {
       const id = generateUUID();
-
-      yield { status: "streaming", id, title, kind: "code", content: "" };
-
-      const result = streamText({
-        model: await getLanguageModel(selectedModel),
-        system: codePrompt,
-        prompt: `Title: ${title}\nDescription: ${description}`,
-        experimental_telemetry: { isEnabled: true },
-        output: Output.object({
-          schema: z.object({
-            code: z.string(),
-          }),
-        }),
-      });
-
-      let content = "";
-
-      for await (const partialObject of result.partialOutputStream) {
-        const { code } = partialObject;
-        if (code) {
-          content = code;
-          yield { status: "streaming", id, title, kind: "code", content };
-        }
-      }
-
-      const usage = await result.usage;
-      costAccumulator?.addLLMCost(
-        selectedModel as AppModelId,
-        usage,
-        "createCodeDocument"
-      );
 
       if (session.user?.id) {
         await saveDocument({
@@ -81,6 +41,10 @@ This extension determines syntax highlighting.`,
         });
       }
 
-      return { status: "complete", id, title, kind: "code", content };
+      return {
+        status: "success",
+        documentId: id,
+        result: "A document was created and is now visible to the user.",
+      };
     },
   });

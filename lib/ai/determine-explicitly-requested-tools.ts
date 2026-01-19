@@ -17,8 +17,15 @@ export function determineExplicitlyRequestedTools(
   if (selectedTool === "generateImage") {
     return ["generateImage"];
   }
-  if (selectedTool === "createDocument") {
-    return ["createDocument", "updateDocument"];
+  if (selectedTool === "createTextDocument") {
+    return [
+      "createTextDocument",
+      "createCodeDocument",
+      "createSheetDocument",
+      "editTextDocument",
+      "editCodeDocument",
+      "editSheetDocument",
+    ];
   }
   return null;
 }

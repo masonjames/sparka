@@ -4,14 +4,15 @@ import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "../icons";
 
-export type CreateDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-createDocument" }
->;
-export type UpdateDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-updateDocument" }
->;
+export type CreateDocumentTool =
+  | Extract<ChatMessage["parts"][number], { type: "tool-createTextDocument" }>
+  | Extract<ChatMessage["parts"][number], { type: "tool-createCodeDocument" }>
+  | Extract<ChatMessage["parts"][number], { type: "tool-createSheetDocument" }>;
+
+export type EditDocumentTool =
+  | Extract<ChatMessage["parts"][number], { type: "tool-editTextDocument" }>
+  | Extract<ChatMessage["parts"][number], { type: "tool-editCodeDocument" }>
+  | Extract<ChatMessage["parts"][number], { type: "tool-editSheetDocument" }>;
 export type RequestSuggestionsTool = Extract<
   ChatMessage["parts"][number],
   { type: "tool-requestSuggestions" }
