@@ -993,6 +993,7 @@ To write the report, call the createTextDocument tool with:
       status: "success",
       documentId: output.documentId,
       result: "A document was created and is now visible to the user.",
+      date: output.date,
     },
   };
 }
@@ -1022,6 +1023,7 @@ export async function runDeepResearcher(
       status: "success",
       documentId: "",
       result: "",
+      date: "",
     },
     toolCallId: input.toolCallId,
   };
