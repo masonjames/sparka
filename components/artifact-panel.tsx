@@ -303,9 +303,13 @@ function PureArtifactPanel({
               if (dateSource) {
                 return (
                   <ArtifactDescription>
-                    {`Updated ${formatDistance(new Date(dateSource), new Date(), {
-                      addSuffix: true,
-                    })}`}
+                    {`Updated ${formatDistance(
+                      new Date(dateSource),
+                      new Date(),
+                      {
+                        addSuffix: true,
+                      }
+                    )}`}
                   </ArtifactDescription>
                 );
               }

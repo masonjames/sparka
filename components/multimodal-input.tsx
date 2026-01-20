@@ -290,7 +290,13 @@ function PureMultimodalInput({
         setMessages(messagesUpToParent);
       }
     },
-    [artifact.isVisible, artifact.messageId, closeArtifact, setMessages, storeApi]
+    [
+      artifact.isVisible,
+      artifact.messageId,
+      closeArtifact,
+      setMessages,
+      storeApi,
+    ]
   );
 
   const coreSubmitLogic = useCallback(() => {
