@@ -59,10 +59,30 @@ const PureUserMessage = ({
             message.role === "user" && mode !== "edit" && "items-end"
           )}
         >
-          {mode === "view" ? (
-            isReadonly ? (
+          {mode === "view" && isReadonly && (
+            <MessageContent
+              className="text-left group-[.is-user]:bg-card"
+              data-testid="message-content"
+            >
+              <AttachmentList
+                attachments={getAttachmentsFromMessage(message)}
+                onImageClick={handleImageClick}
+                testId="message-attachments"
+              />
+              <pre className="whitespace-pre-wrap font-sans">
+                {textPart.text}
+              </pre>
+            </MessageContent>
+          )}
+          {mode === "view" && !isReadonly && (
+            <button
+              className="block cursor-pointer text-left transition-opacity hover:opacity-80"
+              data-testid="message-content"
+              onClick={() => setMode("edit")}
+              type="button"
+            >
               <MessageContent
-                className="text-left group-[.is-user]:bg-card"
+                className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
                 data-testid="message-content"
               >
                 <AttachmentList
@@ -74,29 +94,9 @@ const PureUserMessage = ({
                   {textPart.text}
                 </pre>
               </MessageContent>
-            ) : (
-              <button
-                className="block cursor-pointer text-left transition-opacity hover:opacity-80"
-                data-testid="message-content"
-                onClick={() => setMode("edit")}
-                type="button"
-              >
-                <MessageContent
-                  className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
-                  data-testid="message-content"
-                >
-                  <AttachmentList
-                    attachments={getAttachmentsFromMessage(message)}
-                    onImageClick={handleImageClick}
-                    testId="message-attachments"
-                  />
-                  <pre className="whitespace-pre-wrap font-sans">
-                    {textPart.text}
-                  </pre>
-                </MessageContent>
-              </button>
-            )
-          ) : (
+            </button>
+          )}
+          {mode !== "view" && (
             <div className="flex flex-row items-start gap-2">
               <MessageEditor
                 chatId={chatId}

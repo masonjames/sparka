@@ -344,7 +344,7 @@ export async function removeMcpClient(id: string): Promise<void> {
 /**
  * Get an existing MCP client by ID.
  */
-function getMcpClient(id: string): MCPClient | undefined {
+function _getMcpClient(id: string): MCPClient | undefined {
   return clientsMap.get(id);
 }
 

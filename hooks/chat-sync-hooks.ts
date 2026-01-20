@@ -78,9 +78,6 @@ export function useGetChatMessagesQueryOptions() {
   };
 }
 
-function useMessagesQuery() {
-  return useGetChatMessagesQueryOptions();
-}
 
 export function useDeleteChat() {
   const { data: session } = useSession();
@@ -284,7 +281,7 @@ export function usePinChat() {
   });
 }
 
-function useDeleteTrailingMessages() {
+function _useDeleteTrailingMessages() {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
   const trpc = useTRPC();

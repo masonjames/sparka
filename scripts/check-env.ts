@@ -61,8 +61,12 @@ function checkEnv(): void {
     !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)
   ) {
     const missing = [];
-    if (!env.AUTH_GOOGLE_ID) missing.push("AUTH_GOOGLE_ID");
-    if (!env.AUTH_GOOGLE_SECRET) missing.push("AUTH_GOOGLE_SECRET");
+    if (!env.AUTH_GOOGLE_ID) {
+      missing.push("AUTH_GOOGLE_ID");
+    }
+    if (!env.AUTH_GOOGLE_SECRET) {
+      missing.push("AUTH_GOOGLE_SECRET");
+    }
     errors.push({ feature: "authentication.google", missing });
   }
 
@@ -71,8 +75,12 @@ function checkEnv(): void {
     !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
   ) {
     const missing = [];
-    if (!env.AUTH_GITHUB_ID) missing.push("AUTH_GITHUB_ID");
-    if (!env.AUTH_GITHUB_SECRET) missing.push("AUTH_GITHUB_SECRET");
+    if (!env.AUTH_GITHUB_ID) {
+      missing.push("AUTH_GITHUB_ID");
+    }
+    if (!env.AUTH_GITHUB_SECRET) {
+      missing.push("AUTH_GITHUB_SECRET");
+    }
     errors.push({ feature: "authentication.github", missing });
   }
 
@@ -81,8 +89,12 @@ function checkEnv(): void {
     !(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET)
   ) {
     const missing = [];
-    if (!env.VERCEL_APP_CLIENT_ID) missing.push("VERCEL_APP_CLIENT_ID");
-    if (!env.VERCEL_APP_CLIENT_SECRET) missing.push("VERCEL_APP_CLIENT_SECRET");
+    if (!env.VERCEL_APP_CLIENT_ID) {
+      missing.push("VERCEL_APP_CLIENT_ID");
+    }
+    if (!env.VERCEL_APP_CLIENT_SECRET) {
+      missing.push("VERCEL_APP_CLIENT_SECRET");
+    }
     errors.push({ feature: "authentication.vercel", missing });
   }
 

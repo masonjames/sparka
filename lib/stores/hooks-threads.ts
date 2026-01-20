@@ -25,7 +25,7 @@ export const useThreadEpoch = () =>
 export const useThreadInitialMessages = () =>
   useThreadStore((state) => state.threadInitialMessages);
 
-const useBumpThreadEpoch = () => {
+const _useBumpThreadEpoch = () => {
   const store = useCustomChatStoreApi<ChatMessage>();
   return useCallback(() => {
     store.getState().bumpThreadEpoch();

@@ -60,7 +60,7 @@ export async function createCoreChatAgent({
 
   // Convert to model messages, ignoring data-* parts (drop them)
   const modelMessages = await convertToModelMessages(filteredMessages, {
-    convertDataPart: (_part): undefined => {},
+    convertDataPart: (_part): undefined => undefined,
   });
 
   // Replace file URLs with binary data

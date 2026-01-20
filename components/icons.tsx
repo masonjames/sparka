@@ -1,78 +1,3 @@
-import { Anthropic, Gemini, Groq, OpenAI, XAI } from "@lobehub/icons";
-
-const BotIcon = () => (
-  <svg
-    height="16"
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width="16"
-  >
-    <title>Bot</title>
-    <path
-      clipRule="evenodd"
-      d="M8.75 2.79933C9.19835 2.53997 9.5 2.05521 9.5 1.5C9.5 0.671573 8.82843 0 8 0C7.17157 0 6.5 0.671573 6.5 1.5C6.5 2.05521 6.80165 2.53997 7.25 2.79933V5H7C4.027 5 1.55904 7.16229 1.08296 10H0V13H1V14.5V16H2.5H13.5H15V14.5V13H16V10H14.917C14.441 7.16229 11.973 5 9 5H8.75V2.79933ZM7 6.5C4.51472 6.5 2.5 8.51472 2.5 11V14.5H13.5V11C13.5 8.51472 11.4853 6.5 9 6.5H7ZM7.25 11.25C7.25 12.2165 6.4665 13 5.5 13C4.5335 13 3.75 12.2165 3.75 11.25C3.75 10.2835 4.5335 9.5 5.5 9.5C6.4665 9.5 7.25 10.2835 7.25 11.25ZM10.5 13C11.4665 13 12.25 12.2165 12.25 11.25C12.25 10.2835 11.4665 9.5 10.5 9.5C9.5335 9.5 8.75 10.2835 8.75 11.25C8.75 12.2165 9.5335 13 10.5 13Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const UserIcon = () => (
-  <svg
-    data-testid="geist-icon"
-    height="16"
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width="16"
-  >
-    <title>User</title>
-    <path
-      clipRule="evenodd"
-      d="M7.75 0C5.95507 0 4.5 1.45507 4.5 3.25V3.75C4.5 5.54493 5.95507 7 7.75 7H8.25C10.0449 7 11.5 5.54493 11.5 3.75V3.25C11.5 1.45507 10.0449 0 8.25 0H7.75ZM6 3.25C6 2.2835 6.7835 1.5 7.75 1.5H8.25C9.2165 1.5 10 2.2835 10 3.25V3.75C10 4.7165 9.2165 5.5 8.25 5.5H7.75C6.7835 5.5 6 4.7165 6 3.75V3.25ZM2.5 14.5V13.1709C3.31958 11.5377 4.99308 10.5 6.82945 10.5H9.17055C11.0069 10.5 12.6804 11.5377 13.5 13.1709V14.5H2.5ZM6.82945 9C4.35483 9 2.10604 10.4388 1.06903 12.6857L1 12.8353V13V15.25V16H1.75H14.25H15V15.25V13V12.8353L14.931 12.6857C13.894 10.4388 11.6452 9 9.17055 9H6.82945Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const AttachmentIcon = () => (
-  <svg
-    height="16"
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width="16"
-  >
-    <title>Attachment</title>
-    <path
-      clipRule="evenodd"
-      d="M14.5 6.5V13.5C14.5 14.8807 13.3807 16 12 16H4C2.61929 16 1.5 14.8807 1.5 13.5V1.5V0H3H8H9.08579C9.351 0 9.60536 0.105357 9.79289 0.292893L14.2071 4.70711C14.3946 4.89464 14.5 5.149 14.5 5.41421V6.5ZM13 6.5V13.5C13 14.0523 12.5523 14.5 12 14.5H4C3.44772 14.5 3 14.0523 3 13.5V1.5H8V5V6.5H9.5H13ZM9.5 2.12132V5H12.3787L9.5 2.12132Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const VercelIcon = ({ size = 17 }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Vercel</title>
-    <path
-      clipRule="evenodd"
-      d="M8 1L16 15H0L8 1Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
 export const GitIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     strokeLinejoin="round"
@@ -93,122 +18,6 @@ export const GitIcon = ({ size = 16 }: { size?: number }) => (
         <rect fill="white" height="16" width="16" />
       </clipPath>
     </defs>
-  </svg>
-);
-
-const BoxIcon = ({ size = 16 }: { size: number }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Box</title>
-    <path
-      clipRule="evenodd"
-      d="M8 0.154663L8.34601 0.334591L14.596 3.58459L15 3.79466V4.25V11.75V12.2053L14.596 12.4154L8.34601 15.6654L8 15.8453L7.65399 15.6654L1.40399 12.4154L1 12.2053V11.75V4.25V3.79466L1.40399 3.58459L7.65399 0.334591L8 0.154663ZM2.5 11.2947V5.44058L7.25 7.81559V13.7647L2.5 11.2947ZM8.75 13.7647L13.5 11.2947V5.44056L8.75 7.81556V13.7647ZM8 1.84534L12.5766 4.22519L7.99998 6.51352L3.42335 4.2252L8 1.84534Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const HomeIcon = ({ size = 16 }: { size: number }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Home</title>
-    <path
-      clipRule="evenodd"
-      d="M12.5 6.56062L8.00001 2.06062L3.50001 6.56062V13.5L6.00001 13.5V11C6.00001 9.89539 6.89544 8.99996 8.00001 8.99996C9.10458 8.99996 10 9.89539 10 11V13.5L12.5 13.5V6.56062ZM13.78 5.71933L8.70711 0.646409C8.31659 0.255886 7.68342 0.255883 7.2929 0.646409L2.21987 5.71944C2.21974 5.71957 2.21961 5.7197 2.21949 5.71982L0.469676 7.46963L-0.0606537 7.99996L1.00001 9.06062L1.53034 8.53029L2.00001 8.06062V14.25V15H2.75001L6.00001 15H7.50001H8.50001H10L13.25 15H14V14.25V8.06062L14.4697 8.53029L15 9.06062L16.0607 7.99996L15.5303 7.46963L13.7806 5.71993C13.7804 5.71973 13.7802 5.71953 13.78 5.71933ZM8.50001 11V13.5H7.50001V11C7.50001 10.7238 7.72386 10.5 8.00001 10.5C8.27615 10.5 8.50001 10.7238 8.50001 11Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const GPSIcon = ({ size = 16 }: { size: number }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>GPS</title>
-    <path
-      d="M1 6L15 1L10 15L7.65955 8.91482C7.55797 8.65073 7.34927 8.44203 7.08518 8.34045L1 6Z"
-      fill="transparent"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="bevel"
-      strokeWidth="1.5"
-    />
-  </svg>
-);
-
-const InvoiceIcon = ({ size = 16 }: { size: number }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Invoice</title>
-    <path
-      clipRule="evenodd"
-      d="M13 15.1L12 14.5L10.1524 15.8857C10.0621 15.9534 9.93791 15.9534 9.8476 15.8857L8 14.5L6.14377 15.8922C6.05761 15.9568 5.94008 15.9601 5.85047 15.9003L3.75 14.5L3 15L2.83257 15.1116L1.83633 15.7758L1.68656 15.8756C1.60682 15.9288 1.5 15.8716 1.5 15.7758V15.5958V14.3985V14.1972V1.5V0H3H8H9.08579C9.351 0 9.60536 0.105357 9.79289 0.292893L14.2071 4.70711C14.3946 4.89464 14.5 5.149 14.5 5.41421V6.5V14.2507V14.411V15.5881V15.7881C14.5 15.8813 14.3982 15.9389 14.3183 15.891L14.1468 15.7881L13.1375 15.1825L13 15.1ZM12.3787 5L9.5 2.12132V5H12.3787ZM8 1.5V5V6.5H9.5H13V13.3507L12.7717 13.2138L11.9069 12.6948L11.1 13.3L10 14.125L8.9 13.3L8 12.625L7.1 13.3L5.94902 14.1632L4.58205 13.2519L3.75 12.6972L3 13.1972V1.5H8Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const OpenAIIcon = ({ size = 16 }: { size?: number }) => (
-  <OpenAI name="openai" size={size} />
-);
-
-const GeminiIcon = ({ size = 16 }: { size?: number }) => (
-  <Gemini.Color name="gemini" size={size} />
-);
-
-const GroqIcon = ({ size = 16 }: { size?: number }) => (
-  <Groq name="groq" size={size} />
-);
-
-const XAIIcon = ({ size = 16 }: { size?: number }) => (
-  <XAI name="xai" size={size} />
-);
-
-const GoogleIcon = ({ size = 16 }: { size?: number }) => (
-  <Gemini name="google" size={size} />
-);
-
-const AnthropicIcon = ({ size = 16 }: { size?: number }) => (
-  <Anthropic name="anthropic" size={size} />
-);
-
-const RouteIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Route</title>
-    <path
-      clipRule="evenodd"
-      d="M7.53033 0.719661L7 0.189331L5.93934 1.24999L6.46967 1.78032L6.68934 1.99999H3.375C1.51104 1.99999 0 3.51103 0 5.37499C0 7.23895 1.51104 8.74999 3.375 8.74999H12.625C13.6605 8.74999 14.5 9.58946 14.5 10.625C14.5 11.6605 13.6605 12.5 12.625 12.5H4.88555C4.56698 11.4857 3.61941 10.75 2.5 10.75C1.11929 10.75 0 11.8693 0 13.25C0 14.6307 1.11929 15.75 2.5 15.75C3.61941 15.75 4.56698 15.0143 4.88555 14H12.625C14.489 14 16 12.489 16 10.625C16 8.76103 14.489 7.24999 12.625 7.24999H3.375C2.33947 7.24999 1.5 6.41052 1.5 5.37499C1.5 4.33946 2.33947 3.49999 3.375 3.49999H6.68934L6.46967 3.71966L5.93934 4.24999L7 5.31065L7.53033 4.78032L8.85355 3.4571C9.24408 3.06657 9.24408 2.43341 8.85355 2.04288L7.53033 0.719661ZM2.5 14.25C3.05228 14.25 3.5 13.8023 3.5 13.25C3.5 12.6977 3.05228 12.25 2.5 12.25C1.94772 12.25 1.5 12.6977 1.5 13.25C1.5 13.8023 1.94772 14.25 2.5 14.25ZM14.5 2.74999C14.5 3.30228 14.0523 3.74999 13.5 3.74999C12.9477 3.74999 12.5 3.30228 12.5 2.74999C12.5 2.19771 12.9477 1.74999 13.5 1.74999C14.0523 1.74999 14.5 2.19771 14.5 2.74999ZM16 2.74999C16 4.1307 14.8807 5.24999 13.5 5.24999C12.1193 5.24999 11 4.1307 11 2.74999C11 1.36928 12.1193 0.249991 13.5 0.249991C14.8807 0.249991 16 1.36928 16 2.74999Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
   </svg>
 );
 
@@ -304,43 +113,6 @@ export const LoaderIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const UploadIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    data-testid="geist-icon"
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Upload</title>
-    <path
-      clipRule="evenodd"
-      d="M1.5 4.875C1.5 3.01104 3.01104 1.5 4.875 1.5C6.20018 1.5 7.34838 2.26364 7.901 3.37829C8.1902 3.96162 8.79547 4.5 9.60112 4.5H12.25C13.4926 4.5 14.5 5.50736 14.5 6.75C14.5 7.42688 14.202 8.03329 13.7276 8.44689L13.1622 8.93972L14.1479 10.0704L14.7133 9.57758C15.5006 8.89123 16 7.8785 16 6.75C16 4.67893 14.3211 3 12.25 3H9.60112C9.51183 3 9.35322 2.93049 9.2449 2.71201C8.44888 1.1064 6.79184 0 4.875 0C2.18261 0 0 2.18261 0 4.875V6.40385C0 7.69502 0.598275 8.84699 1.52982 9.59656L2.11415 10.0667L3.0545 8.89808L2.47018 8.42791C1.87727 7.95083 1.5 7.22166 1.5 6.40385V4.875ZM7.29289 7.39645C7.68342 7.00592 8.31658 7.00592 8.70711 7.39645L11.7803 10.4697L12.3107 11L11.25 12.0607L10.7197 11.5303L8.75 9.56066V15.25V16H7.25V15.25V9.56066L5.28033 11.5303L4.75 12.0607L3.68934 11L4.21967 10.4697L7.29289 7.39645Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
-const MenuIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    style={{ color: "currentcolor" }}
-    viewBox="0 0 16 16"
-    width={size}
-  >
-    <title>Menu</title>
-    <path
-      clipRule="evenodd"
-      d="M1 2H1.75H14.25H15V3.5H14.25H1.75H1V2ZM1 12.5H1.75H14.25H15V14H14.25H1.75H1V12.5ZM1.75 7.25H1V8.75H1.75H14.25H15V7.25H14.25H1.75Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
-  </svg>
-);
-
 export const PencilEditIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
@@ -359,7 +131,7 @@ export const PencilEditIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const CheckedSquare = ({ size = 16 }: { size?: number }) => (
+const _CheckedSquare = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -377,7 +149,7 @@ const CheckedSquare = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const UncheckedSquare = ({ size = 16 }: { size?: number }) => (
+const _UncheckedSquare = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -398,7 +170,7 @@ const UncheckedSquare = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const MoreIcon = ({ size = 16 }: { size?: number }) => (
+const _MoreIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -434,7 +206,7 @@ export const TrashIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const InfoIcon = ({ size = 16 }: { size?: number }) => (
+const _InfoIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -487,7 +259,7 @@ export const StopIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const PaperclipIcon = ({ size = 16 }: { size?: number }) => (
+const _PaperclipIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     className="-rotate-45"
     height={size}
@@ -614,7 +386,7 @@ export const RedoIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const DeltaIcon = ({ size = 16 }: { size?: number }) => (
+const _DeltaIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -758,7 +530,7 @@ export const ThumbDownIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const ChevronDownIcon = ({ size = 16 }: { size?: number }) => (
+const _ChevronDownIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -800,7 +572,7 @@ export const SparklesIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => (
+const _CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -818,7 +590,7 @@ const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const GlobeIcon = ({ size = 16 }: { size?: number }) => (
+const _GlobeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -836,7 +608,7 @@ const GlobeIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const LockIcon = ({ size = 16 }: { size?: number }) => (
+const _LockIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -854,7 +626,7 @@ const LockIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const EyeIcon = ({ size = 16 }: { size?: number }) => (
+const _EyeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -890,7 +662,7 @@ export const ShareIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const CodeIcon = ({ size = 16 }: { size?: number }) => (
+const _CodeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -926,7 +698,7 @@ export const PlayIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const PythonIcon = ({ size = 16 }: { size?: number }) => (
+const _PythonIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -964,7 +736,7 @@ export const TerminalWindowIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const TerminalIcon = ({ size = 16 }: { size?: number }) => (
+const _TerminalIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1018,7 +790,7 @@ export const LogsIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const ImageIcon = ({ size = 16 }: { size?: number }) => (
+const _ImageIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1090,7 +862,7 @@ export const LineChartIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const WarningIcon = ({ size = 16 }: { size?: number }) => (
+const _WarningIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}
     strokeLinejoin="round"

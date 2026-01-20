@@ -41,7 +41,7 @@ import {
   vote,
 } from "./schema";
 
-async function getUserByEmail(email: string): Promise<User[]> {
+async function _getUserByEmail(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
@@ -256,7 +256,7 @@ export async function deleteProject({ id }: { id: string }) {
   }
 }
 
-async function getChatsByProjectId({ projectId }: { projectId: string }) {
+async function _getChatsByProjectId({ projectId }: { projectId: string }) {
   try {
     return await db
       .select()
@@ -269,7 +269,7 @@ async function getChatsByProjectId({ projectId }: { projectId: string }) {
   }
 }
 
-async function moveChatToProject({
+async function _moveChatToProject({
   chatId,
   projectId,
 }: {
@@ -284,7 +284,7 @@ async function moveChatToProject({
   }
 }
 
-async function tryGetChatById({ id }: { id: string }) {
+async function _tryGetChatById({ id }: { id: string }) {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
@@ -676,7 +676,7 @@ export async function getDocumentById({ id }: { id: string }) {
   }
 }
 
-async function deleteDocumentsByIdAfterTimestamp({
+async function _deleteDocumentsByIdAfterTimestamp({
   id,
   timestamp,
 }: {
@@ -837,7 +837,7 @@ export async function getChatMessageWithPartsById({
   }
 }
 
-async function deleteMessagesByChatIdAfterTimestamp({
+async function _deleteMessagesByChatIdAfterTimestamp({
   chatId,
   timestamp,
 }: {

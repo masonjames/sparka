@@ -312,7 +312,7 @@ const dynamicToolPartSchema = z.union([
 ]);
 
 // Union schema for all part types
-const messagePartSchema = z.union([
+const _messagePartSchema = z.union([
   textPartSchema,
   reasoningPartSchema,
   filePartSchema,

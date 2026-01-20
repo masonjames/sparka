@@ -9,11 +9,11 @@ Canvas lets you create and edit documents directly in chat. You can generate tex
 
 You can create three types of canvas:
 
-| Type      | Best for                                                     | Features                                                |
-| --------- | ------------------------------------------------------------ | ------------------------------------------------------- |
-| **Text**  | Essays, emails, reports, and other written content           | AI suggestions, edit tracking, version history          |
-| **Code**  | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, execution support, version history |
-| **Sheet** | Spreadsheets, data tables, and CSV files                     | Cell editing, formula support, data manipulation        |
+| Type      | Best for                                                     | Features                                                        |
+| --------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| **Text**  | Essays, emails, reports, and other written content           | AI suggestions, diff view, version history, direct editing      |
+| **Code**  | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, Python execution, version history          |
+| **Sheet** | Spreadsheets, data tables, and CSV files                     | Cell editing, CSV export, data visualization via Python         |
 
 ## Creating a Canvas
 
@@ -39,15 +39,19 @@ The AI can update the entire document or make targeted edits based on your instr
 
 ### Version History
 
-Your canvas maintains a version history. You can navigate between versions using the version controls:
+Your canvas maintains a version history. You can navigate between versions using the arrow controls in the canvas header:
 
-- View previous versions
-- Compare changes between versions
-- Revert to an earlier version if needed
+- Navigate to previous versions
+- Navigate to next versions
+- Return to the latest version when viewing an older one
+
+### Diff View (Text Documents Only)
+
+Text canvas supports a diff view that shows exactly what changed between consecutive versions. Toggle the diff view to see additions and deletions highlighted.
 
 ### Suggestions (Text Documents Only)
 
-Text canvas shows AI-powered suggestions for improvements. You can accept or dismiss suggestions individually. This helps you refine your writing without rewriting from scratch.
+Text canvas shows AI-powered suggestions for improvements. You can request suggestions using the toolbar button, and then accept or dismiss them individually. This helps you refine your writing without rewriting from scratch.
 
 ## Tips for Better Results
 
@@ -55,19 +59,20 @@ Text canvas shows AI-powered suggestions for improvements. You can accept or dis
 
 - Be specific about tone and audience ("professional email to a manager")
 - Ask for specific improvements ("tighten the introduction" or "add more examples")
-- Use suggestions to iterate rather than rewriting
+- Use the toolbar actions: "Add final polish" for grammar and structure, or "Request suggestions" for improvement ideas
 
 ### For Code Canvas
 
-- Include the file extension in your request ("Write a `script.py`" or "Create `utils.ts`")
-- Specify the programming language if not obvious
-- Ask for specific refactors ("add error handling" or "make it more efficient")
+- Include the file extension in your request ("Write a `script.py`" or "Create `utils.ts`"). The extension determines syntax highlighting.
+- Python code can be executed directly in the browser using the "Run" button
+- Use the toolbar actions: "Add comments" or "Add logs" for debugging
 
 ### For Spreadsheets
 
 - Describe the data structure clearly ("rows for employees, columns for name, email, department")
-- Specify any calculations or formulas you need
-- You can edit cells directly or ask the AI to make bulk changes
+- Data is stored in CSV format
+- Use the toolbar actions: "Format and clean data" or "Analyze and visualize data" (creates a Python code canvas for visualization)
+- Copy the data as CSV using the copy button
 
 ## Configuration
 

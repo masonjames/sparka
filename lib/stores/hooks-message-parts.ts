@@ -67,7 +67,7 @@ function useMessagePartsByPartRange<
   endIdx: number,
   type: T
 ): Extract<ChatMessage["parts"][number], { type: T }>[];
-function useMessagePartsByPartRange<
+function _useMessagePartsByPartRange<
   T extends ChatMessage["parts"][number]["type"],
 >(messageId: string, startIdx: number, endIdx: number, type?: T) {
   return usePartsStore(

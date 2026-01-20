@@ -1,8 +1,8 @@
 import { siteConfig } from "@/lib/config";
 
-const isProductionEnvironment = process.env.NODE_ENV === "production";
+const _isProductionEnvironment = process.env.NODE_ENV === "production";
 
-const isTestEnvironment = Boolean(
+const _isTestEnvironment = Boolean(
   process.env.PLAYWRIGHT_TEST_BASE_URL ||
     process.env.PLAYWRIGHT ||
     process.env.CI_PLAYWRIGHT

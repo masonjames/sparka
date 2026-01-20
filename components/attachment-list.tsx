@@ -154,17 +154,18 @@ function AttachmentItem({
   return (
     <PromptInputHoverCard>
       <HoverCardTrigger asChild>
-        <span
-          className="inline-block"
+        <button
+          className="inline-block cursor-default text-left"
           onClick={(e) => {
             e.stopPropagation();
             if (isImage && onImageClick) {
               onImageClick(url, name);
             }
           }}
+          type="button"
         >
           {preview}
-        </span>
+        </button>
       </HoverCardTrigger>
       <PromptInputHoverCardContent className="w-auto p-2">
         <div className="flex items-center gap-2.5">
