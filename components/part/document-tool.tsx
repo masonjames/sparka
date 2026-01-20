@@ -93,4 +93,13 @@ function PureDocumentTool({
   return null;
 }
 
-export const DocumentTool = memo(PureDocumentTool);
+export const DocumentTool = memo(
+  PureDocumentTool,
+  (prevProps, nextProps) =>
+    prevProps.tool.state === nextProps.tool.state &&
+    prevProps.tool.input?.title === nextProps.tool.input?.title &&
+    prevProps.tool.input?.content === nextProps.tool.input?.content &&
+    prevProps.tool.output === nextProps.tool.output &&
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.messageId === nextProps.messageId,
+);
