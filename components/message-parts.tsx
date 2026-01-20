@@ -89,7 +89,7 @@ function ToolPart({
 
   if (type === "tool-deepResearch") {
     return (
-      <DeepResearch isReadonly={isReadonly} messageId={messageId} part={part} />
+      <DeepResearch messageId={messageId} part={part} />
     );
   }
 
