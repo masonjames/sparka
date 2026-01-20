@@ -2,64 +2,18 @@
 
 import { memo, useEffect } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
+import {
+  type DocumentToolType,
+  getToolKind,
+  isEditTool,
+} from "@/lib/ai/tools/documents/types";
 import type { ChatMessage } from "@/lib/ai/types";
-import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { DocumentPreview } from "./document-preview";
 
-type CreateTextDocumentTool = Extract<
+type DocumentTool = Extract<
   ChatMessage["parts"][number],
-  { type: "tool-createTextDocument" }
+  { type: DocumentToolType }
 >;
-
-type CreateCodeDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-createCodeDocument" }
->;
-
-type CreateSheetDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-createSheetDocument" }
->;
-
-type EditTextDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-editTextDocument" }
->;
-
-type EditCodeDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-editCodeDocument" }
->;
-
-type EditSheetDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-editSheetDocument" }
->;
-
-type DocumentTool =
-  | CreateTextDocumentTool
-  | CreateCodeDocumentTool
-  | CreateSheetDocumentTool
-  | EditTextDocumentTool
-  | EditCodeDocumentTool
-  | EditSheetDocumentTool;
-
-function getToolKind(toolType: DocumentTool["type"]): ArtifactKind {
-  if (toolType.includes("Text")) {
-    return "text";
-  }
-  if (toolType.includes("Code")) {
-    return "code";
-  }
-  if (toolType.includes("Sheet")) {
-    return "sheet";
-  }
-  return "text";
-}
-
-function isEditTool(toolType: DocumentTool["type"]): boolean {
-  return toolType.startsWith("tool-edit");
-}
 
 type DocumentToolComponentProps = {
   tool: DocumentTool;

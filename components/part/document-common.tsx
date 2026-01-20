@@ -1,18 +1,22 @@
 import { memo } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
+import type {
+  CreateDocumentToolType,
+  EditDocumentToolType,
+} from "@/lib/ai/tools/documents/types";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "../icons";
 
-export type CreateDocumentTool =
-  | Extract<ChatMessage["parts"][number], { type: "tool-createTextDocument" }>
-  | Extract<ChatMessage["parts"][number], { type: "tool-createCodeDocument" }>
-  | Extract<ChatMessage["parts"][number], { type: "tool-createSheetDocument" }>;
+export type CreateDocumentTool = Extract<
+  ChatMessage["parts"][number],
+  { type: CreateDocumentToolType }
+>;
 
-export type EditDocumentTool =
-  | Extract<ChatMessage["parts"][number], { type: "tool-editTextDocument" }>
-  | Extract<ChatMessage["parts"][number], { type: "tool-editCodeDocument" }>
-  | Extract<ChatMessage["parts"][number], { type: "tool-editSheetDocument" }>;
+export type EditDocumentTool = Extract<
+  ChatMessage["parts"][number],
+  { type: EditDocumentToolType }
+>;
 export type RequestSuggestionsTool = Extract<
   ChatMessage["parts"][number],
   { type: "tool-requestSuggestions" }
