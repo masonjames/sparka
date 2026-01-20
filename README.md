@@ -4,7 +4,7 @@
 
 # ChatJS
 
-Ship AI chat apps 10x faster with battle-tested patterns and a production-ready starter.
+The open-source template for shipping production AI chat.
 
 **Next.js • Vercel AI SDK • Shadcn/UI • Better Auth • Drizzle ORM**
 

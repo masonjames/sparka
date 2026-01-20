@@ -150,7 +150,7 @@ export const siteConfig: SiteConfig = {
   appPrefix: "chatjs",
   appName: "ChatJS",
   appDescription:
-    "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
+    "The open-source template for shipping production AI chat",
   appUrl: "https://chatjs.dev",
 
   organization: {
