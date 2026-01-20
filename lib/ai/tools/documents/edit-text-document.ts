@@ -52,6 +52,7 @@ Avoid:
         status: "success",
         documentId,
         result: "The document was updated and is now visible to the user.",
+        date: new Date().toISOString(),
       };
     },
   });

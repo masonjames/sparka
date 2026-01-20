@@ -41,6 +41,7 @@ The spreadsheet will be created with proper column headers and data.`,
         status: "success",
         documentId: id,
         result: "A document was created and is now visible to the user.",
+        date: new Date().toISOString(),
       };
     },
   });

@@ -121,6 +121,7 @@ describe("cloneMessagesWithDocuments", () => {
           status: "success",
           documentId: "doc-1",
           result: "A document was created and is now visible to the user.",
+          date: "2024-01-01T00:00:00.000Z",
         },
       },
       {
@@ -136,6 +137,7 @@ describe("cloneMessagesWithDocuments", () => {
           status: "success",
           documentId: "doc-1",
           result: "The document was updated and is now visible to the user.",
+          date: "2024-01-01T00:00:00.000Z",
         },
       },
       {
@@ -148,6 +150,7 @@ describe("cloneMessagesWithDocuments", () => {
           status: "success",
           documentId: "doc-1",
           result: "Deep research report content",
+          date: "2024-01-01T00:00:00.000Z",
         },
       },
     ];

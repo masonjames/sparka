@@ -55,6 +55,7 @@ function PureDocumentTool({
           ...prev,
           documentId: output.documentId,
           status: "idle",
+          date: output.date,
         }));
       }
     }

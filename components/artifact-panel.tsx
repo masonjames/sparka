@@ -42,6 +42,7 @@ export type UIArtifact = {
   messageId: string;
   isVisible: boolean;
   status: "streaming" | "idle";
+  date?: string;
 };
 
 function PureArtifactPanel({
@@ -298,16 +299,13 @@ function PureArtifactPanel({
                   <ArtifactDescription>Saving changes...</ArtifactDescription>
                 );
               }
-              if (document) {
+              const dateSource = artifact.date ?? document?.createdAt;
+              if (dateSource) {
                 return (
                   <ArtifactDescription>
-                    {`Updated ${formatDistance(
-                      new Date(document.createdAt),
-                      new Date(),
-                      {
-                        addSuffix: true,
-                      }
-                    )}`}
+                    {`Updated ${formatDistance(new Date(dateSource), new Date(), {
+                      addSuffix: true,
+                    })}`}
                   </ArtifactDescription>
                 );
               }

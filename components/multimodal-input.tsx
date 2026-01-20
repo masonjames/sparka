@@ -25,6 +25,7 @@ import {
 import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
+import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
@@ -94,6 +95,7 @@ function PureMultimodalInput({
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
 }) {
   const storeApi = useChatStoreApi<ChatMessage>();
+  const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
@@ -258,6 +260,10 @@ function PureMultimodalInput({
     (parentId: string | null) => {
       if (parentId === null) {
         setMessages([]);
+        // Close artifact if it was visible since all messages are removed
+        if (artifact.isVisible) {
+          closeArtifact();
+        }
         return;
       }
 
@@ -271,10 +277,20 @@ function PureMultimodalInput({
           .getState()
           .getThrottledMessages()
           .slice(0, parentIndex + 1);
+
+        // Close artifact if its message will not be in the trimmed messages
+        if (
+          artifact.isVisible &&
+          artifact.messageId &&
+          !messagesUpToParent.some((m) => m.id === artifact.messageId)
+        ) {
+          closeArtifact();
+        }
+
         setMessages(messagesUpToParent);
       }
     },
-    [setMessages, storeApi]
+    [artifact.isVisible, artifact.messageId, closeArtifact, setMessages, storeApi]
   );
 
   const coreSubmitLogic = useCallback(() => {

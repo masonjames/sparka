@@ -45,6 +45,7 @@ This extension determines syntax highlighting.`,
         status: "success",
         documentId: id,
         result: "A document was created and is now visible to the user.",
+        date: new Date().toISOString(),
       };
     },
   });
