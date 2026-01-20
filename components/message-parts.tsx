@@ -15,8 +15,8 @@ import {
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
 import { CodeExecution } from "./part/code-execution";
-import { CreateDocument } from "./part/create-document";
 import { DeepResearch } from "./part/deep-research";
+import { DocumentTool } from "./part/document-tool";
 import { DynamicToolPart } from "./part/dynamic-tool";
 import { GenerateImage } from "./part/generate-image";
 import { ReasoningPart } from "./part/message-reasoning";
@@ -24,7 +24,6 @@ import { ReadDocument } from "./part/read-document";
 import { RequestSuggestions } from "./part/request-suggestions";
 import { RetrieveUrl } from "./part/retrieve-url";
 import { TextMessagePart } from "./part/text-message-part";
-import { UpdateDocument } from "./part/update-document";
 import { Weather } from "./part/weather";
 import { WebSearch } from "./part/web-search";
 
@@ -49,23 +48,16 @@ function ToolPart({
     return <Weather tool={part} />;
   }
 
-  if (type === "tool-createDocument") {
+  if (
+    type === "tool-createTextDocument" ||
+    type === "tool-createCodeDocument" ||
+    type === "tool-createSheetDocument" ||
+    type === "tool-editTextDocument" ||
+    type === "tool-editCodeDocument" ||
+    type === "tool-editSheetDocument"
+  ) {
     return (
-      <CreateDocument
-        isReadonly={isReadonly}
-        messageId={messageId}
-        tool={part}
-      />
-    );
-  }
-
-  if (type === "tool-updateDocument") {
-    return (
-      <UpdateDocument
-        isReadonly={isReadonly}
-        messageId={messageId}
-        tool={part}
-      />
+      <DocumentTool isReadonly={isReadonly} messageId={messageId} tool={part} />
     );
   }
 
@@ -96,9 +88,7 @@ function ToolPart({
   }
 
   if (type === "tool-deepResearch") {
-    return (
-      <DeepResearch isReadonly={isReadonly} messageId={messageId} part={part} />
-    );
+    return <DeepResearch messageId={messageId} part={part} />;
   }
 
   if (type === "tool-webSearch") {

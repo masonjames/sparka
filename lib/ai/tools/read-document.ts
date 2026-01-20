@@ -22,10 +22,10 @@ Use for:
 Avoid:
 - Documents that were not produced in the current conversation`,
     inputSchema: z.object({
-      id: z.string().describe("The ID of the document to read"),
+      documentId: z.string().describe("The ID of the document to read"),
     }),
-    execute: async ({ id }) => {
-      const document = await getDocumentById({ id });
+    execute: async ({ documentId }) => {
+      const document = await getDocumentById({ id: documentId });
 
       if (!document) {
         return {
@@ -40,7 +40,7 @@ Avoid:
       }
 
       return {
-        id: document.id,
+        documentId: document.id,
         title: document.title,
         kind: document.kind,
         content: document.content,

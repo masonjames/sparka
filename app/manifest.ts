@@ -1,21 +1,21 @@
-import { siteConfig } from '@/lib/config'
-import type { MetadataRoute } from 'next'
- 
+import type { MetadataRoute } from "next";
+import { siteConfig } from "@/lib/config";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: siteConfig.appName,
     short_name: siteConfig.appName,
     description: siteConfig.appDescription,
-    start_url: '/',
-    display: 'standalone',
-    background_color: '#fff',
-    theme_color: '#fff',
+    start_url: "/",
+    display: "standalone",
+    background_color: "#fff",
+    theme_color: "#fff",
     icons: [
       {
-        src: '/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
+        src: "/icon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
       },
     ],
-  }
+  };
 }

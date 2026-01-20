@@ -3,11 +3,70 @@ title: Credit Tracking
 description: Track and limit AI usage with credit budgets
 ---
 
-ChatJS includes a credit tracking system that monitors costs from LLM usage and external API calls. Credits are stored in cents and deducted after each request.
+ChatJS tracks costs from LLM usage and external API calls. Authenticated users are charged in **cents** (rounded up). Anonymous users use a separate **message credit** system (cookie-backed) since you can’t reliably mutate cookies after streaming begins.
+
+## Overview
+
+Credits track two types of costs:
+
+1. **LLM costs**: computed from token usage + model pricing
+2. **API costs**: fixed per-tool costs (e.g. Tavily, sandbox, image generation)
+
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph Request["POST /api/chat"]
+        A[Create CostAccumulator] --> B[createCoreChatAgent]
+        B --> C[getTools with accumulator]
+        C --> D[streamText]
+        D --> E[Tool executions]
+        E --> F[Stream finish event]
+        F --> G[finalizeMessageAndCredits]
+        G --> H[accumulator.getTotalCost]
+        H --> I[deductCredits]
+    end
+
+    subgraph Tools["Tool Cost Tracking"]
+        E --> T1[webSearch: +5¢ API]
+        E --> T2[codeExecution: +5¢ API]
+        E --> T3[generateImage: +17¢ API or LLM tokens]
+        E --> T4[deepResearch: multiple LLM calls]
+    end
+
+    subgraph DeepResearch["Deep Research Sub-calls"]
+        T4 --> DR1[supervisor generateText]
+        T4 --> DR2[researcher generateText]
+        T4 --> DR3[compress generateObject]
+        T4 --> DR4[webSearch calls]
+        DR1 --> ACC[CostAccumulator]
+        DR2 --> ACC
+        DR3 --> ACC
+        DR4 --> ACC
+    end
+```
+
+## Tool Costs (`lib/ai/tools/tools-definitions.ts`)
+
+Tool costs are **external API fees only** (in cents). LLM costs are accounted via token usage separately.
+
+| Tool | Cost | Notes |
+| --- | --- | --- |
+| webSearch | 5¢ | Tavily |
+| codeExecution | 5¢ | Vercel Sandbox execution |
+| generateImage | 17¢ | Traditional image gen API (multimodal image models are billed via LLM usage instead) |
+| deepResearch | 0¢ | LLM calls tracked via usage; webSearch calls tracked separately |
+| createTextDocument | 0¢ | LLM calls tracked via usage |
+| createCodeDocument | 0¢ | LLM calls tracked via usage |
+| createSheetDocument | 0¢ | LLM calls tracked via usage |
+| editTextDocument | 0¢ | LLM calls tracked via usage |
+| editCodeDocument | 0¢ | LLM calls tracked via usage |
+| editSheetDocument | 0¢ | LLM calls tracked via usage |
+| retrieveUrl | 0¢ | Internal (Firecrawl billed via `webSearch` if you want fixed API pricing) |
 
 ## How It Works
 
-The `CostAccumulator` class collects costs throughout a request lifecycle:
+The `CostAccumulator` collects costs throughout a request lifecycle:
 
 1. A new accumulator is created at request start
 2. The main chat stream adds LLM token costs on finish
@@ -33,7 +92,7 @@ Anonymous users have a separate, simpler credit system stored in browser cookies
 
 | Aspect | Anonymous | Authenticated |
 | --- | --- | --- |
-| Storage | Cookie (`anonymous_session`) | Database (`userCredit`) |
+| Storage | Cookie (`anonymous-session`) | Database (`userCredit`) |
 | Unit | Message count | Cents (dollars × 100) |
 | Cost per request | Fixed: 1 credit | Actual LLM + API costs |
 | Deduction timing | Pre-streaming | Post-streaming |
@@ -58,7 +117,9 @@ Anonymous limits are configured in `lib/config.ts`:
 ```ts
 anonymous: {
   credits: isProd ? 10 : 1000,
-  availableTools: ["createDocument", "updateDocument"],
+  // ToolName values, e.g.:
+  // ["webSearch", "codeExecution", "createTextDocument", "editTextDocument"]
+  availableTools: [],
   rateLimit: {
     requestsPerMinute: isProd ? 5 : 60,
     requestsPerMonth: isProd ? 10 : 1000,

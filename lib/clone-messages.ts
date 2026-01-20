@@ -74,40 +74,70 @@ function transformDeepResearchPart(
   if (part.state !== "output-available") {
     return part;
   }
-  if (part.output?.format !== "report") {
+  if (part.output?.format !== "report" || part.output.status !== "success") {
     return part;
   }
-  const oldDocId = part.output.id;
+  const oldDocId = part.output.documentId;
   const newDocId = updateDocumentIdInPart(oldDocId, documentIdMap);
   return {
     ...part,
     output: {
       ...part.output,
-      id: newDocId,
+      documentId: newDocId,
     },
   };
 }
 
-function transformUpdateDocumentPart(
+function isEditDocumentPart(
+  part: ChatMessage["parts"][number]
+): part is Extract<
+  ChatMessage["parts"][number],
+  | { type: "tool-editTextDocument" }
+  | { type: "tool-editCodeDocument" }
+  | { type: "tool-editSheetDocument" }
+> {
+  return (
+    part.type === "tool-editTextDocument" ||
+    part.type === "tool-editCodeDocument" ||
+    part.type === "tool-editSheetDocument"
+  );
+}
+
+function isCreateDocumentPart(
+  part: ChatMessage["parts"][number]
+): part is Extract<
+  ChatMessage["parts"][number],
+  | { type: "tool-createTextDocument" }
+  | { type: "tool-createCodeDocument" }
+  | { type: "tool-createSheetDocument" }
+> {
+  return (
+    part.type === "tool-createTextDocument" ||
+    part.type === "tool-createCodeDocument" ||
+    part.type === "tool-createSheetDocument"
+  );
+}
+
+function transformEditDocumentPart(
   part: ChatMessage["parts"][number],
   documentIdMap: Map<string, string>
 ): ChatMessage["parts"][number] {
-  if (part.type !== "tool-updateDocument") {
+  if (!isEditDocumentPart(part)) {
     return part;
   }
   if (part.state !== "output-available") {
     return part;
   }
-  if (!part.output.success) {
+  if (part.output.status !== "success") {
     return part;
   }
-  const oldDocId = part.output.id;
+  const oldDocId = part.output.documentId;
   const newDocId = updateDocumentIdInPart(oldDocId, documentIdMap);
   return {
     ...part,
     output: {
       ...part.output,
-      id: newDocId,
+      documentId: newDocId,
     },
   };
 }
@@ -116,19 +146,22 @@ function transformCreateDocumentPart(
   part: ChatMessage["parts"][number],
   documentIdMap: Map<string, string>
 ): ChatMessage["parts"][number] {
-  if (part.type !== "tool-createDocument") {
+  if (!isCreateDocumentPart(part)) {
     return part;
   }
   if (part.state !== "output-available") {
     return part;
   }
-  const oldDocId = part.output.id;
+  if (part.output.status !== "success") {
+    return part;
+  }
+  const oldDocId = part.output.documentId;
   const newDocId = updateDocumentIdInPart(oldDocId, documentIdMap);
   return {
     ...part,
     output: {
       ...part.output,
-      id: newDocId,
+      documentId: newDocId,
     },
   };
 }
@@ -140,10 +173,10 @@ function transformPartWithDocumentId(
   if (part.type === "tool-deepResearch") {
     return transformDeepResearchPart(part, documentIdMap);
   }
-  if (part.type === "tool-updateDocument") {
-    return transformUpdateDocumentPart(part, documentIdMap);
+  if (isEditDocumentPart(part)) {
+    return transformEditDocumentPart(part, documentIdMap);
   }
-  if (part.type === "tool-createDocument") {
+  if (isCreateDocumentPart(part)) {
     return transformCreateDocumentPart(part, documentIdMap);
   }
   return part;

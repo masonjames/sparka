@@ -37,8 +37,43 @@ export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
     icon: Images,
     shortName: "Image",
   },
-  createDocument: {
-    key: "createDocument",
+  createTextDocument: {
+    key: "createTextDocument",
+    name: "Write or code",
+    description: "Create documents, code, or run code in a sandbox.",
+    icon: Edit3,
+    shortName: "Write",
+  },
+  createCodeDocument: {
+    key: "createCodeDocument",
+    name: "Write or code",
+    description: "Create documents, code, or run code in a sandbox.",
+    icon: Edit3,
+    shortName: "Write",
+  },
+  createSheetDocument: {
+    key: "createSheetDocument",
+    name: "Write or code",
+    description: "Create documents, code, or run code in a sandbox.",
+    icon: Edit3,
+    shortName: "Write",
+  },
+  editTextDocument: {
+    key: "editTextDocument",
+    name: "Write or code",
+    description: "Create documents, code, or run code in a sandbox.",
+    icon: Edit3,
+    shortName: "Write",
+  },
+  editCodeDocument: {
+    key: "editCodeDocument",
+    name: "Write or code",
+    description: "Create documents, code, or run code in a sandbox.",
+    icon: Edit3,
+    shortName: "Write",
+  },
+  editSheetDocument: {
+    key: "editSheetDocument",
     name: "Write or code",
     description: "Create documents, code, or run code in a sandbox.",
     icon: Edit3,
@@ -50,5 +85,5 @@ export const enabledTools: UiToolName[] = [
   "webSearch",
   "deepResearch",
   "generateImage",
-  "createDocument",
+  "createTextDocument",
 ];

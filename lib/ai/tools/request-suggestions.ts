@@ -71,8 +71,8 @@ Use for:
 - There is a stored document and you know its ID
 
 Avoid:
-- Creating new content (use createDocument)
-- Directly changing the document (use updateDocument)
+- Creating new content (use createTextDocument, createCodeDocument, or createSheetDocument)
+- Directly changing the document (use editTextDocument, editCodeDocument, or editSheetDocument)
 - When no document exists or the ID is unknown (read or create the document first)
 
 Behavior:

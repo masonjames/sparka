@@ -11,6 +11,7 @@ import {
   useMemo,
 } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
+import { useArtifact } from "@/hooks/use-artifact";
 import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
@@ -55,6 +56,7 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
   const { setDataStream } = useDataStream();
   const threadEpoch = useThreadEpoch();
   const resetThreadEpoch = useResetThreadEpoch();
+  const { artifact, closeArtifact } = useArtifact();
 
   const messagesQuery = useQuery({
     ...(isShared
@@ -150,11 +152,23 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
         leaf ? leaf.id : targetSibling.id
       );
 
+      // Close artifact if its message is not in the new thread
+      if (
+        artifact.isVisible &&
+        artifact.messageId &&
+        !newThread.some((m) => m.id === artifact.messageId)
+      ) {
+        closeArtifact();
+      }
+
       setMessagesWithEpoch(newThread);
     },
     [
       allMessages,
+      artifact.isVisible,
+      artifact.messageId,
       childrenMap,
+      closeArtifact,
       getMessageSiblingInfo,
       setDataStream,
       setMessagesWithEpoch,

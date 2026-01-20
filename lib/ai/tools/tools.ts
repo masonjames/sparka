@@ -3,13 +3,17 @@ import type { ModelId } from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
 import { codeExecution } from "@/lib/ai/tools/code-execution";
-import { createDocumentTool } from "@/lib/ai/tools/create-document";
+import { createCodeDocumentTool } from "@/lib/ai/tools/documents/create-code-document";
+import { createSheetDocumentTool } from "@/lib/ai/tools/documents/create-sheet-document";
+import { createTextDocumentTool } from "@/lib/ai/tools/documents/create-text-document";
+import { editCodeDocumentTool } from "@/lib/ai/tools/documents/edit-code-document";
+import { editSheetDocumentTool } from "@/lib/ai/tools/documents/edit-sheet-document";
+import { editTextDocumentTool } from "@/lib/ai/tools/documents/edit-text-document";
 import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
-import { updateDocument } from "@/lib/ai/tools/update-document";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import { siteConfig } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -44,24 +48,21 @@ export function getTools({
   const imageToolModelId = isMultimodalImageModel(selectedModel)
     ? selectedModel
     : undefined;
+  const documentToolProps = {
+    session,
+    messageId,
+    selectedModel,
+    costAccumulator,
+  };
 
   return {
     getWeather,
-    createDocument: createDocumentTool({
-      session,
-      dataStream,
-      contextForLLM,
-      messageId,
-      selectedModel,
-      costAccumulator,
-    }),
-    updateDocument: updateDocument({
-      session,
-      dataStream,
-      messageId,
-      selectedModel,
-      costAccumulator,
-    }),
+    createTextDocument: createTextDocumentTool(documentToolProps),
+    createCodeDocument: createCodeDocumentTool(documentToolProps),
+    createSheetDocument: createSheetDocumentTool(documentToolProps),
+    editTextDocument: editTextDocumentTool(documentToolProps),
+    editCodeDocument: editCodeDocumentTool(documentToolProps),
+    editSheetDocument: editSheetDocumentTool(documentToolProps),
     requestSuggestions: requestSuggestions({
       session,
       dataStream,

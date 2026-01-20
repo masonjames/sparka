@@ -8,14 +8,34 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Get the weather in a specific location",
     cost: 0, // internal
   },
-  createDocument: {
-    name: "createDocument",
-    description: "Create a new document",
+  createTextDocument: {
+    name: "createTextDocument",
+    description: "Create a text document",
     cost: 0, // internal
   },
-  updateDocument: {
-    name: "updateDocument",
-    description: "Update a document",
+  createCodeDocument: {
+    name: "createCodeDocument",
+    description: "Create a code document",
+    cost: 0, // internal
+  },
+  createSheetDocument: {
+    name: "createSheetDocument",
+    description: "Create a spreadsheet",
+    cost: 0, // internal
+  },
+  editTextDocument: {
+    name: "editTextDocument",
+    description: "Edit a text document",
+    cost: 0, // internal
+  },
+  editCodeDocument: {
+    name: "editCodeDocument",
+    description: "Edit a code document",
+    cost: 0, // internal
+  },
+  editSheetDocument: {
+    name: "editSheetDocument",
+    description: "Edit a spreadsheet",
     cost: 0, // internal
   },
   requestSuggestions: {

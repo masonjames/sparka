@@ -1,15 +1,14 @@
-import { generateText, type ModelMessage, Output } from "ai";
+import { generateText, type ModelMessage, Output, streamText } from "ai";
 import { z } from "zod";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
 import type { ToolSession } from "@/lib/ai/tools/types";
-import { ReportDocumentWriter } from "@/lib/artifacts/text/report-server";
-
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
-import { createDocument } from "../create-document";
+import { createTextDocumentTool } from "../documents/create-text-document";
+import type { DocumentToolResult } from "../documents/types";
 import type { DeepResearchConfig } from "./configuration";
 import {
   clarifyWithUserInstructions,
@@ -352,7 +351,7 @@ class ResearcherAgent extends Agent {
     const tools = await getAllTools(
       this.config,
       this.dataStream,
-      state.requestId
+      this.toolCallId
     );
     if (Object.keys(tools).length === 0) {
       throw new Error(
@@ -852,7 +851,7 @@ type FinalReportGenerationInput = {
 
 async function finalReportGeneration(
   input: FinalReportGenerationInput
-): Promise<Pick<AgentState, "final_report" | "reportResult">> {
+): Promise<Pick<AgentState, "reportResult">> {
   const {
     state,
     config,
@@ -865,7 +864,6 @@ async function finalReportGeneration(
   } = input;
   const notes = state.notes || [];
 
-  const model = await getLanguageModel(config.final_report_model as ModelId);
   const findings = notes.join("\n");
 
   const finalReportPromptText = finalReportGenerationPrompt({
@@ -900,34 +898,64 @@ async function finalReportGeneration(
     finalReportModelContextWindow
   );
 
-  const reportDocumentHandler = new ReportDocumentWriter({
-    model,
-    messages: truncatedFinalMessages,
+  // Aggregate all truncated messages to preserve full context
+  const truncatedReportPrompt =
+    truncatedFinalMessages.length > 0
+      ? truncatedFinalMessages
+          .map((msg) => getTextContentFromModelMessage(msg))
+          .join("\n\n")
+      : finalReportPromptText;
+
+  const reportTool = createTextDocumentTool({
+    session,
+    messageId,
+    selectedModel: config.final_report_model as ModelId,
+    costAccumulator,
+  });
+
+  const systemPrompt = `You are a research report writer. Your task is to write the final research report and save it using the createTextDocument tool.
+
+IMPORTANT: You MUST call the createTextDocument tool with the complete report content. Do not output the report as text - save it using the tool.`;
+
+  const result = streamText({
+    model: await getLanguageModel(config.final_report_model as ModelId),
+    system: systemPrompt,
+    prompt: `Write a comprehensive research report with the title "${reportTitle}" based on the following instructions and findings.
+
+${truncatedReportPrompt}
+
+To write the report, call the createTextDocument tool with:
+- title: "${reportTitle}"
+- content: the full markdown content of your report`,
+    tools: { createTextDocument: reportTool },
     maxOutputTokens: config.final_report_model_max_tokens,
     experimental_telemetry: {
       isEnabled: true,
       functionId: "finalReportGeneration",
+
       metadata: {
         messageId,
         langfuseTraceId: state.requestId,
         langfuseUpdateParent: false,
       },
     },
-    maxRetries: 3,
   });
 
-  const reportResult = await createDocument({
-    dataStream,
-    kind: "text",
-    title: reportTitle,
-    description: "",
-    session,
-    prompt: finalReportPromptText,
-    messageId,
-    selectedModel: config.final_report_model as ModelId,
-    documentHandler: reportDocumentHandler.createDocumentHandler(),
-    costAccumulator,
-  });
+  dataStream.merge(result.toUIMessageStream());
+
+  // Track LLM cost
+  const usage = await result.usage;
+  if (usage) {
+    costAccumulator.addLLMCost(
+      config.final_report_model as AppModelId,
+      usage,
+      "deep-research-final-report"
+    );
+  }
+
+  const createdDocumentToolResult = (await result.toolResults).find(
+    (tr) => tr?.toolName === "createTextDocument"
+  );
 
   dataStream.write({
     id: finalReportUpdateId,
@@ -940,9 +968,33 @@ async function finalReportGeneration(
     },
   });
 
+  if (!createdDocumentToolResult) {
+    return {
+      reportResult: {
+        status: "error",
+        error: "createTextDocument tool was not called",
+      },
+    };
+  }
+
+  const output =
+    createdDocumentToolResult.output as unknown as DocumentToolResult;
+  if (output.status === "error") {
+    return {
+      reportResult: {
+        status: "error",
+        error: output.error,
+      },
+    };
+  }
+
   return {
-    final_report: reportDocumentHandler.getReportContent(),
-    reportResult,
+    reportResult: {
+      status: "success",
+      documentId: output.documentId,
+      result: "A document was created and is now visible to the user.",
+      date: output.date,
+    },
   };
 }
 
@@ -967,12 +1019,11 @@ export async function runDeepResearcher(
     supervisor_messages: [],
     raw_notes: [],
     notes: [],
-    final_report: "",
     reportResult: {
-      id: "",
-      title: "",
-      kind: "text",
-      content: "",
+      status: "success",
+      documentId: "",
+      result: "",
+      date: "",
     },
     toolCallId: input.toolCallId,
   };

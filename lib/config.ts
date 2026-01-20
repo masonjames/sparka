@@ -2,6 +2,7 @@
 // `@/components/config-provider` instead of importing `siteConfig` directly.
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
+import type { ToolName } from "./ai/types";
 import type { AnyImageModelId } from "./models/image-model-id";
 
 export type PricingConfig = {
@@ -48,7 +49,7 @@ export type AnonymousConfig = {
   /** Message credits for anonymous users */
   credits: number;
   /** Tools available to anonymous users */
-  availableTools: string[];
+  availableTools: ToolName[];
   /** Rate limits */
   rateLimit: {
     requestsPerMinute: number;
@@ -260,7 +261,7 @@ export const siteConfig: SiteConfig = {
 
   anonymous: {
     credits: isProd ? 10 : 1000,
-    availableTools: ["createDocument", "updateDocument"],
+    availableTools: [],
     rateLimit: {
       requestsPerMinute: isProd ? 5 : 60,
       requestsPerMonth: isProd ? 10 : 1000,

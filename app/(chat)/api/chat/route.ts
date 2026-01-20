@@ -6,6 +6,7 @@ import {
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { after } from "next/server";
+import { createClient } from "redis";
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -58,17 +59,13 @@ import { generateTitleFromUserMessage } from "../../actions";
 import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";
 
 // Shared Redis clients for resumable stream
-let redisPublisher: ReturnType<typeof import("redis").createClient> | null =
-  null;
-let redisSubscriber: ReturnType<typeof import("redis").createClient> | null =
-  null;
+let redisPublisher: ReturnType<typeof createClient> | null = null;
+let redisSubscriber: ReturnType<typeof createClient> | null = null;
 
 if (env.REDIS_URL) {
-  import("redis").then(async (redis) => {
-    redisPublisher = redis.createClient({ url: env.REDIS_URL });
-    redisSubscriber = redis.createClient({ url: env.REDIS_URL });
-    await Promise.all([redisPublisher.connect(), redisSubscriber.connect()]);
-  });
+  redisPublisher = createClient({ url: env.REDIS_URL });
+  redisSubscriber = createClient({ url: env.REDIS_URL });
+  await Promise.all([redisPublisher.connect(), redisSubscriber.connect()]);
 }
 
 let globalStreamContext: ResumableStreamContext | null = null;

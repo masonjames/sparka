@@ -18,6 +18,7 @@ const initialArtifactData: UIArtifact = {
   messageId: "",
   status: "idle",
   isVisible: false,
+  date: undefined,
 };
 
 type Selector<T> = (state: UIArtifact) => T;

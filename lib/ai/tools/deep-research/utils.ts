@@ -80,11 +80,15 @@ function getSearchTool(
   searchApi: SearchAPI,
   _config: DeepResearchConfig,
   dataStream: StreamWriter,
-  _id?: string
+  parentToolCallId?: string
 ) {
   if (searchApi === "tavily") {
     return {
-      webSearch: tavilyWebSearch({ dataStream, writeTopLevelUpdates: false }),
+      webSearch: tavilyWebSearch({
+        dataStream,
+        writeTopLevelUpdates: false,
+        toolCallIdOverride: parentToolCallId,
+      }),
     };
   }
   if (searchApi === "firecrawl") {
@@ -92,6 +96,7 @@ function getSearchTool(
       webSearch: firecrawlWebSearch({
         dataStream,
         writeTopLevelUpdates: false,
+        toolCallIdOverride: parentToolCallId,
       }),
     };
   }

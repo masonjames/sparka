@@ -12,8 +12,12 @@ export const isLastArtifact = (
     if (message.role === "assistant") {
       for (const part of message.parts) {
         if (
-          (part.type === "tool-createDocument" ||
-            part.type === "tool-updateDocument" ||
+          (part.type === "tool-createTextDocument" ||
+            part.type === "tool-createCodeDocument" ||
+            part.type === "tool-createSheetDocument" ||
+            part.type === "tool-editTextDocument" ||
+            part.type === "tool-editCodeDocument" ||
+            part.type === "tool-editSheetDocument" ||
             part.type === "tool-deepResearch") &&
           part.state === "output-available"
         ) {
