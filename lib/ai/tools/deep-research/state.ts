@@ -79,7 +79,6 @@ export type AgentState = {
   research_brief?: string;
   raw_notes: string[];
   notes: string[];
-  final_report: string;
   reportResult: DocumentToolResult;
   clarificationMessage?: string;
   toolCallId: string;
