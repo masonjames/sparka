@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ModelId } from "@/lib/ai/app-models";
 
 // Simplified search API enum
 export const SearchAPIEnum = z.enum(["firecrawl", "tavily", "none"]);
@@ -26,15 +27,25 @@ export const DeepResearchConfigSchema = z.object({
   max_researcher_iterations: z.number().int().min(1).max(10).default(1),
 
   // Model Configuration
-  summarization_model: z.string().default("openai/gpt-4o-mini"),
+  summarization_model: z
+    .string()
+    .default("google/gemini-2.5-flash-lite" satisfies ModelId),
   summarization_model_max_tokens: z.number().int().default(4000),
-  research_model: z.string().default("openai/gpt-4o-mini"),
+  research_model: z
+    .string()
+    .default("google/gemini-2.5-flash-lite" satisfies ModelId),
   research_model_max_tokens: z.number().int().default(4000),
-  compression_model: z.string().default("openai/gpt-4o-mini"),
+  compression_model: z
+    .string()
+    .default("google/gemini-2.5-flash-lite" satisfies ModelId),
   compression_model_max_tokens: z.number().int().default(4000),
-  final_report_model: z.string().default("openai/gpt-4o"),
+  final_report_model: z
+    .string()
+    .default("google/gemini-3-flash" satisfies ModelId),
   final_report_model_max_tokens: z.number().int().default(6000),
-  status_update_model: z.string().default("openai/gpt-4o-mini"),
+  status_update_model: z
+    .string()
+    .default("google/gemini-2.5-flash-lite" satisfies ModelId),
   status_update_model_max_tokens: z.number().int().default(4000),
 
   // MCP server configuration
