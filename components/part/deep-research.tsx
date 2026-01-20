@@ -1,8 +1,8 @@
 "use client";
 
 import { useChatStoreApi } from "@ai-sdk-tools/store";
-import type { ChatMessage } from "@/lib/ai/types";
 import { useDocuments } from "@/hooks/chat-sync-hooks";
+import type { ChatMessage } from "@/lib/ai/types";
 import { useMessageResearchUpdatePartByToolCallId } from "@/lib/stores/hooks-message-parts";
 import { isLastArtifact } from "../is-last-artifact";
 import { DocumentToolResult } from "./document-common";
