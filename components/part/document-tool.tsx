@@ -100,6 +100,7 @@ export const DocumentTool = memo(
     prevProps.tool.input?.title === nextProps.tool.input?.title &&
     prevProps.tool.input?.content === nextProps.tool.input?.content &&
     prevProps.tool.output === nextProps.tool.output &&
+    prevProps.tool.errorText === nextProps.tool.errorText &&
     prevProps.isReadonly === nextProps.isReadonly &&
-    prevProps.messageId === nextProps.messageId,
+    prevProps.messageId === nextProps.messageId
 );
