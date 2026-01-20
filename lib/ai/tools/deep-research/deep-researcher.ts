@@ -351,7 +351,7 @@ class ResearcherAgent extends Agent {
     const tools = await getAllTools(
       this.config,
       this.dataStream,
-      state.requestId
+      this.toolCallId
     );
     if (Object.keys(tools).length === 0) {
       throw new Error(

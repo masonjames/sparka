@@ -116,10 +116,12 @@ export const tavilyWebSearch = ({
   dataStream,
   writeTopLevelUpdates,
   costAccumulator,
+  toolCallIdOverride,
 }: {
   dataStream: StreamWriter;
   writeTopLevelUpdates: boolean;
   costAccumulator?: CostAccumulator;
+  toolCallIdOverride?: string;
 }) =>
   tool({
     description: `Multi-query web search (supports depth, topic & result limits). Always cite sources inline.
@@ -156,8 +158,9 @@ Avoid:
         searchDepth: "basic" | "advanced" | null;
         exclude_domains: string[] | null;
       },
-      { toolCallId }: { toolCallId: string }
+      { toolCallId: sdkToolCallId }: { toolCallId: string }
     ) => {
+      const toolCallId = toolCallIdOverride ?? sdkToolCallId;
       const log = createModuleLogger("tools/web-search");
       log.debug(
         {
@@ -203,10 +206,12 @@ export const firecrawlWebSearch = ({
   dataStream,
   writeTopLevelUpdates,
   costAccumulator,
+  toolCallIdOverride,
 }: {
   dataStream: StreamWriter;
   writeTopLevelUpdates: boolean;
   costAccumulator?: CostAccumulator;
+  toolCallIdOverride?: string;
 }) =>
   tool({
     description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
@@ -226,8 +231,9 @@ Avoid:
       }: {
         search_queries: { query: string; maxResults: number | null }[];
       },
-      { toolCallId }: { toolCallId: string }
+      { toolCallId: sdkToolCallId }: { toolCallId: string }
     ) => {
+      const toolCallId = toolCallIdOverride ?? sdkToolCallId;
       const log = createModuleLogger("tools/web-search");
       log.debug(
         { queriesCount: search_queries.length },
