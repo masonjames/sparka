@@ -54,35 +54,6 @@ export function useMessagePartByPartIdx<
     : ChatMessage["parts"][number];
 }
 
-function useMessagePartsByPartRange(
-  messageId: string,
-  startIdx: number,
-  endIdx: number
-): ChatMessage["parts"];
-function useMessagePartsByPartRange<
-  T extends ChatMessage["parts"][number]["type"],
->(
-  messageId: string,
-  startIdx: number,
-  endIdx: number,
-  type: T
-): Extract<ChatMessage["parts"][number], { type: T }>[];
-function _useMessagePartsByPartRange<
-  T extends ChatMessage["parts"][number]["type"],
->(messageId: string, startIdx: number, endIdx: number, type?: T) {
-  return usePartsStore(
-    (state) =>
-      state.getMessagePartsRange(
-        messageId,
-        startIdx,
-        endIdx,
-        type as unknown as string | undefined
-      ) as unknown as ChatMessage["parts"],
-    equal
-  ) as unknown as T extends ChatMessage["parts"][number]["type"]
-    ? Extract<ChatMessage["parts"][number], { type: T }>[]
-    : ChatMessage["parts"];
-}
 
 export function useMessageResearchUpdatePartByToolCallId(
   messageId: string,
