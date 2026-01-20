@@ -149,8 +149,7 @@ export const siteConfig: SiteConfig = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
   appName: "ChatJS",
-  appDescription:
-    "The open-source template for shipping production AI chat",
+  appDescription: "The prod-ready AI chat template",
   appUrl: "https://chatjs.dev",
 
   organization: {

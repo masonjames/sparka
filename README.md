@@ -4,7 +4,7 @@
 
 # ChatJS
 
-The open-source template for shipping production AI chat.
+The prod-ready AI chat template.
 
 **Next.js • Vercel AI SDK • Shadcn/UI • Better Auth • Drizzle ORM**
 
