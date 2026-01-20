@@ -41,7 +41,7 @@ export function Chat({
       <ResizablePanelGroup className="h-full w-full" direction="horizontal">
         <ResizablePanel
           className={isSecondaryPanelVisible ? "hidden md:block" : undefined}
-          defaultSize={65}
+          defaultSize={50}
           minSize={40}
         >
           <MainChatPanel
@@ -57,7 +57,7 @@ export function Chat({
           <ResizableHandle className="hidden md:block" />
         )}
         {isSecondaryPanelVisible && (
-          <ResizablePanel defaultSize={35} minSize={25}>
+          <ResizablePanel defaultSize={50} minSize={25}>
             <SecondaryChatPanel
               className="flex h-full min-w-0 flex-1 flex-col"
               isReadonly={isReadonly}
