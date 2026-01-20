@@ -1,69 +1,47 @@
 "use client";
 
-import { useChatStoreApi } from "@ai-sdk-tools/store";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useMessageResearchUpdatePartByToolCallId } from "@/lib/stores/hooks-message-parts";
-import { isLastArtifact } from "../is-last-artifact";
-import { DocumentToolResult } from "./document-common";
-import { DocumentPreview } from "./document-preview";
 import { ResearchUpdates } from "./message-annotations";
+
+type DeepResearchPart = Extract<
+  ChatMessage["parts"][number],
+  { type: "tool-deepResearch" }
+>;
+
+function getOutputError(part: DeepResearchPart): string | null {
+  if (part.state !== "output-available") {
+    return null;
+  }
+  if (part.output.format !== "problem") {
+    return null;
+  }
+  return part.output.answer;
+}
 
 export function DeepResearch({
   messageId,
   part,
-  isReadonly,
 }: {
   messageId: string;
-  part: Extract<ChatMessage["parts"][number], { type: "tool-deepResearch" }>;
-  isReadonly: boolean;
+  part: DeepResearchPart;
 }) {
-  const { toolCallId, state } = part;
+  const { toolCallId } = part;
   const researchUpdates = useMessageResearchUpdatePartByToolCallId(
     messageId,
     toolCallId
   );
-  const chatStore = useChatStoreApi<ChatMessage>();
 
-  if (state === "input-available") {
-    return (
-      <div className="flex w-full flex-col gap-3" key={toolCallId}>
-        <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
-      </div>
-    );
-  }
-  if (state === "output-available") {
-    const { output, input } = part;
-    const shouldShowFullPreview = isLastArtifact(
-      chatStore.getState().messages,
-      toolCallId
-    );
+  const outputError = getOutputError(part);
 
-    if (output.format === "report" || output.format === "problem") {
-      return (
-        <div key={toolCallId}>
-          <div className="mb-2">
-            <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
-          </div>
-          {output.format === "report" &&
-            (shouldShowFullPreview ? (
-              <DocumentPreview
-                args={input}
-                isReadonly={isReadonly}
-                messageId={messageId}
-                result={output}
-                type="create"
-              />
-            ) : (
-              <DocumentToolResult
-                isReadonly={isReadonly}
-                messageId={messageId}
-                result={output}
-                type="create"
-              />
-            ))}
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
+      {outputError && (
+        <div className="rounded border bg-destructive/10 p-2 text-destructive-foreground">
+          Error: {outputError}
         </div>
-      );
-    }
-  }
-  return null;
+      )}
+    </div>
+  );
 }
