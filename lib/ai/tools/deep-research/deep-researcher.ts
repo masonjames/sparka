@@ -898,9 +898,12 @@ async function finalReportGeneration(
     finalReportModelContextWindow
   );
 
+  // Aggregate all truncated messages to preserve full context
   const truncatedReportPrompt =
     truncatedFinalMessages.length > 0
-      ? getTextContentFromModelMessage(truncatedFinalMessages[0])
+      ? truncatedFinalMessages
+          .map((msg) => getTextContentFromModelMessage(msg))
+          .join("\n\n")
       : finalReportPromptText;
 
   const reportTool = createTextDocumentTool({
@@ -925,6 +928,7 @@ To write the report, call the createTextDocument tool with:
 - title: "${reportTitle}"
 - content: the full markdown content of your report`,
     tools: { createTextDocument: reportTool },
+    maxOutputTokens: config.final_report_model_max_tokens,
     experimental_telemetry: {
       isEnabled: true,
       functionId: "finalReportGeneration",
@@ -1014,7 +1018,6 @@ export async function runDeepResearcher(
     supervisor_messages: [],
     raw_notes: [],
     notes: [],
-    final_report: "",
     reportResult: {
       status: "success",
       documentId: "",
