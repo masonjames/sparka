@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { getDocumentById, saveDocument } from "@/lib/db/queries";
+import { codeGuidelines } from "./code-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const editCodeDocumentTool = ({
@@ -14,9 +15,7 @@ Use for editing:
 - Python scripts and programs
 - Code snippets that need to be saved
 - Single-file code examples
-
-The title MUST include the file extension (e.g., "script.py", "App.tsx", "utils.js").
-This extension determines syntax highlighting.
+${codeGuidelines}
 
 Important: You must first read the document content before editing.
 

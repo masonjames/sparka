@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { saveDocument } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
+import { sheetGuidelines } from "./sheet-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const createSheetDocumentTool = ({
@@ -16,6 +17,7 @@ Use for:
 - Lists with multiple columns
 - Financial data, statistics
 - Any tabular information
+${sheetGuidelines}
 
 The spreadsheet will be created with proper column headers and data.`,
     inputSchema: z.object({
