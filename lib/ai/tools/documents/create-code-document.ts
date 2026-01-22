@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { saveDocument } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
+import { codeGuidelines } from "./code-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const createCodeDocumentTool = ({
@@ -15,9 +16,7 @@ Use for:
 - Python scripts and programs
 - Code snippets that need to be saved
 - Single-file code examples
-
-The title MUST include the file extension (e.g., "script.py", "App.tsx", "utils.js").
-This extension determines syntax highlighting.`,
+${codeGuidelines}`,
     inputSchema: z.object({
       title: z
         .string()

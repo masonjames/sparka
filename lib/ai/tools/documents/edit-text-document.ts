@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { getDocumentById, saveDocument } from "@/lib/db/queries";
+import { textGuidelines } from "./text-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const editTextDocumentTool = ({
@@ -14,6 +15,7 @@ Use for editing:
 - Essays, articles, blog posts, reports
 - Documentation, guides, tutorials
 - Emails, letters, formal writing
+${textGuidelines}
 
 Important: You must first read the document content before editing.
 

@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { getDocumentById, saveDocument } from "@/lib/db/queries";
+import { sheetGuidelines } from "./sheet-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const editSheetDocumentTool = ({
@@ -15,6 +16,7 @@ Use for editing:
 - Lists with multiple columns
 - Financial data, statistics
 - Any tabular information
+${sheetGuidelines}
 
 Important: You must first read the document content before editing.
 

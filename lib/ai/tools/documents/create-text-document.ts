@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { saveDocument } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
+import { textGuidelines } from "./text-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
 export const createTextDocumentTool = ({
@@ -15,6 +16,7 @@ Use for:
 - Essays, articles, blog posts, reports
 - Documentation, guides, tutorials
 - Emails, letters, formal writing
+${textGuidelines}
 
 The title should be descriptive of the content.`,
     inputSchema: z.object({
