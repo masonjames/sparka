@@ -1,5 +1,3 @@
-import type { ArtifactKind } from "../artifacts/artifact-kind";
-
 export const systemPrompt = () => `You are a friendly assistant!
 
 ## Your Goals
@@ -25,34 +23,3 @@ export const systemPrompt = () => `You are a friendly assistant!
 Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
   
   `;
-
-export const updateDocumentPrompt = (
-  currentContent: string | null,
-  type: ArtifactKind
-) => {
-  if (type === "text") {
-    return `\
-Improve the following contents of the document based on the given prompt.
-
-${currentContent}
-`;
-  }
-
-  if (type === "code") {
-    return `\
-Improve the following code snippet based on the given prompt.
-
-${currentContent}
-`;
-  }
-
-  if (type === "sheet") {
-    return `\
-Improve the following spreadsheet based on the given prompt.
-
-${currentContent}
-`;
-  }
-
-  return "";
-};
