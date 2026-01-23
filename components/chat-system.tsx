@@ -82,8 +82,8 @@ export const ChatSystem = memo(function PureChatSystem({
               </>
             ) : (
               <ChatInputProvider
-                disableSuggestedActions={isProjectPage}
                 initialTool={initialTool ?? null}
+                isProjectContext={isProjectPage}
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >

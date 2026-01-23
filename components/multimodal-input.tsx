@@ -116,7 +116,7 @@ function PureMultimodalInput({
     getInitialInput,
     isEmpty,
     handleSubmit,
-    disableSuggestedActions,
+    isProjectContext,
   } = useChatInput();
 
   const isAnonymous = !session?.user;
@@ -563,14 +563,25 @@ function PureMultimodalInput({
   });
 
   const showSuggestedActions =
-    !disableSuggestedActions &&
+    !isProjectContext &&
     messageIds.length === 0 &&
     attachments.length === 0 &&
     uploadQueue.length === 0 &&
     !isEditMode;
 
+  const showWelcomeMessage =
+    messageIds.length === 0 && !isProjectContext && !isEditMode;
+
   return (
     <div className="relative">
+      {showWelcomeMessage && (
+        <div className="mb-6 text-center">
+          <h1 className="font-normal text-2xl text-foreground sm:text-3xl">
+            What can I help with?
+          </h1>
+        </div>
+      )}
+
       <input
         accept={ACCEPT_ALL}
         className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
