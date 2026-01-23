@@ -577,7 +577,7 @@ function PureMultimodalInput({
       {showWelcomeMessage && (
         <div className="mb-6 text-center">
           <h1 className="font-normal text-2xl text-foreground sm:text-3xl">
-            What can I help with?
+            How can I help you today?
           </h1>
         </div>
       )}
