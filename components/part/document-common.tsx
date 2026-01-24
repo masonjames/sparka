@@ -77,7 +77,7 @@ function PureDocumentToolResult({
 
   return (
     <button
-      className="flex w-fit cursor-pointer flex-row items-start gap-3 rounded-xl border bg-background px-3 py-2"
+      className="flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border bg-background px-3 py-2"
       onClick={() => {
         setArtifact({
           documentId: result.id,
@@ -91,7 +91,7 @@ function PureDocumentToolResult({
       }}
       type="button"
     >
-      <div className="mt-1 text-muted-foreground">
+      <div className="text-muted-foreground">
         {(() => {
           if (type === "create") {
             return <FileIcon />;

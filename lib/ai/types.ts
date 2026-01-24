@@ -14,7 +14,6 @@ import type { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import type { retrieve } from "@/lib/ai/tools/retrieve";
 import type { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { Suggestion } from "@/lib/db/schema";
-import type { ArtifactKind } from "../artifacts/artifact-kind";
 import type { AppModelId } from "./app-models";
 import type { createCodeDocumentTool } from "./tools/documents/create-code-document";
 import type { createSheetDocumentTool } from "./tools/documents/create-sheet-document";
@@ -123,21 +122,9 @@ type FollowupSuggestions = {
   suggestions: string[];
 };
 
-// Note: Legacy dataStream types are still needed for:
-// - deep-research report generation (textDelta, id, messageId, title, kind, clear, finish)
-// - code/sheet artifact handlers (codeDelta, sheetDelta)
 export type CustomUIDataTypes = {
-  textDelta: string;
-  codeDelta: string;
-  sheetDelta: string;
   suggestion: Suggestion;
   appendMessage: string;
-  id: string;
-  messageId: string;
-  title: string;
-  kind: ArtifactKind;
-  clear: null;
-  finish: null;
   chatConfirmed: {
     chatId: string;
   };

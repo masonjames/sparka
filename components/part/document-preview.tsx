@@ -16,50 +16,62 @@ import { SpreadsheetEditor } from "../sheet-editor";
 import { Editor } from "../text-editor";
 import { DocumentToolCall, DocumentToolResult } from "./document-common";
 
+type DocumentPreviewInput = {
+  title: string;
+  kind: ArtifactKind;
+  content: string;
+};
+
+type DocumentPreviewOutput = {
+  documentId: string;
+  title: string;
+  kind: ArtifactKind;
+};
+
 type DocumentPreviewProps = {
   isReadonly: boolean;
-  result?: any;
-  args?: any;
+  output?: DocumentPreviewOutput;
+  input?: DocumentPreviewInput;
   messageId: string;
   type?: "create" | "update";
 };
 
 export function DocumentPreview({
   isReadonly,
-  result,
-  args,
+  output,
+  input,
   messageId,
   type = "create",
 }: DocumentPreviewProps) {
   const { artifact, setArtifact } = useArtifact();
   const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
-    result?.id || "",
-    result?.id === "init" || artifact.status === "streaming"
+    output?.documentId || "",
+    output?.documentId === "init" || artifact.status === "streaming"
   );
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement | null>(null);
 
   if (artifact.isVisible) {
-    if (result) {
+    if (output) {
       return (
         <DocumentToolResult
           isReadonly={isReadonly}
           messageId={messageId}
           result={{
-            id: result.id,
-            title: result.title,
-            kind: result.kind,
+            id: output.documentId,
+            title: output.title || artifact.title,
+            kind: output.kind,
           }}
           type={type}
         />
       );
     }
 
-    if (args) {
+    if (input) {
       return (
         <DocumentToolCall
-          args={{ title: args.title }}
+          args={{ title: input.title }}
           isReadonly={isReadonly}
           type={type}
         />
@@ -68,7 +80,7 @@ export function DocumentPreview({
   }
 
   if (isDocumentsFetching) {
-    return <LoadingSkeleton artifactKind={result.kind ?? args.kind} />;
+    return <LoadingSkeleton artifactKind={output?.kind ?? input?.kind ?? artifact.kind} />;
   }
 
   const document: Document | null = (() => {
@@ -98,7 +110,7 @@ export function DocumentPreview({
       <HitboxLayer
         hitboxRef={hitboxRef}
         messageId={messageId}
-        result={result}
+        output={output}
         setArtifact={setArtifact}
       />
       <DocumentHeader
@@ -138,12 +150,12 @@ const LoadingSkeleton = ({
 
 const PureHitboxLayer = ({
   hitboxRef,
-  result,
+  output,
   setArtifact,
   messageId,
 }: {
   hitboxRef: React.RefObject<HTMLDivElement | null>;
-  result: any;
+  output?: DocumentPreviewOutput;
   setArtifact: (
     updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)
   ) => void;
@@ -151,20 +163,24 @@ const PureHitboxLayer = ({
 }) => {
   const handleClick = useCallback(
     (_event: MouseEvent<HTMLElement>) => {
-      setArtifact((artifact) =>
-        artifact.status === "streaming"
-          ? { ...artifact, isVisible: true }
-          : {
-              ...artifact,
-              title: result.title,
-              documentId: result.id,
-              messageId,
-              kind: result.kind,
-              isVisible: true,
-            }
-      );
+      if (!output) {
+        return;
+      }
+      setArtifact((artifact) => {
+        if (artifact.status === "streaming") {
+          return { ...artifact, isVisible: true };
+        }
+        return {
+          ...artifact,
+          title: output.title,
+          documentId: output.documentId,
+          messageId,
+          kind: output.kind,
+          isVisible: true,
+        };
+      });
     },
-    [setArtifact, result, messageId]
+    [setArtifact, output, messageId]
   );
 
   return (
@@ -185,7 +201,7 @@ const PureHitboxLayer = ({
 };
 
 const HitboxLayer = memo(PureHitboxLayer, (prevProps, nextProps) => {
-  if (!equal(prevProps.result, nextProps.result)) {
+  if (!equal(prevProps.output, nextProps.output)) {
     return false;
   }
   return true;

@@ -78,21 +78,6 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       language: "python",
     });
   },
-  onStreamPart: ({ streamPart, setArtifact, setMetadata: _setMetadata }) => {
-    if (streamPart.type === "data-codeDelta") {
-      setArtifact((draftArtifact) => ({
-        ...draftArtifact,
-        content: streamPart.data,
-        isVisible:
-          draftArtifact.status === "streaming" &&
-          streamPart.data.length > 300 &&
-          streamPart.data.length < 310
-            ? true
-            : draftArtifact.isVisible,
-        status: "streaming",
-      }));
-    }
-  },
   content: ({ isReadonly, content, title, ...props }) => {
     const language = getLanguageFromFileName(title) || "python";
 

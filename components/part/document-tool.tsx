@@ -77,14 +77,18 @@ function PureDocumentTool({
   ) {
     return (
       <DocumentPreview
-        args={{ title: inputTitle, kind }}
+        input={{ title: inputTitle, kind, content: inputContent }}
         isReadonly={isReadonly}
         messageId={messageId}
-        result={{
-          id: tool.output?.documentId ?? "init",
-          title: inputTitle,
-          kind,
-        }}
+        output={
+          tool.output
+            ? {
+                documentId: tool.output.documentId,
+                title: inputTitle,
+                kind,
+              }
+            : undefined
+        }
         type={isEdit ? "update" : "create"}
       />
     );
