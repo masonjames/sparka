@@ -107,7 +107,7 @@ describe("CostAccumulator", () => {
       expect(cost).toBe(5);
     });
 
-    it("should ignore zero API costs", async () => {
+    it("should ignore zero API costs", () => {
       const accumulator = new CostAccumulator();
       accumulator.addAPICost("internal", 0);
 

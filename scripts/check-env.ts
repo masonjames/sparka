@@ -9,11 +9,13 @@ import { siteConfig } from "../lib/config";
 
 type ValidationError = { feature: string; missing: string[] };
 
-function checkEnv(): void {
-  const errors: ValidationError[] = [];
-  const env = process.env;
+function getMissingEnvVars(vars: [string, string | undefined][]): string[] {
+  return vars.filter(([, value]) => !value).map(([name]) => name);
+}
 
-  // Validate AI Gateway access (required for live model discovery + providers)
+function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
+  const errors: ValidationError[] = [];
+
   if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
     errors.push({
       feature: "aiGateway",
@@ -21,7 +23,6 @@ function checkEnv(): void {
     });
   }
 
-  // Validate integrations
   if (
     siteConfig.integrations.webSearch &&
     !(env.TAVILY_API_KEY || env.FIRECRAWL_API_KEY)
@@ -39,7 +40,6 @@ function checkEnv(): void {
     });
   }
 
-  // Sandbox requires OIDC (Vercel-hosted) or token auth (self-hosted)
   if (siteConfig.integrations.sandbox) {
     const hasOidc = !!env.VERCEL_OIDC_TOKEN;
     const hasTokenAuth =
@@ -55,18 +55,20 @@ function checkEnv(): void {
     }
   }
 
-  // Validate authentication
+  return errors;
+}
+
+function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
+  const errors: ValidationError[] = [];
+
   if (
     siteConfig.authentication.google &&
     !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)
   ) {
-    const missing = [];
-    if (!env.AUTH_GOOGLE_ID) {
-      missing.push("AUTH_GOOGLE_ID");
-    }
-    if (!env.AUTH_GOOGLE_SECRET) {
-      missing.push("AUTH_GOOGLE_SECRET");
-    }
+    const missing = getMissingEnvVars([
+      ["AUTH_GOOGLE_ID", env.AUTH_GOOGLE_ID],
+      ["AUTH_GOOGLE_SECRET", env.AUTH_GOOGLE_SECRET],
+    ]);
     errors.push({ feature: "authentication.google", missing });
   }
 
@@ -74,13 +76,10 @@ function checkEnv(): void {
     siteConfig.authentication.github &&
     !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
   ) {
-    const missing = [];
-    if (!env.AUTH_GITHUB_ID) {
-      missing.push("AUTH_GITHUB_ID");
-    }
-    if (!env.AUTH_GITHUB_SECRET) {
-      missing.push("AUTH_GITHUB_SECRET");
-    }
+    const missing = getMissingEnvVars([
+      ["AUTH_GITHUB_ID", env.AUTH_GITHUB_ID],
+      ["AUTH_GITHUB_SECRET", env.AUTH_GITHUB_SECRET],
+    ]);
     errors.push({ feature: "authentication.github", missing });
   }
 
@@ -88,17 +87,13 @@ function checkEnv(): void {
     siteConfig.authentication.vercel &&
     !(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET)
   ) {
-    const missing = [];
-    if (!env.VERCEL_APP_CLIENT_ID) {
-      missing.push("VERCEL_APP_CLIENT_ID");
-    }
-    if (!env.VERCEL_APP_CLIENT_SECRET) {
-      missing.push("VERCEL_APP_CLIENT_SECRET");
-    }
+    const missing = getMissingEnvVars([
+      ["VERCEL_APP_CLIENT_ID", env.VERCEL_APP_CLIENT_ID],
+      ["VERCEL_APP_CLIENT_SECRET", env.VERCEL_APP_CLIENT_SECRET],
+    ]);
     errors.push({ feature: "authentication.vercel", missing });
   }
 
-  // Check at least one auth provider is enabled and configured
   const hasAuth =
     (siteConfig.authentication.google &&
       env.AUTH_GOOGLE_ID &&
@@ -116,6 +111,13 @@ function checkEnv(): void {
       missing: ["At least one auth provider must be enabled and configured"],
     });
   }
+
+  return errors;
+}
+
+function checkEnv(): void {
+  const env = process.env;
+  const errors = [...validateIntegrations(env), ...validateAuthentication(env)];
 
   if (errors.length > 0) {
     const message = errors

@@ -21,12 +21,6 @@ export type ThreadAugmentedState<UM extends UIMessage> =
     setMessagesWithEpoch: (messages: UM[]) => void;
   };
 
-type ThreadSC<UM extends UIMessage> = StateCreator<
-  ThreadAugmentedState<UM>,
-  [],
-  []
->;
-
 export const withThreads =
   <UI_MESSAGE extends UIMessage, T extends BaseChatStoreState<UI_MESSAGE>>(
     creator: StateCreator<T, [], []>

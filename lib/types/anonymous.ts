@@ -1,23 +1,11 @@
-import type { ChatMessage, ToolName } from "../ai/types";
+import type { ToolName } from "../ai/types";
 import { siteConfig } from "../config";
-import type { DBMessage } from "../db/schema";
-import type { UIChat } from "./ui-chat";
 
 export type AnonymousSession = {
   id: string;
   remainingCredits: number;
   createdAt: Date;
 };
-
-// Anonymous chat structure matching the DB chat structure
-interface AnonymousChat extends UIChat {}
-
-// Anonymous message structure - includes parts since they're stored in localStorage
-interface AnonymousMessage extends DBMessage {
-  // Parts are stored as JSON in localStorage but use the same shape
-  // as ChatMessage["parts"] for tool/document cloning.
-  parts: ChatMessage["parts"];
-}
 
 const anonConfig = siteConfig.anonymous;
 

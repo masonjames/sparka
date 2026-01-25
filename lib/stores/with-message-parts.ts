@@ -47,12 +47,6 @@ export type PartsAugmentedState<UM extends UIMessage> =
     ) => UIMessageParts<UM>[number];
   };
 
-type PartsSC<UM extends UIMessage> = StateCreator<
-  PartsAugmentedState<UM>,
-  [],
-  []
->;
-
 export const withMessageParts =
   <UI_MESSAGE extends UIMessage, T extends BaseChatStoreState<UI_MESSAGE>>(
     creator: StateCreator<T, [], []>

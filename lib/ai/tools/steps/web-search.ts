@@ -3,8 +3,6 @@ import { type TavilySearchOptions, tavily } from "@tavily/core";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "../../../logger";
 
-type SearchProvider = "tavily" | "firecrawl";
-
 export type SearchProviderOptions =
   | ({
       provider: "tavily";
