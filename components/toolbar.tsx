@@ -75,7 +75,7 @@ function Tool({
   const handleSelect = () => {
     // If there's only one tool, execute directly on click
     if (isSingleTool) {
-      onClick({ sendMessage, storeApi });
+      onClick({ sendMessage, storeApi, config });
       return;
     }
 
