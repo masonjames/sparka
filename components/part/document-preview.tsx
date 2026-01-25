@@ -34,6 +34,7 @@ type DocumentPreviewProps = {
   input?: DocumentPreviewInput;
   messageId: string;
   type?: "create" | "update";
+  isLastArtifact?: boolean;
 };
 
 export function DocumentPreview({
@@ -42,6 +43,7 @@ export function DocumentPreview({
   input,
   messageId,
   type = "create",
+  isLastArtifact = true,
 }: DocumentPreviewProps) {
   const { artifact, setArtifact } = useArtifact();
   const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
@@ -52,7 +54,8 @@ export function DocumentPreview({
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement | null>(null);
 
-  if (artifact.isVisible) {
+  // Show collapsed view if artifact panel is visible OR this is not the last artifact
+  if (artifact.isVisible || !isLastArtifact) {
     if (output) {
       return (
         <DocumentToolResult
