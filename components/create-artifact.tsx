@@ -5,7 +5,6 @@ import type { DataUIPart } from "ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { SiteConfig } from "@/lib/config";
-import type { Suggestion } from "@/lib/db/schema";
 import type { useTRPC } from "@/trpc/react";
 import type { UIArtifact } from "./artifact-panel";
 
@@ -47,7 +46,6 @@ type ArtifactContent<M = any> = {
   isCurrentVersion: boolean;
   currentVersionIndex: number;
   status: "streaming" | "idle";
-  suggestions: Suggestion[];
   onSaveContent: (updatedContent: string, debounce: boolean) => void;
   isInline: boolean;
   getDocumentContentById: (index: number) => string;
@@ -77,7 +75,7 @@ type ArtifactConfig<T extends string, M = any> = {
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
-  onStreamPart: (args: {
+  onStreamPart?: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
     streamPart: DataUIPart<CustomUIDataTypes>;
@@ -105,7 +103,7 @@ export class Artifact<T extends string, M = any> {
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
-  readonly onStreamPart: (args: {
+  readonly onStreamPart?: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
     streamPart: DataUIPart<CustomUIDataTypes>;

@@ -5,7 +5,6 @@ import {
   getDocumentById,
   getDocumentsById,
   getPublicDocumentsById,
-  getSuggestionsByDocumentId,
   saveDocument,
 } from "@/lib/db/queries";
 import {
@@ -46,28 +45,6 @@ export const documentRouter = createTRPCRouter({
       }
 
       return documents;
-    }),
-
-  getSuggestions: protectedProcedure
-    .input(z.object({ documentId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      // Validate document belongs to user
-      const documents = await getDocumentsById({
-        id: input.documentId,
-        userId: ctx.user.id,
-      });
-
-      if (documents.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Document not found",
-        });
-      }
-
-      const suggestions = await getSuggestionsByDocumentId({
-        documentId: input.documentId,
-      });
-      return suggestions ?? [];
     }),
 
   saveDocument: protectedProcedure

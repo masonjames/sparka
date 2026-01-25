@@ -6,7 +6,7 @@ import type {
 } from "@/lib/ai/tools/documents/types";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "../icons";
+import { FileIcon, LoaderIcon, PencilEditIcon } from "../icons";
 
 export type CreateDocumentTool = Extract<
   ChatMessage["parts"][number],
@@ -16,10 +16,6 @@ export type CreateDocumentTool = Extract<
 export type EditDocumentTool = Extract<
   ChatMessage["parts"][number],
   { type: EditDocumentToolType }
->;
-export type RequestSuggestionsTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-requestSuggestions" }
 >;
 
 export const hasProp = <T extends string>(
@@ -39,7 +35,7 @@ export const isArtifactToolResult = (
   typeof o.kind === "string";
 
 const getActionText = (
-  type: "create" | "update" | "request-suggestions",
+  type: "create" | "update",
   tense: "present" | "past"
 ) => {
   switch (type) {
@@ -47,17 +43,13 @@ const getActionText = (
       return tense === "present" ? "Creating" : "Created";
     case "update":
       return tense === "present" ? "Updating" : "Updated";
-    case "request-suggestions":
-      return tense === "present"
-        ? "Adding suggestions"
-        : "Added suggestions to";
     default:
       return null;
   }
 };
 
 type DocumentToolResultProps = {
-  type: "create" | "update" | "request-suggestions";
+  type: "create" | "update";
   result: {
     id: string;
     title: string;
@@ -77,7 +69,7 @@ function PureDocumentToolResult({
 
   return (
     <button
-      className="flex w-fit cursor-pointer flex-row items-start gap-3 rounded-xl border bg-background px-3 py-2"
+      className="flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border bg-background px-3 py-2"
       onClick={() => {
         setArtifact({
           documentId: result.id,
@@ -91,16 +83,13 @@ function PureDocumentToolResult({
       }}
       type="button"
     >
-      <div className="mt-1 text-muted-foreground">
+      <div className="text-muted-foreground">
         {(() => {
           if (type === "create") {
             return <FileIcon />;
           }
           if (type === "update") {
             return <PencilEditIcon />;
-          }
-          if (type === "request-suggestions") {
-            return <MessageIcon />;
           }
           return null;
         })()}
@@ -115,7 +104,7 @@ function PureDocumentToolResult({
 export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
 
 type DocumentToolCallProps = {
-  type: "create" | "update" | "request-suggestions";
+  type: "create" | "update";
   args: { title?: string };
   isReadonly: boolean;
 };
@@ -146,9 +135,6 @@ function PureDocumentToolCall({
             }
             if (type === "update") {
               return <PencilEditIcon />;
-            }
-            if (type === "request-suggestions") {
-              return <MessageIcon />;
             }
             return null;
           })()}

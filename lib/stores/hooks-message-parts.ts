@@ -3,11 +3,14 @@
 import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
+import { documentToolTypes } from "../ai/tools/documents/types";
 import type { ChatMessage } from "../ai/types";
 import {
   type CustomChatStoreState,
   useCustomChatStoreApi,
 } from "./custom-store-provider";
+
+const artifactToolTypes = [...documentToolTypes, "tool-deepResearch"] as const;
 
 function usePartsStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
@@ -66,4 +69,29 @@ export function useMessageResearchUpdatePartByToolCallId(
         .filter((part) => part.data.toolCallId === toolCallId) ?? [],
     equal
   );
+}
+
+export function useIsLastArtifact(toolCallId: string): boolean {
+  return usePartsStore((state) => {
+    const messages = state._throttledMessages || state.messages;
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.role !== "assistant") {
+        continue;
+      }
+
+      for (const part of message.parts) {
+        if (
+          "toolCallId" in part &&
+          (artifactToolTypes as readonly string[]).includes(part.type) &&
+          part.state === "output-available"
+        ) {
+          return part.toolCallId === toolCallId;
+        }
+      }
+    }
+
+    return false;
+  });
 }

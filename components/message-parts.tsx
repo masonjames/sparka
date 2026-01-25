@@ -21,7 +21,7 @@ import { DynamicToolPart } from "./part/dynamic-tool";
 import { GenerateImage } from "./part/generate-image";
 import { ReasoningPart } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
-import { RequestSuggestions } from "./part/request-suggestions";
+
 import { RetrieveUrl } from "./part/retrieve-url";
 import { TextMessagePart } from "./part/text-message-part";
 import { Weather } from "./part/weather";
@@ -58,16 +58,6 @@ function ToolPart({
   ) {
     return (
       <DocumentTool isReadonly={isReadonly} messageId={messageId} tool={part} />
-    );
-  }
-
-  if (type === "tool-requestSuggestions") {
-    return (
-      <RequestSuggestions
-        isReadonly={isReadonly}
-        messageId={messageId}
-        tool={part}
-      />
     );
   }
 

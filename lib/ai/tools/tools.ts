@@ -12,7 +12,6 @@ import { editTextDocumentTool } from "@/lib/ai/tools/documents/edit-text-documen
 import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import { siteConfig } from "@/lib/config";
@@ -63,10 +62,6 @@ export function getTools({
     editTextDocument: editTextDocumentTool(documentToolProps),
     editCodeDocument: editCodeDocumentTool(documentToolProps),
     editSheetDocument: editSheetDocumentTool(documentToolProps),
-    requestSuggestions: requestSuggestions({
-      session,
-      dataStream,
-    }),
     readDocument: readDocument({
       session,
       dataStream,

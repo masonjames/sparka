@@ -5,64 +5,14 @@ import { DocumentSkeleton } from "@/components/document-skeleton";
 import {
   ClockRewind,
   CopyIcon,
-  MessageIcon,
   PenIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
 import { Editor } from "@/components/text-editor";
-import type { Suggestion } from "@/lib/db/schema";
-
-type TextArtifactMetadata = {
-  suggestions: Suggestion[];
-};
-
-export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
+export const textArtifact = new Artifact<"text">({
   kind: "text",
   description: "Useful for text content, like drafting essays and emails.",
-  initialize: async ({
-    documentId,
-    setMetadata,
-    trpc,
-    queryClient,
-    isAuthenticated,
-  }) => {
-    if (!isAuthenticated) {
-      setMetadata({
-        suggestions: [],
-      });
-      return;
-    }
-
-    const suggestions = await queryClient.fetchQuery(
-      trpc.document.getSuggestions.queryOptions({ documentId })
-    );
-
-    setMetadata({
-      suggestions,
-    });
-  },
-  onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
-    if (streamPart.type === "data-suggestion") {
-      setMetadata((metadata) => ({
-        suggestions: [...metadata.suggestions, streamPart.data],
-      }));
-    }
-
-    if (streamPart.type === "data-textDelta") {
-      setArtifact((draftArtifact) => ({
-        ...draftArtifact,
-        content: draftArtifact.content + streamPart.data,
-        isVisible:
-          draftArtifact.status === "streaming" &&
-          draftArtifact.content.length > 400 &&
-          draftArtifact.content.length < 450
-            ? true
-            : draftArtifact.isVisible,
-        status: "streaming",
-      }));
-    }
-  },
   content: ({
     mode,
     status,
@@ -72,7 +22,6 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     onSaveContent,
     getDocumentContentById,
     isLoading,
-    metadata,
     isReadonly,
   }) => {
     if (isLoading) {
@@ -99,12 +48,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
           isReadonly={isReadonly}
           onSaveContent={onSaveContent}
           status={status}
-          suggestions={metadata ? metadata.suggestions : []}
         />
-
-        {metadata?.suggestions && metadata.suggestions.length > 0 ? (
-          <div className="h-dvh w-12 shrink-0 md:hidden" />
-        ) : null}
       </div>
     );
   },
@@ -115,7 +59,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("toggle");
       },
-      isDisabled: ({ currentVersionIndex, setMetadata: _setMetadata }) => {
+      isDisabled: ({ currentVersionIndex }) => {
         if (currentVersionIndex === 0) {
           return true;
         }
@@ -175,27 +119,6 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
           ],
           metadata: {
             selectedModel: config.models.defaults.polishText,
-            createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
-            activeStreamId: null,
-          },
-        });
-      },
-    },
-    {
-      icon: <MessageIcon />,
-      description: "Request suggestions",
-      onClick: ({ sendMessage, storeApi, config }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add suggestions you have that could improve the writing.",
-            },
-          ],
-          metadata: {
-            selectedModel: config.models.defaults.suggestions,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
             activeStreamId: null,

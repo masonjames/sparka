@@ -8,6 +8,7 @@ import {
   isEditTool,
 } from "@/lib/ai/tools/documents/types";
 import type { ChatMessage } from "@/lib/ai/types";
+import { useIsLastArtifact } from "@/lib/stores/hooks-message-parts";
 import { DocumentPreview } from "./document-preview";
 
 type DocumentTool = Extract<
@@ -29,6 +30,7 @@ function PureDocumentTool({
   const { setArtifact } = useArtifact();
   const kind = getToolKind(tool.type);
   const isEdit = isEditTool(tool.type);
+  const isLastArtifact = useIsLastArtifact(tool.toolCallId);
 
   const inputTitle = tool.input?.title ?? "";
   const inputContent = tool.input?.content ?? "";
@@ -77,14 +79,19 @@ function PureDocumentTool({
   ) {
     return (
       <DocumentPreview
-        args={{ title: inputTitle, kind }}
+        input={{ title: inputTitle, kind, content: inputContent }}
+        isLastArtifact={isLastArtifact}
         isReadonly={isReadonly}
         messageId={messageId}
-        result={{
-          id: tool.output?.documentId ?? "init",
-          title: inputTitle,
-          kind,
-        }}
+        output={
+          tool.output
+            ? {
+                documentId: tool.output.documentId,
+                title: inputTitle,
+                kind,
+              }
+            : undefined
+        }
         type={isEdit ? "update" : "create"}
       />
     );

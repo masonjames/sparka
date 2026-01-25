@@ -27,9 +27,8 @@ function handleResearchUpdate({
 }
 
 /**
- * Process artifact stream parts for legacy dataStream pattern.
- * Used by deep-research report generation.
- * New document tools use preliminary results instead.
+ * Process artifact stream parts (e.g., data-suggestion for text artifacts).
+ * Dispatches to artifact-specific onStreamPart handlers.
  */
 function processArtifactStreamPart({
   delta,
@@ -53,67 +52,6 @@ function processArtifactStreamPart({
       setMetadata,
     });
   }
-}
-
-/**
- * Update artifact state for legacy dataStream pattern.
- * Used by deep-research report generation.
- * New document tools use preliminary results instead.
- */
-function updateArtifactState({
-  delta,
-  setArtifact,
-}: {
-  delta: any;
-  setArtifact: ReturnType<typeof useArtifact>["setArtifact"];
-}): void {
-  setArtifact((draftArtifact) => {
-    switch (delta.type) {
-      case "data-id":
-        return {
-          ...draftArtifact,
-          documentId: delta.data,
-          status: "streaming",
-        };
-
-      case "data-messageId":
-        return {
-          ...draftArtifact,
-          messageId: delta.data,
-          status: "streaming",
-        };
-
-      case "data-title":
-        return {
-          ...draftArtifact,
-          title: delta.data,
-          status: "streaming",
-        };
-
-      case "data-kind":
-        return {
-          ...draftArtifact,
-          kind: delta.data,
-          status: "streaming",
-        };
-
-      case "data-clear":
-        return {
-          ...draftArtifact,
-          content: "",
-          status: "streaming",
-        };
-
-      case "data-finish":
-        return {
-          ...draftArtifact,
-          status: "idle",
-        };
-
-      default:
-        return draftArtifact;
-    }
-  });
 }
 
 export function DataStreamHandler({ id }: { id: string }) {
@@ -144,15 +82,12 @@ export function DataStreamHandler({ id }: { id: string }) {
 
       handleResearchUpdate({ delta, setSelectedTool });
 
-      // Legacy artifact handling for deep-research
       processArtifactStreamPart({
         delta,
         artifact,
         setArtifact,
         setMetadata,
       });
-
-      updateArtifactState({ delta, setArtifact });
     }
   }, [
     dataStream,

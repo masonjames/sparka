@@ -30,10 +30,7 @@ import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact-panel";
 import { useConfig } from "./config-provider";
-import type {
-  ArtifactToolbarContext,
-  ArtifactToolbarItem,
-} from "./create-artifact";
+import type { ArtifactToolbarItem } from "./create-artifact";
 import { ArrowUpIcon, StopIcon, SummarizeIcon } from "./icons";
 
 type ToolProps = {
@@ -44,7 +41,9 @@ type ToolProps = {
   isToolbarVisible?: boolean;
   setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
   isAnimating: boolean;
+  isSingleTool?: boolean;
   onClick: (context: ArtifactToolbarContext) => void;
+
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
@@ -56,6 +55,7 @@ function Tool({
   isToolbarVisible,
   setIsToolbarVisible,
   isAnimating,
+  isSingleTool,
   onClick,
   storeApi,
 }: ToolProps) {
@@ -70,6 +70,12 @@ function Tool({
   }, [selectedTool, description]);
 
   const handleSelect = () => {
+    // If there's only one tool, execute directly on click
+    if (isSingleTool) {
+      onClick({ sendMessage, storeApi });
+      return;
+    }
+
     if (!isToolbarVisible && setIsToolbarVisible) {
       setIsToolbarVisible(true);
       return;
@@ -302,6 +308,7 @@ function Tools({
         description={primaryTool.description}
         icon={primaryTool.icon}
         isAnimating={isAnimating}
+        isSingleTool={tools.length === 1}
         isToolbarVisible={isToolbarVisible}
         onClick={primaryTool.onClick}
         selectedTool={selectedTool}
