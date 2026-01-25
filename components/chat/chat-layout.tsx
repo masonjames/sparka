@@ -43,7 +43,7 @@ export const ChatLayout = ({
     <ChatLayoutContext.Provider value={{ isSecondaryPanelVisible }}>
       <ResizablePanelGroup
         className={cn(
-          "@container flex h-dvh w-full min-w-0 max-w-screen flex-col bg-background md:max-w-[calc(100vw-var(--sidebar-width))]",
+          "@container flex h-dvh max-h-dvh w-full min-w-0 max-w-screen flex-col bg-background md:max-w-[calc(100vw-var(--sidebar-width))]",
           sidebarState === "collapsed" && "md:max-w-screen",
           className
         )}
