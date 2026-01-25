@@ -10,14 +10,13 @@ import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
-import { determineExplicitlyRequestedTools } from "./determine-explicitly-requested-tools";
 
 export async function createCoreChatAgent({
   system,
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   budgetAllowedTools,
   abortSignal,
@@ -31,7 +30,7 @@ export async function createCoreChatAgent({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: ToolName | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   /** Budget-allowed base tools from route.ts (static ToolNames only) */
   budgetAllowedTools: ToolName[];
@@ -49,9 +48,6 @@ export async function createCoreChatAgent({
 
   // Process conversation history
   const lastGeneratedImage = getRecentGeneratedImage(messages);
-
-  const explicitlyRequestedTools =
-    determineExplicitlyRequestedTools(selectedTool);
 
   addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
 

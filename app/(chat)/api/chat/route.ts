@@ -25,7 +25,7 @@ import {
 } from "@/lib/ai/followup-suggestions";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
-import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
+import { allTools } from "@/lib/ai/tools/tools-definitions";
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
 import {
   getAnonymousSession,
@@ -279,7 +279,7 @@ async function createChatStream({
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   allowedTools,
   abortController,
@@ -294,7 +294,7 @@ async function createChatStream({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: string | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   allowedTools: ToolName[];
   abortController: AbortController;
@@ -306,11 +306,6 @@ async function createChatStream({
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
-
-  const narrowedSelectedTool: ToolName | null =
-    selectedTool && selectedTool in toolsDefinitions
-      ? (selectedTool as ToolName)
-      : null;
 
   // Create cost accumulator to track all LLM and API costs
   const costAccumulator = new CostAccumulator();
@@ -333,7 +328,7 @@ async function createChatStream({
         userMessage,
         previousMessages,
         selectedModelId,
-        selectedTool: narrowedSelectedTool,
+        explicitlyRequestedTools,
         userId,
         budgetAllowedTools: allowedTools,
         abortSignal: abortController.signal,
@@ -438,7 +433,7 @@ async function executeChatRequest({
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   isAnonymous,
   isNewChat,
@@ -451,7 +446,7 @@ async function executeChatRequest({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: string | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   isAnonymous: boolean;
   isNewChat: boolean;
@@ -491,7 +486,7 @@ async function executeChatRequest({
     userMessage,
     previousMessages,
     selectedModelId,
-    selectedTool,
+    explicitlyRequestedTools,
     userId,
     allowedTools,
     abortController,
@@ -821,7 +816,7 @@ export async function POST(request: NextRequest) {
       userMessage,
       previousMessages,
       selectedModelId,
-      selectedTool,
+      explicitlyRequestedTools,
       userId,
       isAnonymous,
       isNewChat,
