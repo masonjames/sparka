@@ -38,11 +38,6 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Edit a spreadsheet",
     cost: 0, // internal
   },
-  requestSuggestions: {
-    name: "requestSuggestions",
-    description: "Request suggestions for a document",
-    cost: 0, // internal
-  },
   readDocument: {
     name: "readDocument",
     description: "Read the content of a document",

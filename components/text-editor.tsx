@@ -17,13 +17,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { $getRoot } from "lexical";
 import { memo, useEffect, useRef } from "react";
 
-import type { Suggestion } from "@/lib/db/schema";
 import { createEditorConfig, handleEditorChange } from "@/lib/editor/config";
-import {
-  projectWithPositions,
-  registerSuggestions,
-  SuggestionNode,
-} from "@/lib/editor/suggestions";
 
 type EditorProps = {
   content: string;
@@ -31,7 +25,6 @@ type EditorProps = {
   status: "streaming" | "idle";
   isCurrentVersion: boolean;
   currentVersionIndex: number;
-  suggestions: Suggestion[];
   isReadonly?: boolean;
 };
 
@@ -115,45 +108,16 @@ function ContentUpdatePlugin({
   return <OnChangePlugin onChange={handleChange} />;
 }
 
-// Suggestions plugin
-function SuggestionsPlugin({
-  suggestions,
-  content,
-}: {
-  suggestions: Suggestion[];
-  content: string;
-}) {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    if (content) {
-      const projectedSuggestions = projectWithPositions(
-        editor,
-        suggestions
-      ).filter(
-        (suggestion) => suggestion.selectionStart && suggestion.selectionEnd
-      );
-
-      registerSuggestions(editor, projectedSuggestions);
-    }
-  }, [suggestions, content, editor]);
-
-  return null;
-}
-
 function PureEditor({
   content,
   onSaveContent,
-  suggestions,
   status,
   isReadonly,
 }: EditorProps) {
   const initialConfig = createEditorConfig();
 
-  // Add SuggestionNode to the editor config
   const editorConfig = {
     ...initialConfig,
-    nodes: [...initialConfig.nodes, SuggestionNode],
     editable: !isReadonly,
   };
 
@@ -176,7 +140,6 @@ function PureEditor({
           onSaveContent={onSaveContent}
           status={status}
         />
-        <SuggestionsPlugin content={content} suggestions={suggestions} />
       </LexicalComposer>
     </div>
   );
@@ -184,7 +147,6 @@ function PureEditor({
 
 function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
   return (
-    prevProps.suggestions === nextProps.suggestions &&
     prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
     prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
     !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
