@@ -35,17 +35,21 @@ The prod-ready AI chat template.
 
 ## Stack
 
-- [Next.js 16](https://nextjs.org) — App Router, React Server Components
+- [Next.js](https://nextjs.org) — App Router, React Server Components
 - [TypeScript](https://www.typescriptlang.org) — Full type safety
-- [Vercel AI SDK v5](https://sdk.vercel.ai) — Unified AI provider integration with 120+ models
+- [Vercel AI SDK](https://sdk.vercel.ai) — Unified AI provider integration with 120+ models
 - [Better Auth](https://www.better-auth.com) — Authentication & authorization
 - [Drizzle ORM](https://orm.drizzle.team) — Type-safe database queries
 - [PostgreSQL](https://www.postgresql.org) — Primary database
 - [Redis](https://redis.io) — Caching & resumable streams
 - [Vercel Blob](https://vercel.com/storage/blob) — Blob storage
 - [Shadcn/UI](https://ui.shadcn.com) — Beautiful, accessible components
-- [Tailwind CSS 4](https://tailwindcss.com) — Styling
+- [Tailwind CSS](https://tailwindcss.com) — Styling
+- [Zod](https://zod.dev) — Runtime validation
+- [Zustand](https://zustand-demo.pmnd.rs) — Lightweight state management
 - [tRPC](https://trpc.io) — End-to-end type-safe APIs
+- [Biome](https://biomejs.dev) — Linting & formatting
+- [Motion](https://motion.dev) — Animations
 
 ## Quick Start
 
