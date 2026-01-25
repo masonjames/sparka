@@ -681,7 +681,7 @@ function PureMultimodalInput({
 
 function WelcomeMessage() {
   return (
-    <div className="-translate-y-1/2 pointer-events-none @[500px]:static fixed inset-x-0 top-1/2 z-0 @[500px]:mb-6 @[500px]:translate-y-0 text-center">
+    <div className="pointer-events-none @[500px]:static fixed inset-x-0 top-1/2 z-0 @[500px]:mb-6 -translate-y-1/2 @[500px]:translate-y-0 text-center">
       <h1 className="font-normal text-2xl text-foreground sm:text-3xl">
         How can I help you today?
       </h1>

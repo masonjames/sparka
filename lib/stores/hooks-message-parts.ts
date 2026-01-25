@@ -54,7 +54,6 @@ export function useMessagePartByPartIdx<
     : ChatMessage["parts"][number];
 }
 
-
 export function useMessageResearchUpdatePartByToolCallId(
   messageId: string,
   toolCallId: string

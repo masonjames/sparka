@@ -78,7 +78,6 @@ export function useGetChatMessagesQueryOptions() {
   };
 }
 
-
 export function useDeleteChat() {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;

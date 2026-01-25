@@ -1,8 +1,7 @@
 "use client";
 
-import { XIcon } from "lucide-react";
+import { CopyIcon, DownloadIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
-import { CopyIcon, DownloadIcon } from "@/components/icons";
 import {
   Dialog,
   DialogClose,

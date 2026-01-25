@@ -72,4 +72,3 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
 // Get only enabled features
 export const getEnabledFeatures = () =>
   Object.values(AVAILABLE_FEATURES).filter((feature) => feature.enabled);
-
