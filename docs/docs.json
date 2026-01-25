@@ -107,6 +107,7 @@
             "group": "AI UX",
             "pages": [
               "cookbook/ai-ux/follow-up-questions",
+              "cookbook/ai-ux/explicit-tool-selection",
               "cookbook/ai-ux/chat-layout"
             ]
           },
