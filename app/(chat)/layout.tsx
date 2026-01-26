@@ -26,20 +26,26 @@ export default async function ChatLayout({
   const cookieModel = cookieStore.get("chat-model")?.value as AppModelId;
   const isAnonymous = !session?.user;
 
-  // Check if the model from cookie is available for anonymous users
+  const chatModels = await getChatModels();
+
+  // Check if the model from cookie exists in available models
   let defaultModel = cookieModel ?? DEFAULT_CHAT_MODEL;
 
-  if (isAnonymous && cookieModel) {
-    const isModelAvailable = ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(
-      cookieModel as (typeof ANONYMOUS_LIMITS.AVAILABLE_MODELS)[number]
-    );
-    if (!isModelAvailable) {
-      // Switch to default model if current model is not available for anonymous users
+  if (cookieModel) {
+    const modelExists = chatModels.some((m) => m.id === cookieModel);
+    if (!modelExists) {
+      // Model doesn't exist in available models, fall back to default
       defaultModel = DEFAULT_CHAT_MODEL;
+    } else if (isAnonymous) {
+      // For anonymous users, also check if the model is in their allowed list
+      const isModelAvailable = ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(
+        cookieModel as (typeof ANONYMOUS_LIMITS.AVAILABLE_MODELS)[number]
+      );
+      if (!isModelAvailable) {
+        defaultModel = DEFAULT_CHAT_MODEL;
+      }
     }
   }
-
-  const chatModels = await getChatModels();
 
   // Prefetch model preferences for authenticated users
   if (session?.user?.id) {

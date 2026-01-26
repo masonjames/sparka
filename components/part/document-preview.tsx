@@ -83,7 +83,11 @@ export function DocumentPreview({
   }
 
   if (isDocumentsFetching) {
-    return <LoadingSkeleton artifactKind={output?.kind ?? input?.kind ?? artifact.kind} />;
+    return (
+      <LoadingSkeleton
+        artifactKind={output?.kind ?? input?.kind ?? artifact.kind}
+      />
+    );
   }
 
   const document: Document | null = (() => {
