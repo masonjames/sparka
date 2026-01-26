@@ -26,6 +26,7 @@ export default async function ChatLayout({
   const cookieModel = cookieStore.get("chat-model")?.value as AppModelId;
   const isAnonymous = !session?.user;
 
+  // Always fetch chat models - needed for ChatModelsProvider and cookie validation
   const chatModels = await getChatModels();
 
   // Check if the model from cookie exists in available models

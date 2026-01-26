@@ -171,7 +171,9 @@ export function PureModelSelector({
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
 
-  const models = useMemo(
+  type ModelItem = { model: AppModelDefinition; disabled: boolean };
+
+  const models = useMemo<ModelItem[]>(
     () =>
       chatModels.map((m) => ({
         model: m,
@@ -219,7 +221,7 @@ export function PureModelSelector({
     );
   }, [models, featureFilters]);
 
-  const selectedItem = useMemo(() => {
+  const selectedItem = useMemo<ModelItem | null>(() => {
     // First try to find in filtered models (user's enabled models)
     const found = models.find((m) => m.model.id === optimisticModelId);
     if (found) {
@@ -235,7 +237,7 @@ export function PureModelSelector({
         disabled:
           isAnonymous &&
           !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(fallbackModel.id),
-      };
+      } satisfies ModelItem;
     }
 
     return null;
