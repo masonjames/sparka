@@ -23,7 +23,7 @@ export const ANONYMOUS_LIMITS = {
   // Credits in cents - 10 cents in prod, 100 cents ($1) in dev
   CREDITS: process.env.NODE_ENV === "production" ? 10 : 100,
   AVAILABLE_MODELS: ANONYMOUS_AVAILABLE_MODELS,
-  AVAILABLE_TOOLS: ["createDocument", "updateDocument"] satisfies ToolName[],
+  AVAILABLE_TOOLS: [] satisfies ToolName[],
   SESSION_DURATION: 2_147_483_647, // Max session time
   // Rate limiting for anonymous users based on IP
   RATE_LIMIT: {

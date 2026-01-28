@@ -57,7 +57,7 @@ export const ChatSystem = memo(function PureChatSystem({
   isProjectPage?: boolean;
 }) {
   return (
-    <ArtifactProvider>
+    <ArtifactProvider key={id}>
       <DataStreamProvider key={id}>
         <CustomStoreProvider<ChatMessage>
           initialMessages={initialMessages}
@@ -82,8 +82,8 @@ export const ChatSystem = memo(function PureChatSystem({
               </>
             ) : (
               <ChatInputProvider
-                disableSuggestedActions={isProjectPage}
                 initialTool={initialTool ?? null}
+                isProjectContext={isProjectPage}
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >

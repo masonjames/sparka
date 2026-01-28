@@ -40,6 +40,7 @@ type ToolProps = {
   isToolbarVisible?: boolean;
   setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
   isAnimating: boolean;
+  isSingleTool?: boolean;
   onClick: ({
     sendMessage,
     storeApi,
@@ -58,6 +59,7 @@ function Tool({
   isToolbarVisible,
   setIsToolbarVisible,
   isAnimating,
+  isSingleTool,
   onClick,
   storeApi,
 }: ToolProps) {
@@ -71,6 +73,12 @@ function Tool({
   }, [selectedTool, description]);
 
   const handleSelect = () => {
+    // If there's only one tool, execute directly on click
+    if (isSingleTool) {
+      onClick({ sendMessage, storeApi });
+      return;
+    }
+
     if (!isToolbarVisible && setIsToolbarVisible) {
       setIsToolbarVisible(true);
       return;
@@ -303,6 +311,7 @@ export function Tools({
         description={primaryTool.description}
         icon={primaryTool.icon}
         isAnimating={isAnimating}
+        isSingleTool={tools.length === 1}
         isToolbarVisible={isToolbarVisible}
         onClick={primaryTool.onClick}
         selectedTool={selectedTool}

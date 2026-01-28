@@ -162,7 +162,7 @@ export function PureModelSelector({
 }) {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
-  const { models: chatModels } = useChatModels();
+  const { models: chatModels, allModels } = useChatModels();
 
   const [open, setOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -171,7 +171,9 @@ export function PureModelSelector({
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
 
-  const models = useMemo(
+  type ModelItem = { model: AppModelDefinition; disabled: boolean };
+
+  const models = useMemo<ModelItem[]>(
     () =>
       chatModels.map((m) => ({
         model: m,
@@ -219,10 +221,27 @@ export function PureModelSelector({
     );
   }, [models, featureFilters]);
 
-  const selectedItem = useMemo(
-    () => models.find((m) => m.model.id === optimisticModelId),
-    [models, optimisticModelId]
-  );
+  const selectedItem = useMemo<ModelItem | null>(() => {
+    // First try to find in filtered models (user's enabled models)
+    const found = models.find((m) => m.model.id === optimisticModelId);
+    if (found) {
+      return found;
+    }
+
+    // Fallback: look in all models to at least display the model name
+    // This handles cases where preferences are loading or model was disabled
+    const fallbackModel = allModels.find((m) => m.id === optimisticModelId);
+    if (fallbackModel) {
+      return {
+        model: fallbackModel,
+        disabled:
+          isAnonymous &&
+          !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(fallbackModel.id),
+      } satisfies ModelItem;
+    }
+
+    return null;
+  }, [models, allModels, optimisticModelId, isAnonymous]);
   const selectedProvider = selectedItem
     ? selectedItem.model.id.split("/")[0]
     : null;

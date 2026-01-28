@@ -75,7 +75,7 @@ type ArtifactConfig<T extends string, M = any> = {
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
-  onStreamPart: (args: {
+  onStreamPart?: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
     streamPart: DataUIPart<CustomUIDataTypes>;
@@ -103,7 +103,7 @@ export class Artifact<T extends string, M = any> {
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
-  readonly onStreamPart: (args: {
+  readonly onStreamPart?: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
     streamPart: DataUIPart<CustomUIDataTypes>;

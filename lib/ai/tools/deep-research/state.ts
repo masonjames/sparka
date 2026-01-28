@@ -6,7 +6,7 @@ import {
   tool,
 } from "ai";
 import { z } from "zod";
-import type { ArtifactToolResult } from "../artifact-tool-result";
+import type { DocumentToolResult } from "../documents/types";
 
 //##################
 // Structured Outputs (Zod Schemas)
@@ -79,8 +79,7 @@ export type AgentState = {
   research_brief?: string;
   raw_notes: string[];
   notes: string[];
-  final_report: string;
-  reportResult: ArtifactToolResult;
+  reportResult: DocumentToolResult;
   clarificationMessage?: string;
   toolCallId: string;
 };
@@ -92,7 +91,7 @@ export type DeepResearchResult =
     }
   | {
       type: "report";
-      data: ArtifactToolResult;
+      data: DocumentToolResult;
     };
 
 export type ResponseMessage = AssistantModelMessage | ToolModelMessage;
