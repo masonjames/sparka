@@ -46,8 +46,12 @@ export function findLastArtifact(
   messages.forEach((msg, messageIndex) => {
     msg.parts?.forEach((part) => {
       if (
-        (part.type === 'tool-createDocument' ||
-          part.type === 'tool-updateDocument' ||
+        (part.type === 'tool-createTextDocument' ||
+          part.type === 'tool-createCodeDocument' ||
+          part.type === 'tool-createSheetDocument' ||
+          part.type === 'tool-editTextDocument' ||
+          part.type === 'tool-editCodeDocument' ||
+          part.type === 'tool-editSheetDocument' ||
           part.type === 'tool-deepResearch') &&
         part.state === 'output-available'
       ) {

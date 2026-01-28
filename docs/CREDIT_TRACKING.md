@@ -83,9 +83,13 @@ Fixed API costs per tool:
 | webSearch       | 5¢   | Tavily/Firecrawl API         |
 | codeInterpreter | 5¢   | Sandbox execution            |
 | generateImage   | 17¢  | Traditional image gen API    |
-| deepResearch    | 0¢   | LLM calls tracked separately |
-| createDocument  | 0¢   | LLM calls tracked separately |
-| updateDocument  | 0¢   | LLM calls tracked separately |
+| deepResearch         | 0¢   | LLM calls tracked separately |
+| createTextDocument   | 0¢   | LLM calls tracked separately |
+| createCodeDocument   | 0¢   | LLM calls tracked separately |
+| createSheetDocument  | 0¢   | LLM calls tracked separately |
+| editTextDocument     | 0¢   | LLM calls tracked separately |
+| editCodeDocument     | 0¢   | LLM calls tracked separately |
+| editSheetDocument    | 0¢   | LLM calls tracked separately |
 
 ## Data Flow
 

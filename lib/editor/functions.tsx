@@ -11,7 +11,6 @@ import { renderToString } from "react-dom/server";
 import Markdown from "react-markdown";
 
 import { createEditorConfig } from "./config";
-import { createSuggestionDecorator, type UISuggestion } from "./suggestions";
 
 export const buildEditorFromContent = (content: string): LexicalEditor => {
   const config = createEditorConfig();
@@ -32,20 +31,6 @@ export const buildContentFromEditor = (editor: LexicalEditor): string => {
   });
 
   return content;
-};
-
-export const createSuggestionDecorators = (
-  suggestions: UISuggestion[],
-  editor: LexicalEditor
-) => {
-  const decorators: Record<string, any> = {};
-
-  for (const suggestion of suggestions) {
-    const decorator = createSuggestionDecorator(suggestion, editor);
-    decorators[`suggestion-${suggestion.id}`] = decorator;
-  }
-
-  return decorators;
 };
 
 // Alternative method using HTML conversion for better compatibility

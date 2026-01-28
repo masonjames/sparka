@@ -6,6 +6,7 @@ import {
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { after } from "next/server";
+import { createClient } from "redis";
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -57,47 +58,37 @@ import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
 import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";
 
-// Create shared Redis clients for resumable stream and cleanup
-let redisPublisher: any = null;
-let redisSubscriber: any = null;
+// Shared Redis clients for resumable stream
+let redisPublisher: ReturnType<typeof createClient> | null = null;
+let redisSubscriber: ReturnType<typeof createClient> | null = null;
 
 if (env.REDIS_URL) {
-  (async () => {
-    const redis = await import("redis");
-    redisPublisher = redis.createClient({ url: env.REDIS_URL });
-    redisSubscriber = redis.createClient({ url: env.REDIS_URL });
-    await Promise.all([redisPublisher.connect(), redisSubscriber.connect()]);
-  })();
+  redisPublisher = createClient({ url: env.REDIS_URL });
+  redisSubscriber = createClient({ url: env.REDIS_URL });
+  await Promise.all([redisPublisher.connect(), redisSubscriber.connect()]);
 }
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
-export function getStreamContext() {
-  if (!globalStreamContext) {
-    try {
-      globalStreamContext = createResumableStreamContext({
-        waitUntil: after,
-        keyPrefix: "sparka-ai:resumable-stream",
-        ...(redisPublisher && redisSubscriber
-          ? {
-              publisher: redisPublisher,
-              subscriber: redisSubscriber,
-            }
-          : {}),
-      });
-    } catch (error: any) {
-      if (error.message.includes("REDIS_URL")) {
-        console.log(
-          " > Resumable streams are disabled due to missing REDIS_URL"
-        );
-      } else {
-        console.error(error);
-      }
-    }
+export function getStreamContext(): ResumableStreamContext | null {
+  if (globalStreamContext) {
+    return globalStreamContext;
   }
+
+  globalStreamContext = createResumableStreamContext({
+    waitUntil: after,
+    keyPrefix: "sparka-ai:resumable-stream",
+    ...(redisPublisher && redisSubscriber
+      ? { publisher: redisPublisher, subscriber: redisSubscriber }
+      : {}),
+  });
 
   return globalStreamContext;
 }
+
+type AnonymousSessionResult =
+  | { success: true; session: AnonymousSession }
+  | { success: false; error: Response };
 
 async function handleAnonymousSession({
   request,
@@ -105,88 +96,63 @@ async function handleAnonymousSession({
   selectedModelId,
 }: {
   request: NextRequest;
-  redis: any;
+  redis: ReturnType<typeof import("redis").createClient> | null;
   selectedModelId: AppModelId;
-}): Promise<{
-  anonymousSession: AnonymousSession;
-  error: Response | null;
-}> {
+}): Promise<AnonymousSessionResult> {
   const log = createModuleLogger("api:chat:anonymous");
 
-  // Apply rate limiting for anonymous users
   const clientIP = getClientIP(request);
   const rateLimitResult = await checkAnonymousRateLimit(clientIP, redis);
 
   if (!rateLimitResult.success) {
     log.warn({ clientIP }, "Rate limit exceeded");
     return {
-      anonymousSession: null as any,
-      error: new Response(
-        JSON.stringify({
-          error: rateLimitResult.error,
-          type: "RATE_LIMIT_EXCEEDED",
-        }),
-        {
-          status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            ...(rateLimitResult.headers || {}),
-          },
-        }
+      success: false,
+      error: Response.json(
+        { error: rateLimitResult.error, type: "RATE_LIMIT_EXCEEDED" },
+        { status: 429, headers: rateLimitResult.headers || {} }
       ),
     };
   }
 
-  let anonymousSession = await getAnonymousSession();
-  if (!anonymousSession) {
-    anonymousSession = await createAnonymousSession();
-  }
+  const session =
+    (await getAnonymousSession()) ?? (await createAnonymousSession());
 
-  // Check credit limits
-  if (anonymousSession.remainingCredits <= 0) {
+  if (session.remainingCredits <= 0) {
     log.info("Anonymous credit limit reached");
     return {
-      anonymousSession: null as any,
-      error: new Response(
-        JSON.stringify({
+      success: false,
+      error: Response.json(
+        {
           error: "You've used your free credits. Sign up to continue chatting!",
           type: "ANONYMOUS_LIMIT_EXCEEDED",
           suggestion:
             "Create an account to get more credits and access to more AI models",
-        }),
-        {
-          status: 402,
-          headers: {
-            "Content-Type": "application/json",
-            ...(rateLimitResult.headers || {}),
-          },
-        }
+        },
+        { status: 402, headers: rateLimitResult.headers || {} }
       ),
     };
   }
 
-  // Validate model for anonymous users
-  if (!ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId as any)) {
+  if (
+    !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(
+      selectedModelId as (typeof ANONYMOUS_LIMITS.AVAILABLE_MODELS)[number]
+    )
+  ) {
     log.warn("Model not available for anonymous users");
     return {
-      anonymousSession: null as any,
-      error: new Response(
-        JSON.stringify({
+      success: false,
+      error: Response.json(
+        {
           error: "Model not available for anonymous users",
           availableModels: ANONYMOUS_LIMITS.AVAILABLE_MODELS,
-        }),
-        {
-          status: 403,
-          headers: {
-            "Content-Type": "application/json",
-            ...(rateLimitResult.headers || {}),
-          },
-        }
+        },
+        { status: 403, headers: rateLimitResult.headers || {} }
       ),
     };
   }
 
-  return { anonymousSession, error: null };
+  return { success: true, session };
 }
 
 async function handleChatValidation({
@@ -199,17 +165,22 @@ async function handleChatValidation({
   userId: string;
   userMessage: ChatMessage;
   projectId?: string;
-}): Promise<Response | null> {
+}): Promise<{ error: Response | null; isNewChat: boolean }> {
   const log = createModuleLogger("api:chat:validation");
 
   const chat = await getChatById({ id: chatId });
+  let isNewChat = false;
 
   if (chat) {
     if (chat.userId !== userId) {
       log.warn("Unauthorized - chat ownership mismatch");
-      return new Response("Unauthorized", { status: 401 });
+      return {
+        error: new Response("Unauthorized", { status: 401 }),
+        isNewChat,
+      };
     }
   } else {
+    isNewChat = true;
     const title = await generateTitleFromUserMessage({
       message: userMessage,
     });
@@ -221,7 +192,7 @@ async function handleChatValidation({
 
   if (existentMessage && existentMessage.chatId !== chatId) {
     log.warn("Unauthorized - message chatId mismatch");
-    return new Response("Unauthorized", { status: 401 });
+    return { error: new Response("Unauthorized", { status: 401 }), isNewChat };
   }
 
   if (!existentMessage) {
@@ -233,45 +204,15 @@ async function handleChatValidation({
     });
   }
 
-  return null;
+  return { error: null, isNewChat };
 }
 
-async function checkUserCanSpend({
-  userId,
-  isAnonymous,
-  anonymousSession,
-}: {
-  userId: string | null;
-  isAnonymous: boolean;
-  anonymousSession: AnonymousSession | null;
-}): Promise<{ error: Response | null }> {
-  if (!isAnonymous) {
-    if (!userId) {
-      return {
-        error: new Response("User ID is required for authenticated users", {
-          status: 401,
-        }),
-      };
-    }
-
-    const userCanSpend = await canSpend(userId);
-    if (!userCanSpend) {
-      return {
-        error: new Response("Insufficient credits", { status: 402 }),
-      };
-    }
-
-    return { error: null };
+async function checkUserCanSpend(userId: string): Promise<Response | null> {
+  const userCanSpend = await canSpend(userId);
+  if (!userCanSpend) {
+    return new Response("Insufficient credits", { status: 402 });
   }
-
-  // Check anonymous session credits
-  if (anonymousSession && anonymousSession.remainingCredits <= 0) {
-    return {
-      error: new Response("Anonymous credits exhausted", { status: 402 }),
-    };
-  }
-
-  return { error: null };
+  return null;
 }
 
 /**
@@ -343,6 +284,7 @@ async function createChatStream({
   allowedTools,
   abortController,
   isAnonymous,
+  isNewChat,
   timeoutId,
   mcpConnectors,
   streamId,
@@ -357,6 +299,7 @@ async function createChatStream({
   allowedTools: ToolName[];
   abortController: AbortController;
   isAnonymous: boolean;
+  isNewChat: boolean;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
@@ -375,8 +318,8 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Confirm chat persistence ASAP (chat + user message are persisted before streaming begins)
-      if (!isAnonymous) {
+      // Confirm chat persistence on first message (chat + user message are persisted before streaming begins)
+      if (isNewChat) {
         dataStream.write({
           id: generateUUID(),
           type: "data-chatConfirmed",
@@ -498,6 +441,7 @@ async function executeChatRequest({
   selectedTool,
   userId,
   isAnonymous,
+  isNewChat,
   allowedTools,
   abortController,
   timeoutId,
@@ -510,6 +454,7 @@ async function executeChatRequest({
   selectedTool: string | null;
   userId: string | null;
   isAnonymous: boolean;
+  isNewChat: boolean;
   allowedTools: ToolName[];
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
@@ -551,88 +496,80 @@ async function executeChatRequest({
     allowedTools,
     abortController,
     isAnonymous,
+    isNewChat,
     timeoutId,
     mcpConnectors,
     streamId,
   });
 
-  after(async () => {
-    // Set TTL on resumable-stream library's internal Redis keys
-    if (redisPublisher) {
+  const publisher = redisPublisher;
+  if (publisher) {
+    after(async () => {
       try {
         const keyPattern = `sparka-ai:resumable-stream:rs:sentinel:${streamId}*`;
-        const keys = await redisPublisher.keys(keyPattern);
+        const keys = await publisher.keys(keyPattern);
         if (keys.length > 0) {
           await Promise.all(
-            keys.map((key: string) => redisPublisher.expire(key, 300))
+            keys.map((key: string) => publisher.expire(key, 300))
           );
         }
       } catch (error) {
         log.error({ error }, "Failed to set TTL on stream keys");
       }
-    }
-  });
+    });
+  }
+
+  const sseHeaders = {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  } as const;
 
   const streamContext = getStreamContext();
+  const sseStream = () => stream.pipeThrough(new JsonToSseTransformStream());
 
   if (streamContext) {
     log.debug("Returning resumable stream");
     return new Response(
-      await streamContext.resumableStream(streamId, () =>
-        stream.pipeThrough(new JsonToSseTransformStream())
-      ),
-      {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
-      }
+      await streamContext.resumableStream(streamId, sseStream),
+      { headers: sseHeaders }
     );
   }
-  return new Response(stream.pipeThrough(new JsonToSseTransformStream()), {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+
+  return new Response(sseStream(), { headers: sseHeaders });
 }
+
+type SessionSetupResult =
+  | { success: false; error: Response }
+  | {
+      success: true;
+      userId: string | null;
+      isAnonymous: boolean;
+      anonymousSession: AnonymousSession | null;
+      modelDefinition: AppModelDefinition;
+    };
 
 async function validateAndSetupSession({
   request,
-  userMessage,
   selectedModelId,
 }: {
   request: NextRequest;
-  userMessage: ChatMessage;
   selectedModelId: AppModelId;
-}): Promise<{
-  userId: string | null;
-  isAnonymous: boolean;
-  anonymousSession: AnonymousSession | null;
-  modelDefinition: AppModelDefinition;
-  error: Response | null;
-}> {
+}): Promise<SessionSetupResult> {
   const log = createModuleLogger("api:chat:setup");
 
   const session = await auth.api.getSession({ headers: await headers() });
-
-  const userId = session?.user?.id || null;
+  const userId = session?.user?.id ?? null;
   const isAnonymous = userId === null;
+
   let anonymousSession: AnonymousSession | null = null;
 
-  // Check for authenticated users
   if (userId) {
-    // TODO: Consider if checking if user exists is really needed
     const user = await getUserById({ userId });
     if (!user) {
       log.warn("User not found");
       return {
-        userId: null,
-        isAnonymous: true,
-        anonymousSession: null,
-        modelDefinition: null as any,
+        success: false,
         error: new Response("User not found", { status: 404 }),
       };
     }
@@ -643,43 +580,29 @@ async function validateAndSetupSession({
       selectedModelId,
     });
 
-    if (result.error) {
-      return {
-        userId: null,
-        isAnonymous: true,
-        anonymousSession: null,
-        modelDefinition: null as any,
-        error: result.error,
-      };
+    if (!result.success) {
+      return result;
     }
-
-    anonymousSession = result.anonymousSession;
+    anonymousSession = result.session;
   }
-
-  // Extract selectedTool from user message metadata
-  const selectedTool = userMessage.metadata.selectedTool || null;
-  log.debug({ selectedTool }, "selectedTool");
 
   let modelDefinition: AppModelDefinition;
   try {
     modelDefinition = await getAppModelDefinition(selectedModelId);
-  } catch (_error) {
+  } catch {
     log.warn("Model not found");
     return {
-      userId,
-      isAnonymous,
-      anonymousSession,
-      modelDefinition: null as any,
+      success: false,
       error: new Response("Model not found", { status: 404 }),
     };
   }
 
   return {
+    success: true,
     userId,
     isAnonymous,
     anonymousSession,
     modelDefinition,
-    error: null,
   };
 }
 
@@ -795,68 +718,6 @@ async function finalizeMessageAndCredits({
   }
 }
 
-async function handleRequestExecution({
-  chatId,
-  userMessage,
-  previousMessages,
-  selectedModelId,
-  selectedTool,
-  userId,
-  isAnonymous,
-  allowedTools,
-  abortController,
-  timeoutId,
-  mcpConnectors,
-}: {
-  chatId: string;
-  userMessage: ChatMessage;
-  previousMessages: ChatMessage[];
-  selectedModelId: AppModelId;
-  selectedTool: string | null;
-  userId: string | null;
-  isAnonymous: boolean;
-  allowedTools: ToolName[];
-  abortController: AbortController;
-  timeoutId: NodeJS.Timeout;
-  mcpConnectors: McpConnector[];
-}): Promise<Response> {
-  const log = createModuleLogger("api:chat:execute-wrapper");
-  try {
-    return await executeChatRequest({
-      chatId,
-      userMessage,
-      previousMessages,
-      selectedModelId,
-      selectedTool,
-      userId,
-      isAnonymous,
-      allowedTools,
-      abortController,
-      timeoutId,
-      mcpConnectors,
-    });
-  } catch (error) {
-    clearTimeout(timeoutId);
-    log.error({ error }, "error found in try block");
-    throw error;
-  }
-}
-
-const ANONYMOUS_COST_PER_MESSAGE = 1;
-
-async function preDeductAnonymousCredits(
-  isAnonymous: boolean,
-  anonymousSession: AnonymousSession | null
-) {
-  if (isAnonymous && anonymousSession) {
-    await setAnonymousSession({
-      ...anonymousSession,
-      remainingCredits:
-        anonymousSession.remainingCredits - ANONYMOUS_COST_PER_MESSAGE,
-    });
-  }
-}
-
 export async function POST(request: NextRequest) {
   const log = createModuleLogger("api:chat");
   try {
@@ -887,56 +748,46 @@ export async function POST(request: NextRequest) {
 
     const sessionSetup = await validateAndSetupSession({
       request,
-      userMessage,
       selectedModelId,
     });
 
-    if (sessionSetup.error) {
+    if (!sessionSetup.success) {
       return sessionSetup.error;
     }
 
     const { userId, isAnonymous, anonymousSession, modelDefinition } =
       sessionSetup;
 
-    // Extract selectedTool from user message metadata
-    const selectedTool = userMessage.metadata.selectedTool || null;
-    // Skip database operations for anonymous users
-    if (!isAnonymous) {
-      if (!userId) {
-        log.warn("User ID is required for authenticated users");
-        return new Response("User ID is required for authenticated users", {
-          status: 401,
-        });
-      }
+    const selectedTool = userMessage.metadata.selectedTool ?? null;
+    let isNewChat = false;
 
-      const validationError = await handleChatValidation({
+    // Handle authenticated user validation and credit check
+    if (userId) {
+      const validationResult = await handleChatValidation({
         chatId,
         userId,
         userMessage,
         projectId,
       });
-
-      if (validationError) {
-        return validationError;
+      if (validationResult.error) {
+        return validationResult.error;
       }
+      isNewChat = validationResult.isNewChat;
+
+      const creditError = await checkUserCanSpend(userId);
+      if (creditError) {
+        return creditError;
+      }
+    } else if (anonymousSession) {
+      // Pre-deduct credits for anonymous users (cookies must be set before streaming)
+      await setAnonymousSession({
+        ...anonymousSession,
+        remainingCredits: anonymousSession.remainingCredits - 1,
+      });
     }
 
     const explicitlyRequestedTools =
       determineExplicitlyRequestedTools(selectedTool);
-
-    // Check if user can spend (has positive credits)
-    const creditCheck = await checkUserCanSpend({
-      userId,
-      isAnonymous,
-      anonymousSession,
-    });
-
-    if (creditCheck.error) {
-      return creditCheck.error;
-    }
-
-    // Pre-deduct credits for anonymous users (cookies must be set before streaming)
-    await preDeductAnonymousCredits(isAnonymous, anonymousSession);
 
     const contextResult = await prepareRequestContext({
       userMessage,
@@ -965,7 +816,7 @@ export async function POST(request: NextRequest) {
       abortController.abort();
     }, 290_000); // 290 seconds
 
-    return await handleRequestExecution({
+    return await executeChatRequest({
       chatId,
       userMessage,
       previousMessages,
@@ -973,6 +824,7 @@ export async function POST(request: NextRequest) {
       selectedTool,
       userId,
       isAnonymous,
+      isNewChat,
       allowedTools,
       abortController,
       timeoutId,
@@ -985,5 +837,3 @@ export async function POST(request: NextRequest) {
     });
   }
 }
-
-// DELETE moved to tRPC chat.deleteChat mutation

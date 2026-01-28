@@ -119,11 +119,9 @@ export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
 export const DEFAULT_ARTIFACT_MODEL: ModelId = "openai/gpt-5-nano";
 export const DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL: ModelId =
   "google/gemini-2.5-flash-lite";
-export const DEFAULT_ARTIFACT_SUGGESTION_MODEL: ModelId = "openai/gpt-5-mini";
 export const DEFAULT_IMAGE_MODEL: AnyImageModelId = "google/gemini-3-pro-image";
 export const DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL: ModelId =
   "openai/gpt-4o-mini";
-export const DEFAULT_SUGGESTIONS_MODEL: ModelId = "openai/gpt-5-mini";
 export const DEFAULT_POLISH_TEXT_MODEL: ModelId = "openai/gpt-5-mini";
 export const DEFAULT_FORMAT_AND_CLEAN_SHEET_MODEL: ModelId =
   "openai/gpt-5-mini";
