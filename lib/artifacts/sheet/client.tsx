@@ -1,13 +1,7 @@
+import { Copy, LineChart, Redo2, Sparkles, Undo2 } from "lucide-react";
 import { parse, unparse } from "papaparse";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
-import {
-  CopyIcon,
-  LineChartIcon,
-  RedoIcon,
-  SparklesIcon,
-  UndoIcon,
-} from "@/components/icons";
 import { SpreadsheetEditor } from "@/components/sheet-editor";
 
 type Metadata = any;
@@ -37,7 +31,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
   ),
   actions: [
     {
-      icon: <UndoIcon size={18} />,
+      icon: <Undo2 size={18} />,
       description: "View Previous version",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("prev");
@@ -51,7 +45,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
       },
     },
     {
-      icon: <RedoIcon size={18} />,
+      icon: <Redo2 size={18} />,
       description: "View Next version",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("next");
@@ -65,7 +59,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
       },
     },
     {
-      icon: <CopyIcon />,
+      icon: <Copy size={16} />,
       description: "Copy as .csv",
       onClick: ({ content }) => {
         const parsed = parse<string[]>(content, { skipEmptyLines: true });
@@ -84,7 +78,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
   toolbar: [
     {
       description: "Format and clean data",
-      icon: <SparklesIcon />,
+      icon: <Sparkles size={16} />,
       onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",
@@ -102,7 +96,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     },
     {
       description: "Analyze and visualize data",
-      icon: <LineChartIcon />,
+      icon: <LineChart size={16} />,
       onClick: ({ sendMessage, storeApi, config }) => {
         sendMessage({
           role: "user",

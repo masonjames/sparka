@@ -1,5 +1,5 @@
 import { useChatStoreApi } from "@ai-sdk-tools/store";
-import { Pencil, PencilOff } from "lucide-react";
+import { Copy, Pencil, PencilOff } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
@@ -11,7 +11,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
 import { useChatVotes } from "./chat/use-chat-votes";
 import { FeedbackActions } from "./feedback-actions";
-import { CopyIcon } from "./icons";
 import { MessageSiblings } from "./message-siblings";
 
 function PureMessageActions({
@@ -103,7 +102,7 @@ function PureMessageActions({
         }}
         tooltip="Copy"
       >
-        <CopyIcon size={14} />
+        <Copy size={14} />
       </Action>
 
       {role === "assistant" && !isReadOnly && (

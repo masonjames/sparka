@@ -1,7 +1,6 @@
 "use client";
 
-import { PinIcon } from "lucide-react";
-import { PencilEditIcon, TrashIcon } from "@/components/icons";
+import { Pencil, PinIcon, Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
@@ -25,7 +24,7 @@ export function ChatMenuItems({
   return (
     <>
       <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
-        <PencilEditIcon />
+        <Pencil size={16} />
         <span>Rename</span>
       </DropdownMenuItem>
 
@@ -40,7 +39,7 @@ export function ChatMenuItems({
         className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
         onSelect={onDelete}
       >
-        <TrashIcon />
+        <Trash2 size={16} />
         <span>Delete</span>
       </DropdownMenuItem>
     </>

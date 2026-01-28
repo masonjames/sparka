@@ -1,6 +1,7 @@
 "use client";
 
 import equal from "fast-deep-equal";
+import { File, Loader2, Maximize, Pencil } from "lucide-react";
 import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
@@ -10,7 +11,6 @@ import { cn } from "@/lib/utils";
 import type { UIArtifact } from "../artifact-panel";
 import { CodeEditor } from "../code-editor";
 import { InlineDocumentSkeleton } from "../document-skeleton";
-import { FileIcon, FullscreenIcon, LoaderIcon, PencilEditIcon } from "../icons";
 import { ImageEditor } from "../image-editor";
 import { SpreadsheetEditor } from "../sheet-editor";
 import { Editor } from "../text-editor";
@@ -145,7 +145,7 @@ const LoadingSkeleton = ({
         <div className="h-4 w-24 animate-pulse rounded-lg bg-muted-foreground/20" />
       </div>
       <div>
-        <FullscreenIcon />
+        <Maximize size={16} />
       </div>
     </div>
 
@@ -200,7 +200,7 @@ const PureHitboxLayer = ({
     >
       <div className="flex w-full items-center justify-end p-4">
         <div className="absolute top-[13px] right-[9px] rounded-md p-2 hover:bg-zinc-100 dark:hover:bg-zinc-700">
-          <FullscreenIcon />
+          <Maximize size={16} />
         </div>
       </div>
     </div>
@@ -246,14 +246,14 @@ const PureDocumentHeader = ({
           if (isStreaming) {
             return (
               <div className="animate-spin">
-                <LoaderIcon />
+                <Loader2 size={16} />
               </div>
             );
           }
           if (type === "update") {
-            return <PencilEditIcon />;
+            return <Pencil size={16} />;
           }
-          return <FileIcon />;
+          return <File size={16} />;
         })()}
       </div>
       <div className="-translate-y-1 font-medium sm:translate-y-0">

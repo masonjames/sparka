@@ -34,7 +34,8 @@ import type {
   ArtifactToolbarContext,
   ArtifactToolbarItem,
 } from "./create-artifact";
-import { ArrowUpIcon, StopIcon, SummarizeIcon } from "./icons";
+import { ArrowUp, Square } from "lucide-react";
+import { SummarizeIcon } from "./icons";
 
 type ToolProps = {
   description: string;
@@ -131,7 +132,7 @@ function Tool({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          {selectedTool === description ? <ArrowUpIcon /> : icon}
+          {selectedTool === description ? <ArrowUp size={16} /> : icon}
         </motion.div>
       </TooltipTrigger>
       <TooltipContent
@@ -250,7 +251,7 @@ function ReadingLevelSelector({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {currentLevel === 2 ? <SummarizeIcon /> : <ArrowUpIcon />}
+            {currentLevel === 2 ? <SummarizeIcon /> : <ArrowUp size={16} />}
           </motion.div>
         </TooltipTrigger>
         <TooltipContent
@@ -459,7 +460,7 @@ function PureToolbar({
                   stop();
                 }}
               >
-                <StopIcon />
+                <Square size={16} />
               </motion.div>
             );
           }

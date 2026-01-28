@@ -1,10 +1,10 @@
 "use client";
+import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
-import { MoreHorizontalIcon } from "@/components/icons";
 import { ShareDialog } from "@/components/share-button";
 import {
   DropdownMenu,
@@ -111,7 +111,7 @@ const PureSidebarChatItem = ({
             className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             showOnHover={!isActive}
           >
-            <MoreHorizontalIcon />
+            <MoreHorizontal size={16} />
             <span className="sr-only">More</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>

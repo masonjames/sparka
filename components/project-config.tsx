@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilEditIcon } from "@/components/icons";
+import { Pencil } from "lucide-react";
 import { ProjectIcon } from "@/components/project-icon";
 import { Button } from "@/components/ui/button";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
@@ -37,7 +37,7 @@ export function ProjectConfig({
             type="button"
             variant="ghost"
           >
-            <PencilEditIcon size={16} />
+            <Pencil size={16} />
             <span className="sr-only">Rename project</span>
           </Button>
         </div>

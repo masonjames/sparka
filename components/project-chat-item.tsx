@@ -1,14 +1,10 @@
 "use client";
 
 import { formatDistance } from "date-fns";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
-import {
-  MoreHorizontalIcon,
-  PencilEditIcon,
-  TrashIcon,
-} from "@/components/icons";
 import { ShareDialog } from "@/components/share-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +58,7 @@ export function ProjectChatItem({
                   type="button"
                   variant="ghost"
                 >
-                  <MoreHorizontalIcon />
+                  <MoreHorizontal size={16} />
                   <span className="sr-only">More</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -72,7 +68,7 @@ export function ProjectChatItem({
                   className="cursor-pointer"
                   onClick={() => setRenameDialogOpen(true)}
                 >
-                  <PencilEditIcon />
+                  <Pencil size={16} />
                   <span>Rename</span>
                 </DropdownMenuItem>
 
@@ -82,7 +78,7 @@ export function ProjectChatItem({
                   className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
                   onSelect={() => onDelete(chat.id)}
                 >
-                  <TrashIcon />
+                  <Trash2 size={16} />
                   <span>Delete</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
