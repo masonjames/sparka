@@ -37,7 +37,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload filesystem scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-fs-results.sarif'
@@ -53,7 +53,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload image scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-image-results.sarif'
