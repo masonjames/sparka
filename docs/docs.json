@@ -22,7 +22,8 @@
             "pages": [
               "core/configuration",
               "core/authentication",
-              "core/multi-model"
+              "core/multi-model",
+              "core/syntax-highlighting"
             ]
           },
           {
