@@ -75,8 +75,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Look for open PRs with upstream-sync label
-          EXISTING=$(gh pr list --label "upstream-sync" --state open --json number --jq '.[0].number')
+          # Look for open PRs with sync branch pattern
+          EXISTING=$(gh pr list --head "sync/" --state open --json number --jq '.[0].number')
           if [ -n "$EXISTING" ]; then
             echo "Existing sync PR: #$EXISTING"
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -190,9 +190,7 @@ jobs:
           2. Trigger Dokploy webhook (if configured)
 
           ---
-          *Automatically created by upstream-sync-pr workflow*" \
-            --label "upstream-sync" \
-            --label "automated"
+          *Automatically created by upstream-sync-pr workflow*"
 
       - name: Create issue for conflicts
         if: steps.merge.outputs.merge_status == 'conflict'
@@ -200,8 +198,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if issue already exists
-          EXISTING=$(gh issue list --label "upstream-sync" --state open --json number --jq '.[0].number')
-          
+          EXISTING=$(gh issue list --search "Upstream sync" --state open --json number --jq '.[0].number')
+
           if [ -z "$EXISTING" ]; then
             gh issue create \
               --title "🔄 Upstream sync requires manual resolution" \
@@ -227,9 +225,7 @@ jobs:
           \`\`\`
 
           ---
-          *Automatically created by upstream-sync-pr workflow*" \
-              --label "upstream-sync" \
-              --label "needs-attention"
+          *Automatically created by upstream-sync-pr workflow*"
           fi
 
       - name: Create issue for validation failure
@@ -253,9 +249,7 @@ jobs:
           See [Sparka Upstream Sync Runbook](https://github.com/masonjames/platform-infra/blob/main/docs/runbooks/workflows/sparka-upstream-sync.md) for the list of files to preserve.
 
           ---
-          *Automatically created by upstream-sync-pr workflow*" \
-            --label "upstream-sync" \
-            --label "needs-attention"
+          *Automatically created by upstream-sync-pr workflow*"
 
       - name: Summary
         run: |
