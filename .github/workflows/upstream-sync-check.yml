@@ -158,6 +158,14 @@ jobs:
               title: `🔄 Upstream sync needed: ${commitsBehind} commits behind`
             });
 
+      - name: Trigger sync PR workflow
+        if: steps.check.outputs.commits_behind != '0' && steps.existing.outputs.result == 'null'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering upstream-sync-pr workflow..."
+          gh workflow run upstream-sync-pr.yml || echo "Could not trigger workflow (may not exist yet)"
+
       - name: Summary
         run: |
           echo "## Upstream Sync Status" >> $GITHUB_STEP_SUMMARY
@@ -171,4 +179,6 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "${{ steps.check.outputs.commit_log }}" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ Sync PR workflow triggered" >> $GITHUB_STEP_SUMMARY
           fi
