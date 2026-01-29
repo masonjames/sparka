@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { deleteFilesByUrls, listFiles } from "@/lib/blob";
+import { siteConfig } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";
 
@@ -36,6 +37,12 @@ export async function GET(request: NextRequest) {
 }
 
 async function cleanupOrphanedAttachments() {
+  // Skip cleanup if neither imageGeneration nor attachments is enabled
+  const { imageGeneration, attachments } = siteConfig.integrations;
+  if (!imageGeneration && !attachments) {
+    return { deletedCount: 0, deletedUrls: [], skipped: true };
+  }
+
   try {
     // Get all attachment URLs from all messages
     const usedAttachmentUrls = new Set(await getAllAttachmentUrls());

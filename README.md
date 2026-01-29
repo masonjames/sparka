@@ -78,7 +78,6 @@ Full documentation available at [chatjs.dev](https://chatjs.dev):
 ### Required
 
 - `DATABASE_URL` — PostgreSQL connection string
-- `BLOB_READ_WRITE_TOKEN` — Vercel Blob token
 - `AUTH_SECRET` — [Generate one](https://generate-secret.vercel.app/32)
 - `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` — AI Gateway access
 
@@ -89,6 +88,7 @@ Full documentation available at [chatjs.dev](https://chatjs.dev):
 
 ### Optional
 
+- `BLOB_READ_WRITE_TOKEN` — Vercel Blob token (for file attachments and image generation)
 - `REDIS_URL` — Resumable streams
 - `TAVILY_API_KEY` — Web search
 - `OPENAI_API_KEY` — Direct OpenAI access

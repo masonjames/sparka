@@ -100,8 +100,10 @@ export type SiteConfig = {
     webSearch: boolean;
     /** MCP tool servers (requires MCP_ENCRYPTION_KEY) */
     mcp: boolean;
-    /** AI image generation */
+    /** AI image generation (requires BLOB_READ_WRITE_TOKEN) */
     imageGeneration: boolean;
+    /** File attachments - images and PDFs (requires BLOB_READ_WRITE_TOKEN) */
+    attachments: boolean;
   };
   pricing?: PricingConfig;
   legal: {
@@ -188,7 +190,8 @@ export const siteConfig: SiteConfig = {
     sandbox: true, // Vercel-native, no key needed
     webSearch: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
     mcp: true, // Requires MCP_ENCRYPTION_KEY
-    imageGeneration: true,
+    imageGeneration: false, // Requires BLOB_READ_WRITE_TOKEN
+    attachments: false, // Requires BLOB_READ_WRITE_TOKEN
   },
 
   legal: {

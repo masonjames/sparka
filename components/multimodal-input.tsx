@@ -126,6 +126,7 @@ function PureMultimodalInput({
   // Attachment configuration from site config
   const { maxBytes, maxDimension, acceptedTypes } = config.attachments;
   const maxMB = Math.round(maxBytes / (1024 * 1024));
+  const attachmentsEnabled = config.integrations.attachments;
   const acceptImages = useMemo(
     () => getAcceptImages(acceptedTypes),
     [acceptedTypes]
@@ -452,6 +453,11 @@ function PureMultimodalInput({
         return;
       }
 
+      // Skip file paste handling if blob storage is disabled
+      if (!attachmentsEnabled) {
+        return;
+      }
+
       const clipboardData = event.clipboardData;
       if (!clipboardData) {
         return;
@@ -498,7 +504,7 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, processFiles, status, session, uploadFile]
+    [setAttachments, processFiles, status, session, uploadFile, attachmentsEnabled]
   );
 
   const removeAttachment = useCallback(
@@ -549,7 +555,8 @@ function PureMultimodalInput({
       }
     },
     noClick: true, // Prevent click to open file dialog since we have the button
-    disabled: status !== "ready",
+    disabled: status !== "ready" || !attachmentsEnabled,
+    noDrag: !attachmentsEnabled,
     accept: acceptedTypes,
   });
 
@@ -567,15 +574,17 @@ function PureMultimodalInput({
     <div className="relative">
       {showWelcomeMessage && <WelcomeMessage />}
 
-      <input
-        accept={acceptAll}
-        className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
-        multiple
-        onChange={handleFileChange}
-        ref={fileInputRef}
-        tabIndex={-1}
-        type="file"
-      />
+      {attachmentsEnabled && (
+        <input
+          accept={acceptAll}
+          className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+          multiple
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          tabIndex={-1}
+          type="file"
+        />
+      )}
 
       <div className="relative">
         <PromptInput
@@ -599,7 +608,7 @@ function PureMultimodalInput({
         >
           <input {...getInputProps()} />
 
-          {isDragActive && (
+          {isDragActive && attachmentsEnabled && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-blue-500 border-dashed bg-blue-50/80 dark:bg-blue-950/40">
               <div className="font-medium text-blue-600 dark:text-blue-400">
                 Drop images or PDFs here to attach
@@ -656,6 +665,7 @@ function PureMultimodalInput({
             acceptAll={acceptAll}
             acceptFiles={acceptFiles}
             acceptImages={acceptImages}
+            attachmentsEnabled={attachmentsEnabled}
             fileInputRef={fileInputRef}
             onModelChange={handleModelChange}
             parentMessageId={parentMessageId}
@@ -835,6 +845,7 @@ function PureChatInputBottomControls({
   acceptAll,
   acceptImages,
   acceptFiles,
+  attachmentsEnabled,
 }: {
   selectedModelId: AppModelId;
   onModelChange: (modelId: AppModelId) => void;
@@ -848,18 +859,21 @@ function PureChatInputBottomControls({
   acceptAll: string;
   acceptImages: string;
   acceptFiles: string;
+  attachmentsEnabled: boolean;
 }) {
   const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
     <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
       <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
-        <AttachmentsButton
-          acceptAll={acceptAll}
-          acceptFiles={acceptFiles}
-          acceptImages={acceptImages}
-          fileInputRef={fileInputRef}
-          status={status}
-        />
+        {attachmentsEnabled && (
+          <AttachmentsButton
+            acceptAll={acceptAll}
+            acceptFiles={acceptFiles}
+            acceptImages={acceptImages}
+            fileInputRef={fileInputRef}
+            status={status}
+          />
+        )}
         <ModelSelector
           className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
           onModelChangeAction={onModelChange}

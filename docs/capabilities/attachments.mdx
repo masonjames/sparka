@@ -5,6 +5,10 @@ description: "Upload images and PDFs to conversations"
 
 ChatJS supports file attachments in conversations. Files are uploaded to Vercel Blob storage and processed by AI models that support multimodal input.
 
+<Note>
+  File attachments require `BLOB_READ_WRITE_TOKEN`. If you don't need attachments, set `integrations.attachments: false` in `lib/config.ts` to run ChatJS without this env var.
+</Note>
+
 ## Supported File Types
 
 | Type | Extensions | Processing |
@@ -21,6 +25,21 @@ ChatJS supports file attachments in conversations. Files are uploaded to Vercel 
 
 ## Configuration
 
+### Enable/Disable
+
+Toggle attachments in `lib/config.ts`:
+
+```ts
+integrations: {
+  attachments: true, // Requires BLOB_READ_WRITE_TOKEN
+}
+```
+
+When disabled:
+- Attachment button is hidden from the chat input
+- Drag-and-drop and paste file handling are disabled
+- File upload API returns 503
+
 ### Environment Variables
 
 Requires `BLOB_READ_WRITE_TOKEN` from Vercel Blob:
@@ -31,7 +50,7 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_...
 
 On Vercel, this is auto-provided via the Blob integration.
 
-### Site Configuration
+### Attachment Settings
 
 File attachment settings are configured in `lib/config.ts` under the `attachments` key:
 

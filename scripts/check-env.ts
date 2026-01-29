@@ -55,6 +55,20 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     }
   }
 
+  if (siteConfig.integrations.imageGeneration && !env.BLOB_READ_WRITE_TOKEN) {
+    errors.push({
+      feature: "integrations.imageGeneration",
+      missing: ["BLOB_READ_WRITE_TOKEN"],
+    });
+  }
+
+  if (siteConfig.integrations.attachments && !env.BLOB_READ_WRITE_TOKEN) {
+    errors.push({
+      feature: "integrations.attachments",
+      missing: ["BLOB_READ_WRITE_TOKEN"],
+    });
+  }
+
   return errors;
 }
 

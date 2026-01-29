@@ -6,7 +6,9 @@ export const env = createEnv({
     // Required core
     DATABASE_URL: z.string().min(1),
     AUTH_SECRET: z.string().min(1),
-    BLOB_READ_WRITE_TOKEN: z.string().min(1),
+
+    // Optional blob storage (enable in lib/config.ts)
+    BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
     // Authentication providers (enable in lib/config.ts)
     AUTH_GOOGLE_ID: z.string().optional(),

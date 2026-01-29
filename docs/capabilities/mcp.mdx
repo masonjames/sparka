@@ -17,7 +17,7 @@ integrations: {
 }
 ```
 
-Generate an encryption key:
+Generate an encryption key (must be exactly 44 characters):
 
 ```bash
 openssl rand -base64 32
@@ -26,7 +26,7 @@ openssl rand -base64 32
 Set the environment variable:
 
 ```bash
-MCP_ENCRYPTION_KEY=your_generated_key
+MCP_ENCRYPTION_KEY=your_generated_44_char_key
 ```
 
 ## Configuration
@@ -46,7 +46,7 @@ export const siteConfig: SiteConfig = {
 
 ### Environment Variables
 
-Required:
+Required (must be exactly 44 characters, base64-encoded 32 bytes):
 
 ```bash
 MCP_ENCRYPTION_KEY=your_base64_encoded_32_byte_key

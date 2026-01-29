@@ -76,6 +76,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - AUTH_SECRET=${AUTH_SECRET}
       - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY}
+      # Optional - remove if attachments and imageGeneration are disabled in lib/config.ts
       - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN}
     depends_on:
       - db
@@ -125,11 +126,13 @@ Create a `.env` file for Docker:
 # Required
 AUTH_SECRET=your-secret-here
 AI_GATEWAY_API_KEY=your-gateway-key
-BLOB_READ_WRITE_TOKEN=your-blob-token
 
 # Auth (choose one)
 AUTH_GITHUB_ID=...
 AUTH_GITHUB_SECRET=...
+
+# Optional - for file attachments and image generation
+BLOB_READ_WRITE_TOKEN=your-blob-token
 
 # Optional
 TAVILY_API_KEY=...

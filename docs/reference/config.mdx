@@ -131,8 +131,10 @@ export type SiteConfig = {
     webSearch: boolean;
     /** MCP tool servers */
     mcp: boolean;
-    /** AI image generation */
+    /** AI image generation (requires BLOB_READ_WRITE_TOKEN) */
     imageGeneration: boolean;
+    /** File attachments - images and PDFs (requires BLOB_READ_WRITE_TOKEN) */
+    attachments: boolean;
   };
 
   pricing?: PricingConfig;
@@ -189,7 +191,8 @@ Feature flags live under `integrations` and `authentication`. They're validated 
 - **`integrations.sandbox`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) _or_ `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
 - **`integrations.webSearch`**: requires `TAVILY_API_KEY` _or_ `FIRECRAWL_API_KEY`
 - **`integrations.mcp`**: requires `MCP_ENCRYPTION_KEY`
-- **`integrations.imageGeneration`**: no required env vars
+- **`integrations.imageGeneration`**: requires `BLOB_READ_WRITE_TOKEN` - AI-powered image generation tool
+- **`integrations.attachments`**: requires `BLOB_READ_WRITE_TOKEN` - file uploads (images and PDFs)
 
 ### Authentication
 

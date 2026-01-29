@@ -122,10 +122,14 @@ Before you begin, make sure you have:
         # DATABASE_URL=postgres://localhost:5432/chatjs
         ```
       </Accordion>
-      <Accordion title="Blob Storage">
+      <Accordion title="Blob Storage (Optional)">
+        Required for file attachments and image generation. Skip if you don't need these features.
+
         1. Go to [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
         2. Create a new blob store
         3. Copy the token → `BLOB_READ_WRITE_TOKEN`
+
+        To disable, set `integrations.attachments: false` and `integrations.imageGeneration: false` in `lib/config.ts`.
       </Accordion>
       <Accordion title="AI Gateway">
         ChatJS uses [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access 120+ models through a single API.
@@ -149,7 +153,6 @@ Before you begin, make sure you have:
     | Variable | Description |
     |----------|-------------|
     | `DATABASE_URL` | PostgreSQL connection string |
-    | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token |
     | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
     | `AI_GATEWAY_API_KEY` | From Vercel AI Gateway |
 
@@ -223,7 +226,7 @@ Before you begin, make sure you have:
   | `FIRECRAWL_API_KEY`   | Web scraping         | [Firecrawl](https://firecrawl.dev) |
   | `LANGFUSE_PUBLIC_KEY` | LLM observability    | [Langfuse](https://langfuse.com) |
   | `LANGFUSE_SECRET_KEY` | LLM observability    | [Langfuse](https://langfuse.com) |
-  | `MCP_ENCRYPTION_KEY`  | MCP connectors       | [Generate](https://generate-secret.vercel.app/32) |
+  | `MCP_ENCRYPTION_KEY`  | MCP connectors       | `openssl rand -base64 32` (must be exactly 44 chars) |
   | `CRON_SECRET`         | Cleanup cron job     | [Generate](https://generate-secret.vercel.app/32) |
 </Accordion>
 

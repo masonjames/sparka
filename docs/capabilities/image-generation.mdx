@@ -13,9 +13,13 @@ Toggle in `lib/config.ts`:
 
 ```ts
 integrations: {
-  imageGeneration: true,
+  imageGeneration: true, // Requires BLOB_READ_WRITE_TOKEN
 }
 ```
+
+<Note>
+  Image generation requires `BLOB_READ_WRITE_TOKEN` since generated images are uploaded to Vercel Blob storage.
+</Note>
 
 Configure the default image model:
 

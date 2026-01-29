@@ -89,7 +89,6 @@ export function getTools({
           generateImage: generateImageTool({
             attachments,
             lastGeneratedImage,
-
             modelId: imageToolModelId,
             costAccumulator,
           }),
