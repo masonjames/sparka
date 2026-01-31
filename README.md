@@ -69,7 +69,7 @@ Visit [http://localhost:3000](http://localhost:3000) to start building.
 Full documentation available at [chatjs.dev](https://chatjs.dev):
 
 - [Quickstart](https://chatjs.dev/quickstart) — Installation and setup
-- [Configuration](https://chatjs.dev/configuration) — Feature toggles via lib/config.ts
+- [Configuration](https://chatjs.dev/configuration) — Feature toggles via chat.config.ts
 - [Features](https://chatjs.dev/features) — Built-in functionality
 - [Patterns](https://chatjs.dev/patterns) — Reusable implementations
 

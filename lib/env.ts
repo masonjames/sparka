@@ -7,10 +7,10 @@ export const env = createEnv({
     DATABASE_URL: z.string().min(1),
     AUTH_SECRET: z.string().min(1),
 
-    // Optional blob storage (enable in lib/config.ts)
+    // Optional blob storage (enable in chat.config.ts)
     BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
-    // Authentication providers (enable in lib/config.ts)
+    // Authentication providers (enable in chat.config.ts)
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
     AUTH_GITHUB_ID: z.string().optional(),
@@ -25,7 +25,7 @@ export const env = createEnv({
     // Optional cleanup cron job secret
     CRON_SECRET: z.string().optional(),
 
-    // Optional features (enable in lib/config.ts)
+    // Optional features (enable in chat.config.ts)
     REDIS_URL: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
     TAVILY_API_KEY: z.string().optional(),

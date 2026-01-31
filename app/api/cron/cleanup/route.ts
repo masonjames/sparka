@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { deleteFilesByUrls, listFiles } from "@/lib/blob";
+import { config } from "@/lib/config/index";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";
-import { siteConfig } from "@/lib/site-config";
 
 const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000; // 4 hours
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
 async function cleanupOrphanedAttachments() {
   // Skip cleanup if neither imageGeneration nor attachments is enabled
-  const { imageGeneration, attachments } = siteConfig.integrations;
+  const { imageGeneration, attachments } = config.integrations;
   if (!(imageGeneration || attachments)) {
     return { deletedCount: 0, deletedUrls: [], skipped: true };
   }

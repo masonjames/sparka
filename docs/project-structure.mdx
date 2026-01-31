@@ -38,7 +38,8 @@ description: "How ChatJS is organized"
 
 | File | Purpose |
 |------|---------|
-| `lib/config.ts` | Central configuration (features, models, branding) |
+| `chat.config.ts` | Central configuration (features, models, branding) |
+| `lib/config/index.ts` | Parsed config export with defaults |
 | `lib/env.ts` | Environment variable validation (t3-env) |
 | `lib/auth.ts` | Better Auth server configuration |
 | `lib/auth-client.ts` | Better Auth client configuration |
@@ -119,7 +120,9 @@ lib/
 ## Configuration Flow
 
 ```
-lib/config.ts          # Define features, models, branding
+chat.config.ts       # Define features, models, branding
+       ↓
+lib/config/index.ts    # Parse defaults and export config
        ↓
 lib/env.ts             # Validate environment variables
        ↓

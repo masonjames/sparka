@@ -1,10 +1,10 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
 import { z } from "zod";
-import { siteConfigSchema } from "../lib/config.schema";
+import { configSchema } from "../lib/config/schema";
 
 // Get defaults by parsing empty object
-const defaults = siteConfigSchema.parse({});
+const defaults = configSchema.parse({});
 
 // Extract descriptions by walking the zod schema
 function extractDescriptions(
@@ -15,7 +15,10 @@ function extractDescriptions(
   // Unwrap wrappers (default, optional, etc.)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let unwrapped: any = schema;
-  while (unwrapped instanceof z.ZodDefault || unwrapped instanceof z.ZodOptional) {
+  while (
+    unwrapped instanceof z.ZodDefault ||
+    unwrapped instanceof z.ZodOptional
+  ) {
     unwrapped = unwrapped._zod.def.innerType;
   }
 
@@ -36,11 +39,12 @@ function extractDescriptions(
   return result;
 }
 
-const descriptions = extractDescriptions(siteConfigSchema);
+const descriptions = extractDescriptions(configSchema);
 
 // Check if a key needs quoting
 const needsQuotes = (key: string) => !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
-const formatKey = (key: string) => (needsQuotes(key) ? JSON.stringify(key) : key);
+const formatKey = (key: string) =>
+  needsQuotes(key) ? JSON.stringify(key) : key;
 
 // Format a value as TypeScript literal
 function formatValue(value: unknown, indent: number): string {
@@ -49,7 +53,8 @@ function formatValue(value: unknown, indent: number): string {
 
   if (value === null || value === undefined) return "undefined";
   if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
 
   if (Array.isArray(value)) {
     if (value.length === 0) return "[]";
@@ -82,8 +87,16 @@ function generateConfig(
       const desc = descriptions.get(path);
       const comment = desc ? ` // ${desc}` : "";
 
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-        const nested = generateConfig(value as Record<string, unknown>, indent + 1, path);
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
+        const nested = generateConfig(
+          value as Record<string, unknown>,
+          indent + 1,
+          path
+        );
         return `${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
 
@@ -92,20 +105,20 @@ function generateConfig(
     .join("\n");
 }
 
-const template = `import type { SiteConfigInput } from "./config.schema";
+const template = `import type { ConfigInput } from "@/lib/config/schema";
 
 /**
- * Site configuration - edit values below to customize your app.
- * Generated from lib/config.schema.ts - run \`bun chatjs:init\` to regenerate.
+ * ChatJS Configuration
  *
+ * Edit this file to customize your app. Run \`bun chatjs:init\` to reset to defaults.
  * @see https://chatjs.dev/docs/reference/config
  */
-const config: SiteConfigInput = {
+const config: ConfigInput = {
 ${generateConfig(defaults, 1, "")}
 };
 
 export default config;
 `;
 
-writeFileSync(join(process.cwd(), "lib", "config.ts"), template);
-console.log("✓ Config reset to defaults (lib/config.ts)");
+writeFileSync(join(process.cwd(), "chat.config.ts"), template);
+console.log("✓ Config reset to defaults (chat.config.ts)");

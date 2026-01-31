@@ -1,6 +1,6 @@
 import { unstable_cache as cache } from "next/cache";
+import { config } from "@/lib/config/index";
 import type { AnyImageModelId } from "@/lib/models/image-model-id";
-import { siteConfig } from "@/lib/site-config";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
@@ -13,8 +13,8 @@ export type AppModelDefinition = Omit<ModelData, "id"> & {
   apiModelId: ModelId;
 };
 
-const DISABLED_MODELS = new Set(siteConfig.models.disabledModels);
-const PROVIDER_ORDER = siteConfig.models.providerOrder;
+const DISABLED_MODELS = new Set(config.models.disabledModels);
+const PROVIDER_ORDER = config.models.providerOrder;
 
 function buildAppModels(models: ModelData[]): AppModelDefinition[] {
   return models
@@ -143,7 +143,7 @@ const KNOWN_MODEL_IDS = new Set<string>(generatedModels.map((m) => m.id));
 export function getDefaultEnabledModels(
   appModels: AppModelDefinition[]
 ): Set<AppModelId> {
-  const enabled = new Set<AppModelId>(siteConfig.models.curatedDefaults);
+  const enabled = new Set<AppModelId>(config.models.curatedDefaults);
 
   // Add any new models from the API that aren't in our generated snapshot
   for (const model of appModels) {

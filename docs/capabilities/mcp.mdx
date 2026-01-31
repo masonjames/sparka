@@ -9,7 +9,7 @@ description: Connect Model Context Protocol servers to extend AI capabilities
 
 ## Quick Start
 
-Enable MCP in `lib/config.ts`:
+Enable MCP in `chat.config.ts`:
 
 ```typescript
 integrations: {
@@ -31,17 +31,21 @@ MCP_ENCRYPTION_KEY=your_generated_44_char_key
 
 ## Configuration
 
-### In lib/config.ts
+### In chat.config.ts
 
 Enable the integration:
 
-```typescript
-export const siteConfig: SiteConfig = {
+```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config/schema";
+
+const config: ConfigInput = {
   integrations: {
     mcp: true, // Requires MCP_ENCRYPTION_KEY
   },
   // ... rest of config
 };
+
+export default config;
 ```
 
 ### Environment Variables

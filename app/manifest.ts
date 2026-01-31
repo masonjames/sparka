@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: siteConfig.appName,
-    short_name: siteConfig.appName,
-    description: siteConfig.appDescription,
+    name: config.appName,
+    short_name: config.appName,
+    description: config.appDescription,
     start_url: "/",
     display: "standalone",
     background_color: "#fff",

@@ -45,14 +45,19 @@ const config: SiteConfigInput = {
     },
   },
   authentication: {
-    google: false, // Google OAuth (requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET)
+    google: true, // Google OAuth (requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET)
     github: true, // GitHub OAuth (requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET)
-    vercel: false, // Vercel OAuth (requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET)
+    vercel: true, // Vercel OAuth (requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET)
   },
   models: {
     providerOrder: ["openai", "google", "anthropic"], // Provider sort order in model selector
     disabledModels: [], // Models to hide from all users
-    curatedDefaults: ["openai/gpt-5-nano", "openai/gpt-5-mini", "google/gemini-2.5-flash-lite", "anthropic/claude-sonnet-4.5"], // Default models enabled for new users
+    curatedDefaults: [
+      "openai/gpt-5-nano",
+      "openai/gpt-5-mini",
+      "google/gemini-2.5-flash-lite",
+      "anthropic/claude-sonnet-4.5",
+    ], // Default models enabled for new users
     anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"], // Models available to anonymous users
     defaults: {
       chat: "openai/gpt-5-nano",
@@ -79,7 +84,7 @@ const config: SiteConfigInput = {
     },
   },
   attachments: {
-    maxBytes: 1048576, // Max file size in bytes after compression
+    maxBytes: 1_048_576, // Max file size in bytes after compression
     maxDimension: 2048, // Max image dimension
     acceptedTypes: {
       "image/png": [".png"],

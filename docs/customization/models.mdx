@@ -5,7 +5,7 @@ description: Add, remove, or configure AI models
 
 ## Overview
 
-Configure which AI models are available in your app and how they behave. All model configuration lives in `lib/config.ts` under `siteConfig.models`.
+Configure which AI models are available in your app and how they behave. All model configuration lives in `chat.config.ts` under `config.models`.
 
 ## Configuration Options
 
@@ -99,7 +99,7 @@ Different tasks use different models by default. This lets you optimize for cost
 
 ## AI Providers
 
-Available providers should be listed in `siteConfig.services.aiProviders`:
+Available providers should be listed in `config.services.aiProviders`:
 
 ```ts
 aiProviders: [

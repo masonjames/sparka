@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 
 function getPlanTypesLabel({
   hasFree,
@@ -35,9 +35,9 @@ function PricingSection({
     return (
       <>
         <p>
-          {siteConfig.appName} currently does not offer paid plans. If we
-          introduce paid features in the future, this section will be updated
-          and you will be notified in advance.
+          {config.appName} currently does not offer paid plans. If we introduce
+          paid features in the future, this section will be updated and you will
+          be notified in advance.
         </p>
         {paymentProcessors.length > 0 && (
           <p>
@@ -54,28 +54,28 @@ function PricingSection({
   return (
     <>
       <p>
-        {siteConfig.appName} offers {planTypesLabel} subscription plans.
+        {config.appName} offers {planTypesLabel} subscription plans.
       </p>
       <ul>
         {hasFree && (
           <li>
-            <strong>{siteConfig.pricing?.free?.name}:</strong>{" "}
-            {siteConfig.pricing?.free?.summary}
+            <strong>{config.pricing?.free?.name}:</strong>{" "}
+            {config.pricing?.free?.summary}
           </li>
         )}
         {hasPro && (
           <li>
-            <strong>{siteConfig.pricing?.pro?.name}:</strong> {currencySymbol}
-            {siteConfig.pricing?.pro?.monthlyPrice}/month —{" "}
-            {siteConfig.pricing?.pro?.summary}
+            <strong>{config.pricing?.pro?.name}:</strong> {currencySymbol}
+            {config.pricing?.pro?.monthlyPrice}/month —{" "}
+            {config.pricing?.pro?.summary}
           </li>
         )}
       </ul>
       {paymentProcessors.length > 0 && (
         <p>
           We use third-party payment processors to handle billing and payments:{" "}
-          {paymentProcessors.join(", ")}. {siteConfig.appName} does not store
-          any payment card details, bank information, or other sensitive payment
+          {paymentProcessors.join(", ")}. {config.appName} does not store any
+          payment card details, bank information, or other sensitive payment
           data. All payment information is processed directly by our providers.
         </p>
       )}
@@ -99,53 +99,50 @@ export default function TermsPage() {
     GBP: "£",
   };
 
-  const currencyCode = siteConfig.pricing?.currency;
+  const currencyCode = config.pricing?.currency;
   const currencySymbol = currencyCode
     ? (currencySymbolMap[currencyCode] ?? currencyCode)
     : "";
-  const hasFree = Boolean(siteConfig.pricing?.free);
-  const hasPro = Boolean(siteConfig.pricing?.pro);
+  const hasFree = Boolean(config.pricing?.free);
+  const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
-  const paymentProcessors = Array.isArray(
-    siteConfig.services?.paymentProcessors
-  )
-    ? siteConfig.services.paymentProcessors
+  const paymentProcessors = Array.isArray(config.services?.paymentProcessors)
+    ? config.services.paymentProcessors
     : [];
   const planTypesLabel = getPlanTypesLabel({ hasFree, hasPro });
 
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
-      <h1>{siteConfig.policies.terms.title}</h1>
-      {siteConfig.policies.terms.lastUpdated ? (
+      <h1>{config.policies.terms.title}</h1>
+      {config.policies.terms.lastUpdated ? (
         <p>
-          <strong>Last updated:</strong> {siteConfig.policies.terms.lastUpdated}
+          <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
         </p>
       ) : null}
 
       <p>
-        Welcome to {siteConfig.appName}. These Terms of Service govern your use
-        of our website and services. By using {siteConfig.appName}, you agree to
-        these terms in full. If you disagree with any part of these terms,
-        please do not use our service.
+        Welcome to {config.appName}. These Terms of Service govern your use of
+        our website and services. By using {config.appName}, you agree to these
+        terms in full. If you disagree with any part of these terms, please do
+        not use our service.
       </p>
 
       <h2>1. Acceptance of Terms</h2>
       <p>
-        By accessing or using {siteConfig.appName}, you acknowledge that you
-        have read, understood, and agree to be bound by these Terms of Service.
-        We reserve the right to modify these terms at any time, and such
+        By accessing or using {config.appName}, you acknowledge that you have
+        read, understood, and agree to be bound by these Terms of Service. We
+        reserve the right to modify these terms at any time, and such
         modifications shall be effective immediately upon posting. Your
-        continued use of {siteConfig.appName} after any modifications indicates
-        your acceptance of the modified terms.
+        continued use of {config.appName} after any modifications indicates your
+        acceptance of the modified terms.
       </p>
 
       <h2>2. Description of Service</h2>
       <p>
-        {siteConfig.appName} helps users find information using AI. Our service
-        is hosted on {siteConfig.services.hosting} and integrates with AI
-        technology providers including{" "}
-        {siteConfig.services.aiProviders.join(", ")} to deliver results and
-        content generation capabilities.
+        {config.appName} helps users find information using AI. Our service is
+        hosted on {config.services.hosting} and integrates with AI technology
+        providers including {config.services.aiProviders.join(", ")} to deliver
+        results and content generation capabilities.
       </p>
 
       <h2>3. User Conduct</h2>
@@ -173,23 +170,23 @@ export default function TermsPage() {
 
       <h2>5. Intellectual Property</h2>
       <p>
-        All content, features, and functionality of {siteConfig.appName} are the
-        property of {siteConfig.organization.name} or its licensors and are
+        All content, features, and functionality of {config.appName} are the
+        property of {config.organization.name} or its licensors and are
         protected by intellectual property laws.
       </p>
 
       <h2>6. Third-Party Services</h2>
       <p>
-        {siteConfig.appName} relies on third-party services to provide
+        {config.appName} relies on third-party services to provide
         functionality:
       </p>
       <ul>
-        <li>Hosting: {siteConfig.services.hosting}</li>
-        <li>AI providers: {siteConfig.services.aiProviders.join(", ")}</li>
-        {siteConfig.services.paymentProcessors.length > 0 ? (
+        <li>Hosting: {config.services.hosting}</li>
+        <li>AI providers: {config.services.aiProviders.join(", ")}</li>
+        {config.services.paymentProcessors.length > 0 ? (
           <li>
-            Payments: {siteConfig.services.paymentProcessors.join(", ")} for
-            billing and subscription management
+            Payments: {config.services.paymentProcessors.join(", ")} for billing
+            and subscription management
           </li>
         ) : null}
       </ul>
@@ -224,20 +221,20 @@ export default function TermsPage() {
 
       <h2>9. Privacy</h2>
       <p>
-        Your use of {siteConfig.appName} is also governed by our Privacy Policy,
+        Your use of {config.appName} is also governed by our Privacy Policy,
         which is incorporated by reference.
       </p>
 
       <h2>10. Limitation of Liability</h2>
       <p>
-        To the maximum extent permitted by law, {siteConfig.organization.name}{" "}
-        shall not be liable for indirect, incidental, special, consequential, or
+        To the maximum extent permitted by law, {config.organization.name} shall
+        not be liable for indirect, incidental, special, consequential, or
         punitive damages.
       </p>
 
       <h2>11. Disclaimers</h2>
       <p>
-        {siteConfig.appName} is provided "as is" and "as available" without any
+        {config.appName} is provided "as is" and "as available" without any
         warranties of any kind, either express or implied.
       </p>
 
@@ -249,18 +246,18 @@ export default function TermsPage() {
 
       <h2>13. Governing Law</h2>
       <p>
-        These Terms are governed by the laws of {siteConfig.legal.governingLaw}.
+        These Terms are governed by the laws of {config.legal.governingLaw}.
       </p>
 
       <h2>14. Contact Us</h2>
       <p>
         If you have any questions about these Terms of Service, contact us at{" "}
-        {siteConfig.organization.contact.legalEmail}
+        {config.organization.contact.legalEmail}
       </p>
 
       <p>
-        By using {siteConfig.appName}, you agree to these Terms of Service and
-        our Privacy Policy.
+        By using {config.appName}, you agree to these Terms of Service and our
+        Privacy Policy.
       </p>
     </main>
   );

@@ -1,10 +1,10 @@
 import { registerOTel } from "@vercel/otel";
 import { LangfuseExporter } from "langfuse-vercel";
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 
 export function register() {
   registerOTel({
-    serviceName: siteConfig.appPrefix,
+    serviceName: config.appPrefix,
     traceExporter: new LangfuseExporter(),
   });
 }

@@ -37,9 +37,9 @@ This fetches current models from the gateway and writes them to `lib/ai/models.g
 
 ## Model Configuration
 
-All model settings are configured in `lib/config.ts` under the `models` key:
+All model settings are configured in `chat.config.ts` under the `models` key:
 
-```typescript title="lib/config.ts"
+```typescript title="chat.config.ts"
 models: {
   providerOrder: ["openai", "google", "anthropic", "xai"],
   disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],

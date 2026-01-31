@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 /**
  * Build-time config validation script.
- * Validates that enabled features in siteConfig have their required env vars.
+ * Validates that enabled features in config have their required env vars.
  * Run via `bun run check-env` or automatically in prebuild.
  */
 import "dotenv/config";
-import { siteConfig } from "../lib/site-config";
+import { config } from "../lib/config/index";
 
 type ValidationError = { feature: string; missing: string[] };
 
@@ -24,7 +24,7 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   if (
-    siteConfig.integrations.webSearch &&
+    config.integrations.webSearch &&
     !(env.TAVILY_API_KEY || env.FIRECRAWL_API_KEY)
   ) {
     errors.push({
@@ -33,14 +33,14 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     });
   }
 
-  if (siteConfig.integrations.mcp && !env.MCP_ENCRYPTION_KEY) {
+  if (config.integrations.mcp && !env.MCP_ENCRYPTION_KEY) {
     errors.push({
       feature: "integrations.mcp",
       missing: ["MCP_ENCRYPTION_KEY"],
     });
   }
 
-  if (siteConfig.integrations.sandbox) {
+  if (config.integrations.sandbox) {
     const hasOidc = !!env.VERCEL_OIDC_TOKEN;
     const hasTokenAuth =
       env.VERCEL_TEAM_ID && env.VERCEL_PROJECT_ID && env.VERCEL_TOKEN;
@@ -55,14 +55,14 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     }
   }
 
-  if (siteConfig.integrations.imageGeneration && !env.BLOB_READ_WRITE_TOKEN) {
+  if (config.integrations.imageGeneration && !env.BLOB_READ_WRITE_TOKEN) {
     errors.push({
       feature: "integrations.imageGeneration",
       missing: ["BLOB_READ_WRITE_TOKEN"],
     });
   }
 
-  if (siteConfig.integrations.attachments && !env.BLOB_READ_WRITE_TOKEN) {
+  if (config.integrations.attachments && !env.BLOB_READ_WRITE_TOKEN) {
     errors.push({
       feature: "integrations.attachments",
       missing: ["BLOB_READ_WRITE_TOKEN"],
@@ -76,7 +76,7 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (
-    siteConfig.authentication.google &&
+    config.authentication.google &&
     !(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)
   ) {
     const missing = getMissingEnvVars([
@@ -87,7 +87,7 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   if (
-    siteConfig.authentication.github &&
+    config.authentication.github &&
     !(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
   ) {
     const missing = getMissingEnvVars([
@@ -98,7 +98,7 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   if (
-    siteConfig.authentication.vercel &&
+    config.authentication.vercel &&
     !(env.VERCEL_APP_CLIENT_ID && env.VERCEL_APP_CLIENT_SECRET)
   ) {
     const missing = getMissingEnvVars([
@@ -109,13 +109,13 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   const hasAuth =
-    (siteConfig.authentication.google &&
+    (config.authentication.google &&
       env.AUTH_GOOGLE_ID &&
       env.AUTH_GOOGLE_SECRET) ||
-    (siteConfig.authentication.github &&
+    (config.authentication.github &&
       env.AUTH_GITHUB_ID &&
       env.AUTH_GITHUB_SECRET) ||
-    (siteConfig.authentication.vercel &&
+    (config.authentication.vercel &&
       env.VERCEL_APP_CLIENT_ID &&
       env.VERCEL_APP_CLIENT_SECRET);
 
@@ -139,7 +139,7 @@ function checkEnv(): void {
       .join("\n");
 
     console.error(
-      `❌ Environment validation failed:\n${message}\n\nEither set the env vars or disable the feature in lib/config.ts`
+      `❌ Environment validation failed:\n${message}\n\nEither set the env vars or disable the feature in chat.config.ts`
     );
     process.exit(1);
   }

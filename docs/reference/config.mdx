@@ -1,20 +1,20 @@
 ---
 title: Config Reference
-description: Full lib/config.ts API reference
+description: Full chat.config.ts API reference
 ---
 
 ## Overview
 
-`lib/config.ts` is the central configuration for ChatJS. It's auto-generated from `lib/config.schema.ts` with sensible defaults and inline comments.
+`chat.config.ts` is the central configuration for ChatJS. It's auto-generated from `lib/config/schema.ts` with sensible defaults and inline comments.
 
 ```bash
-# Regenerate config.ts from schema (resets to defaults)
+# Regenerate chat.config.ts from schema (resets to defaults)
 bun chatjs:init
 ```
 
 <Note>
   In client components, use `useConfig()` from `@/components/config-provider`
-  instead of importing `siteConfig` directly.
+  instead of importing `config` directly.
 </Note>
 
 ## Access patterns
@@ -22,7 +22,7 @@ bun chatjs:init
 Server components / server-only code:
 
 ```ts
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 ```
 
 Client components:
@@ -37,7 +37,7 @@ const config = useConfig();
 
 ## Configuration Shape
 
-The schema is defined in `lib/config.schema.ts`. Each field's `.describe()` comment appears as an inline comment in the generated config.
+The schema is defined in `lib/config/schema.ts`. Each field's `.describe()` comment appears as an inline comment in the generated config.
 
 ```ts
 export type PricingConfig = {
@@ -105,7 +105,7 @@ export type AttachmentsConfig = {
   };
 };
 
-export type SiteConfig = {
+export type Config = {
   githubUrl: string;
   appPrefix: string;
   appName: string;
@@ -209,5 +209,5 @@ Feature flags live under `integrations` and `authentication`. They're validated 
 
 ## Notes on behavior
 
-- **Anonymous limits**: `anonymous.credits` and rate limits are typically higher in dev and lower in prod (see `siteConfig.anonymous` implementation).
+- **Anonymous limits**: `anonymous.credits` and rate limits are typically higher in dev and lower in prod (see `config.anonymous` implementation).
 - **Models**: `models.defaults` drives which model is used per task; `models.disabledModels` hard-hides models globally; `models.anonymousModels` constrains what anonymous users can pick.

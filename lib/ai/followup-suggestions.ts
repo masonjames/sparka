@@ -2,7 +2,7 @@ import { type ModelMessage, Output, streamText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { StreamWriter } from "@/lib/ai/types";
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 import { generateUUID } from "@/lib/utils";
 
 export async function generateFollowupSuggestions(
@@ -12,9 +12,7 @@ export async function generateFollowupSuggestions(
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
   return streamText({
-    model: await getLanguageModel(
-      siteConfig.models.defaults.followupSuggestions
-    ),
+    model: await getLanguageModel(config.models.defaults.followupSuggestions),
     messages: [
       ...modelMessages,
       {

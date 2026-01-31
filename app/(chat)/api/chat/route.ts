@@ -32,16 +32,19 @@ import {
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
+import { config } from "@/lib/config/index";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
   getChatById,
+  getChatCanceledAt,
   getMessageById,
   getProjectById,
   getUserById,
   saveChat,
   saveMessage,
+  updateChatCanceledAt,
   updateMessage,
   updateMessageActiveStreamId,
 } from "@/lib/db/queries";
@@ -50,7 +53,6 @@ import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
 import { canSpend, deductCredits } from "@/lib/repositories/credits";
-import { siteConfig } from "@/lib/site-config";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
@@ -77,7 +79,7 @@ export function getStreamContext(): ResumableStreamContext | null {
 
   globalStreamContext = createResumableStreamContext({
     waitUntil: after,
-    keyPrefix: `${siteConfig.appPrefix}:resumable-stream`,
+    keyPrefix: `${config.appPrefix}:resumable-stream`,
     ...(redisPublisher && redisSubscriber
       ? { publisher: redisPublisher, subscriber: redisSubscriber }
       : {}),
@@ -188,6 +190,8 @@ async function handleChatValidation({
     await saveChat({ id: chatId, userId, title, projectId });
   }
 
+  await updateChatCanceledAt({ chatId, canceledAt: null });
+
   const [existentMessage] = await getMessageById({ id: userMessage.id });
 
   if (existentMessage && existentMessage.chatId !== chatId) {
@@ -213,6 +217,59 @@ async function checkUserCanSpend(userId: string): Promise<Response | null> {
     return new Response("Insufficient credits", { status: 402 });
   }
   return null;
+}
+
+function startChatCancelWatcher({
+  chatId,
+  abortController,
+  enabled,
+}: {
+  chatId: string;
+  abortController: AbortController;
+  enabled: boolean;
+}): () => void {
+  if (!enabled) {
+    return () => {};
+  }
+
+  const log = createModuleLogger("api:chat:cancel");
+  let cleared = false;
+  let intervalId: NodeJS.Timeout | null = null;
+
+  const clear = () => {
+    if (cleared) {
+      return;
+    }
+    cleared = true;
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
+
+  const checkCanceled = async () => {
+    if (abortController.signal.aborted) {
+      clear();
+      return;
+    }
+
+    try {
+      const canceledAt = await getChatCanceledAt({ chatId });
+      if (canceledAt) {
+        abortController.abort();
+      }
+    } catch (error) {
+      log.error({ error }, "Failed to check canceledAt");
+    }
+  };
+
+  intervalId = setInterval(() => {
+    void checkCanceled();
+  }, 1000);
+
+  abortController.signal.addEventListener("abort", clear, { once: true });
+  void checkCanceled();
+
+  return clear;
 }
 
 /**
@@ -288,6 +345,7 @@ async function createChatStream({
   timeoutId,
   mcpConnectors,
   streamId,
+  onStreamCleanup,
 }: {
   messageId: string;
   chatId: string;
@@ -303,6 +361,7 @@ async function createChatStream({
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
+  onStreamCleanup?: () => void;
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
@@ -393,6 +452,7 @@ async function createChatStream({
     },
     generateId: () => messageId,
     onFinish: async ({ messages }) => {
+      onStreamCleanup?.();
       clearTimeout(timeoutId);
       await finalizeMessageAndCredits({
         messages,
@@ -403,6 +463,7 @@ async function createChatStream({
       });
     },
     onError: (error) => {
+      onStreamCleanup?.();
       clearTimeout(timeoutId);
       // If the stream fails, ensure the placeholder assistant message is no longer marked resumable.
       // Otherwise the client will try to resume a stream that no longer exists and we end up with a
@@ -479,29 +540,42 @@ async function executeChatRequest({
     });
   }
 
-  // Build the data stream that will emit tokens
-  const stream = await createChatStream({
-    messageId,
+  const stopWatcherCleanup = startChatCancelWatcher({
     chatId,
-    userMessage,
-    previousMessages,
-    selectedModelId,
-    explicitlyRequestedTools,
-    userId,
-    allowedTools,
     abortController,
-    isAnonymous,
-    isNewChat,
-    timeoutId,
-    mcpConnectors,
-    streamId,
+    enabled: !isAnonymous && !!userId,
   });
+
+  // Build the data stream that will emit tokens
+  let stream: Awaited<ReturnType<typeof createChatStream>>;
+  try {
+    stream = await createChatStream({
+      messageId,
+      chatId,
+      userMessage,
+      previousMessages,
+      selectedModelId,
+      explicitlyRequestedTools,
+      userId,
+      allowedTools,
+      abortController,
+      isAnonymous,
+      isNewChat,
+      timeoutId,
+      mcpConnectors,
+      streamId,
+      onStreamCleanup: stopWatcherCleanup,
+    });
+  } catch (error) {
+    stopWatcherCleanup();
+    throw error;
+  }
 
   const publisher = redisPublisher;
   if (publisher) {
     after(async () => {
       try {
-        const keyPattern = `${siteConfig.appPrefix}:resumable-stream:rs:sentinel:${streamId}*`;
+        const keyPattern = `${config.appPrefix}:resumable-stream:rs:sentinel:${streamId}*`;
         const keys = await publisher.keys(keyPattern);
         if (keys.length > 0) {
           await Promise.all(
@@ -801,7 +875,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch MCP connectors for authenticated users (only if MCP integration enabled)
     const mcpConnectors: McpConnector[] =
-      siteConfig.integrations.mcp && userId && !isAnonymous
+      config.integrations.mcp && userId && !isAnonymous
         ? await getMcpConnectorsByUserId({ userId })
         : [];
 

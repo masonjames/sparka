@@ -7,6 +7,7 @@ import {
   cloneAttachmentsInMessages,
   cloneMessagesWithDocuments,
 } from "@/lib/clone-messages";
+import { config } from "@/lib/config/index";
 import {
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
@@ -18,13 +19,13 @@ import {
   saveChat,
   saveDocuments,
   saveMessages,
+  updateChatCanceledAt,
   updateChatIsPinnedById,
   updateChatTitleById,
   updateChatVisiblityById,
 } from "@/lib/db/queries";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
-import { siteConfig } from "@/lib/site-config";
 import { generateUUID } from "@/lib/utils";
 import {
   createTRPCRouter,
@@ -184,6 +185,29 @@ export const chatRouter = createTRPCRouter({
       return;
     }),
 
+  stopStream: protectedProcedure
+    .input(
+      z.object({
+        chatId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const chat = await getChatById({ id: input.chatId });
+      if (!chat || chat.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Chat not found or access denied",
+        });
+      }
+
+      await updateChatCanceledAt({
+        chatId: input.chatId,
+        canceledAt: new Date(),
+      });
+
+      return { success: true };
+    }),
+
   setVisibility: protectedProcedure
     .input(
       z.object({
@@ -263,7 +287,7 @@ export const chatRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const { text: title } = await generateText({
-        model: await getLanguageModel(siteConfig.models.defaults.title),
+        model: await getLanguageModel(config.models.defaults.title),
         system: `\n
         - you will generate a short title based on the first message a user begins a conversation with
         - ensure it is not more than 80 characters long

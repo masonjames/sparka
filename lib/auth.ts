@@ -2,9 +2,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { env } from "@/lib/env";
+import { config } from "./config/index";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-import { siteConfig } from "./site-config";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -15,7 +15,7 @@ export const auth = betterAuth({
     "http://localhost:3000",
     // Vercel URL for preview branches
     ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
-    siteConfig.appUrl,
+    config.appUrl,
   ],
   secret: env.AUTH_SECRET,
 

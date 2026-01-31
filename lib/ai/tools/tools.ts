@@ -14,11 +14,11 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
 import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
+import { config } from "@/lib/config/index";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 import { isMultimodalImageModel } from "@/lib/models/image-model-id";
-import { siteConfig } from "@/lib/site-config";
 import type { StreamWriter } from "../types";
 import { deepResearch } from "./deep-research/deep-research";
 import type { ToolSession } from "./types";
@@ -71,7 +71,7 @@ export function getTools({
     //   dataStream,
     // }),
     retrieveUrl,
-    ...(siteConfig.integrations.webSearch
+    ...(config.integrations.webSearch
       ? {
           webSearch: tavilyWebSearch({
             dataStream,
@@ -81,10 +81,10 @@ export function getTools({
         }
       : {}),
 
-    ...(siteConfig.integrations.sandbox
+    ...(config.integrations.sandbox
       ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
-    ...(siteConfig.integrations.imageGeneration
+    ...(config.integrations.imageGeneration
       ? {
           generateImage: generateImageTool({
             attachments,
@@ -94,7 +94,7 @@ export function getTools({
           }),
         }
       : {}),
-    ...(siteConfig.integrations.webSearch
+    ...(config.integrations.webSearch
       ? {
           deepResearch: deepResearch({
             session,
@@ -121,7 +121,7 @@ export async function getMcpTools({
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
 }> {
-  if (!siteConfig.integrations.mcp) {
+  if (!config.integrations.mcp) {
     return {
       tools: {},
       cleanup: async () => Promise.resolve(),

@@ -959,6 +959,38 @@ export async function updateChatIsPinnedById({
   }
 }
 
+export async function getChatCanceledAt({
+  chatId,
+}: {
+  chatId: string;
+}): Promise<Date | null> {
+  try {
+    const [result] = await db
+      .select({ canceledAt: chat.canceledAt })
+      .from(chat)
+      .where(eq(chat.id, chatId));
+    return result?.canceledAt ?? null;
+  } catch (error) {
+    console.error("Failed to get chat canceledAt from database");
+    throw error;
+  }
+}
+
+export async function updateChatCanceledAt({
+  chatId,
+  canceledAt,
+}: {
+  chatId: string;
+  canceledAt: Date | null;
+}) {
+  try {
+    return await db.update(chat).set({ canceledAt }).where(eq(chat.id, chatId));
+  } catch (error) {
+    console.error("Failed to update chat canceledAt in database");
+    throw error;
+  }
+}
+
 async function updateChatUpdatedAt({ chatId }: { chatId: string }) {
   try {
     return await db

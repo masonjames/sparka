@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
@@ -28,7 +28,7 @@ export default async function ChatLayout({
   const isAnonymous = !session?.user;
 
   // Check if the model from cookie is available for anonymous users
-  let defaultModel = cookieModel ?? siteConfig.models.defaults.chat;
+  let defaultModel = cookieModel ?? config.models.defaults.chat;
 
   if (isAnonymous && cookieModel) {
     const isModelAvailable = ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(
@@ -36,7 +36,7 @@ export default async function ChatLayout({
     );
     if (!isModelAvailable) {
       // Switch to default model if current model is not available for anonymous users
-      defaultModel = siteConfig.models.defaults.chat;
+      defaultModel = config.models.defaults.chat;
     }
   }
 

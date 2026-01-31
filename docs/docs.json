@@ -86,6 +86,7 @@
             "group": "Streaming",
             "pages": [
               "cookbook/streaming/resumable-streams",
+              "cookbook/streaming/stop-resumable-streams",
               "cookbook/streaming/tool-part"
             ]
           },

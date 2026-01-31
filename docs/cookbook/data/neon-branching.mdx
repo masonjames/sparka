@@ -23,8 +23,19 @@ npm install -g neonctl
 
 # Authenticate
 neonctl auth
+```
 
-# Set your project context (find project ID in Neon dashboard)
+Create a `.neon` file in your project root with your project ID (find it in your Neon dashboard):
+
+```json title=".neon"
+{
+  "projectId": "<your-project-id>"
+}
+```
+
+Alternatively, you can set the context via CLI:
+
+```bash
 neonctl set-context --project-id <your-project-id>
 ```
 

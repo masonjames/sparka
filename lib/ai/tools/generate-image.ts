@@ -2,6 +2,7 @@ import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
+import { config } from "@/lib/config/index";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import {
@@ -9,7 +10,6 @@ import {
   isMultimodalImageModel,
   type MultimodalImageModelId,
 } from "@/lib/models/image-model-id";
-import { siteConfig } from "@/lib/site-config";
 import { toolsDefinitions } from "./tools-definitions";
 
 type GenerateImageProps = {
@@ -127,7 +127,7 @@ async function runGenerateImageTraditional({
   }
 
   const res = await generateImage({
-    model: getImageModel(siteConfig.models.defaults.image),
+    model: getImageModel(config.models.defaults.image),
     prompt: promptInput,
     n: 1,
     providerOptions: {
@@ -307,7 +307,7 @@ export const generateImageTool = ({
       );
 
       try {
-        const effectiveModelId = modelId ?? siteConfig.models.defaults.image;
+        const effectiveModelId = modelId ?? config.models.defaults.image;
 
         // Use multimodal path for language models with image generation
         if (isMultimodalImageModel(effectiveModelId)) {

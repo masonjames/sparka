@@ -31,13 +31,17 @@ To fully rebrand ChatJS, you'll need to replace several image assets and update 
 
 ## Metadata
 
-Update `lib/config.ts`:
+Update `chat.config.ts`:
 
-```ts
-export const siteConfig: SiteConfig = {
+```ts title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config/schema";
+
+const config: ConfigInput = {
   appName: "Your App Name",
   appDescription: "Your app description",
   appUrl: "https://yourdomain.com",
   // ...
 };
+
+export default config;
 ```

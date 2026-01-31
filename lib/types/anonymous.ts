@@ -1,5 +1,5 @@
 import type { ToolName } from "../ai/types";
-import { siteConfig } from "../site-config";
+import { config } from "../config/index";
 
 export type AnonymousSession = {
   id: string;
@@ -7,11 +7,11 @@ export type AnonymousSession = {
   createdAt: Date;
 };
 
-const anonConfig = siteConfig.anonymous;
+const anonConfig = config.anonymous;
 
 export const ANONYMOUS_LIMITS = {
   CREDITS: anonConfig.credits,
-  AVAILABLE_MODELS: siteConfig.models.anonymousModels,
+  AVAILABLE_MODELS: config.models.anonymousModels,
   AVAILABLE_TOOLS: anonConfig.availableTools as ToolName[],
   SESSION_DURATION: 2_147_483_647, // Max session time
   RATE_LIMIT: {

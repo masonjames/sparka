@@ -1,6 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
+import { useMutation } from "@tanstack/react-query";
 import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import {
@@ -37,6 +38,7 @@ import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+import { useTRPC } from "@/trpc/react";
 import { useConfig } from "./config-provider";
 import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
@@ -95,12 +97,17 @@ function PureMultimodalInput({
   const storeApi = useChatStoreApi<ChatMessage>();
   const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
+  const trpc = useTRPC();
   const config = useConfig();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   useChatId();
   const messageIds = useMessageIds();
-  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const {
+    setMessages,
+    sendMessage,
+    stop: stopHelper,
+  } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -122,6 +129,9 @@ function PureMultimodalInput({
   const isModelDisallowedForAnonymous =
     isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
   const { getModelById } = useChatModels();
+  const stopStreamMutation = useMutation(
+    trpc.chat.stopStream.mutationOptions()
+  );
 
   // Attachment configuration from site config
   const { maxBytes, maxDimension, acceptedTypes } = config.attachments;
@@ -577,6 +587,13 @@ function PureMultimodalInput({
   const showWelcomeMessage =
     messageIds.length === 0 && !isProjectContext && !isEditMode;
 
+  const handleStop = useCallback(() => {
+    if (session?.user) {
+      stopStreamMutation.mutate({ chatId });
+    }
+    stopHelper?.();
+  }, [chatId, session?.user, stopHelper, stopStreamMutation]);
+
   return (
     <div className="relative">
       {showWelcomeMessage && <WelcomeMessage />}
@@ -675,6 +692,7 @@ function PureMultimodalInput({
             attachmentsEnabled={attachmentsEnabled}
             fileInputRef={fileInputRef}
             onModelChange={handleModelChange}
+            onStop={handleStop}
             parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
             selectedTool={selectedTool}
@@ -853,6 +871,7 @@ function PureChatInputBottomControls({
   acceptImages,
   acceptFiles,
   attachmentsEnabled,
+  onStop,
 }: {
   selectedModelId: AppModelId;
   onModelChange: (modelId: AppModelId) => void;
@@ -867,8 +886,8 @@ function PureChatInputBottomControls({
   acceptImages: string;
   acceptFiles: string;
   attachmentsEnabled: boolean;
+  onStop: () => void;
 }) {
-  const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
     <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
       <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
@@ -906,7 +925,7 @@ function PureChatInputBottomControls({
           onClick={(e) => {
             e.preventDefault();
             if (status === "streaming" || status === "submitted") {
-              stopHelper?.();
+              onStop();
             } else if (status === "ready" || status === "error") {
               if (!submission.enabled) {
                 if (submission.message) {

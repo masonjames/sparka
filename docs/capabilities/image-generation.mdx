@@ -9,7 +9,7 @@ Generate images directly in chat using AI models. Supports both generation from 
 
 ## Quick Start
 
-Toggle in `lib/config.ts`:
+Toggle in `chat.config.ts`:
 
 ```ts
 integrations: {
@@ -153,7 +153,7 @@ The generated image is uploaded to blob storage and the URL returned.
 
 ### Image Model
 
-```ts title="lib/config.ts"
+```ts title="chat.config.ts"
 models: {
   defaults: {
     image: "google/gemini-3-pro-image",
@@ -179,7 +179,7 @@ const imageToolModelId = isMultimodalImageModel(selectedModel)
 ```
 
 1. If the user's selected chat model can generate images (is a multimodal image model), use it
-2. Otherwise, fall back to `siteConfig.models.defaults.image`
+2. Otherwise, fall back to `config.models.defaults.image`
 
 ### Image Model vs Multimodal Generation
 

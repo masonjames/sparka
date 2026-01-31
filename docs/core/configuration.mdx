@@ -1,14 +1,16 @@
 ---
 title: "Configuration"
-description: "Customize ChatJS via lib/config.ts"
+description: "Customize ChatJS via chat.config.ts"
 ---
 
-All feature toggles and app settings live in `lib/config.ts`. This is the central hub for enabling/disabling features and customizing your app.
+All feature toggles and app settings live in `chat.config.ts`. It is parsed and exported as `config` from `@/lib/config/index`.
 
 ## Config Structure
 
-```typescript lib/config.ts
-export const siteConfig: SiteConfig = {
+```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config/schema";
+
+const config: ConfigInput = {
   appName: "Your App Name",
   appPrefix: "your-app",
   githubUrl: "https://github.com/you/your-app",
@@ -36,6 +38,8 @@ export const siteConfig: SiteConfig = {
 
   // ... more options
 };
+
+export default config;
 ```
 
 ## Integrations
@@ -44,17 +48,19 @@ Toggle features on/off. Set to `true` to enable. Missing env vars are caught at 
 
 | Integration | Config Key | Env Dependency |
 |-------------|------------|----------------|
-| Code Sandbox | `integrations.sandbox` | Vercel deployment only |
-| Web Search | `integrations.webSearch` | `TAVILY_API_KEY` or `EXA_API_KEY` |
+| Code Sandbox | `integrations.sandbox` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
+| Web Search | `integrations.webSearch` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
 | MCP Connectors | `integrations.mcp` | `MCP_ENCRYPTION_KEY` |
-| Image Generation | `integrations.imageGeneration` | None |
+| Image Generation | `integrations.imageGeneration` | `BLOB_READ_WRITE_TOKEN` |
+| Attachments | `integrations.attachments` | `BLOB_READ_WRITE_TOKEN` |
 
 ```typescript
 integrations: {
-  sandbox: true,         // Vercel-native, no key needed
-  webSearch: true,       // Requires TAVILY_API_KEY or EXA_API_KEY
+  sandbox: true,         // Vercel-native, requires VERCEL_OIDC_TOKEN
+  webSearch: true,       // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
   mcp: false,            // Requires MCP_ENCRYPTION_KEY
-  imageGeneration: true, // AI image generation
+  imageGeneration: true, // Requires BLOB_READ_WRITE_TOKEN
+  attachments: true,     // Requires BLOB_READ_WRITE_TOKEN
 },
 ```
 
@@ -93,10 +99,10 @@ organization: {
 In server components, import directly:
 
 ```typescript
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 
 export function ServerComponent() {
-  return <div>{siteConfig.appName}</div>;
+  return <div>{config.appName}</div>;
 }
 ```
 
@@ -117,10 +123,12 @@ export function ClientComponent() {
 Full type reference:
 
 ```typescript
-export type SiteConfig = {
+export type Config = {
   githubUrl: string;
   appPrefix: string;
   appName: string;
+  appDescription: string;
+  appUrl: string;
   organization: {
     name: string;
     contact: {
@@ -138,6 +146,7 @@ export type SiteConfig = {
     webSearch: boolean;
     mcp: boolean;
     imageGeneration: boolean;
+    attachments: boolean;
   };
   pricing?: PricingConfig;
   legal: {
@@ -154,5 +163,10 @@ export type SiteConfig = {
     github: boolean;
     vercel: boolean;
   };
+  models: ModelsConfig;
+  anonymous: AnonymousConfig;
+  attachments: AttachmentsConfig;
 };
 ```
+
+See [Config Reference](/reference/config) for full type definitions of `ModelsConfig`, `AnonymousConfig`, and `AttachmentsConfig`.

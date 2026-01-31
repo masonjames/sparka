@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 
 const _isProductionEnvironment = process.env.NODE_ENV === "production";
 
@@ -8,6 +8,6 @@ const _isTestEnvironment = Boolean(
     process.env.CI_PLAYWRIGHT
 );
 
-export const BLOB_FILE_PREFIX = `${siteConfig.appPrefix}/files/`;
+export const BLOB_FILE_PREFIX = `${config.appPrefix}/files/`;
 
 export const ANONYMOUS_SESSION_COOKIES_KEY = "anonymous-session";

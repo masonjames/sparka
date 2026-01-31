@@ -66,7 +66,7 @@ Before you begin, make sure you have:
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
     cd YOUR_REPO
     bun install
-    bun chatjs:init  # Generate lib/config.ts with defaults
+    bun chatjs:init  # Generate chat.config.ts with defaults
     vercel link
     vercel env pull .env.local
     ```
@@ -97,7 +97,7 @@ Before you begin, make sure you have:
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
     cd YOUR_REPO
     bun install
-    bun chatjs:init  # Generate lib/config.ts with defaults
+    bun chatjs:init  # Generate chat.config.ts with defaults
     ```
 
     ### 2. Set Up External Services
@@ -131,7 +131,7 @@ Before you begin, make sure you have:
         2. Create a new blob store
         3. Copy the token → `BLOB_READ_WRITE_TOKEN`
 
-        To disable, set `integrations.attachments: false` and `integrations.imageGeneration: false` in `lib/config.ts`.
+        To disable, set `integrations.attachments: false` and `integrations.imageGeneration: false` in `chat.config.ts`.
       </Accordion>
       <Accordion title="AI Gateway">
         ChatJS uses [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access 120+ models through a single API.
@@ -224,8 +224,7 @@ Before you begin, make sure you have:
   | --------------------- | -------------------- | ----------- |
   | `REDIS_URL`           | Resumable streams    | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) |
   | `TAVILY_API_KEY`      | Web search           | [Tavily](https://app.tavily.com) |
-  | `EXA_API_KEY`         | Web search           | [Exa](https://dashboard.exa.ai) |
-  | `FIRECRAWL_API_KEY`   | Web scraping         | [Firecrawl](https://firecrawl.dev) |
+  | `FIRECRAWL_API_KEY`   | Web search           | [Firecrawl](https://firecrawl.dev) |
   | `LANGFUSE_PUBLIC_KEY` | LLM observability    | [Langfuse](https://langfuse.com) |
   | `LANGFUSE_SECRET_KEY` | LLM observability    | [Langfuse](https://langfuse.com) |
   | `MCP_ENCRYPTION_KEY`  | MCP connectors       | `openssl rand -base64 32` (must be exactly 44 chars) |
@@ -238,7 +237,7 @@ You're up and running. Here's where to go next:
 
 <CardGroup cols={2}>
   <Card title="Configuration" icon="gear" href="/core/configuration">
-    Customize features, branding, and integrations in lib/config.ts
+    Customize features, branding, and integrations in chat.config.ts
   </Card>
   <Card title="AI Capabilities" icon="sparkles" href="/capabilities/overview">
     Explore built-in tools: web search, image generation, code execution

@@ -1,15 +1,15 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { SiteConfig } from "@/lib/config.schema";
+import type { Config } from "@/lib/config/index";
 
-const ConfigContext = createContext<SiteConfig | null>(null);
+const ConfigContext = createContext<Config | null>(null);
 
 export function ConfigProvider({
   value,
   children,
 }: {
-  value: SiteConfig;
+  value: Config;
   children: React.ReactNode;
 }): React.ReactNode {
   return (
@@ -17,7 +17,7 @@ export function ConfigProvider({
   );
 }
 
-export function useConfig(): SiteConfig {
+export function useConfig(): Config {
   const ctx = useContext(ConfigContext);
   if (!ctx) {
     throw new Error("useConfig must be used within a ConfigProvider");

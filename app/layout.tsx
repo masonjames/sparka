@@ -9,17 +9,17 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { siteConfig } from "@/lib/site-config";
+import { config } from "@/lib/config/index";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.appUrl),
-  title: siteConfig.appName,
-  description: siteConfig.appDescription,
+  metadataBase: new URL(config.appUrl),
+  title: config.appName,
+  description: config.appDescription,
   openGraph: {
-    siteName: siteConfig.appName,
-    url: siteConfig.appUrl,
-    title: siteConfig.appName,
-    description: siteConfig.appDescription,
+    siteName: config.appName,
+    url: config.appUrl,
+    title: config.appName,
+    description: config.appDescription,
   },
 };
 
@@ -92,7 +92,7 @@ export default async function RootLayout({
           strategy="beforeInteractive"
         />
         <NuqsAdapter>
-          <ConfigProvider value={siteConfig}>
+          <ConfigProvider value={config}>
             <ThemeProvider
               attribute="class"
               defaultTheme="system"
