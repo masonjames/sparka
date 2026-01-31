@@ -504,7 +504,14 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, processFiles, status, session, uploadFile, attachmentsEnabled]
+    [
+      setAttachments,
+      processFiles,
+      status,
+      session,
+      uploadFile,
+      attachmentsEnabled,
+    ]
   );
 
   const removeAttachment = useCallback(

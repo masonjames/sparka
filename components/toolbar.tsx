@@ -2,6 +2,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChatActions, type useChatStoreApi } from "@ai-sdk-tools/store";
 import cx from "classnames";
+import { ArrowUp, Square } from "lucide-react";
 import {
   AnimatePresence,
   motion,
@@ -34,7 +35,6 @@ import type {
   ArtifactToolbarContext,
   ArtifactToolbarItem,
 } from "./create-artifact";
-import { ArrowUp, Square } from "lucide-react";
 import { SummarizeIcon } from "./icons";
 
 type ToolProps = {

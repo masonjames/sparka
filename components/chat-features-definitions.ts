@@ -15,7 +15,11 @@ type ToolDefinition = {
 
 export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
   webSearch: { name: "Web Search", icon: GlobeIcon, shortName: "Search" },
-  deepResearch: { name: "Deep Research", icon: Telescope, shortName: "Research" },
+  deepResearch: {
+    name: "Deep Research",
+    icon: Telescope,
+    shortName: "Research",
+  },
   generateImage: { name: "Create an image", icon: Images, shortName: "Image" },
   createTextDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
   createCodeDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },

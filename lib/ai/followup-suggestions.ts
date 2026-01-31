@@ -2,7 +2,7 @@ import { type ModelMessage, Output, streamText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { StreamWriter } from "@/lib/ai/types";
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 import { generateUUID } from "@/lib/utils";
 
 export async function generateFollowupSuggestions(

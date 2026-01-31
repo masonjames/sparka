@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 
 export default function PrivacyPage() {
   const _currencySymbolMap: Record<string, string> = {

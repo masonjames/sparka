@@ -5,7 +5,7 @@
  * Run via `bun run check-env` or automatically in prebuild.
  */
 import "dotenv/config";
-import { siteConfig } from "../lib/config";
+import { siteConfig } from "../lib/site-config";
 
 type ValidationError = { feature: string; missing: string[] };
 

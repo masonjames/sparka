@@ -26,7 +26,7 @@ export function NewChatButton() {
           refreshChatID();
         }}
       >
-        <Plus size={16} aria-label="New Chat" />
+        <Plus aria-label="New Chat" size={16} />
         <span>New Chat</span>
         <span className="ml-auto text-muted-foreground text-xs">
           {shortcutText}

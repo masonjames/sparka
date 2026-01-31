@@ -2,16 +2,14 @@ import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
-
-import { siteConfig } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
-
 import { createModuleLogger } from "@/lib/logger";
 import {
   type AnyImageModelId,
   isMultimodalImageModel,
   type MultimodalImageModelId,
 } from "@/lib/models/image-model-id";
+import { siteConfig } from "@/lib/site-config";
 import { toolsDefinitions } from "./tools-definitions";
 
 type GenerateImageProps = {

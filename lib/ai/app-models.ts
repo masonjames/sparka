@@ -1,6 +1,6 @@
 import { unstable_cache as cache } from "next/cache";
-import { siteConfig } from "@/lib/config";
 import type { AnyImageModelId } from "@/lib/models/image-model-id";
+import { siteConfig } from "@/lib/site-config";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";

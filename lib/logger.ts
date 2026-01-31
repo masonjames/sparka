@@ -1,5 +1,5 @@
 import pino, { type Logger, stdTimeFunctions } from "pino";
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 
 // Prefer JSON in production; pretty in development.
 // We also add base bindings so child loggers inherit app metadata.

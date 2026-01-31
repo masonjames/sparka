@@ -5,7 +5,12 @@ description: Full lib/config.ts API reference
 
 ## Overview
 
-`lib/config.ts` exports `siteConfig`, the central configuration hub for ChatJS. Toggle features, configure providers, and customize behavior.
+`lib/config.ts` is the central configuration for ChatJS. It's auto-generated from `lib/config.schema.ts` with sensible defaults and inline comments.
+
+```bash
+# Regenerate config.ts from schema (resets to defaults)
+bun chatjs:init
+```
 
 <Note>
   In client components, use `useConfig()` from `@/components/config-provider`
@@ -17,7 +22,7 @@ description: Full lib/config.ts API reference
 Server components / server-only code:
 
 ```ts
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 ```
 
 Client components:
@@ -31,6 +36,8 @@ const config = useConfig();
 ```
 
 ## Configuration Shape
+
+The schema is defined in `lib/config.schema.ts`. Each field's `.describe()` comment appears as an inline comment in the generated config.
 
 ```ts
 export type PricingConfig = {

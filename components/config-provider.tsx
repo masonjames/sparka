@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { SiteConfig } from "@/lib/config";
+import type { SiteConfig } from "@/lib/config.schema";
 
 const ConfigContext = createContext<SiteConfig | null>(null);
 

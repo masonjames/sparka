@@ -9,7 +9,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.appUrl),

@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 
 const _isProductionEnvironment = process.env.NODE_ENV === "production";
 

@@ -1,5 +1,5 @@
 import "server-only";
-import { siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/site-config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 type RateLimitResult = {

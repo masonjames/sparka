@@ -32,7 +32,6 @@ import {
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
-import { siteConfig } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
@@ -51,6 +50,7 @@ import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
 import { canSpend, deductCredits } from "@/lib/repositories/credits";
+import { siteConfig } from "@/lib/site-config";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";

@@ -9,7 +9,6 @@ import {
 } from "@/lib/ai/mcp/cache";
 import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
-import { siteConfig } from "@/lib/config";
 import {
   createMcpConnector,
   deleteMcpConnector,
@@ -21,6 +20,7 @@ import {
   updateMcpConnector,
 } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
+import { siteConfig } from "@/lib/site-config";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 const log = createModuleLogger("mcp.router");

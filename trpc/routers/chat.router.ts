@@ -7,7 +7,6 @@ import {
   cloneAttachmentsInMessages,
   cloneMessagesWithDocuments,
 } from "@/lib/clone-messages";
-import { siteConfig } from "@/lib/config";
 import {
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
@@ -25,6 +24,7 @@ import {
 } from "@/lib/db/queries";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
+import { siteConfig } from "@/lib/site-config";
 import { generateUUID } from "@/lib/utils";
 import {
   createTRPCRouter,

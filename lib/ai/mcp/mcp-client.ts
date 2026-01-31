@@ -7,9 +7,9 @@ import type {
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "ai";
-import { siteConfig } from "@/lib/config";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
+import { siteConfig } from "@/lib/site-config";
 import { invalidateAllMcpCaches } from "./cache";
 import {
   McpOAuthClientProvider,
