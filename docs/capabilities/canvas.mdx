@@ -3,55 +3,100 @@ title: Canvas
 description: Create and edit text documents, code, and spreadsheets
 ---
 
-Canvas lets you create and edit documents directly in chat. You can generate text documents, code files, and spreadsheets that the AI helps you refine.
+Canvas lets you create and edit documents directly in chat. The AI creates text documents, code files, and spreadsheets in a side panel where you can view, edit, and refine them.
 
-## Canvas Types
+## Canvas types
 
 You can create three types of canvas:
 
 | Type      | Best for                                                     | Features                                                        |
 | --------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
-| **Text**  | Essays, emails, reports, and other written content           | AI suggestions, diff view, version history, direct editing      |
-| **Code**  | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, Python execution, version history          |
-| **Sheet** | Spreadsheets, data tables, and CSV files                     | Cell editing, CSV export, data visualization via Python         |
+| **Text**  | Essays, emails, reports, documentation, and other written content | Markdown support, diff view, version history, direct editing, polish tool |
+| **Code**  | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, Python execution (via Pyodide), version history, console output |
+| **Sheet** | Data tables, datasets, and CSV files                         | Spreadsheet editor, CSV export, data visualization via Python   |
 
-## Creating a Canvas
+## Creating a canvas
 
-When you ask the AI to create something substantial, it automatically uses the appropriate canvas type. You can also request specific types:
+When you ask the AI to create something substantial, it automatically creates a canvas with the appropriate type. You can also request specific types:
 
 - **Text documents**: "Write a professional email about..." or "Draft an essay on..."
 - **Code**: "Create a Python script that..." or "Write a React component for..."
 - **Spreadsheets**: "Create a spreadsheet with..." or "Build a data table for..."
 
-The AI decides whether to create a canvas based on content length and type. Short responses stay in chat, while substantial content gets its own canvas.
+The AI uses dedicated tools to create documents:
+- `createTextDocument` for markdown text content
+- `createCodeDocument` for code files (filename determines syntax highlighting)
+- `createSheetDocument` for CSV-format spreadsheets
 
-## Editing Documents
+## Editing documents
 
-### Making Changes
+### Direct editing
 
-You can edit any canvas you create. Click into the canvas to edit directly, or ask the AI to make specific changes:
+Click into any canvas to edit directly. Changes auto-save after you stop typing.
+
+### AI-assisted editing
+
+Ask the AI to make changes and it will update the document:
 
 - "Make this code more concise"
 - "Fix the typos in this email"
 - "Add a column for timestamps"
 
-The AI can update the entire document or make targeted edits based on your instructions.
+The AI reads the current document content before making edits to preserve context.
 
-### Version History
+### Version history
 
-Your canvas maintains a version history. You can navigate between versions using the arrow controls in the canvas header:
+Every change creates a new version. Navigate between versions using the controls in the canvas header:
 
-- Navigate to previous versions
-- Navigate to next versions
-- Return to the latest version when viewing an older one
+- **Undo** (left arrow): View the previous version
+- **Redo** (right arrow): View the next version
 
-### Diff View (Text Documents Only)
+When viewing an older version, a footer appears letting you return to the latest version.
 
-Text canvas supports a diff view that shows exactly what changed between consecutive versions. Toggle the diff view to see additions and deletions highlighted.
+### Diff view (text only)
 
-### Suggestions (Text Documents Only)
+Text documents support a diff view that highlights additions and deletions between consecutive versions. Toggle diff view using the history icon in the canvas header.
 
-Text canvas shows AI-powered suggestions for improvements. You can request suggestions using the toolbar button, and then accept or dismiss them individually. This helps you refine your writing without rewriting from scratch.
+## Canvas toolbar
+
+A floating toolbar appears at the bottom-right of the canvas. Each canvas type has different quick actions:
+
+### Text toolbar
+- **Add final polish**: Checks grammar, adds section titles, improves readability
+
+### Code toolbar
+- **Add comments**: Adds explanatory comments to the code
+- **Add logs**: Adds debug logging statements
+
+### Sheet toolbar
+- **Format and clean data**: Cleans and formats the spreadsheet data
+- **Analyze and visualize**: Creates a Python code canvas with data analysis and visualization
+
+## Code execution
+
+Python code can run directly in the browser using Pyodide. Click the **Run** button to execute.
+
+Execution features:
+- Console output displays below the code editor
+- Matplotlib plots render as images in the console
+- Package imports are loaded automatically
+- Standard library only (no external dependencies)
+
+Code execution is only available for Python files. The run button is disabled for other languages.
+
+## Canvas actions
+
+Each canvas type has action buttons in the header:
+
+### All types
+- **Undo/Redo**: Navigate version history
+- **Copy**: Copy content to clipboard
+
+### Text only
+- **View changes**: Toggle diff view comparing current and previous version
+
+### Sheet only
+- **Copy as CSV**: Exports clean CSV (removes empty rows)
 
 ## Configuration
 

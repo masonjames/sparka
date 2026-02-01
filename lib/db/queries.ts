@@ -432,10 +432,7 @@ export async function updateMessage({
       return;
     });
   } catch (error) {
-    logger.error(
-      { error, messageId: id, chatId },
-      updateMessage failed
-    );
+    logger.error({ error, messageId: id, chatId }, "updateMessage failed");
     throw error;
   }
 }
@@ -763,10 +760,7 @@ export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
-    logger.error(
-      { error, messageId: id },
-      getMessageById failed
-    );
+    logger.error({ error, messageId: id }, "getMessageById failed");
     throw error;
   }
 }
@@ -815,7 +809,7 @@ export async function getChatMessageWithPartsById({
   } catch (error) {
     logger.error(
       { error, messageId: id },
-      getChatMessageWithPartsById failed
+      "getChatMessageWithPartsById failed"
     );
     throw error;
   }
@@ -987,10 +981,7 @@ export async function getMessageCanceledAt({
       .where(eq(message.id, messageId));
     return result?.canceledAt ?? null;
   } catch (error) {
-    logger.error(
-      { error, messageId },
-      getMessageCanceledAt failed
-    );
+    logger.error({ error, messageId }, "getMessageCanceledAt failed");
     throw error;
   }
 }
@@ -1008,10 +999,7 @@ export async function updateMessageCanceledAt({
       .set({ canceledAt })
       .where(eq(message.id, messageId));
   } catch (error) {
-    logger.error(
-      { error, messageId },
-      updateMessageCanceledAt failed
-    );
+    logger.error({ error, messageId }, "updateMessageCanceledAt failed");
     throw error;
   }
 }
