@@ -5,6 +5,7 @@ import { HeaderActions } from "@/components/header-actions";
 import { HeaderBreadcrumb } from "@/components/header-breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { Session } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { ShareButton } from "./share-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -14,15 +15,22 @@ function PureChatHeader({
   hasMessages,
   projectId,
   user,
+  className,
 }: {
   chatId: string;
   isReadonly: boolean;
   hasMessages: boolean;
   projectId?: string;
   user?: Session["user"];
+  className?: string;
 }) {
   return (
-    <header className="sticky top-0 flex h-(--header-height) items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2">
+    <header
+      className={cn(
+        "sticky top-0 flex items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2",
+        className
+      )}
+    >
       <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
         <div className="flex min-w-0 items-center gap-2">
           <SidebarTrigger className="md:hidden" />

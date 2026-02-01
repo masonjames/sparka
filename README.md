@@ -4,95 +4,44 @@
 
 # ChatJS
 
-The prod-ready AI chat template.
+A prod-ready AI chat template. Multi-model support, auth, attachments, web search, code execution, and more. Start here then make it your own.
 
-**Next.js • Vercel AI SDK • Shadcn/UI • Better Auth • Drizzle ORM**
-
-[**Documentation**](https://chatjs.dev) · [**Live Demo**](https://chatjs.dev/demo)
+[**Documentation**](https://chatjs.dev/docs) · [**Live Demo**](https://chatjs.dev)
 
 </div>
 
 <br />
 
-> ⚠️ **Active Development**: This project is under active maintenance with frequent updates. Expect occasional breaking changes until the first stable release.
-
-<br />
+![ChatJS Preview](public/preview.png)
 
 ## Features
 
-- 🤖 **120+ AI Models** — Claude, GPT, Gemini, Grok via Vercel AI Gateway
-- 🔐 **Auth & Sync** — Secure authentication with cross-device chat history
-- 🎯 **Try Without Signup** — Guest access for instant demos
-- 📎 **Attachments** — Images, PDFs, documents in conversations
-- 🎨 **Image Generation** — AI-powered image creation
-- 💻 **Syntax Highlighting** — Code formatting for all languages
-- 🔄 **Resumable Streams** — Continue after interruptions
-- 🌳 **Chat Branching** — Alternative conversation paths
-- 🔗 **Chat Sharing** — Share conversations with others
-- 🔭 **Deep Research** — Real-time web search with citations
-- ⚡ **Code Execution** — Secure Python/JavaScript sandboxes
-- 📄 **Document Creation** — Generate docs, spreadsheets, presentations
+- **120+ Models**: Claude, GPT, Gemini, Grok, Llama via one API
+- **Auth**: GitHub, Google, anonymous. Ready to go.
+- **Attachments**: Images, PDFs, docs. Drag and drop.
+- **Resumable Streams**: Continue generation after page refresh
+- **Branching**: Fork conversations, explore alternatives
+- **Sharing**: Share conversations with public links
+- **Web Search**: Real-time web search integration
+- **Image Generation**: AI-powered image creation
+- **Code Execution**: Run code snippets in sandbox
+- **MCP**: Model Context Protocol support
 
 ## Stack
 
-- [Next.js](https://nextjs.org) — App Router, React Server Components
-- [TypeScript](https://www.typescriptlang.org) — Full type safety
-- [Vercel AI SDK](https://sdk.vercel.ai) — Unified AI provider integration with 120+ models
-- [Better Auth](https://www.better-auth.com) — Authentication & authorization
-- [Drizzle ORM](https://orm.drizzle.team) — Type-safe database queries
-- [PostgreSQL](https://www.postgresql.org) — Primary database
-- [Redis](https://redis.io) — Caching & resumable streams
-- [Vercel Blob](https://vercel.com/storage/blob) — Blob storage
-- [Shadcn/UI](https://ui.shadcn.com) — Beautiful, accessible components
-- [Tailwind CSS](https://tailwindcss.com) — Styling
-- [Zod](https://zod.dev) — Runtime validation
-- [Zustand](https://zustand-demo.pmnd.rs) — Lightweight state management
-- [tRPC](https://trpc.io) — End-to-end type-safe APIs
-- [Biome](https://biomejs.dev) — Linting & formatting
-- [Motion](https://motion.dev) — Animations
-
-## Quick Start
-
-```bash
-git clone https://github.com/franciscomoretti/chatjs.git
-cd chatjs
-bun install
-cp .env.example .env.local
-bun db:migrate
-bun dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000) to start building.
+- [Next.js](https://nextjs.org): App Router, React Server Components
+- [AI SDK](https://ai-sdk.dev): The AI Toolkit for TypeScript
+- [Better Auth](https://www.better-auth.com): Authentication & authorization
+- [Drizzle ORM](https://orm.drizzle.team): Type-safe database queries
+- [PostgreSQL](https://www.postgresql.org): Primary database
+- [Redis](https://redis.io): Caching & resumable streams
+- [Shadcn/UI](https://ui.shadcn.com): Beautiful, accessible components
+- [Tailwind CSS](https://tailwindcss.com): Styling
+- [tRPC](https://trpc.io): End-to-end type-safe APIs
 
 ## Documentation
 
-Full documentation available at [chatjs.dev](https://chatjs.dev):
-
-- [Quickstart](https://chatjs.dev/quickstart) — Installation and setup
-- [Configuration](https://chatjs.dev/configuration) — Feature toggles via chat.config.ts
-- [Features](https://chatjs.dev/features) — Built-in functionality
-- [Patterns](https://chatjs.dev/patterns) — Reusable implementations
-
-## Environment Variables
-
-### Required
-
-- `DATABASE_URL` — PostgreSQL connection string
-- `AUTH_SECRET` — [Generate one](https://generate-secret.vercel.app/32)
-- `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` — AI Gateway access
-
-### Auth Provider (choose one)
-
-- `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET`
-- `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET`
-
-### Optional
-
-- `BLOB_READ_WRITE_TOKEN` — Vercel Blob token (for file attachments and image generation)
-- `REDIS_URL` — Resumable streams
-- `TAVILY_API_KEY` — Web search
-- `OPENAI_API_KEY` — Direct OpenAI access
-- `LANGFUSE_PUBLIC_KEY` + `LANGFUSE_SECRET_KEY` — Observability
+Visit [chatjs.dev/docs](https://chatjs.dev/docs) to view the documentation.
 
 ## License
 

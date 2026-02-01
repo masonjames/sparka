@@ -37,10 +37,12 @@ export function ProjectHome({
   chatId,
   projectId,
   status,
+  className,
 }: {
   chatId: string;
   projectId: string;
   status: UseChatHelpers<ChatMessage>["status"];
+  className?: string;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -111,7 +113,9 @@ export function ProjectHome({
   };
 
   return (
-    <div className="flex flex-1 justify-center overflow-y-auto">
+    <div
+      className={cn("flex flex-1 justify-center overflow-y-auto", className)}
+    >
       <div
         className={cn(
           "mx-auto flex h-full min-h-0 w-full flex-col p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6",

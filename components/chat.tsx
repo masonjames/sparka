@@ -15,13 +15,11 @@ export function Chat({
   id,
   initialMessages: _initialMessages,
   isReadonly,
-  isProjectPage,
   projectId,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   isReadonly: boolean;
-  isProjectPage?: boolean;
   projectId?: string;
 }) {
   const isSecondaryPanelVisible = useArtifactSelector(
@@ -34,7 +32,6 @@ export function Chat({
         <MainChatPanel
           chatId={id}
           className="flex h-full min-w-0 flex-1 flex-col"
-          isProjectPage={isProjectPage}
           isReadonly={isReadonly}
           projectId={projectId}
         />

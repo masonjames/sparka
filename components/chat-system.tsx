@@ -15,7 +15,7 @@ import {
   useMessageTree,
 } from "@/providers/message-tree-provider";
 
-function StreamBoundary({
+function ChatThreadSync({
   id,
   projectId,
   withHandler,
@@ -46,7 +46,6 @@ export const ChatSystem = memo(function PureChatSystem({
   initialTool = null,
   overrideModelId,
   projectId,
-  isProjectPage = false,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -54,7 +53,6 @@ export const ChatSystem = memo(function PureChatSystem({
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
   projectId?: string;
-  isProjectPage?: boolean;
 }) {
   return (
     <ArtifactProvider key={id}>
@@ -66,7 +64,7 @@ export const ChatSystem = memo(function PureChatSystem({
           <MessageTreeProvider>
             {isReadonly ? (
               <>
-                <StreamBoundary
+                <ChatThreadSync
                   id={id}
                   projectId={projectId}
                   withHandler={false}
@@ -74,7 +72,6 @@ export const ChatSystem = memo(function PureChatSystem({
                 <Chat
                   id={id}
                   initialMessages={initialMessages}
-                  isProjectPage={isProjectPage}
                   isReadonly={isReadonly}
                   key={id}
                   projectId={projectId}
@@ -83,11 +80,11 @@ export const ChatSystem = memo(function PureChatSystem({
             ) : (
               <ChatInputProvider
                 initialTool={initialTool ?? null}
-                isProjectContext={isProjectPage}
+                isProjectContext={!!projectId}
                 localStorageEnabled={true}
                 overrideModelId={overrideModelId}
               >
-                <StreamBoundary
+                <ChatThreadSync
                   id={id}
                   projectId={projectId}
                   withHandler={true}
@@ -95,7 +92,6 @@ export const ChatSystem = memo(function PureChatSystem({
                 <Chat
                   id={id}
                   initialMessages={initialMessages}
-                  isProjectPage={isProjectPage}
                   isReadonly={isReadonly}
                   key={id}
                   projectId={projectId}

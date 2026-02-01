@@ -32,7 +32,7 @@ import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
+import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
@@ -44,7 +44,6 @@ import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
 import { ResponsiveTools } from "./responsive-tools";
-import { SuggestedActions } from "./suggested-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -101,7 +100,6 @@ function PureMultimodalInput({
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   useChatId();
-  const messageIds = useMessageIds();
   const {
     setMessages,
     sendMessage,
@@ -121,7 +119,6 @@ function PureMultimodalInput({
     getInitialInput,
     isEmpty,
     handleSubmit,
-    isProjectContext,
   } = useChatInput();
 
   const isAnonymous = !session?.user;
@@ -576,16 +573,6 @@ function PureMultimodalInput({
     accept: acceptedTypes,
   });
 
-  const showSuggestedActions =
-    !isProjectContext &&
-    messageIds.length === 0 &&
-    attachments.length === 0 &&
-    uploadQueue.length === 0 &&
-    !isEditMode;
-
-  const showWelcomeMessage =
-    messageIds.length === 0 && !isProjectContext && !isEditMode;
-
   const handleStop = useCallback(() => {
     if (session?.user && lastMessageId) {
       stopStreamMutation.mutate({ messageId: lastMessageId });
@@ -595,8 +582,6 @@ function PureMultimodalInput({
 
   return (
     <div className="relative">
-      {showWelcomeMessage && <WelcomeMessage />}
-
       {attachmentsEnabled && (
         <input
           accept={acceptAll}
@@ -702,23 +687,6 @@ function PureMultimodalInput({
           />
         </PromptInput>
       </div>
-      {showSuggestedActions && (
-        <SuggestedActions
-          chatId={chatId}
-          className="mt-4"
-          selectedModelId={selectedModelId}
-        />
-      )}
-    </div>
-  );
-}
-
-function WelcomeMessage() {
-  return (
-    <div className="pointer-events-none @[500px]:static fixed inset-x-0 top-1/2 z-0 @[500px]:mb-6 -translate-y-1/2 @[500px]:translate-y-0 text-center">
-      <h1 className="font-normal text-2xl text-foreground sm:text-3xl">
-        How can I help you today?
-      </h1>
     </div>
   );
 }

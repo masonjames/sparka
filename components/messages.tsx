@@ -63,7 +63,7 @@ type MessagesProps = {
 
 function PureMessages({ isReadonly, className }: MessagesProps) {
   return (
-    <Conversation className={cn("h-full", className)}>
+    <Conversation className={cn("h-full w-full overflow-hidden", className)}>
       <ConversationContent
         className={cn(
           "container mx-auto w-full pb-10 sm:max-w-2xl md:max-w-3xl",
