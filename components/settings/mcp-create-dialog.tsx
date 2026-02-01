@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { config } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
+import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 
 const mcpConnectorFormSchema = z.object({

@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { config } from "@/lib/config";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
+import { config } from "@/lib/config";
 import { useChatId } from "@/providers/chat-id-provider";
 
 export function SidebarTopRow() {

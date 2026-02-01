@@ -14,7 +14,6 @@ import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { Fragment, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { config } from "@/lib/config";
 import { ConnectorHeader } from "@/components/settings/connector-header";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
@@ -29,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { config } from "@/lib/config";
 import type { McpConnector } from "@/lib/db/schema";
 import {
   type McpConnectorsDialog,
