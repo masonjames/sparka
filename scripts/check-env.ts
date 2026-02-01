@@ -13,6 +13,24 @@ function getMissingEnvVars(vars: [string, string | undefined][]): string[] {
   return vars.filter(([, value]) => !value).map(([name]) => name);
 }
 
+function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
+  if (!config.integrations.sandbox) {
+    return null;
+  }
+  const hasOidc = !!env.VERCEL_OIDC_TOKEN;
+  const hasTokenAuth =
+    env.VERCEL_TEAM_ID && env.VERCEL_PROJECT_ID && env.VERCEL_TOKEN;
+  if (hasOidc || hasTokenAuth) {
+    return null;
+  }
+  return {
+    feature: "integrations.sandbox",
+    missing: [
+      "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
+    ],
+  };
+}
+
 function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -40,19 +58,9 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     });
   }
 
-  if (config.integrations.sandbox) {
-    const hasOidc = !!env.VERCEL_OIDC_TOKEN;
-    const hasTokenAuth =
-      env.VERCEL_TEAM_ID && env.VERCEL_PROJECT_ID && env.VERCEL_TOKEN;
-
-    if (!(hasOidc || hasTokenAuth)) {
-      errors.push({
-        feature: "integrations.sandbox",
-        missing: [
-          "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
-        ],
-      });
-    }
+  const sandboxError = validateSandbox(env);
+  if (sandboxError) {
+    errors.push(sandboxError);
   }
 
   if (config.integrations.imageGeneration && !env.BLOB_READ_WRITE_TOKEN) {

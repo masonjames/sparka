@@ -22,66 +22,6 @@ import { chatMessageToDbMessage } from "@/lib/message-conversion";
 
 const logger = createModuleLogger("db:queries");
 
-/**
- * PostgreSQL error codes and their descriptions.
- * See: https://www.postgresql.org/docs/current/errcodes-appendix.html
- */
-const PG_ERROR_CODES: Record<string, string> = {
-  "42703": "undefined_column",
-  "42P01": "undefined_table",
-  "42P02": "undefined_parameter",
-  "23505": "unique_violation",
-  "23503": "foreign_key_violation",
-  "23502": "not_null_violation",
-  "42601": "syntax_error",
-};
-
-/**
- * Extracts detailed information from PostgreSQL errors for better debugging.
- * Handles missing column errors (42703) and other common Postgres error codes.
- */
-function formatDbError(error: unknown, context: string): string {
-  if (error && typeof error === "object" && "code" in error) {
-    const pgError = error as {
-      code?: string;
-      column?: string;
-      table?: string;
-      detail?: string;
-      hint?: string;
-      message?: string;
-      position?: string;
-      routine?: string;
-    };
-
-    const errorType = pgError.code
-      ? PG_ERROR_CODES[pgError.code] || "unknown"
-      : "unknown";
-
-    // PostgreSQL error code 42703 = undefined_column
-    if (pgError.code === "42703") {
-      // The column name is usually in the error message like: column "canceledAt" does not exist
-      const columnMatch = pgError.message?.match(/column "([^"]+)"/);
-      const columnName = columnMatch?.[1] || pgError.column || "unknown";
-
-      return `${context}: Missing column "${columnName}" - Run migrations? (code: ${pgError.code}, routine: ${pgError.routine || "n/a"})`;
-    }
-
-    // Other PostgreSQL errors - include full context
-    const details = [
-      pgError.column ? `column: ${pgError.column}` : null,
-      pgError.table ? `table: ${pgError.table}` : null,
-      pgError.detail,
-      pgError.hint ? `hint: ${pgError.hint}` : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    return `${context}: [${pgError.code}/${errorType}] ${pgError.message || "Unknown error"}${details ? ` (${details})` : ""}`;
-  }
-
-  return `${context}: ${String(error)}`;
-}
-
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
@@ -396,7 +336,7 @@ export async function saveMessage({
       return;
     });
   } catch (error) {
-    logger.error({ error, chatId, id }, formatDbError(error, "saveMessage"));
+    logger.error({ error, chatId, id }, "saveMessage failed");
     throw error;
   }
 }
@@ -445,7 +385,7 @@ export async function saveMessages({
   } catch (error) {
     logger.error(
       { error, messageIds: messages.map((m) => m.id) },
-      formatDbError(error, "saveMessages")
+      "saveMessages failed"
     );
     throw error;
   }
@@ -494,7 +434,7 @@ export async function updateMessage({
   } catch (error) {
     logger.error(
       { error, messageId: id, chatId },
-      formatDbError(error, "updateMessage")
+      updateMessage failed
     );
     throw error;
   }
@@ -825,7 +765,7 @@ export async function getMessageById({ id }: { id: string }) {
   } catch (error) {
     logger.error(
       { error, messageId: id },
-      formatDbError(error, "getMessageById")
+      getMessageById failed
     );
     throw error;
   }
@@ -875,7 +815,7 @@ export async function getChatMessageWithPartsById({
   } catch (error) {
     logger.error(
       { error, messageId: id },
-      formatDbError(error, "getChatMessageWithPartsById")
+      getChatMessageWithPartsById failed
     );
     throw error;
   }
@@ -1049,7 +989,7 @@ export async function getMessageCanceledAt({
   } catch (error) {
     logger.error(
       { error, messageId },
-      formatDbError(error, "getMessageCanceledAt")
+      getMessageCanceledAt failed
     );
     throw error;
   }
@@ -1070,7 +1010,7 @@ export async function updateMessageCanceledAt({
   } catch (error) {
     logger.error(
       { error, messageId },
-      formatDbError(error, "updateMessageCanceledAt")
+      updateMessageCanceledAt failed
     );
     throw error;
   }

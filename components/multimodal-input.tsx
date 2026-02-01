@@ -152,7 +152,7 @@ function PureMultimodalInput({
     }
     handleModelChange(pdfModel);
     return defaultPdfModelDef;
-  }, [handleModelChange, getModelById, config.models.defaults.pdf]);
+  }, [handleModelChange, getModelById]);
 
   // Helper function to auto-switch to image-compatible model
   const switchToImageCompatibleModel = useCallback(() => {
@@ -165,11 +165,7 @@ function PureMultimodalInput({
     }
     handleModelChange(imageModel);
     return defaultImageModelDef;
-  }, [
-    handleModelChange,
-    getModelById,
-    config.models.defaults.chatImageCompatible,
-  ]);
+  }, [handleModelChange, getModelById]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
