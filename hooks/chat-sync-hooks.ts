@@ -11,7 +11,6 @@ import {
 } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getAnonymousSession } from "@/lib/anonymous-session-client";
 import type { Document, Project } from "@/lib/db/schema";
@@ -69,8 +68,8 @@ export function useProject(
 export function useGetChatMessagesQueryOptions() {
   const { data: session } = useSession();
   const trpc = useTRPC();
-  const { id: chatId, isPersisted } = useChatId();
-  const isShared = useIsSharedRoute();
+  const { id: chatId, isPersisted, source } = useChatId();
+  const isShared = source === "share";
 
   return {
     ...trpc.chat.getChatMessages.queryOptions({ chatId: chatId || "" }),
@@ -460,7 +459,8 @@ export function useSaveDocument(
 
 export function useDocuments(id: string, disable: boolean) {
   const trpc = useTRPC();
-  const isShared = useIsSharedRoute();
+  const { source } = useChatId();
+  const isShared = source === "share";
   const { data: session } = useSession();
 
   return useQuery({

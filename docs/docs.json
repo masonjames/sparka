@@ -68,10 +68,7 @@
           },
           {
             "group": "Roadmap",
-            "pages": [
-              "roadmap/branching",
-              "roadmap/projects"
-            ]
+            "pages": ["roadmap/branching", "roadmap/projects"]
           }
         ]
       },
@@ -79,43 +76,21 @@
         "tab": "Cookbook",
         "groups": [
           {
-            "group": "Cookbook",
-            "pages": ["cookbook/index"]
-          },
-          {
-            "group": "Streaming",
+            "group": "Recipes",
             "pages": [
-              "cookbook/streaming/resumable-streams",
-              "cookbook/streaming/stop-resumable-streams",
-              "cookbook/streaming/tool-part"
+              "cookbook/index",
+              "cookbook/resumable-streams",
+              "cookbook/stop-resumable-streams",
+              "cookbook/tool-part",
+              "cookbook/provisional-ids",
+              "cookbook/credit-tracking",
+              "cookbook/neon-branching",
+              "cookbook/dev-auth-bypass",
+              "cookbook/follow-up-questions",
+              "cookbook/explicit-tool-selection",
+              "cookbook/chat-layout",
+              "cookbook/component-registries"
             ]
-          },
-          {
-            "group": "Data",
-            "pages": [
-              "cookbook/data/provisional-ids",
-              "cookbook/data/credit-tracking",
-              "cookbook/data/neon-branching"
-            ]
-          },
-          {
-            "group": "Auth",
-            "pages": [
-              "cookbook/auth/better-auth-setup",
-              "cookbook/auth/dev-auth-bypass"
-            ]
-          },
-          {
-            "group": "AI UX",
-            "pages": [
-              "cookbook/ai-ux/follow-up-questions",
-              "cookbook/ai-ux/explicit-tool-selection",
-              "cookbook/ai-ux/chat-layout"
-            ]
-          },
-          {
-            "group": "UI",
-            "pages": ["cookbook/ui/component-registries"]
           }
         ]
       }

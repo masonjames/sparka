@@ -25,7 +25,6 @@ import {
   useProject,
   useRenameChat,
 } from "@/hooks/chat-sync-hooks";
-import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import { usePublicChat } from "@/hooks/use-shared-chat";
 import type { Session } from "@/lib/auth";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
@@ -50,8 +49,8 @@ export function HeaderBreadcrumb({
   hasMessages,
   className,
 }: HeaderBreadcrumbProps) {
-  const { id: chatId, isPersisted } = useChatId();
-  const isShared = useIsSharedRoute();
+  const { id: chatId, isPersisted, source } = useChatId();
+  const isShared = source === "share";
   const isAuthenticated = !!user;
 
   const { data: chat } = useGetChatById(chatId, {

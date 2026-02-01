@@ -12,12 +12,14 @@ import {
 import { generateUUID } from "@/lib/utils";
 import {
   type ChatIdType,
+  type ParsedChatIdFromPathname,
   parseChatIdFromPathname,
 } from "./parse-chat-id-from-pathname";
 
 type ChatIdContextType = {
   id: string;
   type: ChatIdType;
+  source: ParsedChatIdFromPathname["source"];
   isPersisted: boolean;
   confirmChatId: (chatId: string) => void;
   refreshChatID: () => void;
@@ -61,6 +63,7 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
     () => ({
       id: resolvedId.id ?? provisionalChatId,
       type: resolvedId.type,
+      source: resolvedId.source,
       isPersisted:
         (resolvedId.id !== null && resolvedId.id !== provisionalChatId) ||
         confirmedChatId === provisionalChatId,
@@ -70,6 +73,7 @@ export function ChatIdProvider({ children }: { children: ReactNode }) {
     [
       resolvedId.id,
       resolvedId.type,
+      resolvedId.source,
       provisionalChatId,
       confirmedChatId,
       confirmChatIdPersisted,
