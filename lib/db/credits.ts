@@ -1,7 +1,7 @@
 import "server-only";
 import { eq, sql } from "drizzle-orm";
-import { db } from "../db/client";
-import { userCredit } from "../db/schema";
+import { db } from "./client";
+import { userCredit } from "./schema";
 
 async function ensureUserCreditRow(userId: string) {
   await db.insert(userCredit).values({ userId }).onConflictDoNothing();

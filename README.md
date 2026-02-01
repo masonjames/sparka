@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/icon.svg" alt="ChatJS" width="64" height="64">
+<img src="app/icon.svg" alt="ChatJS" width="64" height="64">
 
 # ChatJS
 
@@ -12,11 +12,9 @@ A prod-ready AI chat template. Multi-model support, auth, attachments, web searc
 
 <br />
 
-![ChatJS Preview](public/preview.png)
-
 ## Features
 
-- **120+ Models**: Claude, GPT, Gemini, Grok, Llama via one API
+- **120+ Models**: Claude, GPT, Gemini, Grok via one API
 - **Auth**: GitHub, Google, anonymous. Ready to go.
 - **Attachments**: Images, PDFs, docs. Drag and drop.
 - **Resumable Streams**: Continue generation after page refresh
@@ -29,15 +27,31 @@ A prod-ready AI chat template. Multi-model support, auth, attachments, web searc
 
 ## Stack
 
-- [Next.js](https://nextjs.org): App Router, React Server Components
-- [AI SDK](https://ai-sdk.dev): The AI Toolkit for TypeScript
-- [Better Auth](https://www.better-auth.com): Authentication & authorization
-- [Drizzle ORM](https://orm.drizzle.team): Type-safe database queries
-- [PostgreSQL](https://www.postgresql.org): Primary database
-- [Redis](https://redis.io): Caching & resumable streams
-- [Shadcn/UI](https://ui.shadcn.com): Beautiful, accessible components
-- [Tailwind CSS](https://tailwindcss.com): Styling
-- [tRPC](https://trpc.io): End-to-end type-safe APIs
+- [Next.js](https://nextjs.org) - App Router, React Server Components
+- [TypeScript](https://www.typescriptlang.org) - Full type safety
+- [AI SDK](https://ai-sdk.dev/) - The AI Toolkit for TypeScript
+- [AI Gateway](https://vercel.com/ai-gateway) - Unified access to 120+ AI models
+- [Better Auth](https://www.better-auth.com) - Authentication & authorization
+- [Drizzle ORM](https://orm.drizzle.team) - Type-safe database queries
+- [PostgreSQL](https://www.postgresql.org) - Primary database
+- [Redis](https://redis.io) - Caching & resumable streams
+- [Vercel Blob](https://vercel.com/storage/blob) - Blob storage
+- [Shadcn/UI](https://ui.shadcn.com) - Beautiful, accessible components
+- [Tailwind CSS](https://tailwindcss.com) - Styling
+- [tRPC](https://trpc.io) - End-to-end type-safe APIs
+- [Zod](https://zod.dev) - Schema validation
+- [Zustand](https://docs.pmnd.rs/zustand) - State management
+- [Motion](https://motion.dev) - Animations
+- [t3-env](https://env.t3.gg) - Environment variables
+- [Pino](https://getpino.io) - Structured Logging
+- [Langfuse](https://langfuse.com) - LLM observability & analytics
+- [Vercel Analytics](https://vercel.com/analytics) - Web analytics
+- [Biome](https://biomejs.dev) - Code linting and formatting
+- [Ultracite](https://ultracite.ai) - Biome preset for humans and AI
+- [Streamdown](https://streamdown.ai/) - Markdown for AI streaming
+- [AI Elements](https://ai-sdk.dev/elements/overview) - AI-native Components
+- [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
+
 
 ## Documentation
 
@@ -46,3 +60,9 @@ Visit [chatjs.dev/docs](https://chatjs.dev/docs) to view the documentation.
 ## License
 
 Apache-2.0
+
+<br />
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+<br />

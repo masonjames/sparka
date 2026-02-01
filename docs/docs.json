@@ -15,11 +15,12 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": ["index", "quickstart", "project-structure"]
+            "pages": ["index", "quickstart", "project-structure", "changelog"]
           },
           {
             "group": "Core Concepts",
             "pages": [
+              "core/architecture",
               "core/configuration",
               "core/authentication",
               "core/multi-model",
@@ -27,16 +28,16 @@
             ]
           },
           {
-            "group": "AI Capabilities",
+            "group": "Features",
             "pages": [
-              "capabilities/overview",
-              "capabilities/web-search",
-              "capabilities/code-execution",
-              "capabilities/image-generation",
-              "capabilities/attachments",
-              "capabilities/mcp",
-              "capabilities/canvas",
-              "capabilities/sharing"
+              "features/overview",
+              "features/web-search",
+              "features/code-execution",
+              "features/image-generation",
+              "features/attachments",
+              "features/mcp",
+              "features/canvas",
+              "features/sharing"
             ]
           },
           {
@@ -69,8 +70,7 @@
             "group": "Roadmap",
             "pages": [
               "roadmap/branching",
-              "roadmap/projects",
-              "roadmap/sandbox"
+              "roadmap/projects"
             ]
           }
         ]

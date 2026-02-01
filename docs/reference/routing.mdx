@@ -7,41 +7,21 @@ This page explains the URL routing structure used in ChatJS.
 
 ## Route Types
 
-| Route Pattern | Example | Description |
-|---------------|---------|-------------|
-| `/` | `/` | Home page, provisional chat (not yet persisted) |
-| `/chat/:id` | `/chat/abc123` | Standalone chat page |
-| `/share/:id` | `/share/abc123` | Public shared chat page (read-only) |
-| `/project/:projectId` | `/project/proj1` | Project page, provisional chat within project |
-| `/project/:projectId/chat/:chatId` | `/project/proj1/chat/abc123` | Chat within a project |
+| Route Pattern | Description |
+|---------------|-------------|
+| `/` | Home page, provisional chat (not yet persisted) |
+| `/chat/:id` | Standalone chat page |
+| `/share/:id` | Public shared chat page (read-only) |
+| `/project/:projectId` | Project page, provisional chat within project |
+| `/project/:projectId/chat/:chatId` | Chat within a project |
 
 ## Parsing Pathnames
 
-Use the `parseChatIdFromPathname` function to extract routing information:
-
-```typescript
-import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
-
-const result = parseChatIdFromPathname(pathname);
-// result.type: "chat" | "provisional"
-// result.id: string | null (the chat ID)
-// result.source: "share" | "project" | "chat" | "home"
-// result.projectId: string | null
-```
-
-### Return Values by Route
-
-| Route | `type` | `id` | `source` | `projectId` |
-|-------|--------|------|----------|-------------|
-| `/` | `provisional` | `null` | `home` | `null` |
-| `/chat/:id` | `chat` | `":id"` | `chat` | `null` |
-| `/share/:id` | `chat` | `":id"` | `share` | `null` |
-| `/project/:pid` | `provisional` | `null` | `project` | `":pid"` |
-| `/project/:pid/chat/:cid` | `chat` | `":cid"` | `project` | `":pid"` |
+Use `parseChatIdFromPathname` from `@/providers/parse-chat-id-from-pathname` to extract chat ID, project ID, and route source from any pathname.
 
 ## Related Hooks
 
-- **`useChatId()`** from `@/providers/chat-id-provider` - Returns the current chat ID context (uses `parseChatIdFromPathname` internally)
-- **`useIsSharedRoute()`** from `@/hooks/use-is-shared-route` - Returns `true` if on a `/share/:id` route
+- **`useChatId()`** - Returns the current chat ID context
+- **`useIsSharedRoute()`** - Returns `true` if on a `/share/:id` route
 
 See [Provisional Chat IDs](/cookbook/data/provisional-ids) for how chat IDs enable seamless client-side navigation.
