@@ -7,7 +7,7 @@ import type {
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "ai";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import { invalidateAllMcpCaches } from "./cache";

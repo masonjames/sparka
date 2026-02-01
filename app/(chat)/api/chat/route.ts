@@ -11,6 +11,7 @@ import {
   createResumableStreamContext,
   type ResumableStreamContext,
 } from "resumable-stream";
+import throttle from "throttleit";
 import {
   type AppModelDefinition,
   type AppModelId,
@@ -32,19 +33,18 @@ import {
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
   getChatById,
-  getChatCanceledAt,
   getMessageById,
+  getMessageCanceledAt,
   getProjectById,
   getUserById,
   saveChat,
   saveMessage,
-  updateChatCanceledAt,
   updateMessage,
   updateMessageActiveStreamId,
 } from "@/lib/db/queries";
@@ -190,8 +190,6 @@ async function handleChatValidation({
     await saveChat({ id: chatId, userId, title, projectId });
   }
 
-  await updateChatCanceledAt({ chatId, canceledAt: null });
-
   const [existentMessage] = await getMessageById({ id: userMessage.id });
 
   if (existentMessage && existentMessage.chatId !== chatId) {
@@ -217,59 +215,6 @@ async function checkUserCanSpend(userId: string): Promise<Response | null> {
     return new Response("Insufficient credits", { status: 402 });
   }
   return null;
-}
-
-function startChatCancelWatcher({
-  chatId,
-  abortController,
-  enabled,
-}: {
-  chatId: string;
-  abortController: AbortController;
-  enabled: boolean;
-}): () => void {
-  if (!enabled) {
-    return () => {};
-  }
-
-  const log = createModuleLogger("api:chat:cancel");
-  let cleared = false;
-  let intervalId: NodeJS.Timeout | null = null;
-
-  const clear = () => {
-    if (cleared) {
-      return;
-    }
-    cleared = true;
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
-  };
-
-  const checkCanceled = async () => {
-    if (abortController.signal.aborted) {
-      clear();
-      return;
-    }
-
-    try {
-      const canceledAt = await getChatCanceledAt({ chatId });
-      if (canceledAt) {
-        abortController.abort();
-      }
-    } catch (error) {
-      log.error({ error }, "Failed to check canceledAt");
-    }
-  };
-
-  intervalId = setInterval(() => {
-    void checkCanceled();
-  }, 1000);
-
-  abortController.signal.addEventListener("abort", clear, { once: true });
-  void checkCanceled();
-
-  return clear;
 }
 
 /**
@@ -345,7 +290,7 @@ async function createChatStream({
   timeoutId,
   mcpConnectors,
   streamId,
-  onStreamCleanup,
+  onChunk,
 }: {
   messageId: string;
   chatId: string;
@@ -361,7 +306,7 @@ async function createChatStream({
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
-  onStreamCleanup?: () => void;
+  onChunk?: () => void;
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
@@ -396,6 +341,7 @@ async function createChatStream({
         onError: (error) => {
           log.error({ error }, "streamText error");
         },
+        onChunk,
         mcpConnectors,
         costAccumulator,
       });
@@ -452,7 +398,6 @@ async function createChatStream({
     },
     generateId: () => messageId,
     onFinish: async ({ messages }) => {
-      onStreamCleanup?.();
       clearTimeout(timeoutId);
       await finalizeMessageAndCredits({
         messages,
@@ -463,7 +408,6 @@ async function createChatStream({
       });
     },
     onError: (error) => {
-      onStreamCleanup?.();
       clearTimeout(timeoutId);
       // If the stream fails, ensure the placeholder assistant message is no longer marked resumable.
       // Otherwise the client will try to resume a stream that no longer exists and we end up with a
@@ -540,36 +484,35 @@ async function executeChatRequest({
     });
   }
 
-  const stopWatcherCleanup = startChatCancelWatcher({
-    chatId,
-    abortController,
-    enabled: !isAnonymous && !!userId,
-  });
+  // Create throttled cancel check (max once per second) for authenticated users
+  const onChunk =
+    !isAnonymous && userId
+      ? throttle(async () => {
+          const canceledAt = await getMessageCanceledAt({ messageId });
+          if (canceledAt) {
+            abortController.abort();
+          }
+        }, 1000)
+      : undefined;
 
   // Build the data stream that will emit tokens
-  let stream: Awaited<ReturnType<typeof createChatStream>>;
-  try {
-    stream = await createChatStream({
-      messageId,
-      chatId,
-      userMessage,
-      previousMessages,
-      selectedModelId,
-      explicitlyRequestedTools,
-      userId,
-      allowedTools,
-      abortController,
-      isAnonymous,
-      isNewChat,
-      timeoutId,
-      mcpConnectors,
-      streamId,
-      onStreamCleanup: stopWatcherCleanup,
-    });
-  } catch (error) {
-    stopWatcherCleanup();
-    throw error;
-  }
+  const stream = await createChatStream({
+    messageId,
+    chatId,
+    userMessage,
+    previousMessages,
+    selectedModelId,
+    explicitlyRequestedTools,
+    userId,
+    allowedTools,
+    abortController,
+    isAnonymous,
+    isNewChat,
+    timeoutId,
+    mcpConnectors,
+    streamId,
+    onChunk,
+  });
 
   const publisher = redisPublisher;
   if (publisher) {

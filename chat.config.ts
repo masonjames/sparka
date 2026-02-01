@@ -1,4 +1,4 @@
-import type { ConfigInput } from "@/lib/config/schema";
+import type { ConfigInput } from "@/lib/config-schema";
 
 const isProd = process.env.NODE_ENV === "production";
 

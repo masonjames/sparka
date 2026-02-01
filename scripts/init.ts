@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
 import { z } from "zod";
-import { configSchema } from "../lib/config/schema";
+import { configSchema } from "../lib/config-schema";
 
 // Get defaults by parsing empty object
 const defaults = configSchema.parse({});
@@ -105,7 +105,7 @@ function generateConfig(
     .join("\n");
 }
 
-const template = `import type { ConfigInput } from "@/lib/config/schema";
+const template = `import type { ConfigInput } from "@/lib/config-schema";
 
 /**
  * ChatJS Configuration

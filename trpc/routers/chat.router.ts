@@ -7,7 +7,7 @@ import {
   cloneAttachmentsInMessages,
   cloneMessagesWithDocuments,
 } from "@/lib/clone-messages";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import {
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
@@ -19,10 +19,10 @@ import {
   saveChat,
   saveDocuments,
   saveMessages,
-  updateChatCanceledAt,
   updateChatIsPinnedById,
   updateChatTitleById,
   updateChatVisiblityById,
+  updateMessageCanceledAt,
 } from "@/lib/db/queries";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
@@ -188,11 +188,19 @@ export const chatRouter = createTRPCRouter({
   stopStream: protectedProcedure
     .input(
       z.object({
-        chatId: z.string().uuid(),
+        messageId: z.string().uuid(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const chat = await getChatById({ id: input.chatId });
+      const [msg] = await getMessageById({ id: input.messageId });
+      if (!msg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Message not found",
+        });
+      }
+
+      const chat = await getChatById({ id: msg.chatId });
       if (!chat || chat.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -200,8 +208,8 @@ export const chatRouter = createTRPCRouter({
         });
       }
 
-      await updateChatCanceledAt({
-        chatId: input.chatId,
+      await updateMessageCanceledAt({
+        messageId: input.messageId,
         canceledAt: new Date(),
       });
 

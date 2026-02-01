@@ -23,6 +23,7 @@ export async function createCoreChatAgent({
   messageId,
   dataStream,
   onError,
+  onChunk,
   mcpConnectors = [],
   costAccumulator,
 }: {
@@ -38,6 +39,7 @@ export async function createCoreChatAgent({
   messageId: string;
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
+  onChunk?: () => void;
   mcpConnectors?: McpConnector[];
   costAccumulator: CostAccumulator;
 }) {
@@ -143,6 +145,7 @@ export async function createCoreChatAgent({
     onError: (error) => {
       onError?.(error);
     },
+    onChunk,
     abortSignal,
     providerOptions,
     onFinish: async () => {

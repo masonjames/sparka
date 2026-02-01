@@ -5,39 +5,27 @@ description: Full chat.config.ts API reference
 
 ## Overview
 
-`chat.config.ts` is the central configuration for ChatJS. It's auto-generated from `lib/config/schema.ts` with sensible defaults and inline comments.
+`chat.config.ts` is the central configuration for ChatJS. It's auto-generated from `lib/config-schema.ts` with sensible defaults and inline comments.
 
 ```bash
 # Regenerate chat.config.ts from schema (resets to defaults)
 bun chatjs:init
 ```
 
-<Note>
-  In client components, use `useConfig()` from `@/components/config-provider`
-  instead of importing `config` directly.
-</Note>
-
 ## Access patterns
 
-Server components / server-only code:
+
+To access the config, import it from `@/lib/config`:
 
 ```ts
-import { config } from "@/lib/config/index";
-```
+import { config } from "@/lib/config";
 
-Client components:
-
-```ts
-"use client";
-
-import { useConfig } from "@/components/config-provider";
-
-const config = useConfig();
+const { appName } = config;
 ```
 
 ## Configuration Shape
 
-The schema is defined in `lib/config/schema.ts`. Each field's `.describe()` comment appears as an inline comment in the generated config.
+The schema is defined in `lib/config-schema.ts`. Each field's `.describe()` comment appears as an inline comment in the generated config.
 
 ```ts
 export type PricingConfig = {

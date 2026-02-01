@@ -1,5 +1,5 @@
 import "server-only";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 type RateLimitResult = {

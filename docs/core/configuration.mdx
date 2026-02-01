@@ -3,12 +3,12 @@ title: "Configuration"
 description: "Customize ChatJS via chat.config.ts"
 ---
 
-All feature toggles and app settings live in `chat.config.ts`. It is parsed and exported as `config` from `@/lib/config/index`.
+All feature toggles and app settings live in `chat.config.ts`. It is parsed and exported as `config` from `@/lib/config`.
 
 ## Config Structure
 
 ```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config/schema";
+import type { ConfigInput } from "@/lib/config-schema";
 
 const config: ConfigInput = {
   appName: "Your App Name",
@@ -96,24 +96,12 @@ organization: {
 
 ## Using Config in Components
 
-In server components, import directly:
+Import directly in both server and client components:
 
 ```typescript
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
-export function ServerComponent() {
-  return <div>{config.appName}</div>;
-}
-```
-
-In client components, use the hook:
-
-```typescript
-"use client";
-import { useConfig } from "@/components/config-provider";
-
-export function ClientComponent() {
-  const config = useConfig();
+export function MyComponent() {
   return <div>{config.appName}</div>;
 }
 ```

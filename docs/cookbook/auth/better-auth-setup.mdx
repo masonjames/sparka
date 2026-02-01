@@ -41,7 +41,7 @@ import { nextCookies } from "better-auth/next-js";
 import { env } from "@/lib/env";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

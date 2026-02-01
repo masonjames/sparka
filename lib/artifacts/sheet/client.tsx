@@ -3,6 +3,7 @@ import { parse, unparse } from "papaparse";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
 import { SpreadsheetEditor } from "@/components/sheet-editor";
+import { config } from "@/lib/config";
 
 type Metadata = any;
 
@@ -79,7 +80,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     {
       description: "Format and clean data",
       icon: <Sparkles size={16} />,
-      onClick: ({ sendMessage, storeApi, config }) => {
+      onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -97,7 +98,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     {
       description: "Analyze and visualize data",
       icon: <LineChart size={16} />,
-      onClick: ({ sendMessage, storeApi, config }) => {
+      onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
           role: "user",
           parts: [

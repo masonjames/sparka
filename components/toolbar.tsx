@@ -30,7 +30,6 @@ import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact-panel";
-import { useConfig } from "./config-provider";
 import type {
   ArtifactToolbarContext,
   ArtifactToolbarItem,
@@ -64,7 +63,6 @@ function Tool({
   storeApi,
 }: ToolProps) {
   const { sendMessage } = useChatActions<ChatMessage>();
-  const config = useConfig();
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -76,7 +74,7 @@ function Tool({
   const handleSelect = () => {
     // If there's only one tool, execute directly on click
     if (isSingleTool) {
-      onClick({ sendMessage, storeApi, config });
+      onClick({ sendMessage, storeApi });
       return;
     }
 
@@ -95,7 +93,7 @@ function Tool({
       setSelectedTool(description);
     } else {
       setSelectedTool(null);
-      onClick({ sendMessage, storeApi, config });
+      onClick({ sendMessage, storeApi });
     }
   };
 

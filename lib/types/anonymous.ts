@@ -1,5 +1,5 @@
 import type { ToolName } from "../ai/types";
-import { config } from "../config/index";
+import { config } from "../config";
 
 export type AnonymousSession = {
   id: string;

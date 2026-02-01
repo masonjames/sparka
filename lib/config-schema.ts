@@ -168,7 +168,7 @@ export const authenticationConfigSchema = z
     vercel: false,
   });
 
-export const siteConfigSchema = z.object({
+export const configSchema = z.object({
   githubUrl: z.url().default("https://github.com/your-username/your-repo"),
   appPrefix: z.string().default("chatjs"),
   appName: z.string().default("My AI Chat"),
@@ -245,7 +245,7 @@ export const siteConfigSchema = z.object({
 });
 
 // Output types (after defaults applied)
-export type SiteConfig = z.infer<typeof siteConfigSchema>;
+export type Config = z.infer<typeof configSchema>;
 export type PricingConfig = z.infer<typeof pricingConfigSchema>;
 export type ModelsConfig = z.infer<typeof modelsConfigSchema>;
 export type AnonymousConfig = z.infer<typeof anonymousConfigSchema>;
@@ -254,9 +254,9 @@ export type IntegrationsConfig = z.infer<typeof integrationsConfigSchema>;
 export type AuthenticationConfig = z.infer<typeof authenticationConfigSchema>;
 
 // Input types (with optionals for fields with defaults)
-export type SiteConfigInput = z.input<typeof siteConfigSchema>;
+export type ConfigInput = z.input<typeof configSchema>;
 
 // Apply defaults to partial config
-export function applyDefaults(config: SiteConfigInput): SiteConfig {
-  return siteConfigSchema.parse(config);
+export function applyDefaults(input: ConfigInput): Config {
+  return configSchema.parse(input);
 }

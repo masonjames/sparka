@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { extractFilenameFromUrl, uploadFile } from "@/lib/blob";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({

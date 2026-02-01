@@ -2,7 +2,7 @@ import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import {

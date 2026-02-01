@@ -3,7 +3,7 @@
 import { generateText } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { ChatMessage } from "@/lib/ai/types";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
 export async function generateTitleFromUserMessage({
   message,

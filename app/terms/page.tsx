@@ -1,4 +1,4 @@
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
 function getPlanTypesLabel({
   hasFree,

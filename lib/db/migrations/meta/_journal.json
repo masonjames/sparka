@@ -302,6 +302,13 @@
       "when": 1769860906113,
       "tag": "0042_add_chat_canceled_at",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1769940346934,
+      "tag": "0043_lyrical_pride",
+      "breakpoints": true
     }
   ]
 }

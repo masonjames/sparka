@@ -9,7 +9,7 @@ import {
 } from "@/lib/ai/mcp/cache";
 import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import {
   createMcpConnector,
   deleteMcpConnector,

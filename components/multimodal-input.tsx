@@ -30,6 +30,7 @@ import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
+import { config } from "@/lib/config";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
@@ -39,7 +40,6 @@ import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
-import { useConfig } from "./config-provider";
 import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
@@ -98,7 +98,6 @@ function PureMultimodalInput({
   const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
   const trpc = useTRPC();
-  const config = useConfig();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   useChatId();
@@ -588,11 +587,11 @@ function PureMultimodalInput({
     messageIds.length === 0 && !isProjectContext && !isEditMode;
 
   const handleStop = useCallback(() => {
-    if (session?.user) {
-      stopStreamMutation.mutate({ chatId });
+    if (session?.user && lastMessageId) {
+      stopStreamMutation.mutate({ messageId: lastMessageId });
     }
     stopHelper?.();
-  }, [chatId, session?.user, stopHelper, stopStreamMutation]);
+  }, [lastMessageId, session?.user, stopHelper, stopStreamMutation]);
 
   return (
     <div className="relative">

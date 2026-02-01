@@ -4,6 +4,7 @@ import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Editor } from "@/components/text-editor";
+import { config } from "@/lib/config";
 export const textArtifact = new Artifact<"text">({
   kind: "text",
   description: "Useful for text content, like drafting essays and emails.",
@@ -102,7 +103,7 @@ export const textArtifact = new Artifact<"text">({
     {
       icon: <Pen size={16} />,
       description: "Add final polish",
-      onClick: ({ sendMessage, storeApi, config }) => {
+      onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
           role: "user",
           parts: [

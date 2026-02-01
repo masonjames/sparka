@@ -17,7 +17,70 @@ import type {
   ToolName,
   ToolOutput,
 } from "@/lib/ai/types";
+import { createModuleLogger } from "@/lib/logger";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
+
+const logger = createModuleLogger("db:queries");
+
+/**
+ * PostgreSQL error codes and their descriptions.
+ * See: https://www.postgresql.org/docs/current/errcodes-appendix.html
+ */
+const PG_ERROR_CODES: Record<string, string> = {
+  "42703": "undefined_column",
+  "42P01": "undefined_table",
+  "42P02": "undefined_parameter",
+  "23505": "unique_violation",
+  "23503": "foreign_key_violation",
+  "23502": "not_null_violation",
+  "42601": "syntax_error",
+};
+
+/**
+ * Extracts detailed information from PostgreSQL errors for better debugging.
+ * Handles missing column errors (42703) and other common Postgres error codes.
+ */
+function formatDbError(error: unknown, context: string): string {
+  if (error && typeof error === "object" && "code" in error) {
+    const pgError = error as {
+      code?: string;
+      column?: string;
+      table?: string;
+      detail?: string;
+      hint?: string;
+      message?: string;
+      position?: string;
+      routine?: string;
+    };
+
+    const errorType = pgError.code
+      ? PG_ERROR_CODES[pgError.code] || "unknown"
+      : "unknown";
+
+    // PostgreSQL error code 42703 = undefined_column
+    if (pgError.code === "42703") {
+      // The column name is usually in the error message like: column "canceledAt" does not exist
+      const columnMatch = pgError.message?.match(/column "([^"]+)"/);
+      const columnName = columnMatch?.[1] || pgError.column || "unknown";
+
+      return `${context}: Missing column "${columnName}" - Run migrations? (code: ${pgError.code}, routine: ${pgError.routine || "n/a"})`;
+    }
+
+    // Other PostgreSQL errors - include full context
+    const details = [
+      pgError.column ? `column: ${pgError.column}` : null,
+      pgError.table ? `table: ${pgError.table}` : null,
+      pgError.detail,
+      pgError.hint ? `hint: ${pgError.hint}` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return `${context}: [${pgError.code}/${errorType}] ${pgError.message || "Unknown error"}${details ? ` (${details})` : ""}`;
+  }
+
+  return `${context}: ${String(error)}`;
+}
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
@@ -332,7 +395,7 @@ export async function saveMessage({
       return;
     });
   } catch (error) {
-    console.error("Failed to save message in database", error);
+    logger.error({ error, chatId, id }, formatDbError(error, "saveMessage"));
     throw error;
   }
 }
@@ -379,7 +442,10 @@ export async function saveMessages({
       return;
     });
   } catch (error) {
-    console.error("Failed to save messages in database", error);
+    logger.error(
+      { error, messageIds: messages.map((m) => m.id) },
+      formatDbError(error, "saveMessages")
+    );
     throw error;
   }
 }
@@ -425,7 +491,10 @@ export async function updateMessage({
       return;
     });
   } catch (error) {
-    console.error("Failed to update message in database", error);
+    logger.error(
+      { error, messageId: id, chatId },
+      formatDbError(error, "updateMessage")
+    );
     throw error;
   }
 }
@@ -753,7 +822,10 @@ export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
-    console.error("Failed to get message by id from database");
+    logger.error(
+      { error, messageId: id },
+      formatDbError(error, "getMessageById")
+    );
     throw error;
   }
 }
@@ -800,7 +872,10 @@ export async function getChatMessageWithPartsById({
       },
     };
   } catch (error) {
-    console.error("Failed to get message w/ parts by id from database", error);
+    logger.error(
+      { error, messageId: id },
+      formatDbError(error, "getChatMessageWithPartsById")
+    );
     throw error;
   }
 }
@@ -959,34 +1034,43 @@ export async function updateChatIsPinnedById({
   }
 }
 
-export async function getChatCanceledAt({
-  chatId,
+export async function getMessageCanceledAt({
+  messageId,
 }: {
-  chatId: string;
+  messageId: string;
 }): Promise<Date | null> {
   try {
     const [result] = await db
-      .select({ canceledAt: chat.canceledAt })
-      .from(chat)
-      .where(eq(chat.id, chatId));
+      .select({ canceledAt: message.canceledAt })
+      .from(message)
+      .where(eq(message.id, messageId));
     return result?.canceledAt ?? null;
   } catch (error) {
-    console.error("Failed to get chat canceledAt from database");
+    logger.error(
+      { error, messageId },
+      formatDbError(error, "getMessageCanceledAt")
+    );
     throw error;
   }
 }
 
-export async function updateChatCanceledAt({
-  chatId,
+export async function updateMessageCanceledAt({
+  messageId,
   canceledAt,
 }: {
-  chatId: string;
+  messageId: string;
   canceledAt: Date | null;
 }) {
   try {
-    return await db.update(chat).set({ canceledAt }).where(eq(chat.id, chatId));
+    return await db
+      .update(message)
+      .set({ canceledAt })
+      .where(eq(message.id, messageId));
   } catch (error) {
-    console.error("Failed to update chat canceledAt in database");
+    logger.error(
+      { error, messageId },
+      formatDbError(error, "updateMessageCanceledAt")
+    );
     throw error;
   }
 }

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { deleteFilesByUrls, listFiles } from "@/lib/blob";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";
 

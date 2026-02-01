@@ -7,6 +7,7 @@ import {
   type ConsoleOutputContent,
 } from "@/components/console";
 import { Artifact } from "@/components/create-artifact";
+import { config } from "@/lib/config";
 import { generateUUID, getLanguageFromFileName } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
@@ -246,7 +247,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     {
       icon: <MessageSquare size={16} />,
       description: "Add comments",
-      onClick: ({ sendMessage, storeApi, config }) => {
+      onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -267,7 +268,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     {
       icon: <List size={16} />,
       description: "Add logs",
-      onClick: ({ sendMessage, storeApi, config }) => {
+      onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
           role: "user",
           parts: [

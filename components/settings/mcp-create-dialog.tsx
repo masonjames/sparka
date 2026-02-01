@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useConfig } from "@/components/config-provider";
+import { config } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,7 +72,7 @@ export function McpCreateDialog({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
-  const { appName } = useConfig();
+  const { appName } = config;
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
 

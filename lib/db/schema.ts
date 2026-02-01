@@ -96,8 +96,6 @@ export const chat = pgTable("Chat", {
   projectId: uuid("projectId").references(() => project.id, {
     onDelete: "set null",
   }),
-  /** Timestamp when the active stream was canceled by the user. Null means not canceled. */
-  canceledAt: timestamp("canceledAt"),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -119,6 +117,8 @@ export const message = pgTable("Message", {
   selectedTool: varchar("selectedTool", { length: 256 }).default(""),
   lastContext: json("lastContext"),
   activeStreamId: varchar("activeStreamId", { length: 64 }),
+  /** Timestamp when this message's stream was canceled by the user. Null means not canceled. */
+  canceledAt: timestamp("canceledAt"),
 });
 
 export type DBMessage = InferSelectModel<typeof message>;

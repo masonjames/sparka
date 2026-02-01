@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useConfig } from "@/components/config-provider";
+import { config } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +36,6 @@ export function McpConnectDialog({
   onClose: () => void;
   connector: McpConnector | null;
 }) {
-  const config = useConfig();
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
 

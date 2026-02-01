@@ -67,5 +67,6 @@ export function chatMessageToDbMessage(
     selectedModel,
     selectedTool: message.metadata?.selectedTool || null,
     activeStreamId: message.metadata?.activeStreamId || null,
+    canceledAt: null,
   };
 }

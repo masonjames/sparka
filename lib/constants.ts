@@ -1,4 +1,4 @@
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
 const _isProductionEnvironment = process.env.NODE_ENV === "production";
 

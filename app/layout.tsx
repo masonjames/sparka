@@ -7,9 +7,8 @@ import Script from "next/script";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
-import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(config.appUrl),
@@ -92,17 +91,15 @@ export default async function RootLayout({
           strategy="beforeInteractive"
         />
         <NuqsAdapter>
-          <ConfigProvider value={config}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              disableTransitionOnChange
-              enableSystem
-            >
-              <Toaster position="top-center" />
-              {children}
-            </ThemeProvider>
-          </ConfigProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            disableTransitionOnChange
+            enableSystem
+          >
+            <Toaster position="top-center" />
+            {children}
+          </ThemeProvider>
         </NuqsAdapter>
         <Analytics />
         <SpeedInsights />

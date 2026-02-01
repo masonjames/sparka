@@ -1,5 +1,5 @@
 import { unstable_cache as cache } from "next/cache";
-import { config } from "@/lib/config/index";
+import { config } from "@/lib/config";
 import type { AnyImageModelId } from "@/lib/models/image-model-id";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
