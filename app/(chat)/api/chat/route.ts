@@ -231,18 +231,13 @@ function determineAllowedTools({
   explicitlyRequestedTools: ToolName[] | null;
 }): ToolName[] {
   // Start with all tools or anonymous-limited tools
-  let allowedTools: ToolName[] = isAnonymous
+  const allowedTools: ToolName[] = isAnonymous
     ? [...ANONYMOUS_LIMITS.AVAILABLE_TOOLS]
     : [...allTools];
 
   // Disable all tools for models with unspecified features
   if (!modelDefinition?.input) {
     return [];
-  }
-
-  // Don't allow deepResearch if the model supports reasoning (expensive and slow)
-  if (modelDefinition.reasoning) {
-    allowedTools = allowedTools.filter((tool) => tool !== "deepResearch");
   }
 
   // If specific tools were requested, filter them against allowed tools

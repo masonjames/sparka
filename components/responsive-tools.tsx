@@ -35,27 +35,12 @@ export function ResponsiveTools({
   const [showLoginPopover, setShowLoginPopover] = useState(false);
 
   const { getModelById } = useChatModels();
-  const { hasReasoningModel, hasUnspecifiedFeatures } = (() => {
-    const modelDef = getModelById(selectedModelId);
-    if (!modelDef) {
-      return {
-        hasReasoningModel: false,
-        hasUnspecifiedFeatures: false,
-      };
-    }
-    return {
-      hasReasoningModel: modelDef.reasoning === true,
-      hasUnspecifiedFeatures: !modelDef.input,
-    };
-  })();
+  const modelDef = getModelById(selectedModelId);
+  const hasUnspecifiedFeatures = !modelDef?.input;
 
   const activeTool = tools;
 
   const setTool = (tool: UiToolName | null) => {
-    if (tool === "deepResearch" && hasReasoningModel) {
-      return;
-    }
-
     if (hasUnspecifiedFeatures && tool !== null) {
       return;
     }
@@ -118,15 +103,11 @@ export function ResponsiveTools({
           >
             {enabledTools.map((key) => {
               const tool = toolDefinitions[key];
-              const isDeepResearchDisabled =
-                key === "deepResearch" && hasReasoningModel;
-              const isToolDisabled =
-                hasUnspecifiedFeatures || isDeepResearchDisabled;
               const Icon = tool.icon;
               return (
                 <DropdownMenuItem
                   className="flex items-center gap-2"
-                  disabled={isToolDisabled}
+                  disabled={hasUnspecifiedFeatures}
                   key={key}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -140,11 +121,6 @@ export function ResponsiveTools({
                   )}
                   {hasUnspecifiedFeatures && (
                     <span className="text-xs opacity-60">(not supported)</span>
-                  )}
-                  {!hasUnspecifiedFeatures && isDeepResearchDisabled && (
-                    <span className="text-xs opacity-60">
-                      (for non-reasoning models)
-                    </span>
                   )}
                 </DropdownMenuItem>
               );
