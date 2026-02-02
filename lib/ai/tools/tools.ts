@@ -66,11 +66,7 @@ export function getTools({
       session,
       dataStream,
     }),
-    // reasonSearch: createReasonSearch({
-    //   session,
-    //   dataStream,
-    // }),
-    retrieveUrl,
+    ...(config.integrations.urlRetrieval ? { retrieveUrl } : {}),
     ...(config.integrations.webSearch
       ? {
           webSearch: tavilyWebSearch({

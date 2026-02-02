@@ -124,6 +124,8 @@ export type Config = {
     sandbox: boolean;
     /** Web search */
     webSearch: boolean;
+    /** URL content retrieval */
+    urlRetrieval: boolean;
     /** MCP tool servers */
     mcp: boolean;
     /** AI image generation (requires BLOB_READ_WRITE_TOKEN) */
@@ -185,6 +187,7 @@ Feature flags live under `integrations` and `authentication`. They're validated 
 
 - **`integrations.sandbox`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) _or_ `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
 - **`integrations.webSearch`**: requires `TAVILY_API_KEY` _or_ `FIRECRAWL_API_KEY`
+- **`integrations.urlRetrieval`**: requires `FIRECRAWL_API_KEY` - fetch structured content from URLs
 - **`integrations.mcp`**: requires `MCP_ENCRYPTION_KEY`
 - **`integrations.imageGeneration`**: requires `BLOB_READ_WRITE_TOKEN` - AI-powered image generation tool
 - **`integrations.attachments`**: requires `BLOB_READ_WRITE_TOKEN` - file uploads (images and PDFs)

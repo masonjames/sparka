@@ -145,6 +145,9 @@ export const integrationsConfigSchema = z
   .object({
     sandbox: z.boolean().describe("Code sandbox execution (Vercel-native)"),
     webSearch: z.boolean().describe("Web search (requires TAVILY_API_KEY)"),
+    urlRetrieval: z
+      .boolean()
+      .describe("URL content retrieval (requires FIRECRAWL_API_KEY)"),
     mcp: z.boolean().describe("MCP tool servers (requires MCP_ENCRYPTION_KEY)"),
     imageGeneration: z
       .boolean()
@@ -156,6 +159,7 @@ export const integrationsConfigSchema = z
   .default({
     sandbox: false,
     webSearch: false,
+    urlRetrieval: false,
     mcp: false,
     imageGeneration: false,
     attachments: false,

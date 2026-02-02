@@ -125,3 +125,23 @@ webSearch: firecrawlWebSearch({
   costAccumulator,
 }),
 ```
+
+## URL Retrieval
+
+A separate `retrieveUrl` tool is available for fetching structured content from specific URLs (as opposed to searching the web). This tool uses Firecrawl to extract clean markdown from any webpage.
+
+Enable in `chat.config.ts`:
+
+```ts
+integrations: {
+  urlRetrieval: true, // Requires FIRECRAWL_API_KEY
+}
+```
+
+The tool extracts:
+
+- Page title and description
+- Clean markdown content
+- Source URL and language metadata
+
+Use web search for discovery and URL retrieval for extracting content from known URLs.

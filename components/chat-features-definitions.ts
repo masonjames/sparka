@@ -6,6 +6,7 @@ import {
   Telescope,
 } from "lucide-react";
 import type { UiToolName } from "@/lib/ai/types";
+import { config } from "@/lib/config";
 
 type ToolDefinition = {
   name: string;
@@ -29,9 +30,17 @@ export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
   editSheetDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
 };
 
+/**
+ * Tools enabled in the UI based on integration config.
+ * Mirrors the conditional logic in lib/ai/tools/tools.ts
+ */
 export const enabledTools: UiToolName[] = [
-  "webSearch",
-  "deepResearch",
-  "generateImage",
+  // Canvas tools are always available
   "createTextDocument",
+  // Web search tools require webSearch integration
+  ...(config.integrations.webSearch
+    ? (["webSearch", "deepResearch"] as const)
+    : []),
+  // Image generation requires imageGeneration integration
+  ...(config.integrations.imageGeneration ? (["generateImage"] as const) : []),
 ];

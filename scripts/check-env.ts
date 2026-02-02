@@ -51,6 +51,13 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     });
   }
 
+  if (config.integrations.urlRetrieval && !env.FIRECRAWL_API_KEY) {
+    errors.push({
+      feature: "integrations.urlRetrieval",
+      missing: ["FIRECRAWL_API_KEY"],
+    });
+  }
+
   if (config.integrations.mcp && !env.MCP_ENCRYPTION_KEY) {
     errors.push({
       feature: "integrations.mcp",
