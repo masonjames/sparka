@@ -89,7 +89,8 @@
               "cookbook/follow-up-questions",
               "cookbook/explicit-tool-selection",
               "cookbook/chat-layout",
-              "cookbook/component-registries"
+              "cookbook/component-registries",
+              "cookbook/auto-updating-models"
             ]
           }
         ]
