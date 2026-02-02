@@ -1,26 +1,20 @@
 import { unstable_cache as cache } from "next/cache";
-import type { AnyImageModelId } from "../models/image-model-id";
+import { config } from "@/lib/config";
+import type { AnyImageModelId } from "@/lib/models/image-model-id";
+import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
-import type { ModelId } from "./models";
 import { fetchModels } from "./models";
 import { models as generatedModels } from "./models.generated";
 
-export type { ModelId } from "./models";
+export type { AppModelId, ModelId } from "./app-model-id";
 
-export type AppModelId = ModelId | `${ModelId}-reasoning`;
 export type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
   apiModelId: ModelId;
 };
 
-const DISABLED_MODELS: Partial<Record<ModelId, true>> = {
-  // 'anthropic/claude-opus-4': true,
-  // 'anthropic/claude-opus-4.1': true,
-  "morph/morph-v3-large": true,
-  "morph/morph-v3-fast": true,
-};
-
-const PROVIDER_ORDER = ["openai", "google", "anthropic", "xai"];
+const DISABLED_MODELS = new Set(config.models.disabledModels);
+const PROVIDER_ORDER = config.models.providerOrder;
 
 function buildAppModels(models: ModelData[]): AppModelDefinition[] {
   return models
@@ -37,13 +31,13 @@ function buildAppModels(models: ModelData[]): AppModelDefinition[] {
             ...model,
             id: reasoningId,
             apiModelId: modelId,
-            disabled: DISABLED_MODELS[modelId],
+            disabled: DISABLED_MODELS.has(modelId),
           },
           {
             ...model,
             reasoning: false,
             apiModelId: modelId,
-            disabled: DISABLED_MODELS[modelId],
+            disabled: DISABLED_MODELS.has(modelId),
           },
         ];
       }
@@ -53,7 +47,7 @@ function buildAppModels(models: ModelData[]): AppModelDefinition[] {
         {
           ...model,
           apiModelId: modelId,
-          disabled: DISABLED_MODELS[modelId],
+          disabled: DISABLED_MODELS.has(modelId),
         },
       ];
     })
@@ -84,7 +78,7 @@ function buildChatModels(
     });
 }
 
-export const fetchAllAppModels = cache(
+const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
     const models = await fetchModels();
     return buildAppModels(models);
@@ -130,36 +124,12 @@ export const DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL: ModelId =
 
 export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
 
-/**
- * Curated list of models enabled by default when a user has no preferences set.
- */
-const CURATED_DEFAULT_MODELS: AppModelId[] = [
-  // OpenAI
-  "openai/gpt-5-nano",
-  "openai/gpt-5-mini",
-  "openai/gpt-5.2",
-  "openai/gpt-5.2-chat-latest",
-  "openai/gpt-5.2-chat-latest-reasoning",
-  // Google
-  "google/gemini-2.5-flash-lite",
-  "google/gemini-3-flash",
-  "google/gemini-3-pro-preview",
-  // Anthropic
-  "anthropic/claude-sonnet-4.5",
-  "anthropic/claude-sonnet-4.5-reasoning",
-  "anthropic/claude-opus-4.5",
-  // xAI
-  "xai/grok-4",
-  "xai/grok-4-reasoning",
-];
-
 export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
   "google/gemini-2.5-flash-lite",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
   "anthropic/claude-haiku-4.5",
 ];
-
 /**
  * Set of model IDs from the generated models file.
  * Used to detect new models from the API that we haven't "decided" on yet.
@@ -173,7 +143,7 @@ const KNOWN_MODEL_IDS = new Set<string>(generatedModels.map((m) => m.id));
 export function getDefaultEnabledModels(
   appModels: AppModelDefinition[]
 ): Set<AppModelId> {
-  const enabled = new Set<AppModelId>(CURATED_DEFAULT_MODELS);
+  const enabled = new Set<AppModelId>(config.models.curatedDefaults);
 
   // Add any new models from the API that aren't in our generated snapshot
   for (const model of appModels) {

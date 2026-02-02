@@ -1,10 +1,10 @@
 "use client";
 
+import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
-import { MoreHorizontalIcon } from "@/components/icons";
 import {
   type ProjectDetailsData,
   ProjectDetailsDialog,
@@ -83,7 +83,7 @@ export function SidebarProjectItem({
             className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             showOnHover={!isActive}
           >
-            <MoreHorizontalIcon />
+            <MoreHorizontal size={16} />
             <span className="sr-only">More</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>

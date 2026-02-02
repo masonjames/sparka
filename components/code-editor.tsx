@@ -7,7 +7,6 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { memo, useEffect, useRef } from "react";
-import type { Suggestion } from "@/lib/db/schema";
 
 type EditorProps = {
   content: string;
@@ -15,7 +14,6 @@ type EditorProps = {
   status: "streaming" | "idle";
   isCurrentVersion: boolean;
   currentVersionIndex: number;
-  suggestions: Suggestion[];
   isReadonly?: boolean;
   language?: string;
 };
@@ -131,9 +129,6 @@ function PureCodeEditor({
 }
 
 function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
-  if (prevProps.suggestions !== nextProps.suggestions) {
-    return false;
-  }
   if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex) {
     return false;
   }

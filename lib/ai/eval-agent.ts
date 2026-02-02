@@ -1,6 +1,7 @@
 import type { LanguageModelUsage } from "ai";
 import type { AppModelId } from "@/lib/ai/app-models";
 import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
+import { determineExplicitlyRequestedTools } from "@/lib/ai/determine-explicitly-requested-tools";
 import { generateFollowupSuggestions } from "@/lib/ai/followup-suggestions";
 import { systemPrompt } from "@/lib/ai/prompts";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
@@ -35,7 +36,7 @@ async function executeAgentAndGetOutput({
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   activeTools,
   abortSignal,
@@ -44,7 +45,7 @@ async function executeAgentAndGetOutput({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: ToolName | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   activeTools: ToolName[];
   abortSignal: AbortSignal | undefined;
@@ -66,7 +67,7 @@ async function executeAgentAndGetOutput({
     userMessage,
     previousMessages,
     selectedModelId,
-    selectedTool,
+    explicitlyRequestedTools,
     userId,
     budgetAllowedTools: activeTools,
     abortSignal,
@@ -252,13 +253,15 @@ export async function runCoreChatAgentEval({
   abortSignal?: AbortSignal;
 }): Promise<EvalAgentResult> {
   const messageId = generateUUID();
+  const explicitlyRequestedTools =
+    determineExplicitlyRequestedTools(selectedTool);
 
   const { result, contextForLLM, output, response } =
     await executeAgentAndGetOutput({
       userMessage,
       previousMessages,
       selectedModelId,
-      selectedTool,
+      explicitlyRequestedTools,
       userId,
       activeTools,
       abortSignal,

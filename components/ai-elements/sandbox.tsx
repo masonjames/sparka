@@ -131,9 +131,9 @@ export const SandboxTabContent = ({
 export type SandboxCodeProps = ComponentProps<typeof CodeBlock>;
 
 export const SandboxCode = ({ className, ...props }: SandboxCodeProps) => (
-  <CodeBlock className={cn("border-0", className)} {...props}>
+  <CodeBlock className={cn("border-0 min-h-10", className)} {...props}>
     <CodeBlockCopyButton
-      className="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+      className="opacity-0 transition-opacity  duration-200 group-hover:opacity-100"
       size="sm"
     />
   </CodeBlock>
@@ -145,7 +145,7 @@ export type SandboxOutputProps = Omit<
 >;
 
 export const SandboxOutput = ({ className, ...props }: SandboxOutputProps) => (
-  <CodeBlock className={cn("border-0", className)} language="log" {...props}>
+  <CodeBlock className={cn("border-0 min-h-10", className)} language="log" {...props}>
     <CodeBlockCopyButton
       className="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
       size="sm"

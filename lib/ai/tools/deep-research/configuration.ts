@@ -2,20 +2,18 @@ import { z } from "zod";
 import type { ModelId } from "@/lib/ai/app-models";
 
 // Simplified search API enum
-export const SearchAPIEnum = z.enum(["firecrawl", "tavily", "none"]);
+const SearchAPIEnum = z.enum(["firecrawl", "tavily", "none"]);
 export type SearchAPI = z.infer<typeof SearchAPIEnum>;
 
 // MCP Configuration schema
-export const MCPConfigSchema = z.object({
+const MCPConfigSchema = z.object({
   url: z.string().optional(),
   tools: z.array(z.string()).optional(),
   headers: z.record(z.string(), z.string()).optional(),
 });
 
-export type MCPConfig = z.infer<typeof MCPConfigSchema>;
-
 // Simple configuration object
-export const DeepResearchConfigSchema = z.object({
+const DeepResearchConfigSchema = z.object({
   // General Configuration
   max_structured_output_retries: z.number().int().min(1).max(10).default(3),
   allow_clarification: z.boolean().default(true),
@@ -56,7 +54,7 @@ export const DeepResearchConfigSchema = z.object({
 export type DeepResearchConfig = z.infer<typeof DeepResearchConfigSchema>;
 
 // Simple factory function
-export function createDeepResearchConfig(
+function createDeepResearchConfig(
   overrides: Partial<DeepResearchConfig> = {}
 ): DeepResearchConfig {
   return DeepResearchConfigSchema.parse(overrides);
@@ -97,11 +95,3 @@ export function loadConfigFromEnv(): DeepResearchConfig {
 
   return createDeepResearchConfig(envConfig);
 }
-
-// Export constants
-export const SEARCH_API = {
-  ANTHROPIC: "anthropic" as const,
-  OPENAI: "openai" as const,
-  TAVILY: "tavily" as const,
-  NONE: "none" as const,
-} as const;

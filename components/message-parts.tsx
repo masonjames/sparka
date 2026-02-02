@@ -14,14 +14,15 @@ import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
-import { CodeInterpreter } from "./part/code-interpreter";
+import { CodeExecution } from "./part/code-execution";
 import { DeepResearch } from "./part/deep-research";
 import { DocumentTool } from "./part/document-tool";
 import { DynamicToolPart } from "./part/dynamic-tool";
-import { GeneratedImage } from "./part/generated-image";
+import { GenerateImage } from "./part/generate-image";
 import { ReasoningPart } from "./part/message-reasoning";
 import { ReadDocument } from "./part/read-document";
-import { Retrieve } from "./part/retrieve";
+
+import { RetrieveUrl } from "./part/retrieve-url";
 import { TextMessagePart } from "./part/text-message-part";
 import { Weather } from "./part/weather";
 import { WebSearch } from "./part/web-search";
@@ -60,20 +61,20 @@ function ToolPart({
     );
   }
 
-  if (type === "tool-retrieve") {
-    return <Retrieve tool={part} />;
+  if (type === "tool-retrieveUrl") {
+    return <RetrieveUrl tool={part} />;
   }
 
   if (type === "tool-readDocument") {
     return <ReadDocument tool={part} />;
   }
 
-  if (type === "tool-codeInterpreter") {
-    return <CodeInterpreter tool={part} />;
+  if (type === "tool-codeExecution") {
+    return <CodeExecution tool={part} />;
   }
 
   if (type === "tool-generateImage") {
-    return <GeneratedImage tool={part} />;
+    return <GenerateImage tool={part} />;
   }
 
   if (type === "tool-deepResearch") {
@@ -133,7 +134,7 @@ function PureMessagePart({
 
 const MessagePart = memo(PureMessagePart);
 
-export function PureMessageParts({
+function PureMessageParts({
   messageId,
   isLoading,
   isReadonly,

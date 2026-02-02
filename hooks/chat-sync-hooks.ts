@@ -11,7 +11,6 @@ import {
 } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getAnonymousSession } from "@/lib/anonymous-session-client";
 import type { Document, Project } from "@/lib/db/schema";
@@ -22,7 +21,7 @@ import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 // Query key for anonymous credits - allows invalidation after messages
-export const ANONYMOUS_CREDITS_KEY = ["anonymousCredits"] as const;
+const ANONYMOUS_CREDITS_KEY = ["anonymousCredits"] as const;
 
 function snapshotAllChatsQueries(
   qc: ReturnType<typeof useQueryClient>,
@@ -69,17 +68,13 @@ export function useProject(
 export function useGetChatMessagesQueryOptions() {
   const { data: session } = useSession();
   const trpc = useTRPC();
-  const { id: chatId, isPersisted } = useChatId();
-  const isShared = useIsSharedRoute();
+  const { id: chatId, isPersisted, source } = useChatId();
+  const isShared = source === "share";
 
   return {
     ...trpc.chat.getChatMessages.queryOptions({ chatId: chatId || "" }),
     enabled: !!chatId && isPersisted && (isShared || !!session?.user),
   };
-}
-
-export function useMessagesQuery() {
-  return useGetChatMessagesQueryOptions();
 }
 
 export function useDeleteChat() {
@@ -284,7 +279,7 @@ export function usePinChat() {
   });
 }
 
-export function useDeleteTrailingMessages() {
+function _useDeleteTrailingMessages() {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
   const trpc = useTRPC();
@@ -464,7 +459,8 @@ export function useSaveDocument(
 
 export function useDocuments(id: string, disable: boolean) {
   const trpc = useTRPC();
-  const isShared = useIsSharedRoute();
+  const { source } = useChatId();
+  const isShared = source === "share";
   const { data: session } = useSession();
 
   return useQuery({
@@ -542,8 +538,7 @@ export function useGetCredits() {
   }
 
   return {
-    credits: (creditsData as { totalCredits: number } | undefined)
-      ?.totalCredits,
+    credits: creditsData?.credits,
     isLoadingCredits,
   };
 }

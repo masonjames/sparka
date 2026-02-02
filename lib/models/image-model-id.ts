@@ -14,16 +14,17 @@ type TupleIncludes<T extends readonly unknown[], E> = T extends readonly [
   : false;
 
 // Extract language models with "image-generation" tag
-type MultimodalImageModel = Extract<
-  (typeof models)[number],
-  { type: "language"; tags: readonly string[] }
-> extends infer M
-  ? M extends { id: infer Id; tags: infer Tags extends readonly string[] }
-    ? TupleIncludes<Tags, "image-generation"> extends true
-      ? Id
+type MultimodalImageModel =
+  Extract<
+    (typeof models)[number],
+    { type: "language"; tags: readonly string[] }
+  > extends infer M
+    ? M extends { id: infer Id; tags: infer Tags extends readonly string[] }
+      ? TupleIncludes<Tags, "image-generation"> extends true
+        ? Id
+        : never
       : never
-    : never
-  : never;
+    : never;
 
 export type MultimodalImageModelId = MultimodalImageModel;
 

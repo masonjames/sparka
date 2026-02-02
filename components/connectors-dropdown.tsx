@@ -5,9 +5,9 @@ import { Globe, Plug, Settings } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
 import { toast } from "sonner";
+import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
-import { useConfig } from "./config-provider";
 import { Favicon } from "./favicon";
 import { getGoogleFaviconUrl } from "./get-google-favicon-url";
 import { Button } from "./ui/button";
@@ -27,7 +27,6 @@ function PureConnectorsDropdown() {
 
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
-  const config = useConfig();
 
   const { data: connectors } = useQuery({
     ...trpc.mcp.listConnected.queryOptions(),

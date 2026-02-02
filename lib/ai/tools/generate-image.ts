@@ -1,8 +1,8 @@
 import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
-import { DEFAULT_IMAGE_MODEL } from "@/lib/ai/app-models";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
+import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import {
@@ -127,8 +127,7 @@ async function runGenerateImageTraditional({
   }
 
   const res = await generateImage({
-    // For edits, OpenAI expects `gpt-image-1` and accepts input images via prompt.images
-    model: getImageModel(DEFAULT_IMAGE_MODEL),
+    model: getImageModel(config.models.defaults.image),
     prompt: promptInput,
     n: 1,
     providerOptions: {
@@ -277,19 +276,12 @@ export const generateImageTool = ({
   costAccumulator,
 }: GenerateImageProps = {}) =>
   tool({
-    description: `Generate images from text descriptions. Can optionally use attached images as reference.
-
-Use for:
-- Create images, artwork, illustrations from descriptive prompts
-- Generate visual content based on user requests
-- Support various art styles and subjects
-- Be as detailed as possible in the description
-- Use attached images as visual reference when available`,
+    description: `Generate an image from a text prompt. Pass the user's prompt verbatim—do not embellish, rephrase, or add style suggestions. If images are attached, they'll be used as reference.`,
     inputSchema: z.object({
       prompt: z
         .string()
         .describe(
-          "Detailed description of the image to generate. Include style, composition, colors, mood, and any other relevant details."
+          "The user's exact prompt, passed through without modification."
         ),
     }),
     execute: async ({ prompt }) => {
@@ -315,10 +307,12 @@ Use for:
       );
 
       try {
+        const effectiveModelId = modelId ?? config.models.defaults.image;
+
         // Use multimodal path for language models with image generation
-        if (modelId && isMultimodalImageModel(modelId)) {
+        if (isMultimodalImageModel(effectiveModelId)) {
           return await runGenerateImageMultimodal({
-            modelId,
+            modelId: effectiveModelId,
             mode,
             prompt,
             imageParts,
@@ -328,7 +322,7 @@ Use for:
           });
         }
 
-        // Default: traditional image generation
+        // Traditional image generation for dedicated image models
         const result = await runGenerateImageTraditional({
           mode,
           prompt,

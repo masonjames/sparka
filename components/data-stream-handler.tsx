@@ -16,6 +16,7 @@ function handleResearchUpdate({
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
 }): void {
   if (delta.type === "data-researchUpdate") {
+    // TODO: fix this type
     const update: any = (delta as any).data;
     if (update?.type === "completed") {
       setSelectedTool((current) =>

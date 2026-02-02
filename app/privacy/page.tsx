@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/config";
+import { config } from "@/lib/config";
 
 export default function PrivacyPage() {
   const _currencySymbolMap: Record<string, string> = {
@@ -9,19 +9,17 @@ export default function PrivacyPage() {
 
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
-      <h1>{siteConfig.policies.privacy.title}</h1>
-      {siteConfig.policies.privacy.lastUpdated ? (
+      <h1>{config.policies.privacy.title}</h1>
+      {config.policies.privacy.lastUpdated ? (
         <p>
-          <strong>Last updated:</strong>{" "}
-          {siteConfig.policies.privacy.lastUpdated}
+          <strong>Last updated:</strong> {config.policies.privacy.lastUpdated}
         </p>
       ) : null}
 
       <p>
-        At {siteConfig.organization.name}, we respect your privacy and are
-        committed to protecting your personal data. This Privacy Policy explains
-        how we collect, use, and safeguard your information when you use our
-        service.
+        At {config.organization.name}, we respect your privacy and are committed
+        to protecting your personal data. This Privacy Policy explains how we
+        collect, use, and safeguard your information when you use our service.
       </p>
 
       <h2>Information We Collect</h2>
@@ -55,11 +53,11 @@ export default function PrivacyPage() {
       </ul>
       <p>
         <strong>Important Note on Payment Data</strong>:{" "}
-        {siteConfig.organization.name} does not collect, store, or process any
+        {config.organization.name} does not collect, store, or process any
         payment card details, bank information, or other sensitive payment data.
         All payment information is handled directly by our payment processors (
-        {siteConfig.services.paymentProcessors.join(", ")}) and is subject to
-        their respective privacy policies and security standards.
+        {config.services.paymentProcessors.join(", ")}) and is subject to their
+        respective privacy policies and security standards.
       </p>
 
       <h2>How We Use Your Information</h2>
@@ -79,20 +77,19 @@ export default function PrivacyPage() {
           who help us operate, improve, and analyze our service.
         </li>
         <li>
-          <strong>Hosting</strong>: {siteConfig.services.hosting} hosts our
+          <strong>Hosting</strong>: {config.services.hosting} hosts our
           infrastructure.
         </li>
         <li>
           <strong>AI Processing Partners</strong>: We utilize services from
-          companies including {siteConfig.services.aiProviders.join(", ")} to
+          companies including {config.services.aiProviders.join(", ")} to
           process queries and provide results.
         </li>
         <li>
           <strong>Payment Processors</strong>: We use{" "}
-          {siteConfig.services.paymentProcessors.join(", ")} to process payments
-          and manage subscriptions. These providers handle all payment data
-          directly and have their own privacy policies governing payment
-          information.
+          {config.services.paymentProcessors.join(", ")} to process payments and
+          manage subscriptions. These providers handle all payment data directly
+          and have their own privacy policies governing payment information.
         </li>
         <li>
           <strong>Compliance with Laws</strong>: When required by applicable
@@ -131,9 +128,9 @@ export default function PrivacyPage() {
       <h2>Children's Privacy</h2>
       <p>
         Our service is not directed to children under the age of
-        {` ${siteConfig.legal.minimumAge}`}. We do not knowingly collect
-        personal information from children under
-        {` ${siteConfig.legal.minimumAge}`}. If you are a parent or guardian and
+        {` ${config.legal.minimumAge}`}. We do not knowingly collect personal
+        information from children under
+        {` ${config.legal.minimumAge}`}. If you are a parent or guardian and
         believe your child has provided us with personal information, please
         contact us.
       </p>
@@ -148,12 +145,12 @@ export default function PrivacyPage() {
       <h2>Contact Us</h2>
       <p>
         If you have any questions about this Privacy Policy, please contact us
-        at: {siteConfig.organization.contact.privacyEmail}
+        at: {config.organization.contact.privacyEmail}
       </p>
 
       <p>
-        By using {siteConfig.appName}, you agree to our Privacy Policy and our
-        Terms of Service.
+        By using {config.appName}, you agree to our Privacy Policy and our Terms
+        of Service.
       </p>
     </main>
   );

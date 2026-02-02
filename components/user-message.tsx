@@ -16,7 +16,7 @@ export type BaseMessageProps = {
   parentMessageId: string | null;
 };
 
-export const PureUserMessage = ({
+const PureUserMessage = ({
   messageId,
   isLoading,
   isReadonly,
@@ -29,26 +29,10 @@ export const PureUserMessage = ({
     isOpen: boolean;
     imageUrl: string;
     imageName?: string;
-  }>({
-    isOpen: false,
-    imageUrl: "",
-    imageName: undefined,
-  });
+  }>({ isOpen: false, imageUrl: "" });
 
   const handleImageClick = (imageUrl: string, imageName?: string) => {
-    setImageModal({
-      isOpen: true,
-      imageUrl,
-      imageName,
-    });
-  };
-
-  const handleImageModalClose = () => {
-    setImageModal({
-      isOpen: false,
-      imageUrl: "",
-      imageName: undefined,
-    });
+    setImageModal({ isOpen: true, imageUrl, imageName });
   };
 
   if (!message) {
@@ -75,44 +59,44 @@ export const PureUserMessage = ({
             message.role === "user" && mode !== "edit" && "items-end"
           )}
         >
-          {mode === "view" ? (
-            isReadonly ? (
+          {mode === "view" && isReadonly && (
+            <MessageContent
+              className="text-left group-[.is-user]:bg-card"
+              data-testid="message-content"
+            >
+              <AttachmentList
+                attachments={getAttachmentsFromMessage(message)}
+                onImageClick={handleImageClick}
+                testId="message-attachments"
+              />
+              <pre className="whitespace-pre-wrap font-sans">
+                {textPart.text}
+              </pre>
+            </MessageContent>
+          )}
+          {mode === "view" && !isReadonly && (
+            <button
+              className="block cursor-pointer text-left transition-opacity hover:opacity-80"
+              data-testid="message-content"
+              onClick={() => setMode("edit")}
+              type="button"
+            >
               <MessageContent
-                className="text-left group-[.is-user]:bg-card"
+                className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
                 data-testid="message-content"
               >
                 <AttachmentList
                   attachments={getAttachmentsFromMessage(message)}
-                  onImageClickAction={handleImageClick}
+                  onImageClick={handleImageClick}
                   testId="message-attachments"
                 />
                 <pre className="whitespace-pre-wrap font-sans">
                   {textPart.text}
                 </pre>
               </MessageContent>
-            ) : (
-              <button
-                className="block cursor-pointer text-left transition-opacity hover:opacity-80"
-                data-testid="message-content"
-                onClick={() => setMode("edit")}
-                type="button"
-              >
-                <MessageContent
-                  className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
-                  data-testid="message-content"
-                >
-                  <AttachmentList
-                    attachments={getAttachmentsFromMessage(message)}
-                    onImageClickAction={handleImageClick}
-                    testId="message-attachments"
-                  />
-                  <pre className="whitespace-pre-wrap font-sans">
-                    {textPart.text}
-                  </pre>
-                </MessageContent>
-              </button>
-            )
-          ) : (
+            </button>
+          )}
+          {mode !== "view" && (
             <div className="flex flex-row items-start gap-2">
               <MessageEditor
                 chatId={chatId}
@@ -142,7 +126,7 @@ export const PureUserMessage = ({
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}
         isOpen={imageModal.isOpen}
-        onClose={handleImageModalClose}
+        onClose={() => setImageModal({ isOpen: false, imageUrl: "" })}
       />
     </>
   );

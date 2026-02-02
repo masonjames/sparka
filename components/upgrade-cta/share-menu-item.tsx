@@ -1,7 +1,7 @@
 "use client";
 
+import { Share } from "lucide-react";
 import type { ReactNode } from "react";
-import { ShareIcon } from "@/components/icons";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Popover,
@@ -27,7 +27,7 @@ export function ShareMenuItem({ onShare, children }: ShareMenuItemProps) {
             className="cursor-pointer opacity-50"
             onSelect={(e) => e.preventDefault()}
           >
-            <ShareIcon />
+            <Share size={16} />
             <span>Share</span>
           </DropdownMenuItem>
         </PopoverTrigger>
@@ -40,7 +40,7 @@ export function ShareMenuItem({ onShare, children }: ShareMenuItemProps) {
 
   return (
     <DropdownMenuItem className="cursor-pointer" onClick={onShare}>
-      <ShareIcon />
+      <Share size={16} />
       <span>Share</span>
       {children}
     </DropdownMenuItem>

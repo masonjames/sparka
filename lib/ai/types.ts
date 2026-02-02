@@ -5,12 +5,12 @@ import type {
   UIMessageStreamWriter,
 } from "ai";
 import { z } from "zod";
-import type { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
+import type { codeExecution } from "@/lib/ai/tools/code-execution";
 import type { deepResearch } from "@/lib/ai/tools/deep-research/deep-research";
 import type { generateImageTool as generateImageToolFactory } from "@/lib/ai/tools/generate-image";
 import type { getWeather } from "@/lib/ai/tools/get-weather";
 import type { readDocument } from "@/lib/ai/tools/read-document";
-import type { retrieve } from "@/lib/ai/tools/retrieve";
+import type { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import type { tavilyWebSearch } from "@/lib/ai/tools/web-search";
 import type { AppModelId } from "./app-models";
 import type { createCodeDocumentTool } from "./tools/documents/create-code-document";
@@ -30,9 +30,9 @@ export const toolNameSchema = z.enum([
   "editCodeDocument",
   "editSheetDocument",
   "readDocument",
-  "retrieve",
+  "retrieveUrl",
   "webSearch",
-  "codeInterpreter",
+  "codeExecution",
   "generateImage",
   "deepResearch",
 ]);
@@ -41,7 +41,7 @@ const _ = toolNameSchema.options satisfies ToolName[];
 
 type ToolNameInternal = z.infer<typeof toolNameSchema>;
 
-export const frontendToolsSchema = z.enum([
+const frontendToolsSchema = z.enum([
   "webSearch",
   "deepResearch",
   "generateImage",
@@ -56,7 +56,7 @@ export const frontendToolsSchema = z.enum([
 const __ = frontendToolsSchema.options satisfies ToolNameInternal[];
 
 export type UiToolName = z.infer<typeof frontendToolsSchema>;
-export const messageMetadataSchema = z.object({
+const messageMetadataSchema = z.object({
   createdAt: z.date(),
   parentMessageId: z.string().nullable(),
   selectedModel: z.custom<AppModelId>((val) => typeof val === "string"),
@@ -92,8 +92,8 @@ type generateImageTool = InferUITool<
   ReturnType<typeof generateImageToolFactory>
 >;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
-type codeInterpreterTool = InferUITool<ReturnType<typeof codeInterpreter>>;
-type retrieveTool = InferUITool<typeof retrieve>;
+type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
+type retrieveUrlTool = InferUITool<typeof retrieveUrl>;
 
 export type ChatTools = {
   getWeather: weatherTool;
@@ -107,8 +107,8 @@ export type ChatTools = {
   readDocument: readDocumentTool;
   generateImage: generateImageTool;
   webSearch: webSearchTool;
-  codeInterpreter: codeInterpreterTool;
-  retrieve: retrieveTool;
+  codeExecution: codeExecutionTool;
+  retrieveUrl: retrieveUrlTool;
 };
 
 type FollowupSuggestions = {

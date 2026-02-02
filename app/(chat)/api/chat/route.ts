@@ -11,6 +11,7 @@ import {
   createResumableStreamContext,
   type ResumableStreamContext,
 } from "resumable-stream";
+import throttle from "throttleit";
 import {
   type AppModelDefinition,
   type AppModelId,
@@ -25,20 +26,22 @@ import {
 } from "@/lib/ai/followup-suggestions";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
-import { allTools, toolsDefinitions } from "@/lib/ai/tools/tools-definitions";
+import { allTools } from "@/lib/ai/tools/tools-definitions";
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
 import {
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
 import { auth } from "@/lib/auth";
-import { siteConfig } from "@/lib/config";
+import { config } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
+import { canSpend, deductCredits } from "@/lib/db/credits";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
   getChatById,
   getMessageById,
+  getMessageCanceledAt,
   getProjectById,
   getUserById,
   saveChat,
@@ -50,7 +53,6 @@ import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
-import { canSpend, deductCredits } from "@/lib/repositories/credits";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
@@ -75,12 +77,16 @@ export function getStreamContext(): ResumableStreamContext | null {
     return globalStreamContext;
   }
 
+  // Resumable streams require Redis - return null if not configured
+  if (!(redisPublisher && redisSubscriber)) {
+    return null;
+  }
+
   globalStreamContext = createResumableStreamContext({
     waitUntil: after,
-    keyPrefix: "sparka-ai:resumable-stream",
-    ...(redisPublisher && redisSubscriber
-      ? { publisher: redisPublisher, subscriber: redisSubscriber }
-      : {}),
+    keyPrefix: `${config.appPrefix}:resumable-stream`,
+    publisher: redisPublisher,
+    subscriber: redisSubscriber,
   });
 
   return globalStreamContext;
@@ -229,18 +235,13 @@ function determineAllowedTools({
   explicitlyRequestedTools: ToolName[] | null;
 }): ToolName[] {
   // Start with all tools or anonymous-limited tools
-  let allowedTools: ToolName[] = isAnonymous
+  const allowedTools: ToolName[] = isAnonymous
     ? [...ANONYMOUS_LIMITS.AVAILABLE_TOOLS]
     : [...allTools];
 
   // Disable all tools for models with unspecified features
   if (!modelDefinition?.input) {
     return [];
-  }
-
-  // Don't allow deepResearch if the model supports reasoning (expensive and slow)
-  if (modelDefinition.reasoning) {
-    allowedTools = allowedTools.filter((tool) => tool !== "deepResearch");
   }
 
   // If specific tools were requested, filter them against allowed tools
@@ -279,7 +280,7 @@ async function createChatStream({
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   allowedTools,
   abortController,
@@ -288,13 +289,14 @@ async function createChatStream({
   timeoutId,
   mcpConnectors,
   streamId,
+  onChunk,
 }: {
   messageId: string;
   chatId: string;
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: string | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   allowedTools: ToolName[];
   abortController: AbortController;
@@ -303,14 +305,10 @@ async function createChatStream({
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
+  onChunk?: () => void;
 }) {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ isAnonymous, chatId });
-
-  const narrowedSelectedTool: ToolName | null =
-    selectedTool && selectedTool in toolsDefinitions
-      ? (selectedTool as ToolName)
-      : null;
 
   // Create cost accumulator to track all LLM and API costs
   const costAccumulator = new CostAccumulator();
@@ -333,7 +331,7 @@ async function createChatStream({
         userMessage,
         previousMessages,
         selectedModelId,
-        selectedTool: narrowedSelectedTool,
+        explicitlyRequestedTools,
         userId,
         budgetAllowedTools: allowedTools,
         abortSignal: abortController.signal,
@@ -342,6 +340,7 @@ async function createChatStream({
         onError: (error) => {
           log.error({ error }, "streamText error");
         },
+        onChunk,
         mcpConnectors,
         costAccumulator,
       });
@@ -438,7 +437,7 @@ async function executeChatRequest({
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   isAnonymous,
   isNewChat,
@@ -451,7 +450,7 @@ async function executeChatRequest({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: string | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   isAnonymous: boolean;
   isNewChat: boolean;
@@ -484,6 +483,17 @@ async function executeChatRequest({
     });
   }
 
+  // Create throttled cancel check (max once per second) for authenticated users
+  const onChunk =
+    !isAnonymous && userId
+      ? throttle(async () => {
+          const canceledAt = await getMessageCanceledAt({ messageId });
+          if (canceledAt) {
+            abortController.abort();
+          }
+        }, 1000)
+      : undefined;
+
   // Build the data stream that will emit tokens
   const stream = await createChatStream({
     messageId,
@@ -491,7 +501,7 @@ async function executeChatRequest({
     userMessage,
     previousMessages,
     selectedModelId,
-    selectedTool,
+    explicitlyRequestedTools,
     userId,
     allowedTools,
     abortController,
@@ -500,13 +510,14 @@ async function executeChatRequest({
     timeoutId,
     mcpConnectors,
     streamId,
+    onChunk,
   });
 
   const publisher = redisPublisher;
   if (publisher) {
     after(async () => {
       try {
-        const keyPattern = `sparka-ai:resumable-stream:rs:sentinel:${streamId}*`;
+        const keyPattern = `${config.appPrefix}:resumable-stream:rs:sentinel:${streamId}*`;
         const keys = await publisher.keys(keyPattern);
         if (keys.length > 0) {
           await Promise.all(
@@ -806,7 +817,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch MCP connectors for authenticated users (only if MCP integration enabled)
     const mcpConnectors: McpConnector[] =
-      siteConfig.integrations.mcp && userId && !isAnonymous
+      config.integrations.mcp && userId && !isAnonymous
         ? await getMcpConnectorsByUserId({ userId })
         : [];
 
@@ -821,7 +832,7 @@ export async function POST(request: NextRequest) {
       userMessage,
       previousMessages,
       selectedModelId,
-      selectedTool,
+      explicitlyRequestedTools,
       userId,
       isAnonymous,
       isNewChat,
@@ -831,7 +842,15 @@ export async function POST(request: NextRequest) {
       mcpConnectors,
     });
   } catch (error) {
-    log.error({ error }, "RESPONSE > POST /api/chat error");
+    log.error(
+      {
+        err:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack }
+            : error,
+      },
+      "RESPONSE > POST /api/chat error"
+    );
     return new Response("Internal Server Error", {
       status: 500,
     });

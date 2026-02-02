@@ -2,18 +2,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { env } from "@/lib/env";
+import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-
-function asOrigin(input: string): string {
-  // Vercel provides hostnames (e.g. "foo.vercel.app") but Better Auth expects full origins.
-  const raw = input.trim();
-  const withScheme =
-    raw.startsWith("http://") || raw.startsWith("https://")
-      ? raw
-      : `https://${raw}`;
-  return new URL(withScheme).origin;
-}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -22,10 +13,9 @@ export const auth = betterAuth({
   }),
   trustedOrigins: [
     "http://localhost:3000",
-    ...(env.VERCEL_URL ? [asOrigin(env.VERCEL_URL)] : []),
-    ...(env.VERCEL_PROJECT_PRODUCTION_URL
-      ? [asOrigin(env.VERCEL_PROJECT_PRODUCTION_URL)]
-      : []),
+    // Vercel URL for preview branches
+    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+    config.appUrl,
   ],
   secret: env.AUTH_SECRET,
 

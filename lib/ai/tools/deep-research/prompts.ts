@@ -363,7 +363,7 @@ Examples by action type:
 - Final report: Title: "Synthesizing findings", Message: "Combining insights from 15 sources into actionable investment recommendations with risk assessments."`;
 }
 
-export function summarizeWebpagePrompt({
+function _summarizeWebpagePrompt({
   webpage_content,
   date,
 }: {

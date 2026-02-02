@@ -1,7 +1,7 @@
+import { Loader2, Terminal, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
-import { CrossSmallIcon, LoaderIcon, TerminalWindowIcon } from "./icons";
 import { Button } from "./ui/button";
 
 export type ConsoleOutputContent = {
@@ -58,7 +58,7 @@ export function Console({
         <div className="sticky top-0 z-50 flex h-fit w-full flex-row items-center justify-between border-zinc-200 border-b bg-muted px-2 py-1 dark:border-zinc-700">
           <div className="flex flex-row items-center gap-3 pl-2 text-sm text-zinc-800 dark:text-zinc-50">
             <div className="text-muted-foreground">
-              <TerminalWindowIcon />
+              <Terminal size={16} />
             </div>
             <div>Console</div>
           </div>
@@ -68,7 +68,7 @@ export function Console({
             size="icon"
             variant="ghost"
           >
-            <CrossSmallIcon />
+            <X size={16} />
           </Button>
         </div>
 
@@ -95,7 +95,7 @@ export function Console({
               ) ? (
                 <div className="flex flex-row gap-2">
                   <div className="mt-0.5 mb-auto size-fit animate-spin self-center">
-                    <LoaderIcon />
+                    <Loader2 size={16} />
                   </div>
                   <div className="text-muted-foreground">
                     {getConsoleStatusText(consoleOutput)}

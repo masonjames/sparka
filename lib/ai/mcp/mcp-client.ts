@@ -7,8 +7,9 @@ import type {
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "ai";
-import { env } from "@/lib/env";
+import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
+import { getBaseUrl } from "@/lib/url";
 import { invalidateAllMcpCaches } from "./cache";
 import {
   McpOAuthClientProvider,
@@ -25,18 +26,6 @@ type McpClientStatus =
   | "connected"
   | "authorizing"
   | "incompatible";
-
-export type { McpClientStatus };
-
-function getBaseUrl(): string {
-  if (env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  if (env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
-}
 
 /**
  * MCP Client wrapper with OAuth support.
@@ -74,13 +63,13 @@ export class MCPClient {
       mcpConnectorId: this.id,
       serverUrl: this.serverConfig.url,
       clientMetadata: {
-        client_name: `sparka-ai-${this.name}`,
+        client_name: `${config.appPrefix}-${this.name}`,
         grant_types: ["authorization_code", "refresh_token"],
         response_types: ["code"],
         token_endpoint_auth_method: "none", // PKCE
         scope: "mcp:tools",
         redirect_uris: [`${baseUrl}/api/mcp/oauth/callback`],
-        software_id: "sparka-ai",
+        software_id: config.appPrefix,
         software_version: "1.0.0",
       },
       onRedirectToAuthorization: (authorizationUrl: URL) => {
@@ -345,7 +334,7 @@ export async function removeMcpClient(id: string): Promise<void> {
 /**
  * Get an existing MCP client by ID.
  */
-export function getMcpClient(id: string): MCPClient | undefined {
+function _getMcpClient(id: string): MCPClient | undefined {
   return clientsMap.get(id);
 }
 

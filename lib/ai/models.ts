@@ -1,4 +1,3 @@
-import type { GatewayModelId } from "@ai-sdk/gateway";
 import { unstable_cache } from "next/cache";
 import { createModuleLogger } from "@/lib/logger";
 import {
@@ -73,5 +72,3 @@ export const fetchModels = unstable_cache(
     tags: ["ai-gateway-models"],
   }
 );
-
-export type ModelId = GatewayModelId;

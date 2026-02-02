@@ -12,7 +12,7 @@ import {
 
 const artifactToolTypes = [...documentToolTypes, "tool-deepResearch"] as const;
 
-export function usePartsStore<T>(
+function usePartsStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
@@ -43,7 +43,7 @@ export function useMessagePartByPartIdx<
   T extends ChatMessage["parts"][number]["type"],
 >(messageId: string, partIdx: number, type?: T) {
   const part = usePartsStore((state) =>
-    state.getMessagePartByIdxCached(messageId, partIdx)
+    state.getMessagePartByIdx(messageId, partIdx)
   );
   if (type !== undefined && part.type !== type) {
     throw new Error(
@@ -55,36 +55,6 @@ export function useMessagePartByPartIdx<
   return part as unknown as T extends ChatMessage["parts"][number]["type"]
     ? Extract<ChatMessage["parts"][number], { type: T }>
     : ChatMessage["parts"][number];
-}
-
-export function useMessagePartsByPartRange(
-  messageId: string,
-  startIdx: number,
-  endIdx: number
-): ChatMessage["parts"];
-export function useMessagePartsByPartRange<
-  T extends ChatMessage["parts"][number]["type"],
->(
-  messageId: string,
-  startIdx: number,
-  endIdx: number,
-  type: T
-): Extract<ChatMessage["parts"][number], { type: T }>[];
-export function useMessagePartsByPartRange<
-  T extends ChatMessage["parts"][number]["type"],
->(messageId: string, startIdx: number, endIdx: number, type?: T) {
-  return usePartsStore(
-    (state) =>
-      state.getMessagePartsRangeCached(
-        messageId,
-        startIdx,
-        endIdx,
-        type as unknown as string | undefined
-      ) as unknown as ChatMessage["parts"],
-    equal
-  ) as unknown as T extends ChatMessage["parts"][number]["type"]
-    ? Extract<ChatMessage["parts"][number], { type: T }>[]
-    : ChatMessage["parts"];
 }
 
 export function useMessageResearchUpdatePartByToolCallId(

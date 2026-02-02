@@ -24,7 +24,7 @@ export type BaseChart = {
   x_scale?: string;
 };
 
-export function InteractiveChart({ chart }: { chart: BaseChart }) {
+function InteractiveChart({ chart }: { chart: BaseChart }) {
   const { resolvedTheme } = useTheme();
   // TOOD: Update for multitheme support
   // const textColor = theme === 'dark' ? '#e5e5e5' : '#171717';

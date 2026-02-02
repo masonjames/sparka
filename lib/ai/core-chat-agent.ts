@@ -1,6 +1,6 @@
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/add-explicit-tool-request-to-messages";
-import { filterReasoningParts } from "@/app/(chat)/api/chat/filter-reasoning-parts";
+import { filterPartsForLLM } from "@/app/(chat)/api/chat/filter-reasoning-parts";
 import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-generated-image";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
@@ -10,20 +10,20 @@ import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
-import { determineExplicitlyRequestedTools } from "./determine-explicitly-requested-tools";
 
 export async function createCoreChatAgent({
   system,
   userMessage,
   previousMessages,
   selectedModelId,
-  selectedTool,
+  explicitlyRequestedTools,
   userId,
   budgetAllowedTools,
   abortSignal,
   messageId,
   dataStream,
   onError,
+  onChunk,
   mcpConnectors = [],
   costAccumulator,
 }: {
@@ -31,7 +31,7 @@ export async function createCoreChatAgent({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  selectedTool: ToolName | null;
+  explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   /** Budget-allowed base tools from route.ts (static ToolNames only) */
   budgetAllowedTools: ToolName[];
@@ -39,6 +39,7 @@ export async function createCoreChatAgent({
   messageId: string;
   dataStream: StreamWriter;
   onError?: (error: unknown) => void;
+  onChunk?: () => void;
   mcpConnectors?: McpConnector[];
   costAccumulator: CostAccumulator;
 }) {
@@ -50,16 +51,15 @@ export async function createCoreChatAgent({
   // Process conversation history
   const lastGeneratedImage = getRecentGeneratedImage(messages);
 
-  const explicitlyRequestedTools =
-    determineExplicitlyRequestedTools(selectedTool);
-
   addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
 
-  // Filter out reasoning parts to ensure compatibility between different models
-  const messagesWithoutReasoning = filterReasoningParts(messages.slice(-5));
+  // Filter reasoning parts (cross-model compatibility)
+  const filteredMessages = filterPartsForLLM(messages.slice(-5));
 
-  // Convert to model messages
-  const modelMessages = await convertToModelMessages(messagesWithoutReasoning);
+  // Convert to model messages, ignoring data-* parts (drop them)
+  const modelMessages = await convertToModelMessages(filteredMessages, {
+    convertDataPart: (_part): undefined => undefined,
+  });
 
   // Replace file URLs with binary data
   const contextForLLM =
@@ -145,6 +145,7 @@ export async function createCoreChatAgent({
     onError: (error) => {
       onError?.(error);
     },
+    onChunk,
     abortSignal,
     providerOptions,
     onFinish: async () => {

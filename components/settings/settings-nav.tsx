@@ -4,7 +4,7 @@ import { Cpu, Plug, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-import { useConfig } from "@/components/config-provider";
+import { config } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
 export function SettingsNav({
@@ -13,7 +13,6 @@ export function SettingsNav({
   orientation?: "horizontal" | "vertical";
 }) {
   const pathname = usePathname();
-  const config = useConfig();
 
   const navItems = useMemo(
     () =>
@@ -30,7 +29,7 @@ export function SettingsNav({
             ]
           : []),
       ] as const,
-    [config.integrations.mcp]
+    []
   );
 
   return (

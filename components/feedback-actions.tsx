@@ -1,12 +1,12 @@
 import { useMessageById } from "@ai-sdk-tools/store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Vote } from "@/lib/db/schema";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { MessageAction as Action } from "./ai-elements/message";
-import { ThumbDownIcon, ThumbUpIcon } from "./icons";
 import { RetryButton } from "./retry-button";
 import { Tag } from "./tag";
 
@@ -63,7 +63,7 @@ export function FeedbackActions({
         }}
         tooltip="Downvote Response"
       >
-        <ThumbDownIcon size={14} />
+        <ThumbsDown size={14} />
       </Action>
 
       <Action
@@ -86,7 +86,7 @@ export function FeedbackActions({
         }}
         tooltip="Upvote Response"
       >
-        <ThumbUpIcon size={14} />
+        <ThumbsUp size={14} />
       </Action>
 
       <RetryButton messageId={messageId} />

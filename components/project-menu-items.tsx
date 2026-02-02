@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilEditIcon, TrashIcon } from "@/components/icons";
+import { Pencil, Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 type ProjectMenuItemsProps = {
@@ -15,14 +15,14 @@ export function ProjectMenuItems({
   return (
     <>
       <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
-        <PencilEditIcon />
+        <Pencil size={16} />
         <span>Rename</span>
       </DropdownMenuItem>
       <DropdownMenuItem
         className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
         onSelect={onDelete}
       >
-        <TrashIcon />
+        <Trash2 size={16} />
         <span>Delete</span>
       </DropdownMenuItem>
     </>

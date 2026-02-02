@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useConfig } from "@/components/config-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
+import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 
 const mcpConnectorFormSchema = z.object({
@@ -72,7 +72,7 @@ export function McpCreateDialog({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
-  const { appName } = useConfig();
+  const { appName } = config;
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
 

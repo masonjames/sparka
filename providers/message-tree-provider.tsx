@@ -12,7 +12,6 @@ import {
 } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useArtifact } from "@/hooks/use-artifact";
-import { useIsSharedRoute } from "@/hooks/use-is-shared-route";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   useResetThreadEpoch,
@@ -46,8 +45,8 @@ type MessageTreeProviderProps = {
 };
 
 export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
-  const { id, isPersisted } = useChatId();
-  const isShared = useIsSharedRoute();
+  const { id, isPersisted, source } = useChatId();
+  const isShared = source === "share";
   const pathname = usePathname();
   const trpc = useTRPC();
   const setMessagesWithEpoch = useSetMessagesWithEpoch();

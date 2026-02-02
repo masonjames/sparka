@@ -2,6 +2,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChatActions, type useChatStoreApi } from "@ai-sdk-tools/store";
 import cx from "classnames";
+import { ArrowUp, Square } from "lucide-react";
 import {
   AnimatePresence,
   motion,
@@ -29,8 +30,11 @@ import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { artifactDefinitions } from "./artifact-panel";
-import type { ArtifactToolbarItem } from "./create-artifact";
-import { ArrowUpIcon, StopIcon, SummarizeIcon } from "./icons";
+import type {
+  ArtifactToolbarContext,
+  ArtifactToolbarItem,
+} from "./create-artifact";
+import { SummarizeIcon } from "./icons";
 
 type ToolProps = {
   description: string;
@@ -41,13 +45,8 @@ type ToolProps = {
   setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
   isAnimating: boolean;
   isSingleTool?: boolean;
-  onClick: ({
-    sendMessage,
-    storeApi,
-  }: {
-    sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-    storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-  }) => void;
+  onClick: (context: ArtifactToolbarContext) => void;
+
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 };
 
@@ -131,7 +130,7 @@ function Tool({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          {selectedTool === description ? <ArrowUpIcon /> : icon}
+          {selectedTool === description ? <ArrowUp size={16} /> : icon}
         </motion.div>
       </TooltipTrigger>
       <TooltipContent
@@ -250,7 +249,7 @@ function ReadingLevelSelector({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {currentLevel === 2 ? <SummarizeIcon /> : <ArrowUpIcon />}
+            {currentLevel === 2 ? <SummarizeIcon /> : <ArrowUp size={16} />}
           </motion.div>
         </TooltipTrigger>
         <TooltipContent
@@ -265,7 +264,7 @@ function ReadingLevelSelector({
   );
 }
 
-export function Tools({
+function Tools({
   isToolbarVisible,
   selectedTool,
   setSelectedTool,
@@ -459,7 +458,7 @@ function PureToolbar({
                   stop();
                 }}
               >
-                <StopIcon />
+                <Square size={16} />
               </motion.div>
             );
           }

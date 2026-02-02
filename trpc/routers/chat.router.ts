@@ -1,13 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { generateText } from "ai";
 import { z } from "zod";
-import { DEFAULT_TITLE_MODEL } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   cloneAttachmentsInMessages,
   cloneMessagesWithDocuments,
 } from "@/lib/clone-messages";
+import { config } from "@/lib/config";
 import {
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
@@ -22,6 +22,7 @@ import {
   updateChatIsPinnedById,
   updateChatTitleById,
   updateChatVisiblityById,
+  updateMessageCanceledAt,
 } from "@/lib/db/queries";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
@@ -184,6 +185,37 @@ export const chatRouter = createTRPCRouter({
       return;
     }),
 
+  stopStream: protectedProcedure
+    .input(
+      z.object({
+        messageId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [msg] = await getMessageById({ id: input.messageId });
+      if (!msg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Message not found",
+        });
+      }
+
+      const chat = await getChatById({ id: msg.chatId });
+      if (!chat || chat.userId !== ctx.user.id) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Chat not found or access denied",
+        });
+      }
+
+      await updateMessageCanceledAt({
+        messageId: input.messageId,
+        canceledAt: new Date(),
+      });
+
+      return { success: true };
+    }),
+
   setVisibility: protectedProcedure
     .input(
       z.object({
@@ -263,7 +295,7 @@ export const chatRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const { text: title } = await generateText({
-        model: await getLanguageModel(DEFAULT_TITLE_MODEL),
+        model: await getLanguageModel(config.models.defaults.title),
         system: `\n
         - you will generate a short title based on the first message a user begins a conversation with
         - ensure it is not more than 80 characters long

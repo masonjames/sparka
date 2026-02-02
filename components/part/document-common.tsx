@@ -1,3 +1,4 @@
+import { File, Loader2, Pencil } from "lucide-react";
 import { memo } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
 import type {
@@ -6,7 +7,6 @@ import type {
 } from "@/lib/ai/tools/documents/types";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import { FileIcon, LoaderIcon, PencilEditIcon } from "../icons";
 
 export type CreateDocumentTool = Extract<
   ChatMessage["parts"][number],
@@ -86,10 +86,10 @@ function PureDocumentToolResult({
       <div className="text-muted-foreground">
         {(() => {
           if (type === "create") {
-            return <FileIcon />;
+            return <File size={16} />;
           }
           if (type === "update") {
-            return <PencilEditIcon />;
+            return <Pencil size={16} />;
           }
           return null;
         })()}
@@ -131,10 +131,10 @@ function PureDocumentToolCall({
         <div className="mt-1 text-zinc-500">
           {(() => {
             if (type === "create") {
-              return <FileIcon />;
+              return <File size={16} />;
             }
             if (type === "update") {
-              return <PencilEditIcon />;
+              return <Pencil size={16} />;
             }
             return null;
           })()}
@@ -145,7 +145,7 @@ function PureDocumentToolCall({
         </div>
       </div>
 
-      <div className="mt-1 animate-spin">{<LoaderIcon />}</div>
+      <div className="mt-1 animate-spin">{<Loader2 size={16} />}</div>
     </button>
   );
 }

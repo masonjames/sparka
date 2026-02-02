@@ -23,7 +23,7 @@ export const models = [
     object: "model",
     created: 1_755_815_280,
     owned_by: "alibaba",
-    name: "Qwen3 235B A22B Instruct 2507",
+    name: "Qwen3 235B A22b Instruct 2507",
     description:
       "Qwen3-235B-A22B-Instruct-2507 is the updated version of the Qwen3-235B-A22B non-thinking mode, featuring Significant improvements in general capabilities, including instruction following, logical reasoning, text comprehension, mathematics, science, coding and tool usage.",
     context_window: 40_960,
@@ -31,8 +31,8 @@ export const models = [
     type: "language",
     tags: ["tool-use"],
     pricing: {
-      input: "0.00000013",
-      output: "0.0000006",
+      input: "0.000000071",
+      output: "0.000000463",
     },
   },
   {
@@ -134,7 +134,71 @@ export const models = [
     tags: ["tool-use"],
     pricing: {
       input: "0.000001",
+      input_tiers: [
+        {
+          cost: "0.000001",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.0000018",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.000003",
+          min: 128_001,
+          max: 256_001,
+        },
+        {
+          cost: "0.000006",
+          min: 256_001,
+        },
+      ],
       output: "0.000005",
+      output_tiers: [
+        {
+          cost: "0.000005",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.000009",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.000015",
+          min: 128_001,
+          max: 256_001,
+        },
+        {
+          cost: "0.00006",
+          min: 256_001,
+        },
+      ],
+      input_cache_read: "0.0000002",
+      input_cache_read_tiers: [
+        {
+          cost: "0.0000002",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.00000036",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000006",
+          min: 128_001,
+          max: 256_001,
+        },
+        {
+          cost: "0.0000012",
+          min: 256_001,
+        },
+      ],
     },
   },
   {
@@ -194,13 +258,44 @@ export const models = [
     description:
       "The Qwen 3 series Max model has undergone specialized upgrades in agent programming and tool invocation compared to the preview version. The officially released model this time has achieved state-of-the-art (SOTA) performance in its field and is better suited to meet the demands of agents operating in more complex scenarios.",
     context_window: 262_144,
-    max_tokens: 32_768,
+    max_tokens: 65_536,
     type: "language",
-    tags: ["tool-use"],
+    tags: [],
     pricing: {
-      input: "0.0000012",
-      output: "0.000006",
-      input_cache_read: "0.00000024",
+      input: "0.000000845",
+      input_tiers: [
+        {
+          cost: "0.000000845",
+          min: 0,
+          max: 32_769,
+        },
+        {
+          cost: "0.0000014",
+          min: 32_769,
+          max: 131_073,
+        },
+        {
+          cost: "0.00000211",
+          min: 131_073,
+        },
+      ],
+      output: "0.00000338",
+      output_tiers: [
+        {
+          cost: "0.00000338",
+          min: 0,
+          max: 32_769,
+        },
+        {
+          cost: "0.00000564",
+          min: 32_769,
+          max: 131_073,
+        },
+        {
+          cost: "0.00000845",
+          min: 131_073,
+        },
+      ],
     },
   },
   {
@@ -214,11 +309,125 @@ export const models = [
     context_window: 262_144,
     max_tokens: 32_768,
     type: "language",
-    tags: ["tool-use"],
+    tags: ["tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000012",
+      input_tiers: [
+        {
+          cost: "0.0000012",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.0000024",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.000003",
+          min: 128_001,
+        },
+      ],
       output: "0.000006",
+      output_tiers: [
+        {
+          cost: "0.000006",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.000012",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.000015",
+          min: 128_001,
+        },
+      ],
       input_cache_read: "0.00000024",
+      input_cache_read_tiers: [
+        {
+          cost: "0.00000024",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.00000048",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000006",
+          min: 128_001,
+        },
+      ],
+    },
+  },
+  {
+    id: "alibaba/qwen3-max-thinking",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "alibaba",
+    name: "Qwen 3 Max Thinking",
+    description:
+      "Compared with the snapshot as of September 23, 2025, the Qwen-3 series Max model in this release achieves an effective integration of thinking and non-thinking modes, resulting in a comprehensive and substantial improvement in the model’s overall performance. In thinking mode, the model simultaneously supports web search, web information extraction, and a code interpreter tool, enabling it to tackle more complex and challenging problems with greater accuracy by leveraging external tools while engaging in slow, deliberative reasoning. This version is based on a snapshot taken on January 23, 2026.",
+    context_window: 256_000,
+    max_tokens: 65_536,
+    type: "language",
+    tags: ["reasoning", "tool-use", "implicit-caching"],
+    pricing: {
+      input: "0.0000012",
+      input_tiers: [
+        {
+          cost: "0.0000012",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.0000024",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.000003",
+          min: 128_001,
+        },
+      ],
+      output: "0.000006",
+      output_tiers: [
+        {
+          cost: "0.000006",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.000012",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.000015",
+          min: 128_001,
+        },
+      ],
+      input_cache_read: "0.00000024",
+      input_cache_read_tiers: [
+        {
+          cost: "0.00000024",
+          min: 0,
+          max: 32_001,
+        },
+        {
+          cost: "0.00000048",
+          min: 32_001,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000006",
+          min: 128_001,
+        },
+      ],
     },
   },
   {
@@ -267,8 +476,8 @@ export const models = [
     type: "language",
     tags: ["vision"],
     pricing: {
-      input: "0.0000007",
-      output: "0.0000028",
+      input: "0.0000004",
+      output: "0.0000016",
     },
   },
   {
@@ -394,16 +603,14 @@ export const models = [
     owned_by: "anthropic",
     name: "Claude 3 Opus",
     description:
-      "Claude 3 Opus is Anthropic's most intelligent model, with best-in-market performance on highly complex tasks. It can navigate open-ended prompts and sight-unseen scenarios with remarkable fluency and human-like understanding. Opus shows us the outer limits of what's possible with generative AI.",
+      "Claude 3 Opus is Anthropic's most powerful AI model, with state-of-the-art performance on highly complex tasks. It can navigate open-ended prompts and sight-unseen scenarios with remarkable fluency and human-like understanding. Claude 3 Opus shows us the frontier of what's possible with generative AI. Claude 3 Opus can process images and return text outputs, and features a 200K context window.",
     context_window: 200_000,
-    max_tokens: 4096,
+    max_tokens: 8192,
     type: "language",
-    tags: ["tool-use", "vision"],
+    tags: [],
     pricing: {
       input: "0.000015",
       output: "0.000075",
-      input_cache_read: "0.0000015",
-      input_cache_write: "0.00001875",
     },
   },
   {
@@ -567,13 +774,35 @@ export const models = [
     name: "Claude Sonnet 4",
     description:
       "Claude Sonnet 4 significantly improves on Sonnet 3.7's industry-leading capabilities, excelling in coding with a state-of-the-art 72.7% on SWE-bench. The model balances performance and efficiency for internal and external use cases, with enhanced steerability for greater control over implementations. While not matching Opus 4 in most domains, it delivers an optimal mix of capability and practicality.",
-    context_window: 200_000,
+    context_window: 1_000_000,
     max_tokens: 64_000,
     type: "language",
     tags: ["file-input", "reasoning", "tool-use", "vision"],
     pricing: {
       input: "0.000003",
+      input_tiers: [
+        {
+          cost: "0.000003",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.000006",
+          min: 200_001,
+        },
+      ],
       output: "0.000015",
+      output_tiers: [
+        {
+          cost: "0.000015",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.0000225",
+          min: 200_001,
+        },
+      ],
       input_cache_read: "0.0000003",
       input_cache_write: "0.00000375",
       web_search: "10",
@@ -587,16 +816,55 @@ export const models = [
     name: "Claude Sonnet 4.5",
     description:
       "Claude Sonnet 4.5 is the newest model in the Sonnet series, offering improvements and updates over Sonnet 4.",
-    context_window: 200_000,
+    context_window: 1_000_000,
     max_tokens: 64_000,
     type: "language",
     tags: ["file-input", "reasoning", "tool-use", "vision"],
     pricing: {
       input: "0.000003",
+      input_tiers: [
+        {
+          cost: "0.000003",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.000006",
+          min: 200_001,
+        },
+      ],
       output: "0.000015",
+      output_tiers: [
+        {
+          cost: "0.000015",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.0000225",
+          min: 200_001,
+        },
+      ],
       input_cache_read: "0.0000003",
       input_cache_write: "0.00000375",
       web_search: "10",
+    },
+  },
+  {
+    id: "arcee-ai/trinity-large-preview",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "arcee-ai",
+    name: "Trinity Large Preview",
+    description:
+      "Trinity Large (Preview) is a 400B-parameter (13B active) sparse mixture-of-experts language model, engineered to scale model capacity while maintaining inference efficiency over long contexts, with strong performance in reasoning-heavy workloads including math, coding-related tasks, and multi-step agent workflows.",
+    context_window: 131_000,
+    max_tokens: 131_000,
+    type: "language",
+    tags: ["tool-use"],
+    pricing: {
+      input: "0.00000025",
+      output: "0.000001",
     },
   },
   {
@@ -697,6 +965,86 @@ export const models = [
     },
   },
   {
+    id: "bytedance/seed-1.6",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "bytedance",
+    name: "Seed 1.6",
+    description:
+      "ByteDance's new multimodal deep-thinking model, supporting both text and visual inputs with enhanced reasoning capabilities.",
+    context_window: 256_000,
+    max_tokens: 32_000,
+    type: "language",
+    tags: ["reasoning", "tool-use", "implicit-caching"],
+    pricing: {
+      input: "0.00000025",
+      input_tiers: [
+        {
+          cost: "0.00000025",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000005",
+          min: 128_001,
+        },
+      ],
+      output: "0.000002",
+      output_tiers: [
+        {
+          cost: "0.000002",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.000004",
+          min: 128_001,
+        },
+      ],
+      input_cache_read: "0.00000005",
+    },
+  },
+  {
+    id: "bytedance/seed-1.8",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "bytedance",
+    name: "Bytedance Seed 1.8",
+    description:
+      "Bytedance Seed 1.8 features stronger multimodal understanding and agent capabilities. The model delivers superior performance across a wide range of complex real-world tasks, helping enterprises create greater value.",
+    context_window: 256_000,
+    max_tokens: 64_000,
+    type: "language",
+    tags: ["reasoning", "vision", "implicit-caching"],
+    pricing: {
+      input: "0.00000025",
+      input_tiers: [
+        {
+          cost: "0.00000025",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000005",
+          min: 128_001,
+        },
+      ],
+      output: "0.000002",
+      output_tiers: [
+        {
+          cost: "0.000002",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.000004",
+          min: 128_001,
+        },
+      ],
+      input_cache_read: "0.00000005",
+    },
+  },
+  {
     id: "cohere/command-a",
     object: "model",
     created: 1_755_815_280,
@@ -739,7 +1087,7 @@ export const models = [
     context_window: 160_000,
     max_tokens: 16_384,
     type: "language",
-    tags: ["reasoning"],
+    tags: ["reasoning", "implicit-caching"],
     pricing: {
       input: "0.0000005",
       output: "0.00000215",
@@ -807,7 +1155,7 @@ export const models = [
     context_window: 163_842,
     max_tokens: 8000,
     type: "language",
-    tags: [],
+    tags: ["implicit-caching"],
     pricing: {
       input: "0.00000027",
       output: "0.0000004",
@@ -841,7 +1189,7 @@ export const models = [
     context_window: 128_000,
     max_tokens: 64_000,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.00000028",
       output: "0.00000042",
@@ -859,7 +1207,7 @@ export const models = [
     context_window: 1_000_000,
     max_tokens: 8192,
     type: "language",
-    tags: ["file-input", "tool-use", "vision"],
+    tags: ["implicit-caching"],
     pricing: {
       input: "0.0000001",
       output: "0.0000004",
@@ -878,7 +1226,7 @@ export const models = [
     context_window: 1_048_576,
     max_tokens: 8192,
     type: "language",
-    tags: ["file-input", "tool-use", "vision"],
+    tags: [],
     pricing: {
       input: "0.000000075",
       output: "0.0000003",
@@ -894,14 +1242,12 @@ export const models = [
     description:
       "Gemini 2.5 Flash is a thinking model that offers great, well-rounded capabilities. It is designed to offer a balance between price and performance with multimodal support and a 1M token context window.",
     context_window: 1_000_000,
-    max_tokens: 64_000,
+    max_tokens: 65_536,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["reasoning", "tool-use"],
     pricing: {
       input: "0.0000003",
       output: "0.0000025",
-      input_cache_read: "0.00000003",
-      web_search: "35",
     },
   },
   {
@@ -951,7 +1297,7 @@ export const models = [
     context_window: 1_048_576,
     max_tokens: 65_536,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.0000001",
       output: "0.0000004",
@@ -970,7 +1316,7 @@ export const models = [
     context_window: 1_048_576,
     max_tokens: 65_536,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.0000001",
       output: "0.0000004",
@@ -1008,12 +1354,10 @@ export const models = [
     context_window: 1_048_576,
     max_tokens: 65_536,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["tool-use", "reasoning"],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
-      input_cache_read: "0.000000125",
-      web_search: "35",
     },
   },
   {
@@ -1027,11 +1371,44 @@ export const models = [
     context_window: 1_000_000,
     max_tokens: 64_000,
     type: "language",
-    tags: ["reasoning", "file-input", "vision", "tool-use"],
+    tags: ["reasoning", "file-input", "vision", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000005",
+      input_tiers: [
+        {
+          cost: "0.0000005",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.0000005",
+          min: 200_001,
+        },
+      ],
       output: "0.000003",
+      output_tiers: [
+        {
+          cost: "0.000003",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.000003",
+          min: 200_001,
+        },
+      ],
       input_cache_read: "0.00000005",
+      input_cache_read_tiers: [
+        {
+          cost: "0.00000005",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.00000005",
+          min: 200_001,
+        },
+      ],
       web_search: "14",
     },
   },
@@ -1064,11 +1441,44 @@ export const models = [
     context_window: 1_000_000,
     max_tokens: 64_000,
     type: "language",
-    tags: ["file-input", "tool-use", "reasoning", "vision"],
+    tags: ["file-input", "tool-use", "reasoning", "vision", "implicit-caching"],
     pricing: {
       input: "0.000002",
+      input_tiers: [
+        {
+          cost: "0.000002",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.000004",
+          min: 200_001,
+        },
+      ],
       output: "0.000012",
+      output_tiers: [
+        {
+          cost: "0.000012",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.000018",
+          min: 200_001,
+        },
+      ],
       input_cache_read: "0.0000002",
+      input_cache_read_tiers: [
+        {
+          cost: "0.0000002",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.0000004",
+          min: 200_001,
+        },
+      ],
       web_search: "14",
     },
   },
@@ -1193,8 +1603,12 @@ export const models = [
     context_window: 256_000,
     max_tokens: 32_000,
     type: "language",
-    tags: ["reasoning"],
-    pricing: {},
+    tags: ["reasoning", "implicit-caching"],
+    pricing: {
+      input: "0.000000207",
+      output: "0.000000828",
+      input_cache_read: "0.0000000414",
+    },
   },
   {
     id: "meituan/longcat-flash-chat",
@@ -1402,16 +1816,15 @@ export const models = [
     owned_by: "minimax",
     name: "MiniMax M2.1",
     description:
-      "MiniMax 2.1 is MiniMax's latest model, optimized specifically for robustness in coding, tool use,\ninstruction following, and long-horizon planning.",
-    context_window: 204_800,
-    max_tokens: 131_072,
+      "MiniMax 2.1 is MiniMax's latest model, optimized specifically for robustness in coding, tool use, instruction following, and long-horizon planning.",
+    context_window: 196_608,
+    max_tokens: 196_608,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
-      input: "0.0000003",
+      input: "0.00000028",
       output: "0.0000012",
-      input_cache_read: "0.00000003",
-      input_cache_write: "0.000000375",
+      input_cache_read: "0.00000014",
     },
   },
   {
@@ -1425,7 +1838,7 @@ export const models = [
     context_window: 204_800,
     max_tokens: 131_072,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000003",
       output: "0.0000024",
@@ -1649,16 +2062,16 @@ export const models = [
     object: "model",
     created: 1_755_815_280,
     owned_by: "mistral",
-    name: "Mistral Nemo",
+    name: "Mistral Nemo 12B",
     description:
-      "A 12B parameter model with a 128k token context length built by Mistral in collaboration with NVIDIA. The model is multilingual, supporting English, French, German, Spanish, Italian, Portuguese, Chinese, Japanese, Korean, Arabic, and Hindi. It supports function calling and is released under the Apache 2.0 license.",
-    context_window: 60_288,
-    max_tokens: 16_000,
+      "12B model trained jointly by Mistral AI and NVIDIA, it significantly outperforms existing models smaller or similar in size.",
+    context_window: 131_072,
+    max_tokens: 131_072,
     type: "language",
-    tags: ["tool-use"],
+    tags: [],
     pricing: {
-      input: "0.00000004",
-      output: "0.00000017",
+      input: "0.00000002",
+      output: "0.00000004",
     },
   },
   {
@@ -1812,6 +2225,24 @@ export const models = [
     pricing: {
       input: "0.0000024",
       output: "0.00001",
+    },
+  },
+  {
+    id: "moonshotai/kimi-k2.5",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "moonshotai",
+    name: "Kimi K2.5",
+    description:
+      "kimi-k2.5 is Kimi's most versatile model to date, featuring a native multimodal architecture that supports both visual and text input, thinking and non-thinking modes, and dialogue and agent tasks.",
+    context_window: 256_000,
+    max_tokens: 256_000,
+    type: "language",
+    tags: ["reasoning", "tool-use", "vision", "implicit-caching"],
+    pricing: {
+      input: "0.0000006",
+      output: "0.000003",
+      input_cache_read: "0.0000001",
     },
   },
   {
@@ -1993,7 +2424,7 @@ export const models = [
     context_window: 1_047_576,
     max_tokens: 32_768,
     type: "language",
-    tags: ["file-input", "tool-use", "vision"],
+    tags: ["file-input", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.0000004",
       output: "0.0000016",
@@ -2011,11 +2442,11 @@ export const models = [
     context_window: 1_047_576,
     max_tokens: 32_768,
     type: "language",
-    tags: ["file-input", "tool-use", "vision"],
+    tags: ["file-input", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.0000001",
       output: "0.0000004",
-      input_cache_read: "0.000000025",
+      input_cache_read: "0.00000003",
     },
   },
   {
@@ -2029,7 +2460,7 @@ export const models = [
     context_window: 128_000,
     max_tokens: 16_384,
     type: "language",
-    tags: ["file-input", "tool-use", "vision"],
+    tags: ["file-input", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.0000025",
       output: "0.00001",
@@ -2047,11 +2478,29 @@ export const models = [
     context_window: 128_000,
     max_tokens: 16_384,
     type: "language",
-    tags: ["file-input", "tool-use", "vision"],
+    tags: ["file-input", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.00000015",
       output: "0.0000006",
       input_cache_read: "0.000000075",
+    },
+  },
+  {
+    id: "openai/gpt-4o-mini-search-preview",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "GPT 4o Mini Search Preview",
+    description:
+      "GPT-4o mini Search Preview is a specialized model trained to understand and execute web search queries with the Chat Completions API. In addition to token fees, web search queries have a fee per tool call.",
+    context_window: 128_000,
+    max_tokens: 16_384,
+    type: "language",
+    tags: [],
+    pricing: {
+      input: "0.00000015",
+      output: "0.0000006",
+      web_search: "10",
     },
   },
   {
@@ -2065,7 +2514,14 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision", "image-generation"],
+    tags: [
+      "file-input",
+      "reasoning",
+      "tool-use",
+      "vision",
+      "image-generation",
+      "implicit-caching",
+    ],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
@@ -2109,7 +2565,7 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
@@ -2127,7 +2583,7 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.00000025",
       output: "0.000002",
@@ -2145,7 +2601,14 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision", "image-generation"],
+    tags: [
+      "file-input",
+      "reasoning",
+      "tool-use",
+      "vision",
+      "image-generation",
+      "implicit-caching",
+    ],
     pricing: {
       input: "0.00000005",
       output: "0.0000004",
@@ -2205,11 +2668,12 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: ["reasoning", "file-input", "tool-use", "vision"],
+    tags: ["reasoning", "file-input", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
       input_cache_read: "0.000000125",
+      web_search: "10",
     },
   },
   {
@@ -2223,7 +2687,7 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: ["reasoning", "file-input", "vision", "tool-use"],
+    tags: ["reasoning", "file-input", "vision", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.00000025",
       output: "0.000002",
@@ -2242,18 +2706,11 @@ export const models = [
     context_window: 128_000,
     max_tokens: 16_384,
     type: "language",
-    tags: [
-      "tool-use",
-      "vision",
-      "file-input",
-      "image-generation",
-      "reasoning",
-      "implicit-caching",
-    ],
+    tags: ["tool-use", "vision", "file-input", "reasoning", "implicit-caching"],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
-      input_cache_read: "0.000000125",
+      input_cache_read: "0.00000013",
     },
   },
   {
@@ -2267,18 +2724,11 @@ export const models = [
     context_window: 400_000,
     max_tokens: 128_000,
     type: "language",
-    tags: [
-      "tool-use",
-      "implicit-caching",
-      "reasoning",
-      "vision",
-      "file-input",
-      "image-generation",
-    ],
+    tags: ["tool-use", "implicit-caching", "reasoning", "vision", "file-input"],
     pricing: {
       input: "0.00000125",
       output: "0.00001",
-      input_cache_read: "0.000000125",
+      input_cache_read: "0.00000013",
     },
   },
   {
@@ -2286,7 +2736,7 @@ export const models = [
     object: "model",
     created: 1_755_815_280,
     owned_by: "openai",
-    name: "GPT-5.2",
+    name: "GPT 5.2",
     description:
       "GPT-5.2 is OpenAI's best general-purpose model, part of the GPT-5 flagship model family. It's their most intelligent model yet for both general and agentic tasks.",
     context_window: 400_000,
@@ -2296,7 +2746,7 @@ export const models = [
     pricing: {
       input: "0.00000175",
       output: "0.000014",
-      input_cache_read: "0.000000175",
+      input_cache_read: "0.00000018",
     },
   },
   {
@@ -2315,6 +2765,26 @@ export const models = [
       input: "0.00000175",
       output: "0.000014",
       input_cache_read: "0.000000175",
+      web_search: "10",
+    },
+  },
+  {
+    id: "openai/gpt-5.2-codex",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "openai",
+    name: "GPT-5.2-Codex",
+    description:
+      "GPT‑5.2-Codex is a version of GPT‑5.2⁠ further optimized for agentic coding in Codex, including improvements on long-horizon work through context compaction, stronger performance on large code changes like refactors and migrations, improved performance in Windows environments, and significantly stronger cybersecurity capabilities.",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: ["file-input", "tool-use", "reasoning", "vision", "implicit-caching"],
+    pricing: {
+      input: "0.00000175",
+      output: "0.000014",
+      input_cache_read: "0.000000175",
+      web_search: "10",
     },
   },
   {
@@ -2332,6 +2802,7 @@ export const models = [
     pricing: {
       input: "0.000021",
       output: "0.000168",
+      web_search: "10",
     },
   },
   {
@@ -2397,7 +2868,7 @@ export const models = [
     context_window: 200_000,
     max_tokens: 100_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.000015",
       output: "0.00006",
@@ -2415,7 +2886,7 @@ export const models = [
     context_window: 200_000,
     max_tokens: 100_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.000002",
       output: "0.000008",
@@ -2433,7 +2904,7 @@ export const models = [
     context_window: 200_000,
     max_tokens: 100_000,
     type: "language",
-    tags: ["reasoning", "file-input", "tool-use", "vision"],
+    tags: ["reasoning", "file-input", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.00001",
       output: "0.00004",
@@ -2452,7 +2923,7 @@ export const models = [
     context_window: 200_000,
     max_tokens: 100_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use"],
+    tags: ["file-input", "reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000011",
       output: "0.0000044",
@@ -2487,7 +2958,7 @@ export const models = [
     context_window: 200_000,
     max_tokens: 100_000,
     type: "language",
-    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
     pricing: {
       input: "0.0000011",
       output: "0.0000044",
@@ -2624,39 +3095,35 @@ export const models = [
     },
   },
   {
-    id: "stealth/sonoma-dusk-alpha",
+    id: "recraft/recraft-v2",
     object: "model",
     created: 1_755_815_280,
-    owned_by: "stealth",
-    name: "Sonoma Dusk Alpha",
+    owned_by: "recraft",
+    name: "Recraft V2",
     description:
-      "This model is no longer in stealth and gets responses from Grok 4 Fast Non-Reasoning–xAI's latest multimodal model with SOTA cost-efficiency and a 2M token context window.",
-    context_window: 2_000_000,
-    max_tokens: 131_072,
-    type: "language",
-    tags: ["tool-use", "vision"],
+      "Recraft V2 is an image generation model released in March 2024 and the first model trained from scratch by Recraft. With 20 billion parameters, it was a breakthrough in human anatomical accuracy and the first to support brand consistency and brand color inputs. It also introduced vector image generation (SVG output), as well as minimalistic icon and illustration styles.",
+    context_window: 0,
+    max_tokens: 0,
+    type: "image",
+    tags: ["image-generation"],
     pricing: {
-      input: "0.0000002",
-      output: "0.0000005",
-      input_cache_read: "0.00000005",
+      image: "0.022",
     },
   },
   {
-    id: "stealth/sonoma-sky-alpha",
+    id: "recraft/recraft-v3",
     object: "model",
     created: 1_755_815_280,
-    owned_by: "stealth",
-    name: "Sonoma Sky Alpha",
+    owned_by: "recraft",
+    name: "Recraft V3",
     description:
-      "This model is no longer in stealth and gets responses from Grok 4 Fast Reasoning–xAI's latest multimodal model with SOTA cost-efficiency and a 2M token context window.",
-    context_window: 2_000_000,
-    max_tokens: 131_072,
-    type: "language",
-    tags: ["tool-use", "vision"],
+      "V3 introduced major advances in photorealism and text rendering. It was the first Recraft model to generate mid-size text accurately and, as of 2025, is the only model capable of placing text at specific positions in an image.",
+    context_window: 0,
+    max_tokens: 0,
+    type: "image",
+    tags: ["image-generation"],
     pricing: {
-      input: "0.0000002",
-      output: "0.0000005",
-      input_cache_read: "0.00000005",
+      image: "0.04",
     },
   },
   {
@@ -2797,23 +3264,6 @@ export const models = [
     },
   },
   {
-    id: "xai/grok-2",
-    object: "model",
-    created: 1_755_815_280,
-    owned_by: "xai",
-    name: "Grok 2",
-    description:
-      "Grok 2 is a frontier language model with state-of-the-art reasoning capabilities. It features advanced capabilities in chat, coding, and reasoning, outperforming both Claude 3.5 Sonnet and GPT-4-Turbo on the LMSYS leaderboard.",
-    context_window: 131_072,
-    max_tokens: 4000,
-    type: "language",
-    tags: ["tool-use"],
-    pricing: {
-      input: "0.000002",
-      output: "0.00001",
-    },
-  },
-  {
     id: "xai/grok-2-vision",
     object: "model",
     created: 1_755_815_280,
@@ -2926,10 +3376,32 @@ export const models = [
     context_window: 2_000_000,
     max_tokens: 256_000,
     type: "language",
-    tags: ["tool-use"],
+    tags: ["tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      input_tiers: [
+        {
+          cost: "0.0000002",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000004",
+          min: 128_001,
+        },
+      ],
       output: "0.0000005",
+      output_tiers: [
+        {
+          cost: "0.0000005",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.000001",
+          min: 128_001,
+        },
+      ],
       input_cache_read: "0.00000005",
     },
   },
@@ -2944,10 +3416,32 @@ export const models = [
     context_window: 2_000_000,
     max_tokens: 256_000,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      input_tiers: [
+        {
+          cost: "0.0000002",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000004",
+          min: 128_001,
+        },
+      ],
       output: "0.0000005",
+      output_tiers: [
+        {
+          cost: "0.0000005",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.000001",
+          min: 128_001,
+        },
+      ],
       input_cache_read: "0.00000005",
     },
   },
@@ -2962,10 +3456,32 @@ export const models = [
     context_window: 2_000_000,
     max_tokens: 30_000,
     type: "language",
-    tags: [],
+    tags: ["tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      input_tiers: [
+        {
+          cost: "0.0000002",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000004",
+          min: 128_001,
+        },
+      ],
       output: "0.0000005",
+      output_tiers: [
+        {
+          cost: "0.0000005",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.000001",
+          min: 128_001,
+        },
+      ],
       input_cache_read: "0.00000005",
     },
   },
@@ -2980,10 +3496,32 @@ export const models = [
     context_window: 2_000_000,
     max_tokens: 30_000,
     type: "language",
-    tags: ["reasoning"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      input_tiers: [
+        {
+          cost: "0.0000002",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.0000004",
+          min: 128_001,
+        },
+      ],
       output: "0.0000005",
+      output_tiers: [
+        {
+          cost: "0.0000005",
+          min: 0,
+          max: 128_001,
+        },
+        {
+          cost: "0.000001",
+          min: 128_001,
+        },
+      ],
       input_cache_read: "0.00000005",
     },
   },
@@ -2998,7 +3536,7 @@ export const models = [
     context_window: 256_000,
     max_tokens: 256_000,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
       output: "0.0000015",
@@ -3018,8 +3556,8 @@ export const models = [
     type: "language",
     tags: ["reasoning", "tool-use"],
     pricing: {
-      input: "0.000000098",
-      output: "0.000000293",
+      input: "0.00000009",
+      output: "0.00000029",
     },
   },
   {
@@ -3050,10 +3588,11 @@ export const models = [
     context_window: 128_000,
     max_tokens: 96_000,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
       output: "0.0000011",
+      input_cache_read: "0.00000003",
     },
   },
   {
@@ -3065,7 +3604,7 @@ export const models = [
     description:
       "Built on the GLM-4.5-Air base model, GLM-4.5V inherits proven techniques from GLM-4.1V-Thinking while achieving effective scaling through a powerful 106B-parameter MoE architecture.",
     context_window: 65_536,
-    max_tokens: 66_000,
+    max_tokens: 16_384,
     type: "language",
     tags: ["reasoning", "tool-use", "vision"],
     pricing: {
@@ -3084,7 +3623,7 @@ export const models = [
     context_window: 200_000,
     max_tokens: 96_000,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.00000045",
       output: "0.0000018",
@@ -3102,7 +3641,7 @@ export const models = [
     context_window: 128_000,
     max_tokens: 24_000,
     type: "language",
-    tags: ["vision", "file-input", "reasoning", "tool-use"],
+    tags: ["vision", "file-input", "reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000003",
       output: "0.0000009",
@@ -3120,7 +3659,7 @@ export const models = [
     context_window: 128_000,
     max_tokens: 24_000,
     type: "language",
-    tags: ["vision", "reasoning", "file-input", "tool-use"],
+    tags: ["vision", "reasoning", "file-input", "tool-use", "implicit-caching"],
     pricing: {},
   },
   {
@@ -3139,6 +3678,24 @@ export const models = [
       input: "0.00000043",
       output: "0.00000175",
       input_cache_read: "0.00000008",
+    },
+  },
+  {
+    id: "zai/glm-4.7-flashx",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "zai",
+    name: "GLM 4.7 FlashX",
+    description:
+      " GLM-4.7-Flash balances high performance with efficiency, making it the perfect lightweight deployment option. ",
+    context_window: 200_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: ["reasoning", "tool-use", "implicit-caching"],
+    pricing: {
+      input: "0.00000006",
+      output: "0.0000004",
+      input_cache_read: "0.00000001",
     },
   },
 ] as const satisfies readonly AiGatewayModel[];

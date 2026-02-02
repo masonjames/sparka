@@ -12,7 +12,7 @@ import type { DocumentToolResult } from "../documents/types";
 // Structured Outputs (Zod Schemas)
 //##################
 
-export const ConductResearchSchema = z.object({
+const ConductResearchSchema = z.object({
   /**
    * Call this tool to conduct research on a specific topic.
    */
@@ -23,15 +23,10 @@ export const ConductResearchSchema = z.object({
     ),
 });
 
-export const ResearchCompleteSchema = z.object({
+const ResearchCompleteSchema = z.object({
   /**
    * Call this tool to indicate that the research is complete.
    */
-});
-
-export const SummarySchema = z.object({
-  summary: z.string(),
-  key_excerpts: z.string(),
 });
 
 export const ClarifyWithUserSchema = z.object({
@@ -54,12 +49,6 @@ export const ResearchQuestionSchema = z.object({
     .describe("A research question that will be used to guide the research."),
   title: z.string().describe("The title of the research report."),
 });
-
-export type ConductResearch = z.infer<typeof ConductResearchSchema>;
-export type ResearchComplete = z.infer<typeof ResearchCompleteSchema>;
-export type Summary = z.infer<typeof SummarySchema>;
-export type ClarifyWithUser = z.infer<typeof ClarifyWithUserSchema>;
-export type ResearchQuestion = z.infer<typeof ResearchQuestionSchema>;
 
 //##################
 // State Definitions
@@ -189,24 +178,7 @@ export type ResearcherInput = {
   tool_call_iterations: number;
 };
 
-export type ResearcherOutput = {
-  researcher_messages: ModelMessage[];
-  tool_calls: ToolCall<string, any>[];
-  tool_call_iterations: number;
-};
-
 export type CompressResearchInput = {
   requestId: string;
   researcher_messages: ModelMessage[];
 };
-
-export type EndState =
-  | {
-      end_type: "clarification_needed";
-      messages: ModelMessage[];
-    }
-  | {
-      end_type: "research_complete";
-      notes: string[];
-      research_brief: string;
-    };

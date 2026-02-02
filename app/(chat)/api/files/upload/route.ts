@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { extractFilenameFromUrl, uploadFile } from "@/lib/blob";
+import { config } from "@/lib/config";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -21,6 +22,13 @@ const FileSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (!config.integrations.attachments) {
+    return NextResponse.json(
+      { error: "File uploads are not available" },
+      { status: 503 }
+    );
+  }
+
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {

@@ -269,7 +269,6 @@ function PureArtifactPanel({
     onSaveContent: saveContent,
     setMetadata,
     status: artifact.status,
-    suggestions: [],
     title: artifact.title,
   };
 

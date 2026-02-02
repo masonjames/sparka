@@ -1,6 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
+import { useMutation } from "@tanstack/react-query";
 import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import {
@@ -27,26 +28,22 @@ import { ContextUsageFromParent } from "@/components/context-usage";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { AppModelId } from "@/lib/ai/app-models";
-import {
-  DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL,
-  DEFAULT_PDF_MODEL,
-} from "@/lib/ai/app-models";
+import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
+import { config } from "@/lib/config";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useLastMessageId, useMessageIds } from "@/lib/stores/hooks-base";
+import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+import { useTRPC } from "@/trpc/react";
 import { ConnectorsDropdown } from "./connectors-dropdown";
-import { ImageModal } from "./image-modal";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
 import { ResponsiveTools } from "./responsive-tools";
-import { SuggestedActions } from "./suggested-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,26 +55,28 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LimitDisplay } from "./upgrade-cta/limit-display";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
-const IMAGE_UPLOAD_LIMITS = {
-  maxBytes: 1024 * 1024,
-  maxDimension: 2048,
-};
-const IMAGE_UPLOAD_MAX_MB = Math.round(
-  IMAGE_UPLOAD_LIMITS.maxBytes / (1024 * 1024)
-);
 const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
-// Single source of truth for accepted file types
-const ACCEPTED_FILE_TYPES = {
-  "image/png": [".png"],
-  "image/jpeg": [".jpg", ".jpeg"],
-  "application/pdf": [".pdf"],
-} as const;
+/** Derive accept string for images only */
+function getAcceptImages(acceptedTypes: Record<string, string[]>): string {
+  return Object.entries(acceptedTypes)
+    .filter(([mime]) => mime.startsWith("image/"))
+    .flatMap(([, exts]) => exts)
+    .join(",");
+}
 
-// Accept strings for different input modes
-const ACCEPT_IMAGES = ".png,.jpg,.jpeg";
-const ACCEPT_FILES = ".pdf";
-const ACCEPT_ALL = ".png,.jpg,.jpeg,.pdf";
+/** Derive accept string for non-image files only */
+function getAcceptFiles(acceptedTypes: Record<string, string[]>): string {
+  return Object.entries(acceptedTypes)
+    .filter(([mime]) => !mime.startsWith("image/"))
+    .flatMap(([, exts]) => exts)
+    .join(",");
+}
+
+/** Derive accept string for all file types */
+function getAcceptAll(acceptedTypes: Record<string, string[]>): string {
+  return Object.values(acceptedTypes).flat().join(",");
+}
 
 function PureMultimodalInput({
   chatId,
@@ -97,11 +96,15 @@ function PureMultimodalInput({
   const storeApi = useChatStoreApi<ChatMessage>();
   const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
+  const trpc = useTRPC();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   useChatId();
-  const messageIds = useMessageIds();
-  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const {
+    setMessages,
+    sendMessage,
+    stop: stopHelper,
+  } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -116,49 +119,56 @@ function PureMultimodalInput({
     getInitialInput,
     isEmpty,
     handleSubmit,
-    isProjectContext,
   } = useChatInput();
 
   const isAnonymous = !session?.user;
   const isModelDisallowedForAnonymous =
     isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
   const { getModelById } = useChatModels();
+  const stopStreamMutation = useMutation(
+    trpc.chat.stopStream.mutationOptions()
+  );
+
+  // Attachment configuration from site config
+  const { maxBytes, maxDimension, acceptedTypes } = config.attachments;
+  const maxMB = Math.round(maxBytes / (1024 * 1024));
+  const attachmentsEnabled = config.integrations.attachments;
+  const acceptImages = useMemo(
+    () => getAcceptImages(acceptedTypes),
+    [acceptedTypes]
+  );
+  const acceptFiles = useMemo(
+    () => getAcceptFiles(acceptedTypes),
+    [acceptedTypes]
+  );
+  const acceptAll = useMemo(() => getAcceptAll(acceptedTypes), [acceptedTypes]);
 
   // Helper function to auto-switch to PDF-compatible model
   const switchToPdfCompatibleModel = useCallback(() => {
-    const defaultPdfModelDef = getModelById(DEFAULT_PDF_MODEL);
+    const pdfModel = config.models.defaults.pdf;
+    const defaultPdfModelDef = getModelById(pdfModel);
     if (defaultPdfModelDef) {
       toast.success(`Switched to ${defaultPdfModelDef.name} (supports PDF)`);
     }
-    handleModelChange(DEFAULT_PDF_MODEL);
+    handleModelChange(pdfModel);
     return defaultPdfModelDef;
   }, [handleModelChange, getModelById]);
 
   // Helper function to auto-switch to image-compatible model
   const switchToImageCompatibleModel = useCallback(() => {
-    const defaultImageModelDef = getModelById(
-      DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL
-    );
+    const imageModel = config.models.defaults.chatImageCompatible;
+    const defaultImageModelDef = getModelById(imageModel);
     if (defaultImageModelDef) {
       toast.success(
         `Switched to ${defaultImageModelDef.name} (supports images)`
       );
     }
-    handleModelChange(DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL);
+    handleModelChange(imageModel);
     return defaultImageModelDef;
   }, [handleModelChange, getModelById]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
-  const [imageModal, setImageModal] = useState<{
-    isOpen: boolean;
-    imageUrl: string;
-    imageName?: string;
-  }>({
-    isOpen: false,
-    imageUrl: "",
-    imageName: undefined,
-  });
 
   // Centralized submission gating
   const submission = useMemo(():
@@ -192,11 +202,11 @@ function PureMultimodalInput({
   const processFiles = useCallback(
     async (files: File[]): Promise<File[]> => {
       const { processedImages, pdfFiles, stillOversized, unsupportedFiles } =
-        await processFilesForUpload(files, IMAGE_UPLOAD_LIMITS);
+        await processFilesForUpload(files, { maxBytes, maxDimension });
 
       if (stillOversized.length > 0) {
         toast.error(
-          `${stillOversized.length} file(s) exceed ${IMAGE_UPLOAD_MAX_MB}MB after compression`
+          `${stillOversized.length} file(s) exceed ${maxMB}MB after compression`
         );
       }
       if (unsupportedFiles.length > 0) {
@@ -220,6 +230,9 @@ function PureMultimodalInput({
       return [...processedImages, ...pdfFiles];
     },
     [
+      maxBytes,
+      maxDimension,
+      maxMB,
       selectedModelId,
       switchToPdfCompatibleModel,
       switchToImageCompatibleModel,
@@ -442,6 +455,11 @@ function PureMultimodalInput({
         return;
       }
 
+      // Skip file paste handling if blob storage is disabled
+      if (!attachmentsEnabled) {
+        return;
+      }
+
       const clipboardData = event.clipboardData;
       if (!clipboardData) {
         return;
@@ -488,7 +506,14 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments, processFiles, status, session, uploadFile]
+    [
+      setAttachments,
+      processFiles,
+      status,
+      session,
+      uploadFile,
+      attachmentsEnabled,
+    ]
   );
 
   const removeAttachment = useCallback(
@@ -501,25 +526,6 @@ function PureMultimodalInput({
     },
     [setAttachments]
   );
-
-  const handleImageClick = useCallback(
-    (imageUrl: string, imageName?: string) => {
-      setImageModal({
-        isOpen: true,
-        imageUrl,
-        imageName,
-      });
-    },
-    []
-  );
-
-  const handleImageModalClose = useCallback(() => {
-    setImageModal({
-      isOpen: false,
-      imageUrl: "",
-      imageName: undefined,
-    });
-  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: async (acceptedFiles) => {
@@ -558,33 +564,31 @@ function PureMultimodalInput({
       }
     },
     noClick: true, // Prevent click to open file dialog since we have the button
-    disabled: status !== "ready",
-    accept: ACCEPTED_FILE_TYPES,
+    disabled: status !== "ready" || !attachmentsEnabled,
+    noDrag: !attachmentsEnabled,
+    accept: acceptedTypes,
   });
 
-  const showSuggestedActions =
-    !isProjectContext &&
-    messageIds.length === 0 &&
-    attachments.length === 0 &&
-    uploadQueue.length === 0 &&
-    !isEditMode;
-
-  const showWelcomeMessage =
-    messageIds.length === 0 && !isProjectContext && !isEditMode;
+  const handleStop = useCallback(() => {
+    if (session?.user && lastMessageId) {
+      stopStreamMutation.mutate({ messageId: lastMessageId });
+    }
+    stopHelper?.();
+  }, [lastMessageId, session?.user, stopHelper, stopStreamMutation]);
 
   return (
     <div className="relative">
-      {showWelcomeMessage && <WelcomeMessage />}
-
-      <input
-        accept={ACCEPT_ALL}
-        className="-top-4 -left-4 pointer-events-none fixed size-0.5 opacity-0"
-        multiple
-        onChange={handleFileChange}
-        ref={fileInputRef}
-        tabIndex={-1}
-        type="file"
-      />
+      {attachmentsEnabled && (
+        <input
+          accept={acceptAll}
+          className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+          multiple
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          tabIndex={-1}
+          type="file"
+        />
+      )}
 
       <div className="relative">
         <PromptInput
@@ -608,7 +612,7 @@ function PureMultimodalInput({
         >
           <input {...getInputProps()} />
 
-          {isDragActive && (
+          {isDragActive && attachmentsEnabled && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-blue-500 border-dashed bg-blue-50/80 dark:bg-blue-950/40">
               <div className="font-medium text-blue-600 dark:text-blue-400">
                 Drop images or PDFs here to attach
@@ -626,7 +630,6 @@ function PureMultimodalInput({
           <ContextBar
             attachments={attachments}
             className="w-full"
-            onImageClickAction={handleImageClick}
             onRemoveAction={removeAttachment}
             uploadQueue={uploadQueue}
           />
@@ -663,8 +666,13 @@ function PureMultimodalInput({
           />
 
           <ChatInputBottomControls
+            acceptAll={acceptAll}
+            acceptFiles={acceptFiles}
+            acceptImages={acceptImages}
+            attachmentsEnabled={attachmentsEnabled}
             fileInputRef={fileInputRef}
             onModelChange={handleModelChange}
+            onStop={handleStop}
             parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
             selectedTool={selectedTool}
@@ -675,30 +683,6 @@ function PureMultimodalInput({
           />
         </PromptInput>
       </div>
-      {showSuggestedActions && (
-        <SuggestedActions
-          chatId={chatId}
-          className="mt-4"
-          selectedModelId={selectedModelId}
-        />
-      )}
-
-      <ImageModal
-        imageName={imageModal.imageName}
-        imageUrl={imageModal.imageUrl}
-        isOpen={imageModal.isOpen}
-        onClose={handleImageModalClose}
-      />
-    </div>
-  );
-}
-
-function WelcomeMessage() {
-  return (
-    <div className="-translate-y-1/2 pointer-events-none @[500px]:static fixed inset-x-0 top-1/2 z-0 @[500px]:mb-6 @[500px]:translate-y-0 text-center">
-      <h1 className="font-normal text-2xl text-foreground sm:text-3xl">
-        How can I help you today?
-      </h1>
     </div>
   );
 }
@@ -706,9 +690,15 @@ function WelcomeMessage() {
 function PureAttachmentsButton({
   fileInputRef,
   status,
+  acceptAll,
+  acceptImages,
+  acceptFiles,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
+  acceptAll: string;
+  acceptImages: string;
+  acceptFiles: string;
 }) {
   const { data: session } = useSession();
   const isMobile = useIsMobile();
@@ -738,7 +728,7 @@ function PureAttachmentsButton({
       setShowLoginPopover(true);
       return;
     }
-    triggerFileInput(ACCEPT_ALL);
+    triggerFileInput(acceptAll);
   };
 
   // Mobile: dropdown with separate options
@@ -780,17 +770,17 @@ function PureAttachmentsButton({
           </PromptInputButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => triggerFileInput(ACCEPT_IMAGES)}>
+          <DropdownMenuItem onClick={() => triggerFileInput(acceptImages)}>
             <ImageIcon />
             Add photos
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => triggerFileInput(ACCEPT_IMAGES, "environment")}
+            onClick={() => triggerFileInput(acceptImages, "environment")}
           >
             <CameraIcon />
             Take photo
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => triggerFileInput(ACCEPT_FILES)}>
+          <DropdownMenuItem onClick={() => triggerFileInput(acceptFiles)}>
             <FileIcon />
             Add files
           </DropdownMenuItem>
@@ -840,6 +830,11 @@ function PureChatInputBottomControls({
   submitForm,
   submission,
   parentMessageId,
+  acceptAll,
+  acceptImages,
+  acceptFiles,
+  attachmentsEnabled,
+  onStop,
 }: {
   selectedModelId: AppModelId;
   onModelChange: (modelId: AppModelId) => void;
@@ -850,12 +845,24 @@ function PureChatInputBottomControls({
   submitForm: () => void;
   submission: { enabled: boolean; message?: string };
   parentMessageId: string | null;
+  acceptAll: string;
+  acceptImages: string;
+  acceptFiles: string;
+  attachmentsEnabled: boolean;
+  onStop: () => void;
 }) {
-  const { stop: stopHelper } = useChatActions<ChatMessage>();
   return (
     <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
       <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
-        <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+        {attachmentsEnabled && (
+          <AttachmentsButton
+            acceptAll={acceptAll}
+            acceptFiles={acceptFiles}
+            acceptImages={acceptImages}
+            fileInputRef={fileInputRef}
+            status={status}
+          />
+        )}
         <ModelSelector
           className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
           onModelChangeAction={onModelChange}
@@ -881,7 +888,7 @@ function PureChatInputBottomControls({
           onClick={(e) => {
             e.preventDefault();
             if (status === "streaming" || status === "submitted") {
-              stopHelper?.();
+              onStop();
             } else if (status === "ready" || status === "error") {
               if (!submission.enabled) {
                 if (submission.message) {

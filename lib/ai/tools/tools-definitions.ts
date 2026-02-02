@@ -43,9 +43,9 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Read the content of a document",
     cost: 0, // internal
   },
-  retrieve: {
-    name: "retrieve",
-    description: "Retrieve information from the web",
+  retrieveUrl: {
+    name: "retrieveUrl",
+    description: "Retrieve information from a URL",
     cost: 0, // internal
   },
   webSearch: {
@@ -53,10 +53,10 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
     description: "Search the web",
     cost: 5, // Tavily API ~5¢
   },
-  codeInterpreter: {
-    name: "codeInterpreter",
-    description: "Interpret code in a virtual environment",
-    cost: 5, // Sandbox execution ~5¢
+  codeExecution: {
+    name: "codeExecution",
+    description: "Execute code in a virtual environment",
+    cost: 5, // Vercel Sandbox execution ~5¢
   },
   generateImage: {
     name: "generateImage",
@@ -71,7 +71,7 @@ export const toolsDefinitions: Record<ToolName, ToolDefinition> = {
 };
 
 export const allTools = toolNameSchema.options;
-export type ToolDefinition = {
+type ToolDefinition = {
   name: string;
   description: string;
   cost: number;

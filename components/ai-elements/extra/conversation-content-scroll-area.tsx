@@ -14,7 +14,7 @@ import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
 
 
-export type ConversationContentProps = ComponentProps<
+type ConversationContentProps = ComponentProps<
   typeof StickToBottom.Content
 >;
 

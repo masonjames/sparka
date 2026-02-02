@@ -24,7 +24,6 @@ export function ProjectPage() {
     <ChatSystem
       id={id}
       initialMessages={[]}
-      isProjectPage
       isReadonly={false}
       projectId={project.id}
     />

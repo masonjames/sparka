@@ -21,7 +21,7 @@ export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
   PartsAugmentedState<UI_MESSAGE> & ThreadAugmentedState<UI_MESSAGE>;
 
 const ENABLE_TRACING_ON_DEV = false;
-export function createChatStore<TMessage extends UIMessage = UIMessage>(
+function createChatStore<TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = []
 ) {
   return createStore<CustomChatStoreState<TMessage>>()(

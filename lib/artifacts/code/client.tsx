@@ -1,3 +1,4 @@
+import { Copy, List, MessageSquare, Play, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { CodeEditor } from "@/components/code-editor";
 import {
@@ -6,15 +7,7 @@ import {
   type ConsoleOutputContent,
 } from "@/components/console";
 import { Artifact } from "@/components/create-artifact";
-import {
-  CopyIcon,
-  LogsIcon,
-  MessageIcon,
-  PlayIcon,
-  RedoIcon,
-  UndoIcon,
-} from "@/components/icons";
-import { DEFAULT_CODE_EDITS_MODEL } from "@/lib/ai/app-models";
+import { config } from "@/lib/config";
 import { generateUUID, getLanguageFromFileName } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
@@ -110,7 +103,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
   },
   actions: [
     {
-      icon: <PlayIcon size={18} />,
+      icon: <Play size={18} />,
       label: "Run",
       description: "Execute code",
       onClick: async ({ content, setMetadata, metadata: _metadata }) => {
@@ -214,7 +207,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       },
     },
     {
-      icon: <UndoIcon size={18} />,
+      icon: <Undo2 size={18} />,
       description: "View Previous version",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("prev");
@@ -228,7 +221,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       },
     },
     {
-      icon: <RedoIcon size={18} />,
+      icon: <Redo2 size={18} />,
       description: "View Next version",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("next");
@@ -242,7 +235,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       },
     },
     {
-      icon: <CopyIcon size={18} />,
+      icon: <Copy size={18} />,
       description: "Copy code to clipboard",
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
@@ -252,7 +245,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
   ],
   toolbar: [
     {
-      icon: <MessageIcon />,
+      icon: <MessageSquare size={16} />,
       description: "Add comments",
       onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
@@ -264,7 +257,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_CODE_EDITS_MODEL,
+            selectedModel: config.models.defaults.codeEdits,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
             activeStreamId: null,
@@ -273,7 +266,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       },
     },
     {
-      icon: <LogsIcon />,
+      icon: <List size={16} />,
       description: "Add logs",
       onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
@@ -285,7 +278,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_CODE_EDITS_MODEL,
+            selectedModel: config.models.defaults.codeEdits,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
             activeStreamId: null,

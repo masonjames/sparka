@@ -1,10 +1,10 @@
 "use client";
+import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useWindowSize } from "usehooks-ts";
 import { useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document } from "@/lib/db/schema";
-import { LoaderIcon } from "./icons";
 import { Button } from "./ui/button";
 
 type VersionFooterProps = {
@@ -64,7 +64,7 @@ export const VersionFooter = ({
           <div>Restore this version</div>
           {saveDocumentMutation.isPending && (
             <div className="animate-spin">
-              <LoaderIcon />
+              <Loader2 size={16} />
             </div>
           )}
         </Button>

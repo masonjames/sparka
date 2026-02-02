@@ -31,7 +31,7 @@ export function createEditorConfig() {
 }
 
 // Heading transform function equivalent to ProseMirror's headingRule
-export function createHeadingTransform(level: number) {
+function _createHeadingTransform(level: number) {
   return {
     dependencies: [],
     export: null,

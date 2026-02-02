@@ -5,10 +5,9 @@ import { GithubLogo } from "@phosphor-icons/react/dist/csr/GithubLogo";
 import { GoogleLogo } from "@phosphor-icons/react/dist/csr/GoogleLogo";
 import { Button } from "@/components/ui/button";
 import authClient from "@/lib/auth-client";
-import { useConfig } from "./config-provider";
+import { config } from "@/lib/config";
 
 export function SocialAuthProviders() {
-  const config = useConfig();
   return (
     <div className="space-y-2">
       {config.authentication.google ? (

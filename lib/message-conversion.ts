@@ -17,7 +17,7 @@ export function dbChatToUIChat(chat: Chat): UIChat {
   };
 }
 
-export function dbMessageToChatMessage(message: DBMessage): ChatMessage {
+function _dbMessageToChatMessage(message: DBMessage): ChatMessage {
   // Note: This function should not be used directly for messages with parts
   // Use getAllMessagesByChatId which reconstructs parts from Part table
   // Parts are now stored in Part table, not in Message.parts
@@ -67,5 +67,6 @@ export function chatMessageToDbMessage(
     selectedModel,
     selectedTool: message.metadata?.selectedTool || null,
     activeStreamId: message.metadata?.activeStreamId || null,
+    canceledAt: null,
   };
 }

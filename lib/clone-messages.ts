@@ -1,6 +1,7 @@
 import type { FileUIPart } from "ai";
 import type { ChatMessage } from "./ai/types";
 import { uploadFile } from "./blob";
+import { BLOB_FILE_PREFIX } from "./constants";
 import { generateUUID } from "./utils";
 
 function cloneMessages<
@@ -233,7 +234,7 @@ function cloneDocuments<
   return clonedDocuments;
 }
 
-export async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
+async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
   try {
     // Skip if no URL is provided
     if (!part.url) {
@@ -267,8 +268,8 @@ export async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
     }
 
     // Remove any existing prefix if it somehow got into the filename
-    if (filename.startsWith("sparka-ai/files/")) {
-      filename = filename.replace("sparka-ai/files/", "");
+    if (filename.startsWith(BLOB_FILE_PREFIX)) {
+      filename = filename.replace(BLOB_FILE_PREFIX, "");
     }
 
     const newBlob = await uploadFile(

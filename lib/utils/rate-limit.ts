@@ -1,4 +1,5 @@
 import "server-only";
+import { config } from "@/lib/config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 type RateLimitResult = {
@@ -95,7 +96,7 @@ export async function checkAnonymousRateLimit(
     limit: RATE_LIMIT.REQUESTS_PER_MINUTE,
     windowSize: WINDOW_SIZE_MINUTE,
     redisClient,
-    keyPrefix: "sparka-ai:rate-limit:minute",
+    keyPrefix: `${config.appPrefix}:rate-limit:minute`,
   });
 
   if (!minuteResult.success) {
@@ -116,7 +117,7 @@ export async function checkAnonymousRateLimit(
     limit: RATE_LIMIT.REQUESTS_PER_MONTH,
     windowSize: WINDOW_SIZE_MONTH,
     redisClient,
-    keyPrefix: "sparka-ai:rate-limit:month",
+    keyPrefix: `${config.appPrefix}:rate-limit:month`,
   });
 
   if (!monthResult.success) {

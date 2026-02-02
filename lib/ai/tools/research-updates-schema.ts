@@ -39,9 +39,6 @@ const CompletedSchema = BaseStreamUpdateSchema.extend({
   timestamp: z.number(),
 });
 
-export type StartedUpdate = z.infer<typeof StartedSchema>;
-export type CompletedUpdate = z.infer<typeof CompletedSchema>;
-
 const ThoughtsSchema = TaskUpdateSchema.extend({
   type: z.literal("thoughts"),
   message: z.string(),
@@ -52,9 +49,7 @@ const WritingSchema = TaskUpdateSchema.extend({
   message: z.string().optional(),
 });
 
-export type ThoughtsUpdate = z.infer<typeof ThoughtsSchema>;
-
-export const ResearchUpdateSchema = z.discriminatedUnion("type", [
+const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WebSearchSchema,
   StartedSchema,
   CompletedSchema,

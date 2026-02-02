@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";
 
 function PureHeaderActions() {
@@ -41,7 +42,7 @@ function PureHeaderActions() {
       <Button asChild size="icon" type="button" variant="ghost">
         <a
           className="flex items-center justify-center"
-          href="https://github.com/franciscomoretti/sparka"
+          href={config.githubUrl}
           rel="noopener noreferrer"
           target="_blank"
         >

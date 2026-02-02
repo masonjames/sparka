@@ -6,7 +6,7 @@ import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
 
-export function useBaseChatStore<T = StoreState<ChatMessage>>(
+function useBaseChatStore<T = StoreState<ChatMessage>>(
   selector?: (store: StoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
 ) {

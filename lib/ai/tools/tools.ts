@@ -1,8 +1,8 @@
 import type { FileUIPart, ModelMessage, Tool } from "ai";
-import { DEFAULT_IMAGE_MODEL, type ModelId } from "@/lib/ai/app-models";
+import type { ModelId } from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { codeInterpreter } from "@/lib/ai/tools/code-interpreter";
+import { codeExecution } from "@/lib/ai/tools/code-execution";
 import { createCodeDocumentTool } from "@/lib/ai/tools/documents/create-code-document";
 import { createSheetDocumentTool } from "@/lib/ai/tools/documents/create-sheet-document";
 import { createTextDocumentTool } from "@/lib/ai/tools/documents/create-text-document";
@@ -12,19 +12,18 @@ import { editTextDocumentTool } from "@/lib/ai/tools/documents/edit-text-documen
 import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
-import { retrieve } from "@/lib/ai/tools/retrieve";
+import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
 import { tavilyWebSearch } from "@/lib/ai/tools/web-search";
-import { siteConfig } from "@/lib/config";
+import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
+import { isMultimodalImageModel } from "@/lib/models/image-model-id";
 import type { StreamWriter } from "../types";
 import { deepResearch } from "./deep-research/deep-research";
 import type { ToolSession } from "./types";
 
 const log = createModuleLogger("tools:mcp");
-
-export type { ToolSession } from "./types";
 
 export function getTools({
   dataStream,
@@ -45,6 +44,9 @@ export function getTools({
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
 }) {
+  const imageToolModelId = isMultimodalImageModel(selectedModel)
+    ? selectedModel
+    : undefined;
   const documentToolProps = {
     session,
     messageId,
@@ -64,12 +66,8 @@ export function getTools({
       session,
       dataStream,
     }),
-    // reasonSearch: createReasonSearch({
-    //   session,
-    //   dataStream,
-    // }),
-    retrieve,
-    ...(siteConfig.integrations.webSearch
+    ...(config.integrations.urlRetrieval ? { retrieveUrl } : {}),
+    ...(config.integrations.webSearch
       ? {
           webSearch: tavilyWebSearch({
             dataStream,
@@ -79,20 +77,20 @@ export function getTools({
         }
       : {}),
 
-    ...(siteConfig.integrations.sandbox
-      ? { codeInterpreter: codeInterpreter({ costAccumulator }) }
+    ...(config.integrations.sandbox
+      ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
-    ...(siteConfig.integrations.openai
+    ...(config.integrations.imageGeneration
       ? {
           generateImage: generateImageTool({
             attachments,
             lastGeneratedImage,
-            modelId: DEFAULT_IMAGE_MODEL,
+            modelId: imageToolModelId,
             costAccumulator,
           }),
         }
       : {}),
-    ...(siteConfig.integrations.webSearch
+    ...(config.integrations.webSearch
       ? {
           deepResearch: deepResearch({
             session,
@@ -119,7 +117,7 @@ export async function getMcpTools({
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
 }> {
-  if (!siteConfig.integrations.mcp) {
+  if (!config.integrations.mcp) {
     return {
       tools: {},
       cleanup: async () => Promise.resolve(),

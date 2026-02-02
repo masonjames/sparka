@@ -100,18 +100,6 @@ async function executeMultiQuerySearch({
   return { searches: searchResults };
 }
 
-export const QueryCompletionSchema = z.object({
-  type: z.literal("query_completion"),
-  data: z.object({
-    query: z.string(),
-    index: z.number(),
-    total: z.number(),
-    status: z.literal("completed"),
-    resultsCount: z.number(),
-    imagesCount: z.number(),
-  }),
-});
-
 export const tavilyWebSearch = ({
   dataStream,
   writeTopLevelUpdates,
@@ -130,7 +118,7 @@ Use for:
 - General information gathering via web search
 
 Avoid:
-- Pulling content from a single known URL (use retrieve instead)`,
+- Pulling content from a single known URL (use retrieveUrl instead)`,
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
       topics: z
@@ -183,7 +171,7 @@ Avoid:
         })),
         options: {
           baseProviderOptions: {
-            provider: "firecrawl",
+            provider: "tavily",
           },
           topics: safeTopics,
           excludeDomains: safeExcludeDomains,
@@ -221,7 +209,7 @@ Use for:
 - When you need high-quality markdown content from web pages
 
 Avoid:
-- Pulling content from a single known URL (use retrieve instead)`,
+- Pulling content from a single known URL (use retrieveUrl instead)`,
     inputSchema: z.object({
       search_queries: searchQueriesSchema,
     }),

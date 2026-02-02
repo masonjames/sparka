@@ -1,17 +1,10 @@
+import { Copy, History, Pen, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
-import {
-  ClockRewind,
-  CopyIcon,
-  PenIcon,
-  RedoIcon,
-  UndoIcon,
-} from "@/components/icons";
 import { Editor } from "@/components/text-editor";
-import { DEFAULT_POLISH_TEXT_MODEL } from "@/lib/ai/app-models";
-
+import { config } from "@/lib/config";
 export const textArtifact = new Artifact<"text">({
   kind: "text",
   description: "Useful for text content, like drafting essays and emails.",
@@ -56,7 +49,7 @@ export const textArtifact = new Artifact<"text">({
   },
   actions: [
     {
-      icon: <ClockRewind size={18} />,
+      icon: <History size={18} />,
       description: "View changes",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("toggle");
@@ -70,7 +63,7 @@ export const textArtifact = new Artifact<"text">({
       },
     },
     {
-      icon: <UndoIcon size={18} />,
+      icon: <Undo2 size={18} />,
       description: "View Previous version",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("prev");
@@ -84,7 +77,7 @@ export const textArtifact = new Artifact<"text">({
       },
     },
     {
-      icon: <RedoIcon size={18} />,
+      icon: <Redo2 size={18} />,
       description: "View Next version",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("next");
@@ -98,7 +91,7 @@ export const textArtifact = new Artifact<"text">({
       },
     },
     {
-      icon: <CopyIcon size={18} />,
+      icon: <Copy size={18} />,
       description: "Copy to clipboard",
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
@@ -108,7 +101,7 @@ export const textArtifact = new Artifact<"text">({
   ],
   toolbar: [
     {
-      icon: <PenIcon />,
+      icon: <Pen size={16} />,
       description: "Add final polish",
       onClick: ({ sendMessage, storeApi }) => {
         sendMessage({
@@ -120,7 +113,7 @@ export const textArtifact = new Artifact<"text">({
             },
           ],
           metadata: {
-            selectedModel: DEFAULT_POLISH_TEXT_MODEL,
+            selectedModel: config.models.defaults.polishText,
             createdAt: new Date(),
             parentMessageId: storeApi.getState().getLastMessageId(),
             activeStreamId: null,

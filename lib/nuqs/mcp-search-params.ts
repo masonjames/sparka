@@ -1,6 +1,6 @@
 import { parseAsString } from "nuqs";
 
-export const mcpConnectorsDialogValues = ["config", "connect"] as const;
+const mcpConnectorsDialogValues = ["config", "connect"] as const;
 
 export type McpConnectorsDialog = (typeof mcpConnectorsDialogValues)[number];
 

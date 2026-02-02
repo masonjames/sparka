@@ -14,7 +14,6 @@ import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { Fragment, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { useConfig } from "@/components/config-provider";
 import { ConnectorHeader } from "@/components/settings/connector-header";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
@@ -29,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { config } from "@/lib/config";
 import type { McpConnector } from "@/lib/db/schema";
 import {
   type McpConnectorsDialog,
@@ -38,7 +38,6 @@ import { useTRPC } from "@/trpc/react";
 
 export function ConnectorsSettings() {
   const trpc = useTRPC();
-  const config = useConfig();
   const queryClient = useQueryClient();
 
   const [qs, setQs] = useQueryStates(mcpConnectorsSettingsSearchParams, {

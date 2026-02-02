@@ -1,8 +1,8 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PlusIcon } from "@/components/icons";
 import { getNewChatShortcutText } from "@/components/keyboard-shortcuts";
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { useChatId } from "@/providers/chat-id-provider";
@@ -26,7 +26,7 @@ export function NewChatButton() {
           refreshChatID();
         }}
       >
-        <PlusIcon aria-label="New Chat" />
+        <Plus aria-label="New Chat" size={16} />
         <span>New Chat</span>
         <span className="ml-auto text-muted-foreground text-xs">
           {shortcutText}

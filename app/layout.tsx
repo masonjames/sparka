@@ -7,21 +7,18 @@ import Script from "next/script";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
-import { ConfigProvider } from "@/components/config-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { siteConfig } from "@/lib/config";
+import { config } from "@/lib/config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sparka.ai"),
-  title: "Sparka AI - Production-Ready AI Chat Template",
-  description:
-    "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
+  metadataBase: new URL(config.appUrl),
+  title: config.appName,
+  description: config.appDescription,
   openGraph: {
-    siteName: "Sparka AI",
-    url: "https://sparka.ai",
-    title: "Sparka AI - Production-Ready AI Chat Template",
-    description:
-      "Build your own multi-model AI chat app with 120+ models, authentication, streaming, and advanced features.",
+    siteName: config.appName,
+    url: config.appUrl,
+    title: config.appName,
+    description: config.appDescription,
   },
 };
 
@@ -94,17 +91,15 @@ export default async function RootLayout({
           strategy="beforeInteractive"
         />
         <NuqsAdapter>
-          <ConfigProvider value={siteConfig}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              disableTransitionOnChange
-              enableSystem
-            >
-              <Toaster position="top-center" />
-              {children}
-            </ThemeProvider>
-          </ConfigProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            disableTransitionOnChange
+            enableSystem
+          >
+            <Toaster position="top-center" />
+            {children}
+          </ThemeProvider>
         </NuqsAdapter>
         <Analytics />
         <SpeedInsights />

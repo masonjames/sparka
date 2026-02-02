@@ -19,5 +19,5 @@ export const deduplicateByDomainAndUrl = <T extends { url: string }>(
     return false;
   });
 };
-export const extractDomain = (url: string): string =>
+const extractDomain = (url: string): string =>
   url.match(URL_PATTERN)?.[1] || url;

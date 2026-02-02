@@ -151,7 +151,7 @@ const CommandItem = memo(
     prev.isSelected === next.isSelected
 );
 
-export function PureModelSelector({
+function PureModelSelector({
   selectedModelId,
   className,
   onModelChangeAction,
@@ -338,7 +338,7 @@ export function PureModelSelector({
                     <FilterIcon className="h-4 w-4" />
                     {activeFilterCount > 0 && (
                       <Badge
-                        className="-top-1 -right-1 absolute flex h-4 min-w-[16px] items-center justify-center p-0 text-xs"
+                        className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center p-0 text-xs"
                         variant="secondary"
                       >
                         {activeFilterCount}

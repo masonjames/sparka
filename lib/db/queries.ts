@@ -17,7 +17,11 @@ import type {
   ToolName,
   ToolOutput,
 } from "@/lib/ai/types";
+import { createModuleLogger } from "@/lib/logger";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
+
+const logger = createModuleLogger("db:queries");
+
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
@@ -40,7 +44,7 @@ import {
   vote,
 } from "./schema";
 
-export async function getUserByEmail(email: string): Promise<User[]> {
+async function _getUserByEmail(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
@@ -255,11 +259,7 @@ export async function deleteProject({ id }: { id: string }) {
   }
 }
 
-export async function getChatsByProjectId({
-  projectId,
-}: {
-  projectId: string;
-}) {
+async function _getChatsByProjectId({ projectId }: { projectId: string }) {
   try {
     return await db
       .select()
@@ -272,7 +272,7 @@ export async function getChatsByProjectId({
   }
 }
 
-export async function moveChatToProject({
+async function _moveChatToProject({
   chatId,
   projectId,
 }: {
@@ -287,7 +287,7 @@ export async function moveChatToProject({
   }
 }
 
-export async function tryGetChatById({ id }: { id: string }) {
+async function _tryGetChatById({ id }: { id: string }) {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
@@ -336,7 +336,7 @@ export async function saveMessage({
       return;
     });
   } catch (error) {
-    console.error("Failed to save message in database", error);
+    logger.error({ error, chatId, id }, "saveMessage failed");
     throw error;
   }
 }
@@ -383,7 +383,10 @@ export async function saveMessages({
       return;
     });
   } catch (error) {
-    console.error("Failed to save messages in database", error);
+    logger.error(
+      { error, messageIds: messages.map((m) => m.id) },
+      "saveMessages failed"
+    );
     throw error;
   }
 }
@@ -429,7 +432,7 @@ export async function updateMessage({
       return;
     });
   } catch (error) {
-    console.error("Failed to update message in database", error);
+    logger.error({ error, messageId: id, chatId }, "updateMessage failed");
     throw error;
   }
 }
@@ -679,7 +682,7 @@ export async function getDocumentById({ id }: { id: string }) {
   }
 }
 
-export async function deleteDocumentsByIdAfterTimestamp({
+async function _deleteDocumentsByIdAfterTimestamp({
   id,
   timestamp,
 }: {
@@ -757,7 +760,7 @@ export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
-    console.error("Failed to get message by id from database");
+    logger.error({ error, messageId: id }, "getMessageById failed");
     throw error;
   }
 }
@@ -804,12 +807,15 @@ export async function getChatMessageWithPartsById({
       },
     };
   } catch (error) {
-    console.error("Failed to get message w/ parts by id from database", error);
+    logger.error(
+      { error, messageId: id },
+      "getChatMessageWithPartsById failed"
+    );
     throw error;
   }
 }
 
-export async function deleteMessagesByChatIdAfterTimestamp({
+async function _deleteMessagesByChatIdAfterTimestamp({
   chatId,
   timestamp,
 }: {
@@ -963,7 +969,42 @@ export async function updateChatIsPinnedById({
   }
 }
 
-export async function updateChatUpdatedAt({ chatId }: { chatId: string }) {
+export async function getMessageCanceledAt({
+  messageId,
+}: {
+  messageId: string;
+}): Promise<Date | null> {
+  try {
+    const [result] = await db
+      .select({ canceledAt: message.canceledAt })
+      .from(message)
+      .where(eq(message.id, messageId));
+    return result?.canceledAt ?? null;
+  } catch (error) {
+    logger.error({ error, messageId }, "getMessageCanceledAt failed");
+    throw error;
+  }
+}
+
+export async function updateMessageCanceledAt({
+  messageId,
+  canceledAt,
+}: {
+  messageId: string;
+  canceledAt: Date | null;
+}) {
+  try {
+    return await db
+      .update(message)
+      .set({ canceledAt })
+      .where(eq(message.id, messageId));
+  } catch (error) {
+    logger.error({ error, messageId }, "updateMessageCanceledAt failed");
+    throw error;
+  }
+}
+
+async function updateChatUpdatedAt({ chatId }: { chatId: string }) {
   try {
     return await db
       .update(chat)
@@ -990,7 +1031,7 @@ export async function getUserById({
   return users[0];
 }
 
-export async function getMessagesWithAttachments() {
+async function getMessagesWithAttachments() {
   try {
     return await db.select({ attachments: message.attachments }).from(message);
   } catch (error) {
