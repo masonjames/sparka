@@ -4,9 +4,11 @@
 
 # ChatJS
 
-A prod-ready AI chat template. Multi-model support, auth, attachments, web search, code execution, and more. Start here then make it your own.
+A prod-ready AI chat template. Multi-model support, attachments, web search, code execution, and more. Start here then make it your own.
 
 [**Documentation**](https://chatjs.dev/docs) · [**Live Demo**](https://chatjs.dev)
+
+![DemosOnly](https://github.com/user-attachments/assets/f12e89dd-c10c-4e06-9b1a-a9fbd809d234)
 
 </div>
 
