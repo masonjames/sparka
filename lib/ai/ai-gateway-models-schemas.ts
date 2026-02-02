@@ -35,13 +35,31 @@ const aiGatewayModelSchema = z.object({
     web_search: z.string().optional(),
     image: z.string().optional(),
     input_tiers: z
-      .array(z.object({ cost: z.string(), min: z.number(), max: z.number().optional() }))
+      .array(
+        z.object({
+          cost: z.string(),
+          min: z.number(),
+          max: z.number().optional(),
+        })
+      )
       .optional(),
     output_tiers: z
-      .array(z.object({ cost: z.string(), min: z.number(), max: z.number().optional() }))
+      .array(
+        z.object({
+          cost: z.string(),
+          min: z.number(),
+          max: z.number().optional(),
+        })
+      )
       .optional(),
     input_cache_read_tiers: z
-      .array(z.object({ cost: z.string(), min: z.number(), max: z.number().optional() }))
+      .array(
+        z.object({
+          cost: z.string(),
+          min: z.number(),
+          max: z.number().optional(),
+        })
+      )
       .optional(),
   }),
 });

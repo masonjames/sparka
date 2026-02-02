@@ -153,7 +153,9 @@ function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
 
   return {
     feature: "baseUrl",
-    missing: ["APP_URL (for non-Vercel deployments) or VERCEL_URL (auto on Vercel)"],
+    missing: [
+      "APP_URL (for non-Vercel deployments) or VERCEL_URL (auto on Vercel)",
+    ],
   };
 }
 
