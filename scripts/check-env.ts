@@ -137,9 +137,27 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   return errors;
 }
 
+function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
+  const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
+  if (!isProduction) return null;
+
+  const hasBaseUrl = !!(env.APP_URL || env.VERCEL_URL);
+  if (hasBaseUrl) return null;
+
+  return {
+    feature: "baseUrl",
+    missing: ["APP_URL (for non-Vercel deployments) or VERCEL_URL (auto on Vercel)"],
+  };
+}
+
 function checkEnv(): void {
   const env = process.env;
-  const errors = [...validateIntegrations(env), ...validateAuthentication(env)];
+  const baseUrlError = validateBaseUrl(env);
+  const errors = [
+    ...(baseUrlError ? [baseUrlError] : []),
+    ...validateIntegrations(env),
+    ...validateAuthentication(env),
+  ];
 
   if (errors.length > 0) {
     const message = errors

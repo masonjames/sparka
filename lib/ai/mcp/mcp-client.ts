@@ -8,8 +8,8 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Tool } from "ai";
 import { config } from "@/lib/config";
-import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
+import { getBaseUrl } from "@/lib/url";
 import { invalidateAllMcpCaches } from "./cache";
 import {
   McpOAuthClientProvider,
@@ -26,16 +26,6 @@ type McpClientStatus =
   | "connected"
   | "authorizing"
   | "incompatible";
-
-function getBaseUrl(): string {
-  if (env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  if (env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
-}
 
 /**
  * MCP Client wrapper with OAuth support.

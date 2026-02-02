@@ -77,12 +77,16 @@ export function getStreamContext(): ResumableStreamContext | null {
     return globalStreamContext;
   }
 
+  // Resumable streams require Redis - return null if not configured
+  if (!(redisPublisher && redisSubscriber)) {
+    return null;
+  }
+
   globalStreamContext = createResumableStreamContext({
     waitUntil: after,
     keyPrefix: `${config.appPrefix}:resumable-stream`,
-    ...(redisPublisher && redisSubscriber
-      ? { publisher: redisPublisher, subscriber: redisSubscriber }
-      : {}),
+    publisher: redisPublisher,
+    subscriber: redisSubscriber,
   });
 
   return globalStreamContext;
@@ -838,7 +842,15 @@ export async function POST(request: NextRequest) {
       mcpConnectors,
     });
   } catch (error) {
-    log.error({ error }, "RESPONSE > POST /api/chat error");
+    log.error(
+      {
+        err:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack }
+            : error,
+      },
+      "RESPONSE > POST /api/chat error"
+    );
     return new Response("Internal Server Error", {
       status: 500,
     });

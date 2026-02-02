@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { env } from "@/lib/env";
+import { getBaseUrl } from "@/lib/url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = `http://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "localhost:3000"}`;
+  const baseUrl = getBaseUrl();
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = [

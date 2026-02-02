@@ -31,7 +31,9 @@ export const env = createEnv({
     TAVILY_API_KEY: z.string().optional(),
     EXA_API_KEY: z.string().optional(),
     FIRECRAWL_API_KEY: z.string().optional(),
-    MCP_ENCRYPTION_KEY: z.string().length(44).optional(),
+    MCP_ENCRYPTION_KEY: z
+      .union([z.string().length(44), z.literal("")])
+      .optional(),
 
     // Sandbox (for non-Vercel deployments)
     VERCEL_TEAM_ID: z.string().optional(),
@@ -39,9 +41,11 @@ export const env = createEnv({
     VERCEL_TOKEN: z.string().optional(),
     VERCEL_SANDBOX_RUNTIME: z.string().optional(),
 
-    // Misc / platform
+    // App URL (for non-Vercel deployments) - full URL including https://
+    APP_URL: z.string().url().optional(),
+
+    // Vercel platform (auto-set by Vercel)
     VERCEL_URL: z.string().optional(),
-    VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   },
   client: {},
   experimental__runtimeEnv: {},

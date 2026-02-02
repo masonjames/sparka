@@ -11,6 +11,25 @@ Before you begin, make sure you have:
 - **Bun** (install with `curl -fsSL https://bun.sh/install | bash`)
 - A **GitHub account** (for cloning and OAuth)
 
+## Understanding `bun chatjs:init`
+
+The `bun chatjs:init` command generates a `chat.config.ts` file with sensible defaults. This file controls all feature toggles, branding, and app settings.
+
+<Accordion title="What the default config includes">
+  The default configuration gives you a minimal, working setup:
+
+  | Setting | Default | Notes |
+  |---------|---------|-------|
+  | **Authentication** | GitHub only | Google and Vercel OAuth disabled |
+  | **Integrations** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
+  | **Anonymous users** | 10 credits | Limited access, no tools |
+  | **Models** | Curated list | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5 |
+
+  This keeps your initial setup simple—you only need `DATABASE_URL`, `AUTH_SECRET`, `AI_GATEWAY_API_KEY`, and GitHub OAuth credentials to get started.
+
+  Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
+</Accordion>
+
 <Tabs>
   <Tab title="Vercel (Recommended)">
     The fastest path to production. Vercel handles database, blob storage, and AI Gateway automatically.
@@ -66,7 +85,7 @@ Before you begin, make sure you have:
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
     cd YOUR_REPO
     bun install
-    bun chatjs:init  # Generate chat.config.ts with defaults
+    bun chatjs:init  # Generate chat.config.ts with minimal defaults (can re-run to reset)
     vercel link
     vercel env pull .env.local
     ```
@@ -97,7 +116,7 @@ Before you begin, make sure you have:
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
     cd YOUR_REPO
     bun install
-    bun chatjs:init  # Generate chat.config.ts with defaults
+    bun chatjs:init  # Generate chat.config.ts with minimal defaults (can re-run to reset)
     ```
 
     ### 2. Set Up External Services
@@ -157,6 +176,7 @@ Before you begin, make sure you have:
     | `DATABASE_URL` | PostgreSQL connection string |
     | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
     | `AI_GATEWAY_API_KEY` | From Vercel AI Gateway |
+    | `APP_URL` | Your app's public URL (e.g., `https://myapp.com`) |
 
     ### 4. Configure Authentication
 
