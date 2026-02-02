@@ -2,6 +2,7 @@
 
 import { CopyIcon, DownloadIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -72,28 +73,26 @@ export function ImageActions({
 }) {
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <button
-        className={cn(
-          "rounded-lg bg-black/50 p-2 hover:bg-black/70",
-          "flex items-center gap-2 text-white"
-        )}
+      <Button
+        className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
         onClick={(e) => handleCopyImage(e, imageUrl)}
+        size="icon-sm"
         title="Copy image"
-        type="button"
+        variant="ghost"
       >
         <CopyIcon size={16} />
-      </button>
-      <button
-        className={cn(
-          "rounded-lg bg-black/50 p-2 hover:bg-black/70",
-          "flex items-center gap-2 text-white"
-        )}
+        <span className="sr-only">Copy image</span>
+      </Button>
+      <Button
+        className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
         onClick={(e) => handleDownload(e, imageUrl)}
+        size="icon-sm"
         title="Download image"
-        type="button"
+        variant="ghost"
       >
         <DownloadIcon size={16} />
-      </button>
+        <span className="sr-only">Download image</span>
+      </Button>
     </div>
   );
 }
@@ -121,10 +120,16 @@ export function ImageModal({
           <XIcon size={20} />
           <span className="sr-only">Close</span>
         </DialogClose>
-        <button
-          className="group flex h-full w-full items-center justify-center"
+        <div
+          className="group flex h-full w-full cursor-pointer items-center justify-center"
           onClick={() => onClose()}
-          type="button"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              onClose();
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for modal preview */}
           {/* biome-ignore lint/correctness/useImageSize: Dynamic image dimensions unknown */}
@@ -142,7 +147,7 @@ export function ImageModal({
               imageUrl={imageUrl}
             />
           )}
-        </button>
+        </div>
       </DialogContent>
     </Dialog>
   );

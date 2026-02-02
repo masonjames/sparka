@@ -33,7 +33,7 @@ export function MainChatPanel({
 
       <ChatContent
         chatId={chatId}
-        className="h-[calc(100dvh-var(--header-height))]"
+        className="h-[calc(100dvh_-_var(--header-height))]"
         isReadonly={isReadonly}
         projectId={projectId}
       />
