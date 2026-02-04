@@ -341,8 +341,7 @@ export async function saveMessage({
   }
 }
 
-// TODO: This should indicate the it's only updating messages for a single chat
-export async function saveMessages({
+export async function saveChatMessages({
   messages,
 }: {
   messages: Array<{
@@ -385,7 +384,7 @@ export async function saveMessages({
   } catch (error) {
     logger.error(
       { error, messageIds: messages.map((m) => m.id) },
-      "saveMessages failed"
+      "saveChatMessages failed"
     );
     throw error;
   }

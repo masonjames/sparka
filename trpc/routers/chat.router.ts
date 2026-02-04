@@ -17,8 +17,8 @@ import {
   getDocumentsByMessageIds,
   getMessageById,
   saveChat,
+  saveChatMessages,
   saveDocuments,
-  saveMessages,
   updateChatIsPinnedById,
   updateChatTitleById,
   updateChatVisiblityById,
@@ -409,7 +409,7 @@ export const chatRouter = createTRPCRouter({
         await cloneAttachmentsInMessages(clonedMessages);
 
       // Save cloned messages first, then documents due to foreign key dependency
-      await saveMessages({
+      await saveChatMessages({
         messages: messagesWithClonedAttachments.map((msg) => ({
           id: msg.id,
           chatId: newChatId,

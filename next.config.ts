@@ -15,8 +15,6 @@ const nextConfig: NextConfig = {
       "@phosphor-icons/react",
     ],
   },
-  // TODO: Uncomment this when we can exclude /api/cron/cleanup from caching selectively
-  // cacheComponents: true,
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
     remotePatterns: [
