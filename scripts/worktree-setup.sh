@@ -5,7 +5,7 @@
 #   With arg: create worktree + setup
 set -e
 
-MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
+MAIN_REPO=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
 REPO_NAME=$(basename "$MAIN_REPO")
 
 if [ -n "$1" ]; then

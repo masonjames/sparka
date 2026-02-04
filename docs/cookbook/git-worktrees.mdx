@@ -65,7 +65,7 @@ Add these to your `~/.gitconfig` for faster worktree commands:
     wtl = worktree list
 
     # Add a new worktree (usage: git wta <branch-name>)
-    wta = "!f() { git worktree add -b \"$1\" \"../$1\"; }; f"
+    wta = "!f() { repo=$(basename \"$(git worktree list --porcelain | sed -n '1s/^worktree //p')\"); git worktree add -b \"$1\" \"../$repo-$1\"; }; f"
 
     # Remove a worktree (usage: git wtr <path>)
     wtr = "!git worktree remove \"$@\" #"
