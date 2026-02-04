@@ -85,6 +85,14 @@ Keep pages single-purpose. If you need both "what/how-to-use" and "how-it's-buil
 - Update docs.json navigation when adding, removing, or renaming pages
 - Keep page order logical within each group
 
+## New page checklist
+
+When creating a new documentation page:
+
+1. Add the page to `docs.json` navigation under the appropriate group
+2. Update relevant index/overview pages that list content in that section
+3. Add cross-links from related pages (concept pages link to cookbook recipes and vice versa)
+
 ## Do not
 
 - Skip frontmatter on any MDX file
