@@ -45,20 +45,6 @@ Make it executable:
 chmod +x scripts/worktree-setup.sh
 ```
 
-### Package Scripts
-
-Add helper scripts to your `package.json`:
-
-```json title="package.json"
-{
-  "scripts": {
-    "worktree:new": "./scripts/worktree-setup.sh",
-    "worktree:list": "git worktree list",
-    "worktree:remove": "git worktree remove"
-  }
-}
-```
-
 ### IDE Integration (Cursor)
 
 For Cursor IDE, add automatic dependency installation when opening worktrees:
@@ -69,6 +55,28 @@ For Cursor IDE, add automatic dependency installation when opening worktrees:
 }
 ```
 
+### Git Aliases
+
+Add these to your `~/.gitconfig` for faster worktree commands:
+
+```ini title="~/.gitconfig"
+[alias]
+    # List all worktrees
+    wtl = worktree list
+
+    # Add a new worktree (usage: git wta <branch-name>)
+    wta = "!f() { git worktree add -b \"$1\" \"../$1\"; }; f"
+
+    # Remove a worktree (usage: git wtr <path>)
+    wtr = "!git worktree remove \"$@\" #"
+
+    # Prune stale worktrees
+    wtp = worktree prune
+
+    # Cleanup merged branches and their worktrees
+    wt-cleanup = "!f() { git fetch -p && git branch --merged ${1:-main} | grep -v \"^[* ]*${1:-main}$\" | while read branch; do wt=$(git worktree list | grep \"\\[$branch\\]\" | awk '{print $1}'); [ -n \"$wt\" ] && git worktree remove \"$wt\"; git branch -d \"$branch\"; done }; f"
+```
+
 ## Usage
 
 ### Create a New Worktree
@@ -77,8 +85,8 @@ For Cursor IDE, add automatic dependency installation when opening worktrees:
 # Create worktree for a new branch
 ./scripts/worktree-setup.sh feature-auth
 
-# Or use npm script
-npm run worktree:new feature-auth
+# Or use git alias
+git wta feature-auth
 ```
 
 This creates `../chatjs-feature-auth/` with:
@@ -115,26 +123,8 @@ git worktree remove --force ../chatjs-feature-auth
 
 | Command | Description |
 | ------- | ----------- |
-| `npm run worktree:new [branch]` | Create worktree + setup |
-| `npm run worktree:list` | List all worktrees |
-| `git worktree remove <path>` | Remove worktree |
-| `git worktree prune` | Clean up stale worktrees |
-
-## Considerations
-
-**Benefits:**
-- Work on multiple branches simultaneously
-- No branch switching or stashing needed
-- Each worktree has isolated node_modules
-- Side-by-side code comparison in separate editor windows
-- Review PRs without losing your current work
-
-**Trade-offs:**
-- Uses more disk space (separate node_modules per worktree)
-- Need to remember to remove old worktrees
-- Some tools may not handle multiple worktrees well
-
-**Tips:**
-- Name worktrees after their branch for easy identification
-- Keep worktrees as siblings to the main repo (`../repo-branch/`)
-- Run `git worktree prune` periodically to clean up
+| `git wta <branch>` | Add worktree for branch |
+| `git wtl` | List all worktrees |
+| `git wtr <path>` | Remove worktree |
+| `git wtp` | Prune stale worktrees |
+| `git wt-cleanup` | Remove merged branches and their worktrees |
