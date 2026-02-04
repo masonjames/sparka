@@ -2,6 +2,11 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
   "name": "ChatJS",
+  "metadata": {
+    "og:site_name": "ChatJS Documentation",
+    "og:title": "ChatJS Docs - Build Production-Ready AI Chat Applications",
+    "og:description": "Complete documentation for ChatJS, the production-ready AI chat template. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
+  },
   "colors": {
     "primary": "#171717",
     "light": "#525252",
