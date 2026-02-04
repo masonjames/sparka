@@ -12,12 +12,12 @@ import { config } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(config.appUrl),
-  title: config.appName,
+  title: config.appTitle ?? config.appName,
   description: config.appDescription,
   openGraph: {
     siteName: config.appName,
     url: config.appUrl,
-    title: config.appName,
+    title: config.appTitle ?? config.appName,
     description: config.appDescription,
   },
 };

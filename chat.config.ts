@@ -11,7 +11,8 @@ const isProd = process.env.NODE_ENV === "production";
 const config: ConfigInput = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
-  appName: "ChatJS - Production-Ready AI Chat Template",
+  appName: "ChatJS",
+  appTitle: "ChatJS - The prod ready AI chat template",
   appDescription:
     "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",
   appUrl: "https://chatjs.dev",

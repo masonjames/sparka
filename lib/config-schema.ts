@@ -189,6 +189,7 @@ export const configSchema = z.object({
   githubUrl: z.url().default("https://github.com/your-username/your-repo"),
   appPrefix: z.string().default("chatjs"),
   appName: z.string().default("My AI Chat"),
+  appTitle: z.string().optional().describe("Browser tab title (defaults to appName)"),
   appDescription: z.string().default("AI chat powered by ChatJS"),
   appUrl: z.string().url().default("https://your-domain.com"),
 

@@ -82,6 +82,7 @@ Customize app name and organization details:
 
 ```typescript
 appName: "ChatJS",
+appTitle: "ChatJS - The prod ready AI chat template",
 appPrefix: "chatjs",
 githubUrl: "https://github.com/franciscomoretti/chatjs",
 
@@ -115,6 +116,8 @@ export type Config = {
   githubUrl: string;
   appPrefix: string;
   appName: string;
+  /** Browser tab title (defaults to appName) */
+  appTitle?: string;
   appDescription: string;
   appUrl: string;
   organization: {
