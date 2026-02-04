@@ -4,7 +4,7 @@
 
 # ChatJS
 
-A prod-ready AI chat template. Multi-model support, attachments, web search, code execution, and more. Start here then make it your own.
+Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-ready foundation with authentication, 120+ models, streaming, and tools so you can focus on what makes your app unique.
 
 [**Documentation**](https://chatjs.dev/docs) · [**Live Demo**](https://chatjs.dev)
 
