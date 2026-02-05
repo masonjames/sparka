@@ -16,7 +16,7 @@ export const Response = memo(
       {...props}
     />
   ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children
+  (prevProps, nextProps) => prevProps.children === nextProps.children && prevProps.isAnimating === nextProps.isAnimating && prevProps.mode === nextProps.mode
 );
 
 Response.displayName = "Response";
