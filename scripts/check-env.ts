@@ -146,10 +146,14 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
 
 function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
   const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
-  if (!isProduction) return null;
+  if (!isProduction) {
+    return null;
+  }
 
   const hasBaseUrl = !!(env.APP_URL || env.VERCEL_URL);
-  if (hasBaseUrl) return null;
+  if (hasBaseUrl) {
+    return null;
+  }
 
   return {
     feature: "baseUrl",
