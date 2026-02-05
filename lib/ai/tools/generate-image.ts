@@ -276,12 +276,17 @@ export const generateImageTool = ({
   costAccumulator,
 }: GenerateImageProps = {}) =>
   tool({
-    description: `Generate an image from a text prompt. Pass the user's prompt verbatim—do not embellish, rephrase, or add style suggestions. If images are attached, they'll be used as reference.`,
+    description: `Generate an image from a user-provided prompt.
+
+The assistant may make small, neutral adjustments to improve clarity, composition, or technical quality, while strictly preserving the user’s original intent, meaning, and message.
+
+The assistant must not add new subjects, claims, branding, or alter the tone or intent of the prompt.
+`,
     inputSchema: z.object({
       prompt: z
         .string()
         .describe(
-          "The user's exact prompt, passed through without modification."
+          "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
         ),
     }),
     execute: async ({ prompt }) => {

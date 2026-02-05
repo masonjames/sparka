@@ -221,6 +221,35 @@ async function checkUserCanSpend(userId: string): Promise<Response | null> {
   return null;
 }
 
+async function handleUserValidationAndCredits({
+  chatId,
+  userId,
+  userMessage,
+  projectId,
+}: {
+  chatId: string;
+  userId: string;
+  userMessage: ChatMessage;
+  projectId?: string;
+}): Promise<{ error: Response } | { isNewChat: boolean }> {
+  const validationResult = await handleChatValidation({
+    chatId,
+    userId,
+    userMessage,
+    projectId,
+  });
+  if (validationResult.error) {
+    return { error: validationResult.error };
+  }
+
+  const creditError = await checkUserCanSpend(userId);
+  if (creditError) {
+    return { error: creditError };
+  }
+
+  return { isNewChat: validationResult.isNewChat };
+}
+
 /**
  * Determines which built-in tools are allowed based on model capabilities.
  * MCP tools are handled separately in core-chat-agent.
@@ -774,21 +803,16 @@ export async function POST(request: NextRequest) {
 
     // Handle authenticated user validation and credit check
     if (userId) {
-      const validationResult = await handleChatValidation({
+      const result = await handleUserValidationAndCredits({
         chatId,
         userId,
         userMessage,
         projectId,
       });
-      if (validationResult.error) {
-        return validationResult.error;
+      if ("error" in result) {
+        return result.error;
       }
-      isNewChat = validationResult.isNewChat;
-
-      const creditError = await checkUserCanSpend(userId);
-      if (creditError) {
-        return creditError;
-      }
+      isNewChat = result.isNewChat;
     } else if (anonymousSession) {
       // Pre-deduct credits for anonymous users (cookies must be set before streaming)
       await setAnonymousSession({

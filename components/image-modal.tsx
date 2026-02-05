@@ -120,16 +120,10 @@ export function ImageModal({
           <XIcon size={20} />
           <span className="sr-only">Close</span>
         </DialogClose>
-        <div
+        <button
           className="group flex h-full w-full cursor-pointer items-center justify-center"
           onClick={() => onClose()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              onClose();
-            }
-          }}
-          role="button"
-          tabIndex={0}
+          type="button"
         >
           {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for modal preview */}
           {/* biome-ignore lint/correctness/useImageSize: Dynamic image dimensions unknown */}
@@ -141,13 +135,13 @@ export function ImageModal({
             onClick={(e) => e.stopPropagation()}
             src={imageUrl || undefined}
           />
-          {showActions && (
-            <ImageActions
-              className="absolute top-4 right-4"
-              imageUrl={imageUrl}
-            />
-          )}
-        </div>
+        </button>
+        {showActions && (
+          <ImageActions
+            className="absolute top-4 right-4"
+            imageUrl={imageUrl}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
