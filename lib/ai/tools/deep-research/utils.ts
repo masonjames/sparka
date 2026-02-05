@@ -1,10 +1,9 @@
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
-import type { ModelMessage, ToolModelMessage } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import type { StreamWriter } from "@/lib/ai/types";
 import { getAppModelDefinition } from "../../app-models";
 import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
-import type { DeepResearchConfig, SearchAPI } from "./configuration";
+import type { DeepResearchRuntimeConfig, SearchAPI } from "./configuration";
 
 // MCP Utils
 
@@ -12,7 +11,7 @@ type McpClient = Awaited<ReturnType<typeof experimental_createMCPClient>>;
 type McpToolSet = Awaited<ReturnType<McpClient["tools"]>>;
 
 async function loadMcpTools(
-  config: DeepResearchConfig,
+  config: DeepResearchRuntimeConfig,
   existingToolNames: Set<string>
 ) {
   if (!config.mcp_config?.url) {
@@ -78,7 +77,7 @@ async function loadMcpTools(
 
 function getSearchTool(
   searchApi: SearchAPI,
-  _config: DeepResearchConfig,
+  _config: DeepResearchRuntimeConfig,
   dataStream: StreamWriter,
   parentToolCallId?: string
 ) {
@@ -104,7 +103,7 @@ function getSearchTool(
 }
 
 export async function getAllTools(
-  config: DeepResearchConfig,
+  config: DeepResearchRuntimeConfig,
   dataStream: StreamWriter,
   id?: string
 ) {
@@ -119,15 +118,6 @@ export async function getAllTools(
   const mcpTools = await loadMcpTools(config, existingToolNames);
 
   return { ...mcpTools, ...searchTools };
-}
-
-export function getNotesFromToolCalls(messages: ModelMessage[]): string[] {
-  return (
-    messages
-      .filter<ToolModelMessage>((message) => message.role === "tool")
-      // TODO: This might need to be improved to get the output of the tool call parts
-      .map((message) => JSON.stringify(message.content))
-  );
 }
 
 export async function getModelContextWindow(modelId: ModelId): Promise<number> {
