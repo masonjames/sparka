@@ -64,13 +64,33 @@ When you navigate to a different chat, the ID changes and these components remou
 
 ### 3. URL Updates Without Navigation
 
-After the chat is persisted, the URL is updated using the History API:
+The `MultimodalInput` component handles URL updates via `updateChatUrl` when a message is sent:
 
 ```typescript
-window.history.pushState(null, "", `/chat/${chatId}`);
+const updateChatUrl = useCallback(
+  (chatIdToAdd: string) => {
+    if (!session?.user) return; // Anonymous users stay on /
+
+    const currentPath = window.location.pathname;
+    if (currentPath === "/") {
+      window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
+      return;
+    }
+
+    // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
+    const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
+    if (projectMatch) {
+      const [, projectId] = projectMatch;
+      window.history.pushState({}, "", `/project/${projectId}/chat/${chatIdToAdd}`);
+    }
+  },
+  [session?.user]
+);
 ```
 
-This changes the URL without triggering a Next.js navigation or page reload.
+**Why `pushState` instead of `replaceState`?**
+
+Using `pushState` preserves browser navigation history. When users click the back button after sending a message on the homepage, they return to `/` instead of being stuck on the chat page. This matches expected browser behavior where submitting a form creates a new history entry.
 
 ### 4. New Chat Resets State
 
@@ -132,6 +152,7 @@ if (
 | `ChatIdProvider`    | Generates and manages provisional/confirmed chat IDs                      |
 | `ChatSystem`        | Uses ID as React key to control component lifecycle                       |
 | `DataStreamHandler` | Listens for `data-chatConfirmed` and validates ID match before confirming |
+| `MultimodalInput`   | Calls `updateChatUrl` with `pushState` to update URL on message send      |
 | `ChatInputProvider` | Manages input state with localStorage persistence                         |
 | `NewChatButton`     | Calls `refreshChatID` to start fresh                                      |
 | `SidebarTopRow`     | Calls `refreshChatID` when logo is clicked                                |
