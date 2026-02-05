@@ -14,7 +14,7 @@ export async function runResearcher(
   topic: string,
   options: AgentOptions
 ): Promise<string> {
-  const { config, dataStream, toolCallId } = options;
+  const { config, dataStream, toolCallId, abortSignal } = options;
 
   const model = await getLanguageModel(config.research_model as ModelId);
   const tools = await getAllTools(config, dataStream, toolCallId);
@@ -57,7 +57,10 @@ export async function runResearcher(
     },
   });
 
-  const { response } = await researcherAgent.generate({ prompt: topic });
+  const { response } = await researcherAgent.generate({
+    prompt: topic,
+    abortSignal,
+  });
 
   const compressed = await compressResearch(response.messages, options);
 
@@ -79,7 +82,7 @@ async function compressResearch(
   researchMessages: ModelMessage[],
   options: AgentOptions
 ): Promise<string> {
-  const { config } = options;
+  const { config, abortSignal } = options;
   const model = await getLanguageModel(config.compression_model as ModelId);
 
   const messages: ModelMessage[] = [
@@ -105,6 +108,7 @@ async function compressResearch(
     maxOutputTokens: config.compression_model_max_tokens,
     experimental_telemetry: createTelemetry("compressResearch", options),
     maxRetries: 3,
+    abortSignal,
   });
 
   if (response.usage) {

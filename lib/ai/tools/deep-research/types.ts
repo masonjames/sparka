@@ -16,6 +16,7 @@ export type AgentOptions = {
   messageId: string;
   requestId: string;
   costAccumulator?: CostAccumulator;
+  abortSignal?: AbortSignal;
 };
 
 //##################

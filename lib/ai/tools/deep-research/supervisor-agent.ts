@@ -11,7 +11,7 @@ export async function runSupervisor(
   researchBrief: string,
   options: AgentOptions
 ): Promise<string[]> {
-  const { config, dataStream, toolCallId } = options;
+  const { config, dataStream, toolCallId, abortSignal } = options;
   const model = await getLanguageModel(config.research_model as ModelId);
 
   // Sequential execution queue to avoid streaming race conditions and rate limits
@@ -87,7 +87,10 @@ export async function runSupervisor(
     },
   });
 
-  const { steps } = await supervisorAgent.generate({ prompt: researchBrief });
+  const { steps } = await supervisorAgent.generate({
+    prompt: researchBrief,
+    abortSignal,
+  });
 
   return steps.flatMap((step) =>
     step.toolResults

@@ -36,7 +36,7 @@ Use for:
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
     inputSchema: z.object({}),
-    execute: async (_, { toolCallId }: { toolCallId: string }) => {
+    execute: async (_, { toolCallId, abortSignal }) => {
       const researchConfig = getDeepResearchConfig();
 
       try {
@@ -56,7 +56,7 @@ Use for:
           },
           researchConfig,
           dataStream,
-          { session, costAccumulator }
+          { session, costAccumulator, abortSignal }
         );
 
         // Flush the Langfuse trace right after the run

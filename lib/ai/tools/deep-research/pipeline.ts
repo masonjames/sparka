@@ -32,9 +32,10 @@ export async function runDeepResearchPipeline(
   options: {
     session: ToolSession;
     costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
+    abortSignal?: AbortSignal;
   }
 ): Promise<DeepResearchResult> {
-  const { session, costAccumulator } = options;
+  const { session, costAccumulator, abortSignal } = options;
   console.log("runDeepResearchPipeline invoked", {
     requestId: input.requestId,
     messageId: input.messageId,
@@ -47,6 +48,7 @@ export async function runDeepResearchPipeline(
     messageId: input.messageId,
     toolCallId: input.toolCallId,
     costAccumulator,
+    abortSignal,
   };
 
   // Step 1: Clarify with user
@@ -110,7 +112,7 @@ async function clarifyWithUser(
   messages: ModelMessage[],
   ctx: AgentOptions
 ): Promise<ClarificationResult> {
-  const { config, costAccumulator } = ctx;
+  const { config, costAccumulator, abortSignal } = ctx;
 
   if (!config.allow_clarification) {
     return { needsClarification: false };
@@ -138,6 +140,7 @@ async function clarifyWithUser(
     messages: truncatedMessages,
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: createTelemetry("clarifyWithUser", ctx),
+    abortSignal,
   });
 
   if (response.usage) {
@@ -169,7 +172,7 @@ async function writeResearchBrief(
   messages: ModelMessage[],
   ctx: AgentOptions
 ): Promise<ResearchBrief> {
-  const { config, dataStream, toolCallId, costAccumulator } = ctx;
+  const { config, dataStream, toolCallId, costAccumulator, abortSignal } = ctx;
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
 
@@ -205,6 +208,7 @@ async function writeResearchBrief(
     messages: truncatedMessages,
     maxOutputTokens: config.research_model_max_tokens,
     experimental_telemetry: createTelemetry("writeResearchBrief", ctx),
+    abortSignal,
   });
 
   if (result.usage) {
@@ -257,6 +261,7 @@ async function generateFinalReport(
     messageId,
     toolCallId,
     costAccumulator,
+    abortSignal,
   } = input;
 
   const findings = notes.join("\n");
@@ -322,6 +327,7 @@ To write the report, call the createTextDocument tool with:
     tools: { createTextDocument: reportTool },
     maxOutputTokens: config.final_report_model_max_tokens,
     experimental_telemetry: createTelemetry("finalReportGeneration", input),
+    abortSignal,
   });
 
   dataStream.merge(result.toUIMessageStream());
