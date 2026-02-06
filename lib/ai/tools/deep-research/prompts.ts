@@ -177,16 +177,15 @@ You can use any of the tools provided to you to find resources that can help ans
 - When selecting the next tool to call, make sure that you are calling tools with arguments that you have not already tried.
 - Tool calling is costly, so be sure to be very intentional about what you look up. Some of the tools may have implicit limitations. As you call tools, feel out what these limitations are, and adjust your tool calls accordingly.
 - You have a maximum of ${max_search_queries} web search queries available, so use them strategically and efficiently.
-- This could mean that you need to call a different tool, or that you should call "ResearchComplete", e.g. it's okay to recognize that a tool has limitations and cannot do what you need it to.
+- This could mean that you need to call a different tool or stop searching, e.g. it's okay to recognize that a tool has limitations and cannot do what you need it to.
 - Don't mention any tool limitations in your output, but adjust your tool calls accordingly.
 - ${mcp_prompt}
 <Tool Calling Guidelines>
 
 <Criteria for Finishing Research>
-- In addition to tools for research, you will also be given a special "ResearchComplete" tool. This tool is used to indicate that you are done with your research.
 - The user will give you a sense of how much effort you should put into the research. This does not translate ~directly~ to the number of tool calls you should make, but it does give you a sense of the depth of the research you should conduct.
-- DO NOT call "ResearchComplete" unless you are satisfied with your research.
-- One case where it's recommended to call this tool is if you see that your previous tool calls have stopped yielding useful information.
+- Once you are satisfied with your research, stop making tool calls and provide your final findings as text.
+- One case where you should stop is if your previous tool calls have stopped yielding useful information.
 </Criteria for Finishing Research>
 
 <Helpful Tips>
@@ -196,8 +195,8 @@ You can use any of the tools provided to you to find resources that can help ans
 </Helpful Tips>
 
 <Critical Reminders>
-- You MUST conduct research using web search or a different tool before you are allowed tocall "ResearchComplete"! You cannot call "ResearchComplete" without conducting research first!
-- Do not repeat or summarize your research findings unless the user explicitly asks you to do so. Your main job is to call tools. You should call tools until you are satisfied with the research findings, and then call "ResearchComplete".
+- You MUST conduct research using web search or a different tool before finishing! You cannot finish without conducting research first!
+- Do not repeat or summarize your research findings unless the user explicitly asks you to do so. Your main job is to call tools. You should call tools until you are satisfied with the research findings, and then stop making tool calls.
 </Critical Reminders>`;
 }
 

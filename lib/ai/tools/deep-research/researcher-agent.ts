@@ -32,7 +32,7 @@ export async function runResearcher(
       title: "Starting research on topic",
       message: topic,
       type: "thoughts",
-      status: "completed",
+      status: "running",
     },
   });
 
@@ -90,7 +90,7 @@ async function compressResearch(
       role: "system" as const,
       content: compressResearchSystemPrompt({ date: getTodayStr() }),
     },
-    ...researchMessages.slice(1),
+    ...researchMessages,
     {
       role: "user" as const,
       content: compressResearchSimpleHumanMessage,
