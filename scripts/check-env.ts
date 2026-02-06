@@ -13,6 +13,27 @@ function getMissingEnvVars(vars: [string, string | undefined][]): string[] {
   return vars.filter(([, value]) => !value).map(([name]) => name);
 }
 
+function validateSearchApi(env: NodeJS.ProcessEnv): ValidationError[] {
+  const hasKey = !!(env.TAVILY_API_KEY || env.FIRECRAWL_API_KEY);
+  if (hasKey) {
+    return [];
+  }
+  const errors: ValidationError[] = [];
+  if (config.integrations.webSearch) {
+    errors.push({
+      feature: "integrations.webSearch",
+      missing: ["TAVILY_API_KEY or FIRECRAWL_API_KEY"],
+    });
+  }
+  if (config.integrations.deepResearch) {
+    errors.push({
+      feature: "integrations.deepResearch",
+      missing: ["TAVILY_API_KEY or FIRECRAWL_API_KEY"],
+    });
+  }
+  return errors;
+}
+
 function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
   if (!config.integrations.sandbox) {
     return null;
@@ -41,15 +62,7 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     });
   }
 
-  if (
-    config.integrations.webSearch &&
-    !(env.TAVILY_API_KEY || env.FIRECRAWL_API_KEY)
-  ) {
-    errors.push({
-      feature: "integrations.webSearch",
-      missing: ["TAVILY_API_KEY or FIRECRAWL_API_KEY"],
-    });
-  }
+  errors.push(...validateSearchApi(env));
 
   if (config.integrations.urlRetrieval && !env.FIRECRAWL_API_KEY) {
     errors.push({

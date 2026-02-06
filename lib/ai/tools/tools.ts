@@ -90,7 +90,7 @@ export function getTools({
           }),
         }
       : {}),
-    ...(config.integrations.webSearch
+    ...(config.integrations.deepResearch
       ? {
           deepResearch: deepResearch({
             session,

@@ -54,6 +54,8 @@ export const modelsConfigSchema = z
         codeEdits: appModelId(),
         chatImageCompatible: appModelId(),
         image: imageModelId(),
+        deepResearch: appModelId(),
+        deepResearchFinalReport: appModelId(),
       })
       .describe("Default model for each task type"),
   })
@@ -94,6 +96,8 @@ export const modelsConfigSchema = z
       codeEdits: "openai/gpt-5-mini",
       chatImageCompatible: "openai/gpt-4o-mini",
       image: "google/gemini-3-pro-image",
+      deepResearch: "google/gemini-2.5-flash-lite",
+      deepResearchFinalReport: "google/gemini-3-flash",
     },
   });
 
@@ -141,6 +145,37 @@ export const attachmentsConfigSchema = z
     },
   });
 
+export const deepResearchConfigSchema = z
+  .object({
+    allowClarification: z
+      .boolean()
+      .describe("Whether to ask clarifying questions before starting research"),
+    maxResearcherIterations: z
+      .number()
+      .int()
+      .min(1)
+      .max(10)
+      .describe("Maximum supervisor loop iterations"),
+    maxConcurrentResearchUnits: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .describe("Topics researched in parallel per iteration"),
+    maxSearchQueries: z
+      .number()
+      .int()
+      .min(1)
+      .max(10)
+      .describe("Max search queries per research topic"),
+  })
+  .default({
+    allowClarification: true,
+    maxResearcherIterations: 1,
+    maxConcurrentResearchUnits: 2,
+    maxSearchQueries: 2,
+  });
+
 export const integrationsConfigSchema = z
   .object({
     sandbox: z.boolean().describe("Code sandbox execution (Vercel-native)"),
@@ -148,6 +183,9 @@ export const integrationsConfigSchema = z
     urlRetrieval: z
       .boolean()
       .describe("URL content retrieval (requires FIRECRAWL_API_KEY)"),
+    deepResearch: z
+      .boolean()
+      .describe("Deep research agent (requires webSearch)"),
     mcp: z.boolean().describe("MCP tool servers (requires MCP_ENCRYPTION_KEY)"),
     imageGeneration: z
       .boolean()
@@ -160,6 +198,7 @@ export const integrationsConfigSchema = z
     sandbox: false,
     webSearch: false,
     urlRetrieval: false,
+    deepResearch: false,
     mcp: false,
     imageGeneration: false,
     attachments: false,
@@ -263,6 +302,8 @@ export const configSchema = z.object({
   anonymous: anonymousConfigSchema,
 
   attachments: attachmentsConfigSchema,
+
+  deepResearch: deepResearchConfigSchema,
 });
 
 // Output types (after defaults applied)
@@ -271,6 +312,7 @@ export type PricingConfig = z.infer<typeof pricingConfigSchema>;
 export type ModelsConfig = z.infer<typeof modelsConfigSchema>;
 export type AnonymousConfig = z.infer<typeof anonymousConfigSchema>;
 export type AttachmentsConfig = z.infer<typeof attachmentsConfigSchema>;
+export type DeepResearchConfig = z.infer<typeof deepResearchConfigSchema>;
 export type IntegrationsConfig = z.infer<typeof integrationsConfigSchema>;
 export type AuthenticationConfig = z.infer<typeof authenticationConfigSchema>;
 

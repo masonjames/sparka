@@ -6,8 +6,8 @@ import type { ToolSession } from "@/lib/ai/tools/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
 import type { StreamWriter } from "../../types";
-import { type DeepResearchConfig, loadConfigFromEnv } from "./configuration";
-import { runDeepResearcher } from "./deep-researcher";
+import { getDeepResearchConfig } from "./configuration";
+import { runDeepResearchPipeline } from "./pipeline";
 
 export const deepResearch = ({
   session,
@@ -36,8 +36,8 @@ Use for:
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
     inputSchema: z.object({}),
-    execute: async (_, { toolCallId }: { toolCallId: string }) => {
-      const smallConfig: DeepResearchConfig = loadConfigFromEnv();
+    execute: async (_, { toolCallId, abortSignal }) => {
+      const researchConfig = getDeepResearchConfig();
 
       try {
         const requestId = generateUUID();
@@ -47,16 +47,16 @@ Use for:
         // Open a Langfuse trace with id = requestId before the run
         const langfuse = new Langfuse();
         langfuse.trace({ id: requestId, name: "deep-research" });
-        const researchResult = await runDeepResearcher(
+        const researchResult = await runDeepResearchPipeline(
           {
             requestId,
             messageId,
             toolCallId,
             messages,
           },
-          smallConfig,
+          researchConfig,
           dataStream,
-          { session, costAccumulator }
+          { session, costAccumulator, abortSignal }
         );
 
         // Flush the Langfuse trace right after the run
