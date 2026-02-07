@@ -23,6 +23,7 @@ const config: ConfigInput = {
       legalEmail: "legal@chatjs.dev",
     },
   },
+  gateway: "openrouter",
   services: {
     hosting: "Vercel",
     aiProviders: [
