@@ -8,12 +8,13 @@ import type { GatewayProvider } from "./gateway-provider";
 import type {
   ExtractImageModelIdFromProvider,
   ExtractModelIdFromProvider,
+  StrictLiterals,
 } from "./provider-types";
 
 const log = createModuleLogger("ai/gateways/openai");
 
-type OpenaiLanguageModelId = ExtractModelIdFromProvider<typeof createOpenAI>;
-type OpenaiImageModelId = ExtractImageModelIdFromProvider<typeof createOpenAI>;
+type OpenaiLanguageModelId = StrictLiterals<ExtractModelIdFromProvider<typeof createOpenAI>>;
+type OpenaiImageModelId = StrictLiterals<ExtractImageModelIdFromProvider<typeof createOpenAI>>;
 
 type OpenAIModelResponse = {
   id: string;

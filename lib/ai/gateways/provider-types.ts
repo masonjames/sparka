@@ -1,3 +1,9 @@
+export type StrictLiterals<T> = T extends string
+  ? string extends T
+    ? never
+    : T
+  : T;
+
 export type ExtractModelIdFromProvider<
   ProviderFactory extends (...args: any) => {
     languageModel: (modelId: any) => any;
