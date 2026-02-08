@@ -45,6 +45,7 @@
               "features/attachments",
               "features/mcp",
               "features/canvas",
+              "features/reasoning",
               "features/sharing"
             ]
           },
