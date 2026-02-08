@@ -7,6 +7,7 @@ import {
   type CustomChatStoreState,
   useCustomChatStoreApi,
 } from "./custom-store-provider";
+import type { MessageSiblingInfo } from "./with-threads";
 
 function useThreadStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
@@ -45,6 +46,69 @@ export const useSetMessagesWithEpoch = () => {
     (messages: ChatMessage[]) => {
       store.getState().setMessagesWithEpoch(messages);
     },
+    [store]
+  );
+};
+
+export const useAllMessages = () =>
+  useThreadStore((state) => state.allMessages);
+
+export const useSetAllMessages = () => {
+  const store = useCustomChatStoreApi<ChatMessage>();
+  return useCallback(
+    (messages: ChatMessage[]) => {
+      store.getState().setAllMessages(messages);
+    },
+    [store]
+  );
+};
+
+export const useAddMessageToTree = () => {
+  const store = useCustomChatStoreApi<ChatMessage>();
+  return useCallback(
+    (message: ChatMessage) => {
+      store.getState().addMessageToTree(message);
+    },
+    [store]
+  );
+};
+
+/** Reactive hook — re-renders when sibling info for `messageId` changes. */
+export function useMessageSiblingInfo(
+  messageId: string
+): MessageSiblingInfo<ChatMessage> | null {
+  return useThreadStore(
+    (state) => {
+      const message = state.allMessages.find((m) => m.id === messageId);
+      if (!message) {
+        return null;
+      }
+      const parentId = message.metadata?.parentMessageId || null;
+      const siblings =
+        (state.childrenMap.get(parentId) as ChatMessage[] | undefined) ?? [];
+      const siblingIndex = siblings.findIndex((s) => s.id === messageId);
+      return { siblings, siblingIndex };
+    },
+    (a, b) => {
+      if (a === null && b === null) {
+        return true;
+      }
+      if (a === null || b === null) {
+        return false;
+      }
+      return (
+        a.siblingIndex === b.siblingIndex &&
+        a.siblings.length === b.siblings.length
+      );
+    }
+  );
+}
+
+export const useSwitchToSibling = () => {
+  const store = useCustomChatStoreApi<ChatMessage>();
+  return useCallback(
+    (messageId: string, direction: "prev" | "next") =>
+      store.getState().switchToSibling(messageId, direction),
     [store]
   );
 };

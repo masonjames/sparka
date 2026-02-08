@@ -79,6 +79,28 @@ export function getDefaultThread<T extends MessageNode>(allMessages: T[]): T[] {
   return buildThreadFromLeaf(allMessages, defaultLeaf.id);
 }
 
+// Build parent->children mapping sorted by createdAt
+export function buildChildrenMap<T extends MessageNode>(
+  allMessages: T[]
+): Map<string | null, T[]> {
+  const map = new Map<string | null, T[]>();
+  for (const message of allMessages) {
+    const parentId = message.metadata?.parentMessageId || null;
+    if (!map.has(parentId)) {
+      map.set(parentId, []);
+    }
+    map.get(parentId)?.push(message);
+  }
+  for (const siblings of map.values()) {
+    siblings.sort(
+      (a, b) =>
+        new Date(a.metadata?.createdAt || new Date()).getTime() -
+        new Date(b.metadata?.createdAt || new Date()).getTime()
+    );
+  }
+  return map;
+}
+
 export function findLeafDfsToRightFromMessageId<T extends MessageNode>(
   childrenMapSorted: Map<string | null, T[]>,
   messageId: string

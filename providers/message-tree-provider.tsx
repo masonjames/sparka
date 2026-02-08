@@ -3,60 +3,38 @@
 import { useChatActions, useChatReset } from "@ai-sdk-tools/store";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
+import { useCallback, useEffect } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   useResetThreadEpoch,
-  useSetMessagesWithEpoch,
-  useThreadEpoch,
+  useSetAllMessages,
+  useSwitchToSibling,
 } from "@/lib/stores/hooks-threads";
-import {
-  buildThreadFromLeaf,
-  findLeafDfsToRightFromMessageId,
-} from "@/lib/thread-utils";
 import { useTRPC } from "@/trpc/react";
 import { useChatId } from "./chat-id-provider";
-
-type MessageSiblingInfo = {
-  siblings: ChatMessage[];
-  siblingIndex: number;
-};
-
-type MessageTreeContextType = {
-  getMessageSiblingInfo: (messageId: string) => MessageSiblingInfo | null;
-  navigateToSibling: (messageId: string, direction: "prev" | "next") => void;
-  threadEpoch: number;
-};
-
-const MessageTreeContext = createContext<MessageTreeContextType | undefined>(
-  undefined
-);
 
 type MessageTreeProviderProps = {
   children: React.ReactNode;
 };
 
+/**
+ * Syncs the server's message tree into the Zustand store and handles
+ * home-page reset. Tree logic (sibling info, thread switching) lives
+ * in the store (with-threads middleware).
+ */
 export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
   const { id, isPersisted, source } = useChatId();
   const isShared = source === "share";
   const pathname = usePathname();
   const trpc = useTRPC();
-  const setMessagesWithEpoch = useSetMessagesWithEpoch();
   const reset = useChatReset();
-  const { stop } = useChatActions<ChatMessage>();
   const { setDataStream } = useDataStream();
-  const threadEpoch = useThreadEpoch();
   const resetThreadEpoch = useResetThreadEpoch();
-  const { artifact, closeArtifact } = useArtifact();
+  const setAllMessages = useSetAllMessages();
 
+  // React Query fetches the full tree from the server and feeds it into the store
   const messagesQuery = useQuery({
     ...(isShared
       ? trpc.chat.getPublicChatMessages.queryOptions({ chatId: id })
@@ -64,7 +42,12 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
     enabled: !!id && isPersisted && pathname !== "/",
   });
 
-  const allMessages = (messagesQuery.data ?? []) as ChatMessage[];
+  // Sync server data → store whenever React Query resolves
+  useEffect(() => {
+    if (messagesQuery.data) {
+      setAllMessages(messagesQuery.data as ChatMessage[]);
+    }
+  }, [messagesQuery.data, setAllMessages]);
 
   useEffect(() => {
     if (!isPersisted && pathname === "/") {
@@ -74,127 +57,44 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
     }
   }, [isPersisted, pathname, reset, setDataStream, resetThreadEpoch]);
 
-  // Build parent->children mapping once
-  const childrenMap = useMemo(() => {
-    const map = new Map<string | null, ChatMessage[]>();
-    for (const message of allMessages) {
-      const parentId = message.metadata?.parentMessageId || null;
+  return children;
+}
 
-      if (!map.has(parentId)) {
-        map.set(parentId, []);
-      }
-      const siblings = map.get(parentId);
-      if (siblings) {
-        siblings.push(message);
-      }
-    }
+/**
+ * Navigate to a sibling thread with side effects (stop stream, close artifact).
+ * Uses the store's switchToSibling for the pure state transition.
+ */
+export function useNavigateToSibling() {
+  const { stop } = useChatActions<ChatMessage>();
+  const { setDataStream } = useDataStream();
+  const { artifact, closeArtifact } = useArtifact();
+  const switchToSibling = useSwitchToSibling();
 
-    // Sort siblings by createdAt
-    for (const siblings of map.values()) {
-      siblings.sort(
-        (a, b) =>
-          new Date(a.metadata?.createdAt || new Date()).getTime() -
-          new Date(b.metadata?.createdAt || new Date()).getTime()
-      );
-    }
-
-    return map;
-  }, [allMessages]);
-
-  const getMessageSiblingInfo = useCallback(
-    (messageId: string): MessageSiblingInfo | null => {
-      const message = allMessages.find((m) => m.id === messageId);
-      if (!message) {
-        return null;
-      }
-
-      const siblings =
-        childrenMap.get(message.metadata?.parentMessageId || null) || [];
-      const siblingIndex = siblings.findIndex((s) => s.id === messageId);
-
-      return {
-        siblings,
-        siblingIndex,
-      };
-    },
-    [allMessages, childrenMap]
-  );
-
-  const navigateToSibling = useCallback(
+  return useCallback(
     (messageId: string, direction: "prev" | "next") => {
-      if (!allMessages.length) {
-        return;
-      }
-      const siblingInfo = getMessageSiblingInfo(messageId);
-      if (!siblingInfo || siblingInfo.siblings.length <= 1) {
-        return;
-      }
-
-      // Thread switch must hard-disconnect the current stream + clear buffered deltas,
-      // otherwise the new DataStreamHandler can replay old deltas after remount.
+      // Hard-disconnect the current stream + clear buffered deltas
       stop?.();
       setDataStream([]);
 
-      const { siblings, siblingIndex } = siblingInfo;
-      const nextIndex =
-        direction === "next"
-          ? (siblingIndex + 1) % siblings.length
-          : (siblingIndex - 1 + siblings.length) % siblings.length;
-
-      const targetSibling = siblings[nextIndex];
-      const leaf = findLeafDfsToRightFromMessageId(
-        childrenMap,
-        targetSibling.id
-      );
-      const newThread = buildThreadFromLeaf(
-        allMessages,
-        leaf ? leaf.id : targetSibling.id
-      );
+      const newThread = switchToSibling(messageId, direction);
 
       // Close artifact if its message is not in the new thread
       if (
+        newThread &&
         artifact.isVisible &&
         artifact.messageId &&
         !newThread.some((m) => m.id === artifact.messageId)
       ) {
         closeArtifact();
       }
-
-      setMessagesWithEpoch(newThread);
     },
     [
-      allMessages,
       artifact.isVisible,
       artifact.messageId,
-      childrenMap,
       closeArtifact,
-      getMessageSiblingInfo,
       setDataStream,
-      setMessagesWithEpoch,
       stop,
+      switchToSibling,
     ]
   );
-
-  const value = useMemo(
-    () => ({
-      getMessageSiblingInfo,
-      navigateToSibling,
-      threadEpoch,
-    }),
-    [getMessageSiblingInfo, navigateToSibling, threadEpoch]
-  );
-
-  return (
-    <MessageTreeContext.Provider value={value}>
-      {children}
-    </MessageTreeContext.Provider>
-  );
-}
-
-export function useMessageTree() {
-  const context = useContext(MessageTreeContext);
-  if (!context) {
-    throw new Error("useMessageTree must be used within MessageTreeProvider");
-  }
-  return context;
 }
