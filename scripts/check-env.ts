@@ -55,7 +55,7 @@ function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
 function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  if (config.gateway === "openrouter") {
+  if (config.models.gateway === "openrouter") {
     if (!env.OPENROUTER_API_KEY) {
       errors.push({
         feature: "aiGateway (openrouter)",

@@ -3,7 +3,7 @@ import type { ImageModel, LanguageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
 import { models as fallbackModels } from "../models.generated";
-import type { GatewayProvider } from "./types";
+import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/openrouter");
 
@@ -116,12 +116,20 @@ export class OpenRouterGateway implements GatewayProvider {
     return null;
   }
 
-  getApiKey(): string | undefined {
+  private getApiKey(): string | undefined {
     return process.env.OPENROUTER_API_KEY;
   }
 
-  getModelsUrl(): string {
+  private getModelsUrl(): string {
     return "https://openrouter.ai/api/v1/models";
+  }
+
+  async fetchModelRecord(): Promise<Record<string, null>> {
+    const models = await this.fetchModels();
+    return Object.fromEntries(models.map((m) => [m.id, null])) as Record<
+      string,
+      null
+    >;
   }
 
   async fetchModels(): Promise<AiGatewayModel[]> {

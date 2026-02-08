@@ -23,7 +23,6 @@ const config: ConfigInput = {
       legalEmail: "legal@chatjs.dev",
     },
   },
-  gateway: "vercel",
   services: {
     hosting: "Vercel",
     aiProviders: [
@@ -76,6 +75,7 @@ const config: ConfigInput = {
     vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
   models: {
+    gateway: "vercel",
     providerOrder: ["openai", "google", "anthropic", "xai"],
     disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
     curatedDefaults: [

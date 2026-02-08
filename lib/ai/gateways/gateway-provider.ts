@@ -1,10 +1,8 @@
 import type { ImageModel, LanguageModel } from "ai";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
 
-export type GatewayType = "vercel" | "openrouter";
-
-export type GatewayProvider = {
-  readonly type: GatewayType;
+export type GatewayProvider<TGateway extends string = string> = {
+  readonly type: TGateway;
 
   /** Create a language model instance from a model ID like "openai/gpt-5-nano" */
   createLanguageModel(modelId: string): LanguageModel;
@@ -14,10 +12,4 @@ export type GatewayProvider = {
 
   /** Fetch the list of available models from the gateway's API */
   fetchModels(): Promise<AiGatewayModel[]>;
-
-  /** Return the API key for this gateway, if configured */
-  getApiKey(): string | undefined;
-
-  /** Return the URL for the models list endpoint */
-  getModelsUrl(): string;
 };

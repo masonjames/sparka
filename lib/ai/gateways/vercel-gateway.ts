@@ -1,3 +1,4 @@
+import type { GatewayModelId } from "@ai-sdk/gateway";
 import { gateway } from "@ai-sdk/gateway";
 import type { ImageModel, LanguageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
@@ -6,7 +7,7 @@ import {
   aiGatewayModelsResponseSchema,
 } from "../ai-gateway-models-schemas";
 import { models as fallbackModels } from "../models.generated";
-import type { GatewayProvider } from "./types";
+import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/vercel");
 
@@ -23,12 +24,20 @@ export class VercelGateway implements GatewayProvider {
     );
   }
 
-  getApiKey(): string | undefined {
+  private getApiKey(): string | undefined {
     return process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   }
 
-  getModelsUrl(): string {
+  private getModelsUrl(): string {
     return "https://ai-gateway.vercel.sh/v1/models";
+  }
+
+  async fetchModelRecord(): Promise<Record<GatewayModelId, null>> {
+    const models = await this.fetchModels();
+    return Object.fromEntries(models.map((m) => [m.id, null])) as Record<
+      GatewayModelId,
+      null
+    >;
   }
 
   async fetchModels(): Promise<AiGatewayModel[]> {

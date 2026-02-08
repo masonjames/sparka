@@ -1,7 +1,7 @@
-/**
- * Model IDs use the "{provider}/{model-name}" format,
- * e.g. "openai/gpt-5-nano", "google/gemini-3-flash".
- * This type is gateway-agnostic.
- */
-export type ModelId = string;
-export type AppModelId = string;
+import type { GatewayModelIdMap, GatewayType } from "./gateways/registry";
+
+/** Runtime model ID — union of all gateway model ID types (resolves to string) */
+export type ModelId = GatewayModelIdMap[GatewayType];
+
+/** App-level model ID (same as ModelId; autocomplete comes from ConfigInput) */
+export type AppModelId = ModelId;

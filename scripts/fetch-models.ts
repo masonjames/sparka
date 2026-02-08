@@ -1,13 +1,8 @@
 import { writeFileSync } from "node:fs";
-import { getActiveGateway } from "../lib/ai/gateways";
+import { getActiveGateway } from "../lib/ai/active-gateway";
 
 async function fetchAndSaveModels() {
   const gateway = getActiveGateway();
-
-  const apiKey = gateway.getApiKey();
-  if (!apiKey) {
-    throw new Error(`No API key configured for gateway '${gateway.type}'`);
-  }
 
   console.log(`Fetching models from '${gateway.type}' gateway...`);
   const models = await gateway.fetchModels();

@@ -12,9 +12,9 @@ import type {
   ImageModelId,
   MultimodalImageModelId,
 } from "../models/image-model-id";
+import { getActiveGateway } from "./active-gateway";
 import type { AppModelId, ModelId } from "./app-models";
 import { getAppModelDefinition } from "./app-models";
-import { getActiveGateway } from "./gateways";
 
 const _telemetryConfig = {
   telemetry: {

@@ -1,65 +1,75 @@
 import { z } from "zod";
-import type { AppModelId } from "@/lib/ai/app-model-id";
+import type {
+  GatewayModelIdMap,
+  GatewayType,
+} from "@/lib/ai/gateways/registry";
 import type { ToolName } from "./ai/types";
 import type { AnyImageModelId } from "./models/image-model-id";
 
 // Helper to create typed model ID schemas
-const appModelId = () => z.custom<AppModelId>();
 const imageModelId = () => z.custom<AnyImageModelId>();
 const toolName = () => z.custom<ToolName>();
 
-export const pricingConfigSchema = z.object({
-  currency: z.string().optional(),
-  free: z
-    .object({
-      name: z.string(),
-      summary: z.string(),
-    })
-    .optional(),
-  pro: z
-    .object({
-      name: z.string(),
-      monthlyPrice: z.number(),
-      summary: z.string(),
-    })
-    .optional(),
-});
+// =====================================================
+// Models config — discriminated union keyed on gateway
+// =====================================================
 
-export const modelsConfigSchema = z
-  .object({
+function gatewayModelId<G extends GatewayType>() {
+  return z.custom<GatewayModelIdMap[G]>((v) => typeof v === "string");
+}
+
+function createModelsSchema<G extends GatewayType>(g: G) {
+  return z.object({
+    gateway: z.literal(g),
     providerOrder: z
       .array(z.string())
       .describe("Provider sort order in model selector"),
     disabledModels: z
-      .array(appModelId())
+      .array(gatewayModelId<G>())
       .describe("Models to hide from all users"),
     curatedDefaults: z
-      .array(appModelId())
+      .array(gatewayModelId<G>())
       .describe("Default models enabled for new users"),
     anonymousModels: z
-      .array(appModelId())
+      .array(gatewayModelId<G>())
       .describe("Models available to anonymous users"),
     defaults: z
       .object({
-        chat: appModelId(),
-        title: appModelId(),
-        pdf: appModelId(),
-        artifact: appModelId(),
-        artifactSuggestion: appModelId(),
-        followupSuggestions: appModelId(),
-        suggestions: appModelId(),
-        polishText: appModelId(),
-        formatSheet: appModelId(),
-        analyzeSheet: appModelId(),
-        codeEdits: appModelId(),
-        chatImageCompatible: appModelId(),
+        chat: gatewayModelId<G>(),
+        title: gatewayModelId<G>(),
+        pdf: gatewayModelId<G>(),
+        artifact: gatewayModelId<G>(),
+        artifactSuggestion: gatewayModelId<G>(),
+        followupSuggestions: gatewayModelId<G>(),
+        suggestions: gatewayModelId<G>(),
+        polishText: gatewayModelId<G>(),
+        formatSheet: gatewayModelId<G>(),
+        analyzeSheet: gatewayModelId<G>(),
+        codeEdits: gatewayModelId<G>(),
+        chatImageCompatible: gatewayModelId<G>(),
         image: imageModelId(),
-        deepResearch: appModelId(),
-        deepResearchFinalReport: appModelId(),
+        deepResearch: gatewayModelId<G>(),
+        deepResearchFinalReport: gatewayModelId<G>(),
       })
       .describe("Default model for each task type"),
-  })
+  });
+}
+
+// Record ensures a compile error if a new gateway is added but not here.
+const gatewaySchemaMap: {
+  [G in GatewayType]: ReturnType<typeof createModelsSchema<G>>;
+} = {
+  vercel: createModelsSchema("vercel"),
+  openrouter: createModelsSchema("openrouter"),
+};
+
+export const modelsConfigSchema = z
+  .discriminatedUnion("gateway", [
+    gatewaySchemaMap.vercel,
+    gatewaySchemaMap.openrouter,
+  ])
   .default({
+    gateway: "vercel",
     providerOrder: ["openai", "google", "anthropic"],
     disabledModels: [],
     curatedDefaults: [
@@ -100,6 +110,23 @@ export const modelsConfigSchema = z
       deepResearchFinalReport: "google/gemini-3-flash",
     },
   });
+
+export const pricingConfigSchema = z.object({
+  currency: z.string().optional(),
+  free: z
+    .object({
+      name: z.string(),
+      summary: z.string(),
+    })
+    .optional(),
+  pro: z
+    .object({
+      name: z.string(),
+      monthlyPrice: z.number(),
+      summary: z.string(),
+    })
+    .optional(),
+});
 
 export const anonymousConfigSchema = z
   .object({
@@ -224,15 +251,7 @@ export const authenticationConfigSchema = z
     vercel: false,
   });
 
-export const gatewaySchema = z
-  .enum(["vercel", "openrouter"])
-  .default("vercel")
-  .describe(
-    "AI gateway backend: 'vercel' for Vercel AI Gateway, 'openrouter' for OpenRouter"
-  );
-
 export const configSchema = z.object({
-  gateway: gatewaySchema,
   githubUrl: z.url().default("https://github.com/your-username/your-repo"),
   appPrefix: z.string().default("chatjs"),
   appName: z.string().default("My AI Chat"),
@@ -241,7 +260,7 @@ export const configSchema = z.object({
     .optional()
     .describe("Browser tab title (defaults to appName)"),
   appDescription: z.string().default("AI chat powered by ChatJS"),
-  appUrl: z.string().url().default("https://your-domain.com"),
+  appUrl: z.url().default("https://your-domain.com"),
 
   organization: z
     .object({
@@ -324,8 +343,40 @@ export type DeepResearchConfig = z.infer<typeof deepResearchConfigSchema>;
 export type IntegrationsConfig = z.infer<typeof integrationsConfigSchema>;
 export type AuthenticationConfig = z.infer<typeof authenticationConfigSchema>;
 
-// Input types (with optionals for fields with defaults)
-export type ConfigInput = z.input<typeof configSchema>;
+// Gateway-aware input types: model IDs narrowed per gateway for autocomplete
+type ZodConfigInput = z.input<typeof configSchema>;
+
+// Use vercel variant as shape reference (all variants share the same structure)
+type ModelsShape = z.input<typeof gatewaySchemaMap.vercel>;
+
+type DefaultGateway = "vercel";
+
+type ModelsInputFor<G extends GatewayType> = {
+  [K in keyof ModelsShape]: K extends "gateway"
+    ? G extends DefaultGateway
+      ? G | undefined
+      : G
+    : K extends "defaults"
+      ? {
+          [D in keyof ModelsShape["defaults"]]: D extends "image"
+            ? ModelsShape["defaults"][D]
+            : GatewayModelIdMap[G];
+        }
+      : K extends "disabledModels" | "curatedDefaults" | "anonymousModels"
+        ? GatewayModelIdMap[G][]
+        : ModelsShape[K];
+};
+
+type ConfigInputForGateway<G extends GatewayType> = Omit<
+  ZodConfigInput,
+  "models"
+> & {
+  models?: ModelsInputFor<G>;
+};
+
+export type ConfigInput = {
+  [G in GatewayType]: ConfigInputForGateway<G>;
+}[GatewayType];
 
 // Apply defaults to partial config
 export function applyDefaults(input: ConfigInput): Config {

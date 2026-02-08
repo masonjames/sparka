@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createModuleLogger } from "@/lib/logger";
+import { getActiveGateway } from "./active-gateway";
 import type { AiGatewayModel } from "./ai-gateway-models-schemas";
-import { getActiveGateway } from "./gateways";
 import type { ModelData } from "./model-data";
 import { toModelData } from "./to-model-data";
 
@@ -10,10 +10,7 @@ const log = createModuleLogger("ai/models");
 async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
   const activeGateway = getActiveGateway();
 
-  log.debug(
-    { gateway: activeGateway.type, url: activeGateway.getModelsUrl() },
-    "Fetching models from gateway"
-  );
+  log.debug({ gateway: activeGateway.type }, "Fetching models from gateway");
 
   try {
     const models = await activeGateway.fetchModels();
