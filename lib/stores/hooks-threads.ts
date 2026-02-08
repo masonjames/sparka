@@ -26,13 +26,6 @@ export const useThreadEpoch = () =>
 export const useThreadInitialMessages = () =>
   useThreadStore((state) => state.threadInitialMessages);
 
-const _useBumpThreadEpoch = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
-  return useCallback(() => {
-    store.getState().bumpThreadEpoch();
-  }, [store]);
-};
-
 export const useResetThreadEpoch = () => {
   const store = useCustomChatStoreApi<ChatMessage>();
   return useCallback(() => {
@@ -78,17 +71,7 @@ export function useMessageSiblingInfo(
   messageId: string
 ): MessageSiblingInfo<ChatMessage> | null {
   return useThreadStore(
-    (state) => {
-      const message = state.allMessages.find((m) => m.id === messageId);
-      if (!message) {
-        return null;
-      }
-      const parentId = message.metadata?.parentMessageId || null;
-      const siblings =
-        (state.childrenMap.get(parentId) as ChatMessage[] | undefined) ?? [];
-      const siblingIndex = siblings.findIndex((s) => s.id === messageId);
-      return { siblings, siblingIndex };
-    },
+    (state) => state.getMessageSiblingInfo(messageId),
     (a, b) => {
       if (a === null && b === null) {
         return true;

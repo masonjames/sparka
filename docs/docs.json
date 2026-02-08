@@ -43,7 +43,8 @@
               "features/attachments",
               "features/mcp",
               "features/canvas",
-              "features/sharing"
+              "features/sharing",
+              "features/branching"
             ]
           },
           {
@@ -74,7 +75,7 @@
           },
           {
             "group": "Roadmap",
-            "pages": ["roadmap/branching", "roadmap/projects"]
+            "pages": ["roadmap/projects"]
           }
         ]
       },

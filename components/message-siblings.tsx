@@ -1,8 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { memo } from "react";
 import { Action } from "@/components/ai-elements/actions";
+import { useNavigateToSibling } from "@/hooks/use-navigate-to-sibling";
 import { useMessageSiblingInfo } from "@/lib/stores/hooks-threads";
-import { useNavigateToSibling } from "@/providers/message-tree-provider";
 import { useSession } from "@/providers/session-provider";
 
 function PureMessageSiblings({

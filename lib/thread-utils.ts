@@ -5,7 +5,6 @@ export type MessageNode = {
     parentMessageId: string | null;
     createdAt: Date;
   };
-  [key: string]: any; // Allow other properties
 };
 
 // Get the default leaf (most recent message by timestamp)

@@ -1,30 +1,24 @@
 "use client";
 
-import { useChatActions, useChatReset } from "@ai-sdk-tools/store";
+import { useChatReset } from "@ai-sdk-tools/store";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
-import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   useResetThreadEpoch,
   useSetAllMessages,
-  useSwitchToSibling,
 } from "@/lib/stores/hooks-threads";
 import { useTRPC } from "@/trpc/react";
 import { useChatId } from "./chat-id-provider";
 
-type MessageTreeProviderProps = {
-  children: React.ReactNode;
-};
-
 /**
- * Syncs the server's message tree into the Zustand store and handles
- * home-page reset. Tree logic (sibling info, thread switching) lives
- * in the store (with-threads middleware).
+ * Renderless component that syncs the server's message tree into the Zustand
+ * store and handles home-page reset. Tree logic (sibling info, thread
+ * switching) lives in the store (with-threads middleware).
  */
-export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
+export function MessageTreeSync() {
   const { id, isPersisted, source } = useChatId();
   const isShared = source === "share";
   const pathname = usePathname();
@@ -57,44 +51,5 @@ export function MessageTreeProvider({ children }: MessageTreeProviderProps) {
     }
   }, [isPersisted, pathname, reset, setDataStream, resetThreadEpoch]);
 
-  return children;
-}
-
-/**
- * Navigate to a sibling thread with side effects (stop stream, close artifact).
- * Uses the store's switchToSibling for the pure state transition.
- */
-export function useNavigateToSibling() {
-  const { stop } = useChatActions<ChatMessage>();
-  const { setDataStream } = useDataStream();
-  const { artifact, closeArtifact } = useArtifact();
-  const switchToSibling = useSwitchToSibling();
-
-  return useCallback(
-    (messageId: string, direction: "prev" | "next") => {
-      // Hard-disconnect the current stream + clear buffered deltas
-      stop?.();
-      setDataStream([]);
-
-      const newThread = switchToSibling(messageId, direction);
-
-      // Close artifact if its message is not in the new thread
-      if (
-        newThread &&
-        artifact.isVisible &&
-        artifact.messageId &&
-        !newThread.some((m) => m.id === artifact.messageId)
-      ) {
-        closeArtifact();
-      }
-    },
-    [
-      artifact.isVisible,
-      artifact.messageId,
-      closeArtifact,
-      setDataStream,
-      stop,
-      switchToSibling,
-    ]
-  );
+  return null;
 }
