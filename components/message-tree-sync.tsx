@@ -11,7 +11,7 @@ import {
   useSetAllMessages,
 } from "@/lib/stores/hooks-threads";
 import { useTRPC } from "@/trpc/react";
-import { useChatId } from "./chat-id-provider";
+import { useChatId } from "../providers/chat-id-provider";
 
 /**
  * Renderless component that syncs the server's message tree into the Zustand

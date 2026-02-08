@@ -11,7 +11,7 @@ import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import { useThreadEpoch } from "@/lib/stores/hooks-threads";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
-import { MessageTreeSync } from "@/providers/message-tree-provider";
+import { MessageTreeSync } from "@/components/message-tree-sync";
 
 function ChatThreadSync({
   id,
