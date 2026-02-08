@@ -3,6 +3,7 @@ import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import type { AppModelId } from "@/lib/ai/app-model-id";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/app-models";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";

@@ -175,7 +175,10 @@ function PureModelSelector({
       chatModels.map((m) => ({
         model: m,
         disabled:
-          isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(m.id),
+          isAnonymous &&
+          !(
+            ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+          ).includes(m.id),
       })),
     [isAnonymous, chatModels]
   );
@@ -233,7 +236,9 @@ function PureModelSelector({
         model: fallbackModel,
         disabled:
           isAnonymous &&
-          !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(fallbackModel.id),
+          !(
+            ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+          ).includes(fallbackModel.id),
       } satisfies ModelItem;
     }
 

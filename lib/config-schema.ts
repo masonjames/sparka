@@ -85,23 +85,21 @@ export const modelsConfigSchema = z
       "openai/gpt-5-mini",
       "openai/gpt-5.2",
       "openai/gpt-5.2-chat-latest",
-      "openai/gpt-5.2-chat-latest-reasoning",
+      
       // Google
       "google/gemini-2.5-flash-lite",
       "google/gemini-3-flash",
       "google/gemini-3-pro-preview",
       // Anthropic
       "anthropic/claude-sonnet-4.5",
-      "anthropic/claude-sonnet-4.5-reasoning",
       "anthropic/claude-opus-4.5",
       // xAI
       "xai/grok-4",
-      "xai/grok-4-reasoning",
     ],
     anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
     defaults: {
-      chat: "gpt-5-mini",
-      title: "gpt-5-nano",
+      chat: "openai/gpt-5-mini",
+      title: "openai/gpt-5-nano",
       pdf: "openai/gpt-5-mini",
       artifact: "openai/gpt-5-nano",
       artifactSuggestion: "openai/gpt-5-mini",
