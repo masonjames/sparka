@@ -5,7 +5,6 @@ export type MessageNode = {
     parentMessageId: string | null;
     createdAt: Date;
   };
-  [key: string]: any; // Allow other properties
 };
 
 // Get the default leaf (most recent message by timestamp)
@@ -19,8 +18,8 @@ function getDefaultLeafMessage<T extends MessageNode>(
   // Sort by createdAt descending and return the first one
   const sorted = [...allMessages].sort(
     (a, b) =>
-      new Date(b.metadata?.createdAt || new Date()).getTime() -
-      new Date(a.metadata?.createdAt || new Date()).getTime()
+      (b.metadata?.createdAt?.getTime() ?? 0) -
+      (a.metadata?.createdAt?.getTime() ?? 0)
   );
 
   return sorted[0];
@@ -77,6 +76,28 @@ export function getDefaultThread<T extends MessageNode>(allMessages: T[]): T[] {
   }
 
   return buildThreadFromLeaf(allMessages, defaultLeaf.id);
+}
+
+// Build parent->children mapping sorted by createdAt
+export function buildChildrenMap<T extends MessageNode>(
+  allMessages: T[]
+): Map<string | null, T[]> {
+  const map = new Map<string | null, T[]>();
+  for (const message of allMessages) {
+    const parentId = message.metadata?.parentMessageId || null;
+    if (!map.has(parentId)) {
+      map.set(parentId, []);
+    }
+    map.get(parentId)?.push(message);
+  }
+  for (const siblings of map.values()) {
+    siblings.sort(
+      (a, b) =>
+        (a.metadata?.createdAt?.getTime() ?? 0) -
+        (b.metadata?.createdAt?.getTime() ?? 0)
+    );
+  }
+  return map;
 }
 
 export function findLeafDfsToRightFromMessageId<T extends MessageNode>(

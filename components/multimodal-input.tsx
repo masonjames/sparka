@@ -33,6 +33,7 @@ import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
+import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
@@ -99,6 +100,7 @@ function PureMultimodalInput({
   const trpc = useTRPC();
   const isMobile = useIsMobile();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
+  const addMessageToTree = useAddMessageToTree();
   useChatId();
   const {
     setMessages,
@@ -353,6 +355,7 @@ function PureMultimodalInput({
 
     onSendMessage?.(message);
 
+    addMessageToTree(message);
     saveChatMessage({ message, chatId });
 
     sendMessage(message);
@@ -362,6 +365,7 @@ function PureMultimodalInput({
       editorRef.current?.focus();
     }
   }, [
+    addMessageToTree,
     attachments,
     isMobile,
     chatId,
