@@ -18,7 +18,6 @@ import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
-import { isMultimodalImageModel } from "@/lib/models/image-model-id";
 import type { StreamWriter } from "../types";
 import { deepResearch } from "./deep-research/deep-research";
 import type { ToolSession } from "./types";
@@ -44,9 +43,6 @@ export function getTools({
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
 }) {
-  const imageToolModelId = isMultimodalImageModel(selectedModel)
-    ? selectedModel
-    : undefined;
   const documentToolProps = {
     session,
     messageId,
@@ -85,7 +81,7 @@ export function getTools({
           generateImage: generateImageTool({
             attachments,
             lastGeneratedImage,
-            modelId: imageToolModelId,
+            selectedModel,
             costAccumulator,
           }),
         }

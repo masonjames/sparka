@@ -1,4 +1,5 @@
 import type { GatewayProvider as GatewayProviderBase } from "./gateway-provider";
+import { OpenAICompatibleGateway } from "./openai-compatible-gateway";
 import { OpenAIGateway } from "./openai-gateway";
 import { OpenRouterGateway } from "./openrouter-gateway";
 import { VercelGateway } from "./vercel-gateway";
@@ -7,6 +8,7 @@ export const gatewayRegistry = {
   vercel: () => new VercelGateway(),
   openrouter: () => new OpenRouterGateway(),
   openai: () => new OpenAIGateway(),
+  "openai-compatible": () => new OpenAICompatibleGateway(),
 } as const satisfies Record<string, () => GatewayProviderBase>;
 
 export type GatewayProvider = GatewayProviderBase<GatewayType>;
@@ -27,4 +29,9 @@ type InferImageModelId<T extends GatewayType> = Parameters<
 
 export type GatewayImageModelIdMap = {
   [K in GatewayType]: InferImageModelId<K>;
+};
+
+/** Union of dedicated image model IDs and language model IDs that can produce images */
+export type GatewayAnyImageModelIdMap = {
+  [K in GatewayType]: InferImageModelId<K> | InferLanguageModelId<K>;
 };

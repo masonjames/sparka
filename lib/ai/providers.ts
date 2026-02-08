@@ -8,20 +8,10 @@ import {
   type LanguageModelMiddleware,
   wrapLanguageModel,
 } from "ai";
-import type {
-  ImageModelId,
-  MultimodalImageModelId,
-} from "../models/image-model-id";
+import type { ImageModelId } from "../models/image-model-id";
 import { getActiveGateway } from "./active-gateway";
 import type { AppModelId, ModelId } from "./app-models";
 import { getAppModelDefinition } from "./app-models";
-
-const _telemetryConfig = {
-  telemetry: {
-    isEnabled: true,
-    functionId: "get-language-model",
-  },
-};
 
 export const getLanguageModel = async (modelId: ModelId) => {
   const model = await getAppModelDefinition(modelId);
@@ -62,7 +52,7 @@ export const getImageModel = (modelId: ImageModelId) => {
 };
 
 // Get a multimodal language model that can generate images via generateText
-export const getMultimodalImageModel = (modelId: MultimodalImageModelId) =>
+export const getMultimodalImageModel = (modelId: string) =>
   getActiveGateway().createLanguageModel(modelId);
 
 // Model aliases removed - use getLanguageModel directly with specific model IDs

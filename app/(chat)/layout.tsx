@@ -3,7 +3,6 @@ import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import type { AppModelId } from "@/lib/ai/app-model-id";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/app-models";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
@@ -24,7 +23,7 @@ export default async function ChatLayout({
   const session = await auth.api.getSession({ headers: await headers() });
   const isCollapsed = cookieStore.get("sidebar:state")?.value !== "true";
 
-  const cookieModel = cookieStore.get("chat-model")?.value as AppModelId;
+  const cookieModel = cookieStore.get("chat-model")?.value;
   const isAnonymous = !session?.user;
 
   // Always fetch chat models - needed for ChatModelsProvider and cookie validation
@@ -40,9 +39,9 @@ export default async function ChatLayout({
       defaultModel = DEFAULT_CHAT_MODEL;
     } else if (isAnonymous) {
       // For anonymous users, also check if the model is in their allowed list
-      const isModelAvailable = ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(
-        cookieModel as (typeof ANONYMOUS_LIMITS.AVAILABLE_MODELS)[number]
-      );
+      const isModelAvailable = (
+        ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+      ).includes(cookieModel);
       if (!isModelAvailable) {
         defaultModel = DEFAULT_CHAT_MODEL;
       }

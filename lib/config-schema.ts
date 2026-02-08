@@ -65,6 +65,7 @@ const gatewaySchemaMap: {
   vercel: createModelsSchema("vercel"),
   openrouter: createModelsSchema("openrouter"),
   openai: createModelsSchema("openai"),
+  "openai-compatible": createModelsSchema("openai-compatible"),
 };
 
 export const modelsConfigSchema = z
@@ -72,9 +73,10 @@ export const modelsConfigSchema = z
     gatewaySchemaMap.vercel,
     gatewaySchemaMap.openrouter,
     gatewaySchemaMap.openai,
+    gatewaySchemaMap["openai-compatible"],
   ])
   .default({
-    gateway: "openai",
+    gateway: "vercel",
     providerOrder: ["openai", "google", "anthropic"],
     disabledModels: [],
     curatedDefaults: [

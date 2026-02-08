@@ -22,13 +22,15 @@ export const env = createEnv({
     AI_GATEWAY_API_KEY: z.string().optional(),
     VERCEL_OIDC_TOKEN: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
+    OPENAI_COMPATIBLE_BASE_URL: z.string().url().optional(),
+    OPENAI_COMPATIBLE_API_KEY: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
 
     // Optional cleanup cron job secret
     CRON_SECRET: z.string().optional(),
 
     // Optional features (enable in chat.config.ts)
     REDIS_URL: z.string().optional(),
-    OPENAI_API_KEY: z.string().optional(),
     TAVILY_API_KEY: z.string().optional(),
     EXA_API_KEY: z.string().optional(),
     FIRECRAWL_API_KEY: z.string().optional(),

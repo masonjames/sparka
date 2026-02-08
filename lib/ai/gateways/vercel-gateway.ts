@@ -1,4 +1,3 @@
-import type { GatewayModelId } from "@ai-sdk/gateway";
 import { gateway } from "@ai-sdk/gateway";
 import type { ImageModel, LanguageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
@@ -8,17 +7,22 @@ import {
 } from "../ai-gateway-models-schemas";
 import { models as fallbackModels } from "../models.generated";
 import type { GatewayProvider } from "./gateway-provider";
+import type { StrictLiterals } from "./provider-types";
 
 const log = createModuleLogger("ai/gateways/vercel");
 
 type VercelImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
+type VercelLanguageModelId = StrictLiterals<
+  Parameters<(typeof gateway)["languageModel"]>[0]
+>;
 
 export class VercelGateway
-  implements GatewayProvider<"vercel", GatewayModelId, VercelImageModelId>
+  implements
+    GatewayProvider<"vercel", VercelLanguageModelId, VercelImageModelId>
 {
   readonly type = "vercel" as const;
 
-  createLanguageModel(modelId: GatewayModelId): LanguageModel {
+  createLanguageModel(modelId: VercelLanguageModelId): LanguageModel {
     return gateway(modelId);
   }
 

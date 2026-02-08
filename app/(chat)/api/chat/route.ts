@@ -141,8 +141,8 @@ async function handleAnonymousSession({
   }
 
   if (
-    !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(
-      selectedModelId as (typeof ANONYMOUS_LIMITS.AVAILABLE_MODELS)[number]
+    !(ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]).includes(
+      selectedModelId
     )
   ) {
     log.warn("Model not available for anonymous users");

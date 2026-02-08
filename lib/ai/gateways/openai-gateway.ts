@@ -13,8 +13,12 @@ import type {
 
 const log = createModuleLogger("ai/gateways/openai");
 
-type OpenaiLanguageModelId = StrictLiterals<ExtractModelIdFromProvider<typeof createOpenAI>>;
-type OpenaiImageModelId = StrictLiterals<ExtractImageModelIdFromProvider<typeof createOpenAI>>;
+type OpenaiLanguageModelId = StrictLiterals<
+  ExtractModelIdFromProvider<typeof createOpenAI>
+>;
+type OpenaiImageModelId = StrictLiterals<
+  ExtractImageModelIdFromProvider<typeof createOpenAI>
+>;
 
 type OpenAIModelResponse = {
   id: string;
@@ -28,7 +32,8 @@ function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
     id: model.id,
     object: "model",
     created: model.created ?? 0,
-    owned_by: model.owned_by ?? "openai",
+    owned_by:
+      (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
     name: model.id,
     description: "",
     context_window: 0,
@@ -39,7 +44,8 @@ function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
 }
 
 export class OpenAIGateway
-  implements GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId>
+  implements
+    GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId>
 {
   readonly type = "openai" as const;
 

@@ -95,7 +95,6 @@ function PureCommandItem({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const [provider] = model.id.split("/");
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
     () =>
@@ -119,11 +118,9 @@ function PureCommandItem({
       value={searchValue}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        {provider && (
-          <div className="shrink-0">
-            <ModelSelectorLogo provider={provider} />
-          </div>
-        )}
+        <div className="shrink-0">
+          <ModelSelectorLogo modelId={model.id} />
+        </div>
         <span className="flex items-center gap-1.5 truncate font-medium text-sm">
           {model.name}
           {model.reasoning && reasoningConfig && (
@@ -242,9 +239,6 @@ function PureModelSelector({
 
     return null;
   }, [models, allModels, optimisticModelId, isAnonymous]);
-  const selectedProvider = selectedItem
-    ? selectedItem.model.id.split("/")[0]
-    : null;
   const reasoningConfig = useMemo(
     () => getEnabledFeatures().find((f) => f.key === "reasoning"),
     []
@@ -276,9 +270,9 @@ function PureModelSelector({
           variant="ghost"
         >
           <div className="flex items-center gap-2">
-            {selectedProvider && (
+            {selectedItem && (
               <div className="shrink-0">
-                <ModelSelectorLogo provider={selectedProvider} />
+                <ModelSelectorLogo modelId={selectedItem.model.id} />
               </div>
             )}
             <p className="inline-flex items-center gap-1.5 truncate">
