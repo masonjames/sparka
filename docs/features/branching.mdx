@@ -57,6 +57,6 @@ A `withThreads` middleware wraps the base chat store and adds:
 - `switchToSibling` - finds the target sibling, walks to its rightmost leaf, builds the new thread, and swaps it in
 - `threadEpoch` - a counter that bumps on thread switches, used as a React key to remount `useChat`
 
-### Server Sync (`providers/message-tree-provider.tsx`)
+### Server Sync (`components/message-tree-sync.tsx`)
 
 `MessageTreeSync` is a renderless component that fetches the full message tree from the server via React Query and feeds it into the Zustand store with `setAllMessages`. It also handles resetting state when navigating to the home page.
