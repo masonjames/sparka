@@ -1,13 +1,12 @@
 import { z } from "zod";
 import type {
+  GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
 } from "@/lib/ai/gateways/registry";
 import type { ToolName } from "./ai/types";
-import type { AnyImageModelId } from "./models/image-model-id";
 
 // Helper to create typed model ID schemas
-const imageModelId = () => z.custom<AnyImageModelId>();
 const toolName = () => z.custom<ToolName>();
 
 // =====================================================
@@ -16,6 +15,10 @@ const toolName = () => z.custom<ToolName>();
 
 function gatewayModelId<G extends GatewayType>() {
   return z.custom<GatewayModelIdMap[G]>((v) => typeof v === "string");
+}
+
+function gatewayImageModelId<G extends GatewayType>() {
+  return z.custom<GatewayImageModelIdMap[G]>((v) => typeof v === "string");
 }
 
 function createModelsSchema<G extends GatewayType>(g: G) {
@@ -47,7 +50,7 @@ function createModelsSchema<G extends GatewayType>(g: G) {
         analyzeSheet: gatewayModelId<G>(),
         codeEdits: gatewayModelId<G>(),
         chatImageCompatible: gatewayModelId<G>(),
-        image: imageModelId(),
+        image: gatewayImageModelId<G>(),
         deepResearch: gatewayModelId<G>(),
         deepResearchFinalReport: gatewayModelId<G>(),
       })
@@ -61,15 +64,17 @@ const gatewaySchemaMap: {
 } = {
   vercel: createModelsSchema("vercel"),
   openrouter: createModelsSchema("openrouter"),
+  openai: createModelsSchema("openai"),
 };
 
 export const modelsConfigSchema = z
   .discriminatedUnion("gateway", [
     gatewaySchemaMap.vercel,
     gatewaySchemaMap.openrouter,
+    gatewaySchemaMap.openai,
   ])
   .default({
-    gateway: "vercel",
+    gateway: "openai",
     providerOrder: ["openai", "google", "anthropic"],
     disabledModels: [],
     curatedDefaults: [
@@ -93,8 +98,8 @@ export const modelsConfigSchema = z
     ],
     anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
     defaults: {
-      chat: "openai/gpt-5-nano",
-      title: "google/gemini-2.5-flash-lite",
+      chat: "gpt-5-mini",
+      title: "gpt-5-nano",
       pdf: "openai/gpt-5-mini",
       artifact: "openai/gpt-5-nano",
       artifactSuggestion: "openai/gpt-5-mini",
@@ -359,7 +364,7 @@ type ModelsInputFor<G extends GatewayType> = {
     : K extends "defaults"
       ? {
           [D in keyof ModelsShape["defaults"]]: D extends "image"
-            ? ModelsShape["defaults"][D]
+            ? GatewayImageModelIdMap[G]
             : GatewayModelIdMap[G];
         }
       : K extends "disabledModels" | "curatedDefaults" | "anonymousModels"

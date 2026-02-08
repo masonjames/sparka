@@ -11,8 +11,10 @@ import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/vercel");
 
+type VercelImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
+
 export class VercelGateway
-  implements GatewayProvider<"vercel", GatewayModelId>
+  implements GatewayProvider<"vercel", GatewayModelId, VercelImageModelId>
 {
   readonly type = "vercel" as const;
 
@@ -20,10 +22,8 @@ export class VercelGateway
     return gateway(modelId);
   }
 
-  createImageModel(modelId: string): ImageModel {
-    return gateway.imageModel(
-      modelId as Parameters<(typeof gateway)["imageModel"]>[0]
-    );
+  createImageModel(modelId: VercelImageModelId): ImageModel {
+    return gateway.imageModel(modelId);
   }
 
   private getApiKey(): string | undefined {

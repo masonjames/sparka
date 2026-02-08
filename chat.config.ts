@@ -75,7 +75,7 @@ const config: ConfigInput = {
     vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
   models: {
-    gateway: "vercel",
+    gateway: "openai",
     providerOrder: ["openai", "google", "anthropic", "xai"],
     disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
     curatedDefaults: [
@@ -104,13 +104,13 @@ const config: ConfigInput = {
       "anthropic/claude-haiku-4.5",
     ],
     defaults: {
-      chat: "openai/gpt-5-nano",
-      title: "google/gemini-2.5-flash-lite",
+      chat: "gpt-5-mini",
+      title: "gpt-5-nano",
       pdf: "openai/gpt-5-mini",
       artifact: "openai/gpt-5-nano",
       artifactSuggestion: "openai/gpt-5-mini",
-      followupSuggestions: "google/gemini-2.5-flash-lite",
-      suggestions: "openai/gpt-5-mini",
+      followupSuggestions: "gpt-5-nano",
+      suggestions: "gpt-5-mini",
       polishText: "openai/gpt-5-mini",
       formatSheet: "openai/gpt-5-mini",
       analyzeSheet: "openai/gpt-5-mini",

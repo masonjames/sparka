@@ -4,6 +4,7 @@ import type { AiGatewayModel } from "../ai-gateway-models-schemas";
 export type GatewayProvider<
   TGateway extends string = string,
   TModelId extends string = string,
+  TImageModelId extends string = string,
 > = {
   readonly type: TGateway;
 
@@ -11,7 +12,7 @@ export type GatewayProvider<
   createLanguageModel(modelId: TModelId): LanguageModel;
 
   /** Create a dedicated image model instance, or null if unsupported */
-  createImageModel(modelId: string): ImageModel | null;
+  createImageModel(modelId: TImageModelId): ImageModel | null;
 
   /** Fetch the list of available models from the gateway's API */
   fetchModels(): Promise<AiGatewayModel[]>;

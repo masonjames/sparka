@@ -94,7 +94,9 @@ function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
   };
 }
 
-export class OpenRouterGateway implements GatewayProvider {
+export class OpenRouterGateway
+  implements GatewayProvider<"openrouter", string, string>
+{
   readonly type = "openrouter" as const;
 
   private getProvider() {

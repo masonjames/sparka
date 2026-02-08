@@ -55,18 +55,31 @@ function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
 function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  if (config.models.gateway === "openrouter") {
-    if (!env.OPENROUTER_API_KEY) {
-      errors.push({
-        feature: "aiGateway (openrouter)",
-        missing: ["OPENROUTER_API_KEY"],
-      });
-    }
-  } else if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
-    errors.push({
-      feature: "aiGateway (vercel)",
-      missing: ["AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN"],
-    });
+  switch (config.models.gateway) {
+    case "openrouter":
+      if (!env.OPENROUTER_API_KEY) {
+        errors.push({
+          feature: "aiGateway (openrouter)",
+          missing: ["OPENROUTER_API_KEY"],
+        });
+      }
+      break;
+    case "openai":
+      if (!env.OPENAI_API_KEY) {
+        errors.push({
+          feature: "aiGateway (openai)",
+          missing: ["OPENAI_API_KEY"],
+        });
+      }
+      break;
+    case "vercel":
+      if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
+        errors.push({
+          feature: "aiGateway (vercel)",
+          missing: ["AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN"],
+        });
+      }
+      break;
   }
 
   errors.push(...validateSearchApi(env));
