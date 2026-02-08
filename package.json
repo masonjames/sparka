@@ -37,6 +37,7 @@
     "test:playwright": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
+    "docs:links": "cd docs && bunx mintlify@latest broken-links",
     "ai:devtools": "bunx @ai-sdk/devtools",
     "hooks:enable": "husky",
     "hooks:disable": "git config core.hooksPath .git/hooks",
