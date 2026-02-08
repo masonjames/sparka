@@ -10,10 +10,10 @@ export const gatewayRegistry = {
 
 export type GatewayProvider = GatewayProviderBase<GatewayType>;
 export type GatewayType = keyof typeof gatewayRegistry;
-/** Infer model ID type from a gateway's `fetchModelRecord` return type */
-type InferModelId<T extends GatewayType> = keyof Awaited<
-  ReturnType<ReturnType<(typeof gatewayRegistry)[T]>["fetchModelRecord"]>
->;
+/** Infer model ID type from a gateway's `createLanguageModel` parameter */
+type InferModelId<T extends GatewayType> = Parameters<
+  ReturnType<(typeof gatewayRegistry)[T]>["createLanguageModel"]
+>[0];
 
 export type GatewayModelIdMap = {
   [K in GatewayType]: InferModelId<K>;

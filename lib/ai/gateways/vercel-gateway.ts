@@ -11,11 +11,13 @@ import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/vercel");
 
-export class VercelGateway implements GatewayProvider {
+export class VercelGateway
+  implements GatewayProvider<"vercel", GatewayModelId>
+{
   readonly type = "vercel" as const;
 
-  createLanguageModel(modelId: string): LanguageModel {
-    return gateway(modelId as Parameters<typeof gateway>[0]);
+  createLanguageModel(modelId: GatewayModelId): LanguageModel {
+    return gateway(modelId);
   }
 
   createImageModel(modelId: string): ImageModel {
@@ -30,14 +32,6 @@ export class VercelGateway implements GatewayProvider {
 
   private getModelsUrl(): string {
     return "https://ai-gateway.vercel.sh/v1/models";
-  }
-
-  async fetchModelRecord(): Promise<Record<GatewayModelId, null>> {
-    const models = await this.fetchModels();
-    return Object.fromEntries(models.map((m) => [m.id, null])) as Record<
-      GatewayModelId,
-      null
-    >;
   }
 
   async fetchModels(): Promise<AiGatewayModel[]> {

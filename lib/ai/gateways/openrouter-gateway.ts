@@ -124,14 +124,6 @@ export class OpenRouterGateway implements GatewayProvider {
     return "https://openrouter.ai/api/v1/models";
   }
 
-  async fetchModelRecord(): Promise<Record<string, null>> {
-    const models = await this.fetchModels();
-    return Object.fromEntries(models.map((m) => [m.id, null])) as Record<
-      string,
-      null
-    >;
-  }
-
   async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
