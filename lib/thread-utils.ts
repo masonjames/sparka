@@ -7,6 +7,13 @@ export type MessageNode = {
   };
 };
 
+/** Safely extract a numeric timestamp from a Date object or ISO string. */
+function toTimestamp(value: Date | string | undefined | null): number {
+  if (!value) return 0;
+  if (value instanceof Date) return value.getTime();
+  return new Date(value).getTime();
+}
+
 // Get the default leaf (most recent message by timestamp)
 function getDefaultLeafMessage<T extends MessageNode>(
   allMessages: T[]
@@ -18,8 +25,7 @@ function getDefaultLeafMessage<T extends MessageNode>(
   // Sort by createdAt descending and return the first one
   const sorted = [...allMessages].sort(
     (a, b) =>
-      (b.metadata?.createdAt?.getTime() ?? 0) -
-      (a.metadata?.createdAt?.getTime() ?? 0)
+      toTimestamp(b.metadata?.createdAt) - toTimestamp(a.metadata?.createdAt)
   );
 
   return sorted[0];
@@ -93,8 +99,7 @@ export function buildChildrenMap<T extends MessageNode>(
   for (const siblings of map.values()) {
     siblings.sort(
       (a, b) =>
-        (a.metadata?.createdAt?.getTime() ?? 0) -
-        (b.metadata?.createdAt?.getTime() ?? 0)
+        toTimestamp(a.metadata?.createdAt) - toTimestamp(b.metadata?.createdAt)
     );
   }
   return map;
