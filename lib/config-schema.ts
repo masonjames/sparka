@@ -84,7 +84,7 @@ export const modelsConfigSchema = z
       "openai/gpt-5-nano",
       "openai/gpt-5-mini",
       "openai/gpt-5.2",
-      "openai/gpt-5.2-chat-latest",
+      "openai/gpt-5.2-chat",
       
       // Google
       "google/gemini-2.5-flash-lite",
