@@ -1,0 +1,78 @@
+---
+title: "OpenAI Gateway"
+description: "Connect directly to the OpenAI API"
+---
+
+The OpenAI gateway connects ChatJS directly to the [OpenAI API](https://platform.openai.com/docs/api-reference) using the `@ai-sdk/openai` provider SDK. Use this when you only need OpenAI models and want the simplest setup with type-safe model IDs.
+
+## Setup
+
+1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Add to `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
+3. Set the gateway in your config:
+
+```typescript title="chat.config.ts"
+const config: ConfigInput = {
+  models: {
+    gateway: "openai",
+    defaults: {
+      chat: "gpt-5-mini",
+      title: "gpt-5-nano",
+      // ...
+    },
+    // ...
+  },
+};
+```
+
+## Authentication
+
+| Variable | Description |
+|----------|-------------|
+| `OPENAI_API_KEY` | Required. Your OpenAI API key |
+
+Without the key, the app falls back to the static model snapshot in `models.generated.ts` and cannot make API calls.
+
+## Available Models
+
+Models are fetched at runtime from `https://api.openai.com/v1/models` and cached for 1 hour. This returns all models available to your API key, including GPT, DALL-E, and embedding models.
+
+## Model IDs
+
+Unlike the Vercel and OpenRouter gateways which use `provider/model` format, the OpenAI gateway uses bare model IDs since all models come from OpenAI:
+
+- `gpt-5-mini`
+- `gpt-5-nano`
+- `gpt-4o`
+- `o3-mini`
+
+The gateway provides **type-safe model IDs** extracted from the `@ai-sdk/openai` SDK, giving you autocomplete in `chat.config.ts`.
+
+## Image Generation
+
+The OpenAI gateway supports dedicated image models through `createImageModel()`:
+
+- `gpt-image-1`
+- `gpt-image-1.5`
+- `dall-e-3`
+
+This enables the built-in [Image Generation](/features/image-generation) feature.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/ai/gateways/openai-gateway.ts` | Gateway implementation |
+| `lib/ai/gateways/gateway-provider.ts` | `GatewayProvider` interface |
+| `lib/ai/gateways/registry.ts` | Gateway registry and resolution |
+
+## Related
+
+- [Gateways Overview](/gateways/overview) for the gateway system architecture
+- [Multi-Model Support](/core/multi-model) for model configuration
+- [Vercel Gateway](/gateways/vercel) for multi-provider access via a single key

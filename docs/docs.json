@@ -29,8 +29,6 @@
               "core/configuration",
               "core/authentication",
               "core/multi-model",
-              "core/vercel-gateway",
-              "core/openrouter-gateway",
               "core/syntax-highlighting"
             ]
           },
@@ -56,6 +54,16 @@
               "customization/branding",
               "customization/models",
               "customization/prompts"
+            ]
+          },
+              {
+            "group": "Gateways",
+            "pages": [
+              "gateways/overview",
+              "gateways/vercel",
+              "gateways/openrouter",
+              "gateways/openai",
+              "gateways/openai-compatible"
             ]
           },
           {

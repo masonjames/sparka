@@ -3,12 +3,14 @@ title: "Multi-Model Support"
 description: "Access hundreds of AI models through a pluggable gateway abstraction"
 ---
 
-ChatJS provides access to hundreds of models from multiple providers through a pluggable gateway system. Set `gateway` in `chat.config.ts` to choose your backend:
+ChatJS provides access to hundreds of models from multiple providers through a pluggable [gateway system](/gateways/overview). Set `gateway` in `chat.config.ts` to choose your backend:
 
 | Gateway | Models | Setup |
 |---------|--------|-------|
-| [Vercel AI Gateway](/core/vercel-gateway) (default) | 120+ | `AI_GATEWAY_API_KEY` |
-| [OpenRouter](/core/openrouter-gateway) | Hundreds | `OPENROUTER_API_KEY` |
+| [Vercel AI Gateway](/gateways/vercel) (default) | 120+ | `AI_GATEWAY_API_KEY` |
+| [OpenRouter](/gateways/openrouter) | Hundreds | `OPENROUTER_API_KEY` |
+| [OpenAI](/gateways/openai) | OpenAI only | `OPENAI_API_KEY` |
+| [OpenAI Compatible](/gateways/openai-compatible) | Varies | `OPENAI_COMPATIBLE_BASE_URL` |
 
 ## Model Registry Architecture
 
@@ -112,15 +114,15 @@ Users configure their model preferences at `/settings/models`. This page lets us
 
 ## Environment Variables
 
-The active gateway handles authentication with all providers. You do not need individual API keys for OpenAI, Anthropic, Google, etc. Instead, you authenticate with the gateway:
+The active gateway handles authentication with all providers. You authenticate with the gateway, not with individual providers:
 
-**Vercel AI Gateway** (default):
-- `VERCEL_OIDC_TOKEN` (automatically provided on Vercel deployments)
-- `AI_GATEWAY_API_KEY` (for non-Vercel deployments, obtain from [Vercel AI Gateway](https://vercel.com/docs/ai-gateway))
-
-**OpenRouter**:
-- `OPENROUTER_API_KEY` (obtain from [OpenRouter](https://openrouter.ai/keys))
+| Gateway | Required Variable |
+|---------|-------------------|
+| [Vercel](/gateways/vercel) (default) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` (auto on Vercel) |
+| [OpenRouter](/gateways/openrouter) | `OPENROUTER_API_KEY` |
+| [OpenAI](/gateways/openai) | `OPENAI_API_KEY` |
+| [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL` + optional `OPENAI_COMPATIBLE_API_KEY` |
 
 Without the required key for your active gateway, the app uses the fallback model list and cannot make API calls to providers.
 
-See [Vercel Gateway](/core/vercel-gateway) and [OpenRouter Gateway](/core/openrouter-gateway) for detailed setup.
+See [Gateways](/gateways/overview) for detailed setup instructions for each gateway.

@@ -145,6 +145,16 @@ export function getDefaultEnabledModels(
 ): Set<AppModelId> {
   const enabled = new Set<AppModelId>(config.models.curatedDefaults);
 
+  // If a curated default has a -reasoning variant, enable it too
+  for (const model of appModels) {
+    if (
+      model.id.endsWith("-reasoning") &&
+      enabled.has(model.apiModelId)
+    ) {
+      enabled.add(model.id);
+    }
+  }
+
   // Add any new models from the API that aren't in our generated snapshot
   for (const model of appModels) {
     if (!KNOWN_MODEL_IDS.has(model.apiModelId)) {

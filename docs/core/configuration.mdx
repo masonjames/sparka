@@ -23,7 +23,10 @@ const config: ConfigInput = {
     },
   },
 
-  gateway: "vercel", // or "openrouter"
+  models: {
+    gateway: "vercel", // "vercel" | "openrouter" | "openai" | "openai-compatible"
+    // ...
+  },
 
   integrations: {
     sandbox: true,         // Code execution (Python/JS)
@@ -46,16 +49,23 @@ export default config;
 
 ## AI Gateway
 
-The `gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
+The `models.gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
 
 | Value | Backend | Env Dependency |
 |-------|---------|----------------|
-| `"vercel"` (default) | [Vercel AI Gateway](/core/vercel-gateway) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
-| `"openrouter"` | [OpenRouter](/core/openrouter-gateway) | `OPENROUTER_API_KEY` |
+| `"vercel"` (default) | [Vercel AI Gateway](/gateways/vercel) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
+| `"openrouter"` | [OpenRouter](/gateways/openrouter) | `OPENROUTER_API_KEY` |
+| `"openai"` | [OpenAI](/gateways/openai) | `OPENAI_API_KEY` |
+| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL` |
 
 ```typescript
-gateway: "openrouter", // Switch to OpenRouter
+models: {
+  gateway: "openrouter", // Switch to OpenRouter
+  // ...
+},
 ```
+
+See [Gateways](/gateways/overview) for detailed setup and comparison.
 
 ## Integrations
 
@@ -128,8 +138,7 @@ Full type reference:
 
 ```typescript
 export type Config = {
-  /** AI gateway backend */
-  gateway: "vercel" | "openrouter";
+  models: ModelsConfig; // includes gateway: "vercel" | "openrouter" | "openai" | "openai-compatible"
   githubUrl: string;
   appPrefix: string;
   appName: string;
@@ -171,7 +180,6 @@ export type Config = {
     github: boolean;
     vercel: boolean;
   };
-  models: ModelsConfig;
   anonymous: AnonymousConfig;
   attachments: AttachmentsConfig;
 };
