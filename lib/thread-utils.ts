@@ -9,8 +9,12 @@ export type MessageNode = {
 
 /** Safely extract a numeric timestamp from a Date object or ISO string. */
 function toTimestamp(value: Date | string | undefined | null): number {
-  if (!value) return 0;
-  if (value instanceof Date) return value.getTime();
+  if (!value) {
+    return 0;
+  }
+  if (value instanceof Date) {
+    return value.getTime();
+  }
   return new Date(value).getTime();
 }
 
