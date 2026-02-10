@@ -1052,11 +1052,39 @@ function getGeneratedImageParts() {
 
 function getFilePartUrls(args: { messageIds?: string[] } = {}) {
   const { messageIds } = args;
-  let conditions: SQL<unknown> = eq(part.type, "file");
+  let conditions: SQL<unknown> | undefined = eq(part.type, "file");
   if (messageIds && messageIds.length > 0) {
     conditions = and(conditions, inArray(part.messageId, messageIds));
   }
   return db.select({ file_url: part.file_url }).from(part).where(conditions);
+}
+
+function collectMessageAttachmentUrls(
+  messages: { attachments: unknown }[]
+): string[] {
+  const urls: string[] = [];
+  for (const msg of messages) {
+    if (msg.attachments && Array.isArray(msg.attachments)) {
+      for (const attachment of msg.attachments as Attachment[]) {
+        if (attachment.url) {
+          urls.push(attachment.url);
+        }
+      }
+    }
+  }
+  return urls;
+}
+
+function collectFilePartUrls(
+  fileParts: { file_url: string | null }[]
+): string[] {
+  const urls: string[] = [];
+  for (const p of fileParts) {
+    if (p.file_url) {
+      urls.push(p.file_url);
+    }
+  }
+  return urls;
 }
 
 export async function getAllAttachmentUrls(): Promise<string[]> {
@@ -1067,19 +1095,10 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
       getFilePartUrls(),
     ]);
 
-    const attachmentUrls: string[] = [];
-
-    // Collect URLs from message attachments
-    for (const msg of messages) {
-      if (msg.attachments && Array.isArray(msg.attachments)) {
-        const attachments = msg.attachments as Attachment[];
-        for (const attachment of attachments) {
-          if (attachment.url) {
-            attachmentUrls.push(attachment.url);
-          }
-        }
-      }
-    }
+    const attachmentUrls = [
+      ...collectMessageAttachmentUrls(messages),
+      ...collectFilePartUrls(fileParts),
+    ];
 
     // Collect URLs from generated images in tool outputs
     for (const p of generatedImageParts) {
@@ -1089,14 +1108,6 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
       }
     }
 
-    // Collect URLs from file parts (user-uploaded attachments)
-    for (const p of fileParts) {
-      if (p.file_url) {
-        attachmentUrls.push(p.file_url);
-      }
-    }
-
-    // Deduplicate to avoid redundant processing by callers
     return [...new Set(attachmentUrls)];
   } catch (error) {
     console.error("Failed to get attachment URLs from database", error);
@@ -1106,28 +1117,13 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
 
 async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
   try {
-    const attachmentUrls: string[] = [];
-
-    for (const msg of messages) {
-      if (msg.attachments && Array.isArray(msg.attachments)) {
-        const attachments = msg.attachments as Attachment[];
-        for (const attachment of attachments) {
-          if (attachment.url) {
-            attachmentUrls.push(attachment.url);
-          }
-        }
-      }
-    }
+    const attachmentUrls = collectMessageAttachmentUrls(messages);
 
     // Collect file URLs from Part table for these messages via shared helper
     const messageIds = messages.map((msg) => msg.id);
     if (messageIds.length > 0) {
       const fileParts = await getFilePartUrls({ messageIds });
-      for (const p of fileParts) {
-        if (p.file_url) {
-          attachmentUrls.push(p.file_url);
-        }
-      }
+      attachmentUrls.push(...collectFilePartUrls(fileParts));
     }
 
     // Deduplicate in case the same file URL is referenced multiple times

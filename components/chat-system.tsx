@@ -5,13 +5,13 @@ import { Chat } from "@/components/chat";
 import { ChatSync } from "@/components/chat-sync";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DataStreamProvider } from "@/components/data-stream-provider";
+import { MessageTreeSync } from "@/components/message-tree-sync";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import { useThreadEpoch } from "@/lib/stores/hooks-threads";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
-import { MessageTreeSync } from "@/components/message-tree-sync";
 
 function ChatThreadSync({
   id,
