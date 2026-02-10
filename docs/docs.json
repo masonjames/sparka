@@ -56,16 +56,6 @@
               "customization/prompts"
             ]
           },
-              {
-            "group": "Gateways",
-            "pages": [
-              "gateways/overview",
-              "gateways/vercel",
-              "gateways/openrouter",
-              "gateways/openai",
-              "gateways/openai-compatible"
-            ]
-          },
           {
             "group": "Deployment",
             "pages": [
@@ -80,7 +70,17 @@
               "reference/config",
               "reference/database",
               "reference/routing",
-              "reference/evaluations"
+              "reference/evaluations",
+              {
+                "group": "Gateways",
+                "pages": [
+                  "gateways/overview",
+                  "gateways/vercel",
+                  "gateways/openrouter",
+                  "gateways/openai",
+                  "gateways/openai-compatible"
+                ]
+              }
             ]
           },
           {
