@@ -1050,11 +1050,19 @@ function getGeneratedImageParts() {
     .where(eq(part.tool_name, toolName));
 }
 
+function getFilePartUrls() {
+  return db
+    .select({ file_url: part.file_url })
+    .from(part)
+    .where(eq(part.type, "file"));
+}
+
 export async function getAllAttachmentUrls(): Promise<string[]> {
   try {
-    const [messages, generatedImageParts] = await Promise.all([
+    const [messages, generatedImageParts, fileParts] = await Promise.all([
       getMessagesWithAttachments(),
       getGeneratedImageParts(),
+      getFilePartUrls(),
     ]);
 
     const attachmentUrls: string[] = [];
@@ -1079,6 +1087,13 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
       }
     }
 
+    // Collect URLs from file parts (user-uploaded attachments)
+    for (const p of fileParts) {
+      if (p.file_url) {
+        attachmentUrls.push(p.file_url);
+      }
+    }
+
     return attachmentUrls;
   } catch (error) {
     console.error("Failed to get attachment URLs from database", error);
@@ -1097,6 +1112,21 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
           if (attachment.url) {
             attachmentUrls.push(attachment.url);
           }
+        }
+      }
+    }
+
+    // Collect file URLs from Part table for these messages
+    const messageIds = messages.map((msg) => msg.id);
+    if (messageIds.length > 0) {
+      const fileParts = await db
+        .select({ file_url: part.file_url })
+        .from(part)
+        .where(and(inArray(part.messageId, messageIds), eq(part.type, "file")));
+
+      for (const p of fileParts) {
+        if (p.file_url) {
+          attachmentUrls.push(p.file_url);
         }
       }
     }
