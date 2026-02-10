@@ -1050,11 +1050,13 @@ function getGeneratedImageParts() {
     .where(eq(part.tool_name, toolName));
 }
 
-function getFilePartUrls() {
-  return db
-    .select({ file_url: part.file_url })
-    .from(part)
-    .where(eq(part.type, "file"));
+function getFilePartUrls(args: { messageIds?: string[] } = {}) {
+  const { messageIds } = args;
+  let conditions: SQL<unknown> = eq(part.type, "file");
+  if (messageIds && messageIds.length > 0) {
+    conditions = and(conditions, inArray(part.messageId, messageIds));
+  }
+  return db.select({ file_url: part.file_url }).from(part).where(conditions);
 }
 
 export async function getAllAttachmentUrls(): Promise<string[]> {
@@ -1094,7 +1096,8 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
       }
     }
 
-    return attachmentUrls;
+    // Deduplicate to avoid redundant processing by callers
+    return [...new Set(attachmentUrls)];
   } catch (error) {
     console.error("Failed to get attachment URLs from database", error);
     throw error;
@@ -1116,14 +1119,10 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
       }
     }
 
-    // Collect file URLs from Part table for these messages
+    // Collect file URLs from Part table for these messages via shared helper
     const messageIds = messages.map((msg) => msg.id);
     if (messageIds.length > 0) {
-      const fileParts = await db
-        .select({ file_url: part.file_url })
-        .from(part)
-        .where(and(inArray(part.messageId, messageIds), eq(part.type, "file")));
-
+      const fileParts = await getFilePartUrls({ messageIds });
       for (const p of fileParts) {
         if (p.file_url) {
           attachmentUrls.push(p.file_url);
@@ -1131,8 +1130,10 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
       }
     }
 
-    if (attachmentUrls.length > 0) {
-      await del(attachmentUrls);
+    // Deduplicate in case the same file URL is referenced multiple times
+    const uniqueUrls = [...new Set(attachmentUrls)];
+    if (uniqueUrls.length > 0) {
+      await del(uniqueUrls);
     }
   } catch (error) {
     console.error("Failed to delete attachments from Vercel Blob:", error);
