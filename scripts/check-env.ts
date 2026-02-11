@@ -6,6 +6,7 @@
  */
 import "dotenv/config";
 import { config } from "../lib/config";
+import { generatedForGateway } from "../lib/ai/models.generated";
 
 type ValidationError = { feature: string; missing: string[] };
 
@@ -196,6 +197,13 @@ function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
   };
 }
 
+function checkGatewaySnapshot(): string | null {
+  if (config.models.gateway === generatedForGateway) {
+    return null;
+  }
+  return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.models.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
+}
+
 function checkEnv(): void {
   const env = process.env;
   const baseUrlError = validateBaseUrl(env);
@@ -214,6 +222,11 @@ function checkEnv(): void {
       `❌ Environment validation failed:\n${message}\n\nEither set the env vars or disable the feature in chat.config.ts`
     );
     process.exit(1);
+  }
+
+  const snapshotWarning = checkGatewaySnapshot();
+  if (snapshotWarning) {
+    console.warn(`⚠️  ${snapshotWarning}`);
   }
 
   console.log("✅ Environment validation passed");

@@ -12,6 +12,9 @@ async function fetchAndSaveModels() {
   }
 
   const fileContent = `import type { AiGatewayModel } from "@/lib/ai/ai-gateway-models-schemas";
+import type { GatewayType } from "@/lib/ai/gateways/registry";
+
+export const generatedForGateway: GatewayType = "${gateway.type}";
 
 export const models = ${JSON.stringify(models, null, 2)} as const satisfies readonly AiGatewayModel[];
 `;
