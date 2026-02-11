@@ -17,7 +17,6 @@ export const ModelSelectorLogo = ({
     return model?.owned_by ?? modelId.split("/")[0] ?? "";
   }, [getModelById, modelId]);
 
-  console.log("provider", provider);
   if (!provider) {
     return null;
   }

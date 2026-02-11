@@ -30,8 +30,3 @@ type InferImageModelId<T extends GatewayType> = Parameters<
 export type GatewayImageModelIdMap = {
   [K in GatewayType]: InferImageModelId<K>;
 };
-
-/** Union of dedicated image model IDs and language model IDs that can produce images */
-export type GatewayAnyImageModelIdMap = {
-  [K in GatewayType]: InferImageModelId<K> | InferLanguageModelId<K>;
-};

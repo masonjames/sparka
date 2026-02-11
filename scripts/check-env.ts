@@ -79,6 +79,14 @@ function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
         };
       }
       return null;
+    case "openai-compatible":
+      if (!env.OPENAI_COMPATIBLE_BASE_URL) {
+        return {
+          feature: "aiGateway (openai-compatible)",
+          missing: ["OPENAI_COMPATIBLE_BASE_URL"],
+        };
+      }
+      return null;
     default:
       return null;
   }

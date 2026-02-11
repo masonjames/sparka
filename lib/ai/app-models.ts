@@ -1,6 +1,5 @@
 import { unstable_cache as cache } from "next/cache";
 import { config } from "@/lib/config";
-import type { AnyImageModelId } from "@/lib/models/image-model-id";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
@@ -110,29 +109,7 @@ export async function getAppModelDefinition(
   return model;
 }
 
-export const DEFAULT_CHAT_MODEL: ModelId = "openai/gpt-5-nano";
-export const DEFAULT_PDF_MODEL: ModelId = "openai/gpt-5-mini";
-export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
-export const DEFAULT_ARTIFACT_MODEL: ModelId = "openai/gpt-5-nano";
-export const DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL: ModelId =
-  "google/gemini-2.5-flash-lite";
-export const DEFAULT_IMAGE_MODEL: AnyImageModelId = "google/gemini-3-pro-image";
-export const DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL: ModelId =
-  "openai/gpt-4o-mini";
-export const DEFAULT_POLISH_TEXT_MODEL: ModelId = "openai/gpt-5-mini";
-export const DEFAULT_FORMAT_AND_CLEAN_SHEET_MODEL: ModelId =
-  "openai/gpt-5-mini";
-export const DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL: ModelId =
-  "openai/gpt-5-mini";
 
-export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
-
-export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
-  "google/gemini-2.5-flash-lite",
-  "openai/gpt-5-mini",
-  "openai/gpt-5-nano",
-  "anthropic/claude-haiku-4.5",
-];
 /**
  * Set of model IDs from the generated models file.
  * Used to detect new models from the API that we haven't "decided" on yet.
