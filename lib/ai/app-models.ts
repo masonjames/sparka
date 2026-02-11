@@ -147,10 +147,7 @@ export function getDefaultEnabledModels(
 
   // If a curated default has a -reasoning variant, enable it too
   for (const model of appModels) {
-    if (
-      model.id.endsWith("-reasoning") &&
-      enabled.has(model.apiModelId)
-    ) {
+    if (model.id.endsWith("-reasoning") && enabled.has(model.apiModelId)) {
       enabled.add(model.id);
     }
   }

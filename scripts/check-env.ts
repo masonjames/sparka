@@ -5,8 +5,8 @@
  * Run via `bun run check-env` or automatically in prebuild.
  */
 import "dotenv/config";
-import { config } from "../lib/config";
 import { generatedForGateway } from "../lib/ai/models.generated";
+import { config } from "../lib/config";
 
 type ValidationError = { feature: string; missing: string[] };
 
@@ -53,34 +53,43 @@ function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
   };
 }
 
-function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
-  const errors: ValidationError[] = [];
-
+function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
   switch (config.models.gateway) {
     case "openrouter":
       if (!env.OPENROUTER_API_KEY) {
-        errors.push({
+        return {
           feature: "aiGateway (openrouter)",
           missing: ["OPENROUTER_API_KEY"],
-        });
+        };
       }
-      break;
+      return null;
     case "openai":
       if (!env.OPENAI_API_KEY) {
-        errors.push({
+        return {
           feature: "aiGateway (openai)",
           missing: ["OPENAI_API_KEY"],
-        });
+        };
       }
-      break;
+      return null;
     case "vercel":
       if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
-        errors.push({
+        return {
           feature: "aiGateway (vercel)",
           missing: ["AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN"],
-        });
+        };
       }
-      break;
+      return null;
+    default:
+      return null;
+  }
+}
+
+function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  const gatewayError = validateGatewayKey(env);
+  if (gatewayError) {
+    errors.push(gatewayError);
   }
 
   errors.push(...validateSearchApi(env));

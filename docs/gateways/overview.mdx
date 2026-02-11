@@ -63,6 +63,21 @@ When no API key is available, the app falls back to a static snapshot in `models
 bun fetch:models
 ```
 
+### Snapshot Gateway Validation
+
+The snapshot file records which gateway generated it via a `generatedForGateway` export. When you run `bun check-env`, it compares this value against `config.models.gateway` and warns if they don't match:
+
+```
+⚠️  models.generated.ts was built for "vercel" but config uses "openrouter".
+    Run `bun fetch:models` to update the fallback snapshot.
+```
+
+This prevents a subtle issue: if you switch gateways but forget to regenerate the snapshot, the fallback would serve model IDs from the wrong provider.
+
+<Tip>
+After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to keep the fallback snapshot in sync.
+</Tip>
+
 See [Auto-Updating Models](/cookbook/auto-updating-models) for the full implementation pattern.
 
 ## Gateway Architecture
