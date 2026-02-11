@@ -5,7 +5,7 @@ import {
   type AiGatewayModel,
   aiGatewayModelsResponseSchema,
 } from "../ai-gateway-models-schemas";
-import { models as fallbackModels } from "../models.generated";
+import { getFallbackModels } from "./fallback-models";
 import type { GatewayProvider } from "./gateway-provider";
 import type { StrictLiterals } from "./provider-types";
 
@@ -43,7 +43,7 @@ export class VercelGateway
 
     if (!apiKey) {
       log.warn("No AI gateway API key found, using fallback models");
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
 
     const url = this.getModelsUrl();
@@ -80,7 +80,7 @@ export class VercelGateway
         { err: error, url },
         "Error fetching models from Vercel AI Gateway, falling back to generated models"
       );
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
   }
 }

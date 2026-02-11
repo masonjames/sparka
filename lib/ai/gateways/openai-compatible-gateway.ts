@@ -2,7 +2,7 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { ImageModel, LanguageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
-import { models as fallbackModels } from "../models.generated";
+import { getFallbackModels } from "./fallback-models";
 import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/openai-compatible");
@@ -73,7 +73,7 @@ export class OpenAICompatibleGateway
 
     if (!baseURL) {
       log.warn("No OPENAI_COMPATIBLE_BASE_URL found, using fallback models");
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
 
     const url = `${baseURL}/models`;
@@ -114,7 +114,7 @@ export class OpenAICompatibleGateway
         { err: error, url },
         "Error fetching models from OpenAI-compatible provider, falling back to generated models"
       );
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
   }
 }

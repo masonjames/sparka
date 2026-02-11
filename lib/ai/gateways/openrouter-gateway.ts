@@ -2,7 +2,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { ImageModel, LanguageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
-import { models as fallbackModels } from "../models.generated";
+import { getFallbackModels } from "./fallback-models";
 import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/openrouter");
@@ -131,7 +131,7 @@ export class OpenRouterGateway
 
     if (!apiKey) {
       log.warn("No OPENROUTER_API_KEY found, using fallback models");
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
 
     const url = this.getModelsUrl();
@@ -168,7 +168,7 @@ export class OpenRouterGateway
         { err: error, url },
         "Error fetching models from OpenRouter, falling back to generated models"
       );
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
   }
 }

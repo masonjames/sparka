@@ -3,7 +3,7 @@ import type { ImageModel, LanguageModel } from "ai";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
-import { models as fallbackModels } from "../models.generated";
+import { getFallbackModels } from "./fallback-models";
 import type { GatewayProvider } from "./gateway-provider";
 import type {
   ExtractImageModelIdFromProvider,
@@ -76,7 +76,7 @@ export class OpenAIGateway
 
     if (!apiKey) {
       log.warn("No OPENAI_API_KEY found, using fallback models");
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
 
     const url = "https://api.openai.com/v1/models";
@@ -113,7 +113,7 @@ export class OpenAIGateway
         { err: error, url },
         "Error fetching models from OpenAI, falling back to generated models"
       );
-      return fallbackModels as unknown as AiGatewayModel[];
+      return [...getFallbackModels(this.type)];
     }
   }
 }

@@ -4,7 +4,10 @@ import type { AnyImageModelId } from "@/lib/models/image-model-id";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
-import { models as generatedModels } from "./models.generated";
+import {
+  generatedForGateway,
+  models as generatedModels,
+} from "./models.generated";
 
 export type { AppModelId, ModelId } from "./app-model-id";
 
@@ -133,8 +136,14 @@ export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
 /**
  * Set of model IDs from the generated models file.
  * Used to detect new models from the API that we haven't "decided" on yet.
+ * When the snapshot was generated for a different gateway the IDs won't match,
+ * so we fall back to an empty set (which auto-enables all models).
  */
-const KNOWN_MODEL_IDS = new Set<string>(generatedModels.map((m) => m.id));
+const KNOWN_MODEL_IDS = new Set<string>(
+  generatedForGateway === config.models.gateway
+    ? generatedModels.map((m) => m.id)
+    : []
+);
 
 /**
  * Returns the default enabled models for a given list of app models.
