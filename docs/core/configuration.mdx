@@ -29,9 +29,9 @@ const config: ConfigInput = {
   },
 
   features: {
-    sandbox: true,         // Code execution (Python/JS)
-    webSearch: true,       // Tavily/Exa web search
-    mcp: true,             // MCP connector support
+    sandbox: true, // Code execution (Python/JS)
+    webSearch: true, // Tavily/Exa web search
+    mcp: true, // MCP connector support
     imageGeneration: true, // AI image generation
   },
 
@@ -51,12 +51,12 @@ export default config;
 
 The `models.gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
 
-| Value | Backend | Env Dependency |
-|-------|---------|----------------|
-| `"vercel"` (default) | [Vercel AI Gateway](/gateways/vercel) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
-| `"openrouter"` | [OpenRouter](/gateways/openrouter) | `OPENROUTER_API_KEY` |
-| `"openai"` | [OpenAI](/gateways/openai) | `OPENAI_API_KEY` |
-| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL` |
+| Value                 | Backend                                          | Env Dependency                              |
+| --------------------- | ------------------------------------------------ | ------------------------------------------- |
+| `"vercel"` (default)  | [Vercel AI Gateway](/gateways/vercel)            | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
+| `"openrouter"`        | [OpenRouter](/gateways/openrouter)               | `OPENROUTER_API_KEY`                        |
+| `"openai"`            | [OpenAI](/gateways/openai)                       | `OPENAI_API_KEY`                            |
+| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL`                |
 
 ```typescript
 models: {
@@ -71,13 +71,13 @@ See [Gateways](/gateways/overview) for detailed setup and comparison.
 
 Toggle features on/off. Set to `true` to enable. Missing env vars are caught at build time via `bun run prebuild`.
 
-| Feature | Config Key | Env Dependency |
-|-------------|------------|----------------|
-| Code Sandbox | `features.sandbox` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
-| Web Search | `features.webSearch` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
-| MCP Connectors | `features.mcp` | `MCP_ENCRYPTION_KEY` |
-| Image Generation | `features.imageGeneration` | `BLOB_READ_WRITE_TOKEN` |
-| Attachments | `features.attachments` | `BLOB_READ_WRITE_TOKEN` |
+| Feature          | Config Key                 | Env Dependency                                                                         |
+| ---------------- | -------------------------- | -------------------------------------------------------------------------------------- |
+| Code Sandbox     | `features.sandbox`         | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
+| Web Search       | `features.webSearch`       | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                |
+| MCP Connectors   | `features.mcp`             | `MCP_ENCRYPTION_KEY`                                                                   |
+| Image Generation | `features.imageGeneration` | `BLOB_READ_WRITE_TOKEN`                                                                |
+| Attachments      | `features.attachments`     | `BLOB_READ_WRITE_TOKEN`                                                                |
 
 ```typescript
 features: {
