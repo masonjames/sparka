@@ -1,5 +1,7 @@
 import pino, { type Logger, stdTimeFunctions } from "pino";
-import { config } from "@/lib/config";
+import userConfig from "@/chat.config";
+
+const appBinding = userConfig.appPrefix || userConfig.appName || "chatjs";
 
 // Prefer JSON in production; pretty in development.
 // We also add base bindings so child loggers inherit app metadata.
@@ -7,7 +9,7 @@ const logger: Logger =
   process.env.NODE_ENV === "production"
     ? pino({
         level: "info",
-        base: { app: config.appPrefix },
+        base: { app: appBinding },
         timestamp: stdTimeFunctions.isoTime,
         redact: {
           paths: [
@@ -22,7 +24,7 @@ const logger: Logger =
       })
     : pino({
         level: "debug",
-        base: { app: config.appPrefix },
+        base: { app: appBinding },
         timestamp: stdTimeFunctions.isoTime,
         transport: {
           target: "pino-pretty",

@@ -1,7 +1,7 @@
 import type { AiGatewayModel } from "@/lib/ai/ai-gateway-models-schemas";
 import type { GatewayType } from "@/lib/ai/gateways/registry";
 
-export const generatedForGateway: GatewayType = "vercel";
+export const generatedForGateway = "vercel" satisfies GatewayType
 
 export const models = [
   {
