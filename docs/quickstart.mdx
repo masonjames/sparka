@@ -21,7 +21,7 @@ The `bun chatjs:init` command generates a `chat.config.ts` file with sensible de
   | Setting | Default | Notes |
   |---------|---------|-------|
   | **Authentication** | GitHub only | Google and Vercel OAuth disabled |
-  | **Integrations** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
+  | **Features** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
   | **Anonymous users** | 10 credits | Limited access, no tools |
   | **Models** | Curated list | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5 |
 
@@ -150,7 +150,7 @@ The `bun chatjs:init` command generates a `chat.config.ts` file with sensible de
         2. Create a new blob store
         3. Copy the token → `BLOB_READ_WRITE_TOKEN`
 
-        To disable, set `integrations.attachments: false` and `integrations.imageGeneration: false` in `chat.config.ts`.
+        To disable, set `features.attachments: false` and `features.imageGeneration: false` in `chat.config.ts`.
       </Accordion>
       <Accordion title="AI Gateway">
         ChatJS uses [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access 120+ models through a single API.
@@ -257,7 +257,7 @@ You're up and running. Here's where to go next:
 
 <CardGroup cols={2}>
   <Card title="Configuration" icon="gear" href="/core/configuration">
-    Customize features, branding, and integrations in chat.config.ts
+    Customize features, branding, and settings in chat.config.ts
   </Card>
   <Card title="AI Capabilities" icon="sparkles" href="/features/overview">
     Explore built-in tools: web search, image generation, code execution

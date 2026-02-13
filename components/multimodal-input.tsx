@@ -134,7 +134,7 @@ function PureMultimodalInput({
   // Attachment configuration from site config
   const { maxBytes, maxDimension, acceptedTypes } = config.attachments;
   const maxMB = Math.round(maxBytes / (1024 * 1024));
-  const attachmentsEnabled = config.integrations.attachments;
+  const attachmentsEnabled = config.features.attachments;
   const acceptImages = useMemo(
     () => getAcceptImages(acceptedTypes),
     [acceptedTypes]

@@ -176,7 +176,7 @@ export const deepResearchConfigSchema = z
     maxSearchQueries: 2,
   });
 
-export const integrationsConfigSchema = z
+export const featuresConfigSchema = z
   .object({
     sandbox: z.boolean().describe("Code sandbox execution (Vercel-native)"),
     webSearch: z.boolean().describe("Web search (requires TAVILY_API_KEY)"),
@@ -193,6 +193,9 @@ export const integrationsConfigSchema = z
     attachments: z
       .boolean()
       .describe("File attachments (requires BLOB_READ_WRITE_TOKEN)"),
+    followupSuggestions: z
+      .boolean()
+      .describe("Follow-up question suggestions after AI responses"),
   })
   .default({
     sandbox: false,
@@ -202,6 +205,7 @@ export const integrationsConfigSchema = z
     mcp: false,
     imageGeneration: false,
     attachments: false,
+    followupSuggestions: false,
   });
 
 export const authenticationConfigSchema = z
@@ -263,7 +267,7 @@ export const configSchema = z.object({
       paymentProcessors: [],
     }),
 
-  integrations: integrationsConfigSchema,
+  features: featuresConfigSchema,
 
   pricing: pricingConfigSchema.optional(),
 
@@ -313,7 +317,7 @@ export type ModelsConfig = z.infer<typeof modelsConfigSchema>;
 export type AnonymousConfig = z.infer<typeof anonymousConfigSchema>;
 export type AttachmentsConfig = z.infer<typeof attachmentsConfigSchema>;
 export type DeepResearchConfig = z.infer<typeof deepResearchConfigSchema>;
-export type IntegrationsConfig = z.infer<typeof integrationsConfigSchema>;
+export type FeaturesConfig = z.infer<typeof featuresConfigSchema>;
 export type AuthenticationConfig = z.infer<typeof authenticationConfigSchema>;
 
 // Input types (with optionals for fields with defaults)

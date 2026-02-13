@@ -45,7 +45,8 @@
               "features/canvas",
               "features/sharing",
               "features/branching",
-              "features/projects"
+              "features/projects",
+              "features/follow-up-suggestions"
             ]
           },
           {

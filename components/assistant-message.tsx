@@ -1,6 +1,7 @@
 "use client";
 import { useChatId, useChatStatus } from "@ai-sdk-tools/store";
 import { memo } from "react";
+import { config } from "@/lib/config";
 import { useMessageMetadataById } from "@/lib/stores/hooks-base";
 import { Message, MessageContent } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
@@ -47,7 +48,9 @@ const PureAssistantMessage = ({
           key={`action-${messageId}`}
           messageId={messageId}
         />
-        {isReadonly ? null : <FollowUpSuggestionsParts messageId={messageId} />}
+        {isReadonly || !config.features.followupSuggestions ? null : (
+          <FollowUpSuggestionsParts messageId={messageId} />
+        )}
       </MessageContent>
     </Message>
   );

@@ -23,7 +23,7 @@ const config: ConfigInput = {
     },
   },
 
-  integrations: {
+  features: {
     sandbox: true,         // Code execution (Python/JS)
     webSearch: true,       // Tavily/Exa web search
     mcp: true,             // MCP connector support
@@ -42,20 +42,20 @@ const config: ConfigInput = {
 export default config;
 ```
 
-## Integrations
+## Features
 
 Toggle features on/off. Set to `true` to enable. Missing env vars are caught at build time via `bun run prebuild`.
 
-| Integration | Config Key | Env Dependency |
+| Feature | Config Key | Env Dependency |
 |-------------|------------|----------------|
-| Code Sandbox | `integrations.sandbox` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
-| Web Search | `integrations.webSearch` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
-| MCP Connectors | `integrations.mcp` | `MCP_ENCRYPTION_KEY` |
-| Image Generation | `integrations.imageGeneration` | `BLOB_READ_WRITE_TOKEN` |
-| Attachments | `integrations.attachments` | `BLOB_READ_WRITE_TOKEN` |
+| Code Sandbox | `features.sandbox` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
+| Web Search | `features.webSearch` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
+| MCP Connectors | `features.mcp` | `MCP_ENCRYPTION_KEY` |
+| Image Generation | `features.imageGeneration` | `BLOB_READ_WRITE_TOKEN` |
+| Attachments | `features.attachments` | `BLOB_READ_WRITE_TOKEN` |
 
 ```typescript
-integrations: {
+features: {
   sandbox: true,         // Vercel-native, requires VERCEL_OIDC_TOKEN
   webSearch: true,       // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
   mcp: false,            // Requires MCP_ENCRYPTION_KEY
@@ -132,7 +132,7 @@ export type Config = {
     aiProviders: string[];
     paymentProcessors: string[];
   };
-  integrations: {
+  features: {
     sandbox: boolean;
     webSearch: boolean;
     mcp: boolean;

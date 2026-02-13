@@ -19,15 +19,15 @@ function validateSearchApi(env: NodeJS.ProcessEnv): ValidationError[] {
     return [];
   }
   const errors: ValidationError[] = [];
-  if (config.integrations.webSearch) {
+  if (config.features.webSearch) {
     errors.push({
-      feature: "integrations.webSearch",
+      feature: "features.webSearch",
       missing: ["TAVILY_API_KEY or FIRECRAWL_API_KEY"],
     });
   }
-  if (config.integrations.deepResearch) {
+  if (config.features.deepResearch) {
     errors.push({
-      feature: "integrations.deepResearch",
+      feature: "features.deepResearch",
       missing: ["TAVILY_API_KEY or FIRECRAWL_API_KEY"],
     });
   }
@@ -35,7 +35,7 @@ function validateSearchApi(env: NodeJS.ProcessEnv): ValidationError[] {
 }
 
 function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
-  if (!config.integrations.sandbox) {
+  if (!config.features.sandbox) {
     return null;
   }
   const hasOidc = !!env.VERCEL_OIDC_TOKEN;
@@ -45,14 +45,14 @@ function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
     return null;
   }
   return {
-    feature: "integrations.sandbox",
+    feature: "features.sandbox",
     missing: [
       "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
     ],
   };
 }
 
-function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
+function validateFeatures(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
@@ -64,16 +64,16 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
 
   errors.push(...validateSearchApi(env));
 
-  if (config.integrations.urlRetrieval && !env.FIRECRAWL_API_KEY) {
+  if (config.features.urlRetrieval && !env.FIRECRAWL_API_KEY) {
     errors.push({
-      feature: "integrations.urlRetrieval",
+      feature: "features.urlRetrieval",
       missing: ["FIRECRAWL_API_KEY"],
     });
   }
 
-  if (config.integrations.mcp && !env.MCP_ENCRYPTION_KEY) {
+  if (config.features.mcp && !env.MCP_ENCRYPTION_KEY) {
     errors.push({
-      feature: "integrations.mcp",
+      feature: "features.mcp",
       missing: ["MCP_ENCRYPTION_KEY"],
     });
   }
@@ -83,16 +83,16 @@ function validateIntegrations(env: NodeJS.ProcessEnv): ValidationError[] {
     errors.push(sandboxError);
   }
 
-  if (config.integrations.imageGeneration && !env.BLOB_READ_WRITE_TOKEN) {
+  if (config.features.imageGeneration && !env.BLOB_READ_WRITE_TOKEN) {
     errors.push({
-      feature: "integrations.imageGeneration",
+      feature: "features.imageGeneration",
       missing: ["BLOB_READ_WRITE_TOKEN"],
     });
   }
 
-  if (config.integrations.attachments && !env.BLOB_READ_WRITE_TOKEN) {
+  if (config.features.attachments && !env.BLOB_READ_WRITE_TOKEN) {
     errors.push({
-      feature: "integrations.attachments",
+      feature: "features.attachments",
       missing: ["BLOB_READ_WRITE_TOKEN"],
     });
   }
@@ -181,7 +181,7 @@ function checkEnv(): void {
   const baseUrlError = validateBaseUrl(env);
   const errors = [
     ...(baseUrlError ? [baseUrlError] : []),
-    ...validateIntegrations(env),
+    ...validateFeatures(env),
     ...validateAuthentication(env),
   ];
 
