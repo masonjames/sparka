@@ -18,7 +18,8 @@ integrations: {
 ```
 
 <Note>
-  Image generation requires `BLOB_READ_WRITE_TOKEN` since generated images are uploaded to Vercel Blob storage.
+  Image generation requires `BLOB_READ_WRITE_TOKEN` since generated images are
+  uploaded to Vercel Blob storage.
 </Note>
 
 Configure the default image model:
@@ -35,10 +36,10 @@ models: {
 
 The tool operates in two modes based on context:
 
-| Mode       | Trigger                                      | Behavior                        |
-| ---------- | -------------------------------------------- | ------------------------------- |
-| `generate` | Text prompt only                             | Creates new image from scratch  |
-| `edit`     | Prompt + attachments or previous generation  | Uses existing images as input   |
+| Mode       | Trigger                                     | Behavior                       |
+| ---------- | ------------------------------------------- | ------------------------------ |
+| `generate` | Text prompt only                            | Creates new image from scratch |
+| `edit`     | Prompt + attachments or previous generation | Uses existing images as input  |
 
 Mode is determined automatically:
 
@@ -56,10 +57,10 @@ Users can iterate on generated images without re-uploading. The system automatic
 
 ```ts title="app/(chat)/api/chat/get-recent-generated-image.ts"
 export function getRecentGeneratedImage(
-  messages: ChatMessage[]
+  messages: ChatMessage[],
 ): { imageUrl: string; name: string } | null {
   const lastAssistantMessage = messages.findLast(
-    (message) => message.role === "assistant"
+    (message) => message.role === "assistant",
   );
 
   if (lastAssistantMessage?.parts && lastAssistantMessage.parts.length > 0) {
@@ -102,25 +103,27 @@ promptInput = { text: prompt, images: inputImages };
 ### User Experience
 
 - User: "Generate a sunset over mountains"
-- AI: *generates image*
+- AI: _generates image_
 - User: "Add a lake in the foreground"
-- AI: *edits previous image* (no re-upload needed)
+- AI: _edits previous image_ (no re-upload needed)
 
 ## Image Sources
 
 Edit mode combines images from multiple sources:
 
-| Source               | Description                                |
-| -------------------- | ------------------------------------------ |
+| Source               | Description                                 |
+| -------------------- | ------------------------------------------- |
 | `lastGeneratedImage` | Most recent generated image in conversation |
-| `attachments`        | User-uploaded images in current message    |
+| `attachments`        | User-uploaded images in current message     |
 
 Both are fetched and passed to the model:
 
 ```ts
 async function collectEditImages({ imageParts, lastGeneratedImage }) {
   return await Promise.all([
-    ...(lastGeneratedImage ? [fetchImageBuffer(lastGeneratedImage.imageUrl)] : []),
+    ...(lastGeneratedImage
+      ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
+      : []),
     ...imageParts.map((p) => fetchImageBuffer(p.url)),
   ]);
 }
@@ -144,10 +147,10 @@ The generated image is uploaded to blob storage and the URL returned.
 
 ### UI States
 
-| State               | Shows                          |
-| ------------------- | ------------------------------ |
-| `input-available`   | Skeleton + "Generating image: {prompt}" |
-| `output-available`  | Image + copy button + prompt   |
+| State              | Shows                                   |
+| ------------------ | --------------------------------------- |
+| `input-available`  | Skeleton + "Generating image: {prompt}" |
+| `output-available` | Image + copy button + prompt            |
 
 ## Configuration
 
@@ -165,20 +168,14 @@ models: {
 
 The tool supports two types of models:
 
-| Type | Description | Example |
-| ---- | ----------- | ------- |
-| Image model | Standalone image generation models | `google/gemini-3-pro-image` |
-| Multimodal | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
+| Type        | Description                                      | Example                       |
+| ----------- | ------------------------------------------------ | ----------------------------- |
+| Image model | Standalone image generation models               | `google/gemini-3-pro-image`   |
+| Multimodal  | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
 
-Model selection follows this priority:
+Model selection is done in `resolveImageModel(selectedModel)` in `lib/ai/tools/generate-image.ts`:
 
-```ts title="lib/ai/tools/tools.ts"
-const imageToolModelId = isMultimodalImageModel(selectedModel)
-  ? selectedModel
-  : undefined;
-```
-
-1. If the user's selected chat model can generate images (is a multimodal image model), use it
+1. If the user's selected chat model supports image output (per app model registry, `model.output.image`), use it
 2. Otherwise, fall back to `config.models.defaults.image`
 
 ### Image Model vs Multimodal Generation
@@ -186,13 +183,14 @@ const imageToolModelId = isMultimodalImageModel(selectedModel)
 The tool uses different generation paths based on model type:
 
 **Image model** (`generateImage` from AI SDK):
+
 - Uses standalone image models via `getImageModel()`
 - Supports edit mode with image buffers as input
 - Returns base64-encoded images
 
 **Multimodal** (`generateText` with image output):
+
 - Uses language models via `getMultimodalImageModel()`
 - Passes images as URL references in message content
 - Requires `responseModalities: ["TEXT", "IMAGE"]` for Google models
 - Extracts generated image from response files
-

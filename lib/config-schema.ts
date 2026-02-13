@@ -1,8 +1,10 @@
 import { z } from "zod";
-import type {
-  GatewayImageModelIdMap,
-  GatewayModelIdMap,
-  GatewayType,
+import {
+  DEFAULT_GATEWAY,
+  type DefaultGateway,
+  type GatewayImageModelIdMap,
+  type GatewayModelIdMap,
+  type GatewayType,
 } from "@/lib/ai/gateways/registry";
 import type { ToolName } from "./ai/types";
 
@@ -76,7 +78,7 @@ export const modelsConfigSchema = z
     gatewaySchemaMap["openai-compatible"],
   ])
   .default({
-    gateway: "vercel",
+    gateway: DEFAULT_GATEWAY,
     providerOrder: ["openai", "google", "anthropic"],
     disabledModels: [],
     curatedDefaults: [
@@ -353,8 +355,6 @@ type ZodConfigInput = z.input<typeof configSchema>;
 
 // Use vercel variant as shape reference (all variants share the same structure)
 type ModelsShape = z.input<typeof gatewaySchemaMap.vercel>;
-
-type DefaultGateway = "vercel";
 
 type ModelsInputFor<G extends GatewayType> = {
   [K in keyof ModelsShape]: K extends "gateway"

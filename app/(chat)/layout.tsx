@@ -4,16 +4,15 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
+import { config } from "@/lib/config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider } from "@/providers/session-provider";
-
 import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 import { auth } from "../../lib/auth";
 import { ChatProviders } from "./chat-providers";
-import { config } from "@/lib/config";
 
 export default async function ChatLayout({
   children,
@@ -30,9 +29,10 @@ export default async function ChatLayout({
   // Always fetch chat models - needed for ChatModelsProvider and cookie validation
   const chatModels = await getChatModels();
 
-  const default_chat_model = config.models.defaults.chat as ModelId;
+  const default_chat_model = config.models.defaults.chat;
   // Check if the model from cookie exists in available models
-  let defaultModel = cookieModel ?? default_chat_model;
+  let defaultModel: AppModelId =
+    (cookieModel as AppModelId) ?? default_chat_model;
 
   if (cookieModel) {
     const modelExists = chatModels.some((m) => m.id === cookieModel);
@@ -43,7 +43,7 @@ export default async function ChatLayout({
       // For anonymous users, also check if the model is in their allowed list
       const isModelAvailable = (
         ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-      ).includes(cookieModel);
+      ).includes(cookieModel as AppModelId);
       if (!isModelAvailable) {
         defaultModel = default_chat_model;
       }

@@ -8,6 +8,7 @@ import {
   useContext,
   useMemo,
 } from "react";
+import type { AppModelId } from "@/lib/ai/app-model-id";
 import {
   type AppModelDefinition,
   getDefaultEnabledModels,
@@ -53,9 +54,9 @@ export function ChatModelsProvider({
     const enabled = getDefaultEnabledModels(models);
     for (const pref of preferences ?? []) {
       if (pref.enabled) {
-        enabled.add(pref.modelId);
+        enabled.add(pref.modelId as AppModelId);
       } else {
-        enabled.delete(pref.modelId);
+        enabled.delete(pref.modelId as AppModelId);
       }
     }
     return enabled;

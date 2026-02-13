@@ -260,7 +260,11 @@ async function runGenerateImageMultimodal({
   // Track LLM cost for multimodal image generation
 
   if (res.usage) {
-    costAccumulator?.addLLMCost(modelId, res.usage, "generateImage-multimodal");
+    costAccumulator?.addLLMCost(
+      modelId as AppModelId,
+      res.usage,
+      "generateImage-multimodal"
+    );
   }
 
   // Find the first image in the response files

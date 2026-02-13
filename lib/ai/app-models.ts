@@ -26,7 +26,7 @@ function buildAppModels(models: ModelData[]): AppModelDefinition[] {
       // - Non-reasoning (original id, reasoning=false)
       // - Reasoning (id with -reasoning suffix, reasoning=true)
       if (model.reasoning === true) {
-        const reasoningId: AppModelId = `${modelId}-reasoning`;
+        const reasoningId = `${modelId}-reasoning` as AppModelId;
 
         return [
           {
@@ -108,7 +108,6 @@ export async function getAppModelDefinition(
   }
   return model;
 }
-
 
 /**
  * Set of model IDs from the generated models file.

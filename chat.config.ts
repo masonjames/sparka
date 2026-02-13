@@ -8,7 +8,7 @@ const isProd = process.env.NODE_ENV === "production";
  * Edit this file to customize your app. Run `bun chatjs:init` to reset to defaults.
  * @see https://chatjs.dev/docs/reference/config
  */
-const config: ConfigInput = {
+const config = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
   appName: "ChatJS",
@@ -135,6 +135,6 @@ const config: ConfigInput = {
       "application/pdf": [".pdf"],
     },
   },
-};
+} satisfies ConfigInput;
 
 export default config;

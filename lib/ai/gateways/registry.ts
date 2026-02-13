@@ -13,6 +13,10 @@ export const gatewayRegistry = {
 
 export type GatewayProvider = GatewayProviderBase<GatewayType>;
 export type GatewayType = keyof typeof gatewayRegistry;
+
+/** Single source of truth for the default gateway */
+export const DEFAULT_GATEWAY = "vercel" as const satisfies GatewayType;
+export type DefaultGateway = typeof DEFAULT_GATEWAY;
 /** Infer model ID type from a gateway's `createLanguageModel` parameter */
 type InferLanguageModelId<T extends GatewayType> = Parameters<
   ReturnType<(typeof gatewayRegistry)[T]>["createLanguageModel"]

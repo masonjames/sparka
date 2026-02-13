@@ -1,5 +1,6 @@
 import { config } from "@/lib/config";
 import {
+  DEFAULT_GATEWAY,
   type GatewayProvider,
   type GatewayType,
   gatewayRegistry,
@@ -12,7 +13,7 @@ export function getActiveGateway(): GatewayProvider {
     return activeGateway;
   }
 
-  const gatewayType: GatewayType = config.models.gateway ?? "vercel";
+  const gatewayType: GatewayType = config.models.gateway ?? DEFAULT_GATEWAY;
 
   const factory = gatewayRegistry[gatewayType];
   if (!factory) {

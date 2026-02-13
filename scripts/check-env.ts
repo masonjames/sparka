@@ -5,6 +5,7 @@
  * Run via `bun run check-env` or automatically in prebuild.
  */
 import "dotenv/config";
+import type { GatewayType } from "../lib/ai/gateways/registry";
 import { generatedForGateway } from "../lib/ai/models.generated";
 import { config } from "../lib/config";
 
@@ -54,7 +55,9 @@ function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
 }
 
 function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
-  switch (config.models.gateway) {
+  // Type widening
+  const gateway: GatewayType = config.models.gateway;
+  switch (gateway) {
     case "openrouter":
       if (!env.OPENROUTER_API_KEY) {
         return {

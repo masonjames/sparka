@@ -8,14 +8,15 @@ import {
   type LanguageModelMiddleware,
   wrapLanguageModel,
 } from "ai";
-import type { ImageModelId } from "../models/image-model-id";
 import { getActiveGateway } from "./active-gateway";
-import type { AppModelId, ModelId } from "./app-models";
+import type { AppModelId } from "./app-models";
 import { getAppModelDefinition } from "./app-models";
 
-export const getLanguageModel = async (modelId: ModelId) => {
+export const getLanguageModel = async (modelId: AppModelId) => {
   const model = await getAppModelDefinition(modelId);
-  const languageProvider = getActiveGateway().createLanguageModel(model.id);
+  const languageProvider = getActiveGateway().createLanguageModel(
+    model.apiModelId
+  );
 
   const middlewares: Parameters<typeof wrapLanguageModel>[0]["middleware"][] =
     [];
@@ -27,7 +28,6 @@ export const getLanguageModel = async (modelId: ModelId) => {
 
   // Add reasoning middleware if the model supports reasoning
   if (model.reasoning && model.owned_by === "xai") {
-    console.log("Wrapping reasoning middleware for", model.id);
     middlewares.push(extractReasoningMiddleware({ tagName: "think" }));
   }
 
@@ -41,7 +41,7 @@ export const getLanguageModel = async (modelId: ModelId) => {
   });
 };
 
-export const getImageModel = (modelId: ImageModelId) => {
+export const getImageModel = (modelId: string) => {
   const imageModel = getActiveGateway().createImageModel(modelId);
   if (!imageModel) {
     throw new Error(
@@ -80,9 +80,9 @@ export const getModelProviderOptions = async (
       return {
         openai: {
           reasoningSummary: "auto",
-          ...(model.id === "openai/gpt-5" ||
-          model.id === "openai/gpt-5-mini" ||
-          model.id === "openai/gpt-5-nano"
+          ...(model.apiModelId === "openai/gpt-5" ||
+          model.apiModelId === "openai/gpt-5-mini" ||
+          model.apiModelId === "openai/gpt-5-nano"
             ? { reasoningEffort: "low" }
             : {}),
         } satisfies OpenAIResponsesProviderOptions,
