@@ -21,10 +21,6 @@ export type ModelId = GatewayModelIdMap[ActiveGatewayType];
 /** App-level model ID (same as ModelId; autocomplete comes from ConfigInput) */
 export type AppModelId = ModelId;
 
-// Merge with derived from snapshot if snapshot matches current gateway
-
-type GatewayGeneratedIsActive = typeof generatedForGateway extends ActiveGatewayType ? true : false;
-
 // Helper: check if tuple T contains element E
 type TupleIncludes<T extends readonly unknown[], E> = T extends readonly [
   infer H,
@@ -35,7 +31,7 @@ type TupleIncludes<T extends readonly unknown[], E> = T extends readonly [
     : TupleIncludes<R, E>
   : false;
 
-// Extract language models with "image-generation" tag
+// Extract language models with "image-generation" tag from the snapshot
 type MultimodalImageModel =
   Extract<
     (typeof models)[number],
@@ -48,6 +44,10 @@ type MultimodalImageModel =
       : never
     : never;
 
-type ActiveMultimodalImageModel = GatewayGeneratedIsActive extends true ? MultimodalImageModel : never;
+// Merge snapshot-derived multimodal image models into the map per gateway key
+type FullImageModelIdMap = {
+  [K in GatewayType]: GatewayImageModelIdMap[K]
+    | (K extends typeof generatedForGateway ? MultimodalImageModel : never);
+};
 
-export type ImageModelId = GatewayImageModelIdMap[ActiveGatewayType] | ActiveMultimodalImageModel
+export type ImageModelId = FullImageModelIdMap[ActiveGatewayType];
