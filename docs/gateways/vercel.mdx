@@ -45,28 +45,15 @@ The gateway authenticates using one of these (checked in order):
 | `AI_GATEWAY_API_KEY` | Self-hosted or local development |
 | `VERCEL_OIDC_TOKEN`  | Automatic on Vercel deployments  |
 
-Without either key, the app falls back to the static model snapshot in `models.generated.ts` and cannot make API calls.
-
 ## Available Models
 
-Vercel AI Gateway provides access to 120+ models. The full list is fetched at runtime from `https://ai-gateway.vercel.sh/v1/models` and cached for 1 hour.
-
-Supported providers include OpenAI, Anthropic, Google, xAI, Meta, Mistral, Cohere, DeepSeek, and more.
+120+ models from OpenAI, Anthropic, Google, xAI, Meta, Mistral, Cohere, DeepSeek, and more. The full list is fetched at runtime and cached for 1 hour.
 
 ## Image Generation
 
 The Vercel gateway supports dedicated image models (e.g., `bfl/flux-pro-1.1`) through `createImageModel()`. This enables the built-in [Image Generation](/features/image-generation) feature.
 
-## Key Files
-
-| File                                  | Purpose                         |
-| ------------------------------------- | ------------------------------- |
-| `lib/ai/gateways/vercel-gateway.ts`   | Gateway implementation          |
-| `lib/ai/gateways/gateway-provider.ts` | `GatewayProvider` interface     |
-| `lib/ai/gateways/registry.ts`         | Gateway registry and resolution |
-
 ## Related
 
-- [Gateways Overview](/gateways/overview) for the gateway system architecture
-- [Multi-Model Support](/core/multi-model) for model configuration
-- [OpenRouter Gateway](/gateways/openrouter) for an alternative multi-provider backend
+- [Gateways Overview](/gateways/overview) for the full gateway comparison
+- [OpenRouter](/gateways/openrouter) for an alternative multi-provider backend

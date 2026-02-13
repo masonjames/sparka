@@ -81,7 +81,8 @@
                   "gateways/vercel",
                   "gateways/openrouter",
                   "gateways/openai",
-                  "gateways/openai-compatible"
+                  "gateways/openai-compatible",
+                  "gateways/custom"
                 ]
               }
             ]
@@ -107,7 +108,6 @@
               "cookbook/chat-layout",
               "cookbook/component-registries",
               "cookbook/auto-updating-models",
-              "cookbook/adding-a-gateway",
               "cookbook/git-worktrees"
             ]
           }

@@ -1,37 +1,11 @@
 ---
-title: Adding a Gateway
-description: How to add a new AI gateway provider to the multi-gateway system
+title: "Custom Gateway"
+description: "Add a new AI gateway to the multi-gateway system"
 ---
 
-Add support for any OpenAI-compatible API (or custom provider SDK) by implementing the `GatewayProvider` interface and registering it in the gateway system. This recipe walks through the full process.
+Add support for any AI provider by implementing the `GatewayProvider` interface and registering it. If your provider follows the OpenAI API format, consider using the built-in [OpenAI Compatible](/gateways/openai-compatible) gateway instead.
 
-## Problem
-
-You want to route AI requests through a provider that is not built in (e.g., a local LLM server, a corporate proxy, or a niche cloud provider). The gateway abstraction lets you plug it in without touching application code.
-
-## Architecture Overview
-
-```mermaid
-flowchart TB
-    Config["chat.config.ts<br/>(gateway: 'my-gateway')"]
-    Registry["gatewayRegistry<br/>lib/ai/gateways/registry.ts"]
-    Schema["config-schema.ts<br/>(discriminated union)"]
-    Impl["MyGateway class<br/>lib/ai/gateways/my-gateway.ts"]
-    Env["lib/env.ts<br/>(env vars)"]
-
-    Config -->|selects| Registry
-    Registry -->|creates| Impl
-    Schema -->|validates| Config
-    Env -->|provides keys| Impl
-```
-
-Every gateway implements three things:
-
-1. **`createLanguageModel(id)`** -- return a language model instance
-2. **`createImageModel(id)`** -- return an image model (or `null` if unsupported)
-3. **`fetchModels()`** -- list available models from the provider API
-
-## Step-by-Step
+## Steps
 
 ### 1. Install the provider SDK
 
@@ -41,7 +15,7 @@ If your provider has an AI SDK adapter, install it:
 bun add @ai-sdk/openai-compatible
 ```
 
-For providers with a dedicated SDK (like `@ai-sdk/openai` or `@openrouter/ai-sdk-provider`), install that instead. The `@ai-sdk/openai-compatible` package works with any provider that follows the OpenAI API format.
+For providers with a dedicated SDK (like `@ai-sdk/openai` or `@openrouter/ai-sdk-provider`), install that instead.
 
 ### 2. Add environment variables
 
@@ -59,7 +33,18 @@ server: {
 
 ### 3. Create the gateway class
 
-Create a new file at `lib/ai/gateways/my-gateway.ts`. Follow the pattern of the existing gateways:
+Create `lib/ai/gateways/my-gateway.ts`. Every gateway implements the `GatewayProvider` interface:
+
+```ts
+type GatewayProvider<TGateway, TModelId, TImageModelId> = {
+  readonly type: TGateway;
+  createLanguageModel(modelId: TModelId): LanguageModel;
+  createImageModel(modelId: TImageModelId): ImageModel | null;
+  fetchModels(): Promise<AiGatewayModel[]>;
+};
+```
+
+Full example:
 
 ```ts title="lib/ai/gateways/my-gateway.ts"
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
@@ -179,7 +164,7 @@ If your provider uses a dedicated SDK (not OpenAI-compatible), replace `createOp
 
 ### 4. Register in the gateway registry
 
-Import your class and add it to the registry object:
+Import your class and add it to the registry:
 
 ```ts title="lib/ai/gateways/registry.ts"
 import { MyGateway } from "./my-gateway";
@@ -193,13 +178,11 @@ export const gatewayRegistry = {
 } as const satisfies Record<string, () => GatewayProviderBase>;
 ```
 
-The `satisfies` constraint ensures your class matches the `GatewayProvider` interface at compile time.
-
 ### 5. Add the schema variant
 
 In `lib/config-schema.ts`, add your gateway to two places:
 
-**The schema map** (compile-time enforced, so you get an error if you forget):
+**The schema map** (compile-time enforced):
 
 ```ts title="lib/config-schema.ts"
 const gatewaySchemaMap: {
@@ -227,7 +210,7 @@ export const modelsConfigSchema = z
 ```
 
 <Note>
-The `gatewaySchemaMap` record is typed as `[G in GatewayType]`, so TypeScript will show an error if you add a gateway to the registry but forget to add it here.
+The `gatewaySchemaMap` record is typed as `[G in GatewayType]`, so TypeScript shows an error if you add a gateway to the registry but forget to add it here.
 </Note>
 
 ### 6. Configure your app
@@ -236,7 +219,6 @@ Set the gateway and model defaults in `chat.config.ts`:
 
 ```ts title="chat.config.ts"
 const config: ConfigInput = {
-  // ...
   models: {
     gateway: "my-gateway",
     providerOrder: ["my-provider"],
@@ -246,19 +228,8 @@ const config: ConfigInput = {
     defaults: {
       chat: "my-model-a",
       title: "my-model-a",
-      pdf: "my-model-a",
-      artifact: "my-model-a",
-      artifactSuggestion: "my-model-a",
-      followupSuggestions: "my-model-a",
-      suggestions: "my-model-a",
-      polishText: "my-model-a",
-      formatSheet: "my-model-a",
-      analyzeSheet: "my-model-a",
-      codeEdits: "my-model-a",
-      chatImageCompatible: "my-model-a",
+      // ... fill in all task defaults
       image: "my-image-model",
-      deepResearch: "my-model-a",
-      deepResearchFinalReport: "my-model-a",
     },
   },
 };
@@ -271,63 +242,14 @@ MY_GATEWAY_BASE_URL=https://api.my-provider.com/v1
 MY_GATEWAY_API_KEY=sk-...
 ```
 
-## The GatewayProvider Interface
+### 7. Verify
 
-Every gateway must implement this interface:
-
-```ts title="lib/ai/gateways/gateway-provider.ts"
-export type GatewayProvider<
-  TGateway extends string = string,
-  TModelId extends string = string,
-  TImageModelId extends string = string,
-> = {
-  readonly type: TGateway;
-  createLanguageModel(modelId: TModelId): LanguageModel;
-  createImageModel(modelId: TImageModelId): ImageModel | null;
-  fetchModels(): Promise<AiGatewayModel[]>;
-};
+```bash
+bunx tsc --noEmit
+bun fetch:models
 ```
-
-The generic parameters give you type-safe model IDs. If your provider has a known set of model IDs, use the specific type (like the OpenAI gateway does with `OpenaiLanguageModelId`). Otherwise, use `string` (like the OpenRouter and OpenAI-compatible gateways).
-
-## Flow
-
-```mermaid
-sequenceDiagram
-    participant App as Application Code
-    participant Registry as gatewayRegistry
-    participant Gateway as MyGateway
-    participant SDK as Provider SDK
-    participant API as Provider API
-
-    App->>Registry: getGateway(config.gateway)
-    Registry->>Gateway: new MyGateway()
-    App->>Gateway: createLanguageModel("model-id")
-    Gateway->>SDK: createOpenAICompatible(...)
-    SDK-->>Gateway: provider instance
-    Gateway->>SDK: provider("model-id")
-    SDK-->>App: LanguageModel
-
-    App->>Gateway: fetchModels()
-    Gateway->>API: GET /models
-    API-->>Gateway: model list
-    Gateway-->>App: AiGatewayModel[]
-```
-
-## Key Files
-
-| File | Purpose |
-| ---- | ------- |
-| `lib/ai/gateways/gateway-provider.ts` | `GatewayProvider` interface |
-| `lib/ai/gateways/registry.ts` | Gateway registry and type exports |
-| `lib/ai/gateways/*.ts` | Gateway implementations |
-| `lib/config-schema.ts` | Zod schema with discriminated union |
-| `lib/env.ts` | Environment variable validation |
-| `chat.config.ts` | User-facing configuration |
 
 ## Checklist
-
-When adding a new gateway, make sure you:
 
 1. Install the provider SDK (`bun add ...`)
 2. Add env vars to `lib/env.ts`
@@ -337,25 +259,7 @@ When adding a new gateway, make sure you:
 6. Set `gateway` in `chat.config.ts` and fill in model defaults
 7. Run `bunx tsc --noEmit` to verify types
 
-## Using the built-in OpenAI-compatible gateway
-
-If your provider follows the OpenAI API format, you can skip creating a custom gateway and use the built-in `openai-compatible` gateway instead:
-
-```ts title="chat.config.ts"
-models: {
-  gateway: "openai-compatible",
-  // ...
-}
-```
-
-```bash title=".env.local"
-OPENAI_COMPATIBLE_BASE_URL=https://api.my-provider.com/v1
-OPENAI_COMPATIBLE_API_KEY=sk-...
-```
-
-This is the fastest way to connect to providers like [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai), [vLLM](https://docs.vllm.ai), [Azure OpenAI](https://azure.microsoft.com/products/ai-services/openai-service), or any other OpenAI-compatible endpoint.
-
 ## Related
 
-- [Auto-Updating Models](/cookbook/auto-updating-models) for how `fetchModels()` feeds into the runtime model catalog
-- [Multi-Model Support](/core/multi-model) for user-facing model configuration
+- [Gateways Overview](/gateways/overview) for the gateway system architecture
+- [Multi-Model Support](/core/multi-model) for model configuration

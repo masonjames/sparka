@@ -36,11 +36,9 @@ const config: ConfigInput = {
 |----------|-------------|
 | `OPENAI_API_KEY` | Required. Your OpenAI API key |
 
-Without the key, the app falls back to the static model snapshot in `models.generated.ts` and cannot make API calls.
-
 ## Available Models
 
-Models are fetched at runtime from `https://api.openai.com/v1/models` and cached for 1 hour. This returns all models available to your API key, including GPT, DALL-E, and embedding models.
+All models available to your API key (GPT, DALL-E, and embedding models). The full list is fetched at runtime and cached for 1 hour.
 
 ## Model IDs
 
@@ -63,16 +61,7 @@ The OpenAI gateway supports dedicated image models through `createImageModel()`:
 
 This enables the built-in [Image Generation](/features/image-generation) feature.
 
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `lib/ai/gateways/openai-gateway.ts` | Gateway implementation |
-| `lib/ai/gateways/gateway-provider.ts` | `GatewayProvider` interface |
-| `lib/ai/gateways/registry.ts` | Gateway registry and resolution |
-
 ## Related
 
-- [Gateways Overview](/gateways/overview) for the gateway system architecture
-- [Multi-Model Support](/core/multi-model) for model configuration
+- [Gateways Overview](/gateways/overview) for the full gateway comparison
 - [Vercel Gateway](/gateways/vercel) for multi-provider access via a single key

@@ -47,11 +47,9 @@ const config: ConfigInput = {
 | `OPENAI_COMPATIBLE_BASE_URL` | Required. The base URL of the API (e.g., `http://localhost:11434/v1`) |
 | `OPENAI_COMPATIBLE_API_KEY` | Optional. API key if the provider requires authentication |
 
-Without the base URL, the app falls back to the static model snapshot in `models.generated.ts` and cannot make API calls.
-
 ## Available Models
 
-Models are fetched at runtime from `{OPENAI_COMPATIBLE_BASE_URL}/models` and cached for 1 hour. The available models depend entirely on your provider.
+Depends entirely on your provider. Models are fetched at runtime from `{OPENAI_COMPATIBLE_BASE_URL}/models` and cached for 1 hour.
 
 ### Ollama
 
@@ -74,16 +72,7 @@ OPENAI_COMPATIBLE_BASE_URL=http://localhost:1234/v1
 
 Image generation support depends on the provider. If the endpoint supports the OpenAI image generation API format, `createImageModel()` will work. Otherwise, multimodal language models with image output capabilities can still generate images inline.
 
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `lib/ai/gateways/openai-compatible-gateway.ts` | Gateway implementation |
-| `lib/ai/gateways/gateway-provider.ts` | `GatewayProvider` interface |
-| `lib/ai/gateways/registry.ts` | Gateway registry and resolution |
-
 ## Related
 
-- [Gateways Overview](/gateways/overview) for the gateway system architecture
-- [Adding a Gateway](/cookbook/adding-a-gateway) if you need more control than this generic gateway provides
-- [Multi-Model Support](/core/multi-model) for model configuration
+- [Gateways Overview](/gateways/overview) for the full gateway comparison
+- [Custom Gateway](/gateways/custom) if you need more control than this generic gateway provides

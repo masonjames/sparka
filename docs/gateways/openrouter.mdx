@@ -34,17 +34,9 @@ const config: ConfigInput = {
 |----------|-------------|
 | `OPENROUTER_API_KEY` | Required. Your OpenRouter API key |
 
-Without the key, the app falls back to the static model snapshot in `models.generated.ts` and cannot make API calls.
-
 ## Available Models
 
-OpenRouter provides access to hundreds of models. The full list is fetched at runtime from `https://openrouter.ai/api/v1/models` and cached for 1 hour.
-
-The OpenRouter response format is automatically normalized to match the internal `AiGatewayModel` schema. This includes:
-
-- `context_length` mapped to `context_window`
-- `pricing.prompt` / `pricing.completion` mapped to `pricing.input` / `pricing.output`
-- Tags derived from `architecture.input_modalities`, `architecture.output_modalities`, and `supported_parameters` (vision, reasoning, tool-use, image-generation, etc.)
+Hundreds of models from OpenAI, Anthropic, Google, Meta, Mistral, and many others. The full list is fetched at runtime and cached for 1 hour. The OpenRouter response format is automatically normalized to match the internal model schema.
 
 ## Model IDs
 
@@ -69,16 +61,7 @@ OpenRouter charges per-token based on the underlying model's pricing. Check [Ope
 
 You can set spending limits in your [OpenRouter dashboard](https://openrouter.ai/settings/limits).
 
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `lib/ai/gateways/openrouter-gateway.ts` | Gateway implementation |
-| `lib/ai/gateways/gateway-provider.ts` | `GatewayProvider` interface |
-| `lib/ai/gateways/registry.ts` | Gateway registry and resolution |
-
 ## Related
 
-- [Gateways Overview](/gateways/overview) for the gateway system architecture
-- [Multi-Model Support](/core/multi-model) for model configuration
+- [Gateways Overview](/gateways/overview) for the full gateway comparison
 - [Vercel Gateway](/gateways/vercel) for the default gateway
