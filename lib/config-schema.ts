@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   DEFAULT_GATEWAY,
-  type DefaultGateway,
   type GatewayImageModelIdMap,
   type GatewayModelIdMap,
   type GatewayType,
@@ -362,9 +361,7 @@ type ModelsShape = z.input<typeof gatewaySchemaMap.vercel>;
 
 type ModelsInputFor<G extends GatewayType> = {
   [K in keyof ModelsShape]: K extends "gateway"
-    ? G extends DefaultGateway
-      ? G | undefined
-      : G
+    ? G
     : K extends "defaults"
       ? {
           [D in keyof ModelsShape["defaults"]]: D extends "image"

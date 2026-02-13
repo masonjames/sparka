@@ -77,12 +77,15 @@ export const getModelProviderOptions = async (
   const model = await getAppModelDefinition(providerModelId);
   if (model.owned_by === "openai") {
     if (model.reasoning) {
+      // Strip provider prefix (e.g. "openai/gpt-5-mini" → "gpt-5-mini")
+      // so the check works for all gateways (Vercel uses prefixed IDs, OpenAI direct does not)
+      const modelName = model.apiModelId.split("/").pop() ?? model.apiModelId;
       return {
         openai: {
           reasoningSummary: "auto",
-          ...(model.apiModelId === "openai/gpt-5" ||
-          model.apiModelId === "openai/gpt-5-mini" ||
-          model.apiModelId === "openai/gpt-5-nano"
+          ...(modelName === "gpt-5" ||
+          modelName === "gpt-5-mini" ||
+          modelName === "gpt-5-nano"
             ? { reasoningEffort: "low" }
             : {}),
         } satisfies OpenAIResponsesProviderOptions,

@@ -50,6 +50,15 @@ export default async function ChatLayout({
     }
   }
 
+  // Ensure anonymous users always get a model from their allowed list
+  if (isAnonymous) {
+    const anonymousModels =
+      ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[];
+    if (!anonymousModels.includes(defaultModel)) {
+      defaultModel = anonymousModels[0] ?? default_chat_model;
+    }
+  }
+
   // Prefetch model preferences for authenticated users
   if (session?.user?.id) {
     const queryClient = getQueryClient();

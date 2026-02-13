@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
 import { getActiveGateway } from "./active-gateway";
 import type { AiGatewayModel } from "./ai-gateway-models-schemas";
@@ -33,7 +34,7 @@ export const fetchModels = unstable_cache(
     const models = await fetchModelsRaw();
     return models.map(toModelData);
   },
-  ["ai-gateway-models"],
+  [`ai-gateway-models-${config.models.gateway}`],
   {
     revalidate: 3600,
     tags: ["ai-gateway-models"],
