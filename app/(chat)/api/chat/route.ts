@@ -415,14 +415,16 @@ async function createChatStream({
       const responseMessages = response.messages;
 
       // Generate and stream follow-up suggestions
-      const followupSuggestionsResult = generateFollowupSuggestions([
-        ...contextForLLM,
-        ...responseMessages,
-      ]);
-      await streamFollowupSuggestions({
-        followupSuggestionsResult,
-        writer: dataStream,
-      });
+      if (config.features.followupSuggestions) {
+        const followupSuggestionsResult = generateFollowupSuggestions([
+          ...contextForLLM,
+          ...responseMessages,
+        ]);
+        await streamFollowupSuggestions({
+          followupSuggestionsResult,
+          writer: dataStream,
+        });
+      }
     },
     generateId: () => messageId,
     onFinish: async ({ messages }) => {
@@ -841,7 +843,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch MCP connectors for authenticated users (only if MCP integration enabled)
     const mcpConnectors: McpConnector[] =
-      config.integrations.mcp && userId && !isAnonymous
+      config.features.mcp && userId && !isAnonymous
         ? await getMcpConnectorsByUserId({ userId })
         : [];
 

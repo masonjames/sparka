@@ -1,12 +1,11 @@
 import type chatConfig from "@/chat.config";
 import type {
-    DefaultGateway,
-    GatewayImageModelIdMap,
-    GatewayModelIdMap,
-    GatewayType,
+  DefaultGateway,
+  GatewayImageModelIdMap,
+  GatewayModelIdMap,
+  GatewayType,
 } from "./gateways/registry";
-import { generatedForGateway, type models } from "./models.generated";
-
+import type { generatedForGateway, models } from "./models.generated";
 
 /** The gateway type actively selected in chat.config.ts */
 export type ActiveGatewayType = typeof chatConfig extends {
@@ -46,7 +45,8 @@ type MultimodalImageModel =
 
 // Merge snapshot-derived multimodal image models into the map per gateway key
 type FullImageModelIdMap = {
-  [K in GatewayType]: GatewayImageModelIdMap[K]
+  [K in GatewayType]:
+    | GatewayImageModelIdMap[K]
     | (K extends typeof generatedForGateway ? MultimodalImageModel : never);
 };
 

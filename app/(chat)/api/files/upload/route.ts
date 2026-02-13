@@ -22,7 +22,7 @@ const FileSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!config.integrations.attachments) {
+  if (!config.features.attachments) {
     return NextResponse.json(
       { error: "File uploads are not available" },
       { status: 503 }

@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { memo } from "react";
 import { Action } from "@/components/ai-elements/actions";
-import { useMessageTree } from "@/providers/message-tree-provider";
+import { useNavigateToSibling } from "@/hooks/use-navigate-to-sibling";
+import { useMessageSiblingInfo } from "@/lib/stores/hooks-threads";
 import { useSession } from "@/providers/session-provider";
 
 function PureMessageSiblings({
@@ -14,8 +15,8 @@ function PureMessageSiblings({
   const { data: session } = useSession();
   const _isAuthenticated = !!session?.user;
 
-  const { getMessageSiblingInfo, navigateToSibling } = useMessageTree();
-  const siblingInfo = getMessageSiblingInfo(messageId);
+  const siblingInfo = useMessageSiblingInfo(messageId);
+  const navigateToSibling = useNavigateToSibling();
   const hasSiblings = siblingInfo && siblingInfo.siblings.length > 1;
 
   return (

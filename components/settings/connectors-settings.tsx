@@ -143,7 +143,7 @@ export function ConnectorsSettings() {
     setDialogState({ dialog: null });
   }, [setDialogState]);
 
-  if (!config.integrations.mcp) {
+  if (!config.features.mcp) {
     return (
       <SettingsPageContent className="gap-4">
         <div className="flex flex-col items-center justify-center py-12 text-center">

@@ -44,7 +44,10 @@
               "features/mcp",
               "features/canvas",
               "features/reasoning",
-              "features/sharing"
+              "features/sharing",
+              "features/branching",
+              "features/projects",
+              "features/follow-up-suggestions"
             ]
           },
           {
@@ -82,10 +85,6 @@
                 ]
               }
             ]
-          },
-          {
-            "group": "Roadmap",
-            "pages": ["roadmap/branching", "roadmap/projects"]
           }
         ]
       },

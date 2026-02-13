@@ -38,9 +38,9 @@ export const enabledTools: UiToolName[] = [
   // Canvas tools are always available
   "createTextDocument",
   // Web search tools require webSearch integration
-  ...(config.integrations.webSearch
+  ...(config.features.webSearch
     ? (["webSearch", "deepResearch"] as const)
     : []),
   // Image generation requires imageGeneration integration
-  ...(config.integrations.imageGeneration ? (["generateImage"] as const) : []),
+  ...(config.features.imageGeneration ? (["generateImage"] as const) : []),
 ];

@@ -62,8 +62,8 @@ export function getTools({
       session,
       dataStream,
     }),
-    ...(config.integrations.urlRetrieval ? { retrieveUrl } : {}),
-    ...(config.integrations.webSearch
+    ...(config.features.urlRetrieval ? { retrieveUrl } : {}),
+    ...(config.features.webSearch
       ? {
           webSearch: tavilyWebSearch({
             dataStream,
@@ -73,10 +73,10 @@ export function getTools({
         }
       : {}),
 
-    ...(config.integrations.sandbox
+    ...(config.features.sandbox
       ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
-    ...(config.integrations.imageGeneration
+    ...(config.features.imageGeneration
       ? {
           generateImage: generateImageTool({
             attachments,
@@ -86,7 +86,7 @@ export function getTools({
           }),
         }
       : {}),
-    ...(config.integrations.deepResearch
+    ...(config.features.deepResearch
       ? {
           deepResearch: deepResearch({
             session,
@@ -113,7 +113,7 @@ export async function getMcpTools({
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
 }> {
-  if (!config.integrations.mcp) {
+  if (!config.features.mcp) {
     return {
       tools: {},
       cleanup: async () => Promise.resolve(),

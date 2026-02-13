@@ -45,7 +45,7 @@ const config = {
     ],
     paymentProcessors: [],
   },
-  integrations: {
+  features: {
     sandbox: true, // Vercel-native, no key needed
     webSearch: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
     urlRetrieval: true, // Requires FIRECRAWL_API_KEY
@@ -53,6 +53,7 @@ const config = {
     mcp: true, // Requires MCP_ENCRYPTION_KEY
     imageGeneration: true, // Requires BLOB_READ_WRITE_TOKEN
     attachments: true, // Requires BLOB_READ_WRITE_TOKEN
+    followupSuggestions: true,
   },
   legal: {
     minimumAge: 13,

@@ -118,11 +118,11 @@ export type Config = {
   };
 
   /**
-   * Feature flags for optional integrations.
+   * Feature flags for optional features.
    * Set to true to enable - requires corresponding env vars.
    * Validated at build time via scripts/check-env.ts.
    */
-  integrations: {
+  features: {
     /** Code sandbox execution (Vercel-native) */
     sandbox: boolean;
     /** Web search */
@@ -192,19 +192,19 @@ The `gateway` field determines which AI backend is used for model creation and m
 
 ## Feature flags + env validation
 
-Feature flags live under `integrations` and `authentication`. They're validated at build time by `scripts/check-env.ts`:
+Feature flags live under `features` and `authentication`. They're validated at build time by `scripts/check-env.ts`:
 
 - Runs as `prebuild` step before `next build`
 - Missing env vars will fail the build immediately
 
-### Integrations
+### Features
 
-- **`integrations.sandbox`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) _or_ `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
-- **`integrations.webSearch`**: requires `TAVILY_API_KEY` _or_ `FIRECRAWL_API_KEY`
-- **`integrations.urlRetrieval`**: requires `FIRECRAWL_API_KEY` - fetch structured content from URLs
-- **`integrations.mcp`**: requires `MCP_ENCRYPTION_KEY`
-- **`integrations.imageGeneration`**: requires `BLOB_READ_WRITE_TOKEN` - AI-powered image generation tool
-- **`integrations.attachments`**: requires `BLOB_READ_WRITE_TOKEN` - file uploads (images and PDFs)
+- **`features.sandbox`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) _or_ `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
+- **`features.webSearch`**: requires `TAVILY_API_KEY` _or_ `FIRECRAWL_API_KEY`
+- **`features.urlRetrieval`**: requires `FIRECRAWL_API_KEY` - fetch structured content from URLs
+- **`features.mcp`**: requires `MCP_ENCRYPTION_KEY`
+- **`features.imageGeneration`**: requires `BLOB_READ_WRITE_TOKEN` - AI-powered image generation tool
+- **`features.attachments`**: requires `BLOB_READ_WRITE_TOKEN` - file uploads (images and PDFs)
 
 ### Authentication
 

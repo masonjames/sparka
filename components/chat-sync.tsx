@@ -9,7 +9,10 @@ import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useThreadInitialMessages } from "@/lib/stores/hooks-threads";
+import {
+  useAddMessageToTree,
+  useThreadInitialMessages,
+} from "@/lib/stores/hooks-threads";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
@@ -28,6 +31,7 @@ export function ChatSync({
   const isAuthenticated = !!session?.user;
   const { stop } = useChatActions<ChatMessage>();
   const threadInitialMessages = useThreadInitialMessages();
+  const addMessageToTree = useAddMessageToTree();
 
   const lastMessage = threadInitialMessages.at(-1);
   const isLastMessagePartial = !!lastMessage?.metadata?.activeStreamId;
@@ -51,6 +55,7 @@ export function ChatSync({
     messages: threadInitialMessages,
     generateId: generateUUID,
     onFinish: ({ message }) => {
+      addMessageToTree(message);
       saveChatMessage({ message, chatId: id });
       setAutoResume(true);
     },
