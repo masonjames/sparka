@@ -1,27 +1,60 @@
 import { type FileUIPart, generateImage, generateText, tool } from "ai";
 import { z } from "zod";
+import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { uploadFile } from "@/lib/blob";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
-import {
-  type AnyImageModelId,
-  isMultimodalImageModel,
-  type MultimodalImageModelId,
-} from "@/lib/models/image-model-id";
 import { toolsDefinitions } from "./tools-definitions";
 
 type GenerateImageProps = {
   attachments?: FileUIPart[];
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
-  modelId?: AnyImageModelId;
+  selectedModel?: string;
   costAccumulator?: CostAccumulator;
 };
 
 const log = createModuleLogger("ai.tools.generate-image");
 
 type ImageMode = "edit" | "generate";
+
+/**
+ * Resolve which model to use for image generation and whether it's a
+ * multimodal language model (uses generateText) or a dedicated image model
+ * (uses generateImage). Uses the dynamic model registry so it works across
+ * all gateways, not just the static models.generated snapshot.
+ */
+async function resolveImageModel(selectedModel?: string): Promise<{
+  modelId: string;
+  multimodal: boolean;
+}> {
+  // If the user's selected chat model can generate images, prefer it
+  if (selectedModel) {
+    try {
+      const model = await getAppModelDefinition(selectedModel as AppModelId);
+      if (model.output.image) {
+        return { modelId: selectedModel, multimodal: true };
+      }
+    } catch {
+      // Not in app models registry, fall through
+    }
+  }
+
+  // Fall back to the configured default image model
+  const defaultId = config.models.defaults.image;
+  try {
+    const model = await getAppModelDefinition(defaultId as AppModelId);
+    // Default could be a multimodal language model (e.g. gemini-3-pro-image)
+    if (model.output.image) {
+      return { modelId: defaultId, multimodal: true };
+    }
+  } catch {
+    // Not in app models registry → dedicated image model (e.g. dall-e-3)
+  }
+
+  return { modelId: defaultId, multimodal: false };
+}
 
 async function fetchImageBuffer(url: string): Promise<Buffer> {
   const response = await fetch(url);
@@ -170,7 +203,7 @@ async function runGenerateImageMultimodal({
   startMs,
   costAccumulator,
 }: {
-  modelId: MultimodalImageModelId;
+  modelId: string;
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
@@ -178,10 +211,6 @@ async function runGenerateImageMultimodal({
   startMs: number;
   costAccumulator?: CostAccumulator;
 }): Promise<{ imageUrl: string; prompt: string }> {
-  if (!isMultimodalImageModel(modelId)) {
-    throw new Error(`Model ${modelId} is not a multimodal image model`);
-  }
-
   // Build messages with image context if in edit mode
   type ImageContent = { type: "image"; image: URL };
   type TextContent = { type: "text"; text: string };
@@ -231,7 +260,11 @@ async function runGenerateImageMultimodal({
   // Track LLM cost for multimodal image generation
 
   if (res.usage) {
-    costAccumulator?.addLLMCost(modelId, res.usage, "generateImage-multimodal");
+    costAccumulator?.addLLMCost(
+      modelId as AppModelId,
+      res.usage,
+      "generateImage-multimodal"
+    );
   }
 
   // Find the first image in the response files
@@ -272,7 +305,7 @@ async function runGenerateImageMultimodal({
 export const generateImageTool = ({
   attachments = [],
   lastGeneratedImage = null,
-  modelId,
+  selectedModel,
   costAccumulator,
 }: GenerateImageProps = {}) =>
   tool({
@@ -303,7 +336,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
       log.info(
         {
           mode,
-          modelId,
+          selectedModel,
           attachmentCount: imageParts.length,
           hasLastGeneratedImage: lastGeneratedImage !== null,
           promptLength: prompt.length,
@@ -312,10 +345,11 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
       );
 
       try {
-        const effectiveModelId = modelId ?? config.models.defaults.image;
+        const { modelId: effectiveModelId, multimodal } =
+          await resolveImageModel(selectedModel);
 
         // Use multimodal path for language models with image generation
-        if (isMultimodalImageModel(effectiveModelId)) {
+        if (multimodal) {
           return await runGenerateImageMultimodal({
             modelId: effectiveModelId,
             mode,
@@ -348,7 +382,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
         log.error(
           {
             mode,
-            modelId,
+            selectedModel,
             ms: Date.now() - startMs,
             error: serializeError(resolvedError),
             ...getErrorDebugInfo(resolvedError),

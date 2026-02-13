@@ -1,12 +1,121 @@
 import { z } from "zod";
-import type { AppModelId } from "@/lib/ai/app-model-id";
+import {
+  DEFAULT_GATEWAY,
+  type GatewayImageModelIdMap,
+  type GatewayModelIdMap,
+  type GatewayType,
+} from "@/lib/ai/gateways/registry";
 import type { ToolName } from "./ai/types";
-import type { AnyImageModelId } from "./models/image-model-id";
 
 // Helper to create typed model ID schemas
-const appModelId = () => z.custom<AppModelId>();
-const imageModelId = () => z.custom<AnyImageModelId>();
 const toolName = () => z.custom<ToolName>();
+
+// =====================================================
+// Models config — discriminated union keyed on gateway
+// =====================================================
+
+function gatewayModelId<G extends GatewayType>() {
+  return z.custom<GatewayModelIdMap[G]>((v) => typeof v === "string");
+}
+
+function gatewayImageModelId<G extends GatewayType>() {
+  return z.custom<GatewayImageModelIdMap[G]>((v) => typeof v === "string");
+}
+
+function createModelsSchema<G extends GatewayType>(g: G) {
+  return z.object({
+    gateway: z.literal(g),
+    providerOrder: z
+      .array(z.string())
+      .describe("Provider sort order in model selector"),
+    disabledModels: z
+      .array(gatewayModelId<G>())
+      .describe("Models to hide from all users"),
+    curatedDefaults: z
+      .array(gatewayModelId<G>())
+      .describe("Default models enabled for new users"),
+    anonymousModels: z
+      .array(gatewayModelId<G>())
+      .describe("Models available to anonymous users"),
+    defaults: z
+      .object({
+        chat: gatewayModelId<G>(),
+        title: gatewayModelId<G>(),
+        pdf: gatewayModelId<G>(),
+        artifact: gatewayModelId<G>(),
+        artifactSuggestion: gatewayModelId<G>(),
+        followupSuggestions: gatewayModelId<G>(),
+        suggestions: gatewayModelId<G>(),
+        polishText: gatewayModelId<G>(),
+        formatSheet: gatewayModelId<G>(),
+        analyzeSheet: gatewayModelId<G>(),
+        codeEdits: gatewayModelId<G>(),
+        chatImageCompatible: gatewayModelId<G>(),
+        image: gatewayImageModelId<G>(),
+        deepResearch: gatewayModelId<G>(),
+        deepResearchFinalReport: gatewayModelId<G>(),
+      })
+      .describe("Default model for each task type"),
+  });
+}
+
+// Record ensures a compile error if a new gateway is added but not here.
+const gatewaySchemaMap: {
+  [G in GatewayType]: ReturnType<typeof createModelsSchema<G>>;
+} = {
+  vercel: createModelsSchema("vercel"),
+  openrouter: createModelsSchema("openrouter"),
+  openai: createModelsSchema("openai"),
+  "openai-compatible": createModelsSchema("openai-compatible"),
+};
+
+export const modelsConfigSchema = z
+  .discriminatedUnion("gateway", [
+    gatewaySchemaMap.vercel,
+    gatewaySchemaMap.openrouter,
+    gatewaySchemaMap.openai,
+    gatewaySchemaMap["openai-compatible"],
+  ])
+  .default({
+    gateway: DEFAULT_GATEWAY,
+    providerOrder: ["openai", "google", "anthropic"],
+    disabledModels: [],
+    curatedDefaults: [
+      // OpenAI
+      "openai/gpt-5-nano",
+      "openai/gpt-5-mini",
+      "openai/gpt-5.2",
+      "openai/gpt-5.2-chat",
+
+      // Google
+      "google/gemini-2.5-flash-lite",
+      "google/gemini-3-flash",
+      "google/gemini-3-pro-preview",
+      // Anthropic
+      "anthropic/claude-sonnet-4.5",
+      "anthropic/claude-opus-4.5",
+      // xAI
+      "xai/grok-4",
+    ],
+    anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
+    defaults: {
+      chat: "openai/gpt-5-mini",
+      title: "openai/gpt-5-nano",
+      pdf: "openai/gpt-5-mini",
+      artifact: "openai/gpt-5-nano",
+      artifactSuggestion: "openai/gpt-5-mini",
+      followupSuggestions: "google/gemini-2.5-flash-lite",
+      suggestions: "openai/gpt-5-mini",
+      polishText: "openai/gpt-5-mini",
+      formatSheet: "openai/gpt-5-mini",
+      analyzeSheet: "openai/gpt-5-mini",
+      codeEdits: "openai/gpt-5-mini",
+      chatImageCompatible: "openai/gpt-4o-mini",
+      image: "google/gemini-3-pro-image",
+      deepResearch: "google/gemini-2.5-flash-lite",
+      deepResearchFinalReport: "google/gemini-3-flash",
+    },
+  });
 
 export const pricingConfigSchema = z.object({
   currency: z.string().optional(),
@@ -24,82 +133,6 @@ export const pricingConfigSchema = z.object({
     })
     .optional(),
 });
-
-export const modelsConfigSchema = z
-  .object({
-    providerOrder: z
-      .array(z.string())
-      .describe("Provider sort order in model selector"),
-    disabledModels: z
-      .array(appModelId())
-      .describe("Models to hide from all users"),
-    curatedDefaults: z
-      .array(appModelId())
-      .describe("Default models enabled for new users"),
-    anonymousModels: z
-      .array(appModelId())
-      .describe("Models available to anonymous users"),
-    defaults: z
-      .object({
-        chat: appModelId(),
-        title: appModelId(),
-        pdf: appModelId(),
-        artifact: appModelId(),
-        artifactSuggestion: appModelId(),
-        followupSuggestions: appModelId(),
-        suggestions: appModelId(),
-        polishText: appModelId(),
-        formatSheet: appModelId(),
-        analyzeSheet: appModelId(),
-        codeEdits: appModelId(),
-        chatImageCompatible: appModelId(),
-        image: imageModelId(),
-        deepResearch: appModelId(),
-        deepResearchFinalReport: appModelId(),
-      })
-      .describe("Default model for each task type"),
-  })
-  .default({
-    providerOrder: ["openai", "google", "anthropic"],
-    disabledModels: [],
-    curatedDefaults: [
-      // OpenAI
-      "openai/gpt-5-nano",
-      "openai/gpt-5-mini",
-      "openai/gpt-5.2",
-      "openai/gpt-5.2-chat-latest",
-      "openai/gpt-5.2-chat-latest-reasoning",
-      // Google
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-3-flash",
-      "google/gemini-3-pro-preview",
-      // Anthropic
-      "anthropic/claude-sonnet-4.5",
-      "anthropic/claude-sonnet-4.5-reasoning",
-      "anthropic/claude-opus-4.5",
-      // xAI
-      "xai/grok-4",
-      "xai/grok-4-reasoning",
-    ],
-    anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
-    defaults: {
-      chat: "openai/gpt-5-nano",
-      title: "google/gemini-2.5-flash-lite",
-      pdf: "openai/gpt-5-mini",
-      artifact: "openai/gpt-5-nano",
-      artifactSuggestion: "openai/gpt-5-mini",
-      followupSuggestions: "google/gemini-2.5-flash-lite",
-      suggestions: "openai/gpt-5-mini",
-      polishText: "openai/gpt-5-mini",
-      formatSheet: "openai/gpt-5-mini",
-      analyzeSheet: "openai/gpt-5-mini",
-      codeEdits: "openai/gpt-5-mini",
-      chatImageCompatible: "openai/gpt-4o-mini",
-      image: "google/gemini-3-pro-image",
-      deepResearch: "google/gemini-2.5-flash-lite",
-      deepResearchFinalReport: "google/gemini-3-flash",
-    },
-  });
 
 export const anonymousConfigSchema = z
   .object({
@@ -237,7 +270,7 @@ export const configSchema = z.object({
     .optional()
     .describe("Browser tab title (defaults to appName)"),
   appDescription: z.string().default("AI chat powered by ChatJS"),
-  appUrl: z.string().url().default("https://your-domain.com"),
+  appUrl: z.url().default("https://your-domain.com"),
 
   organization: z
     .object({
@@ -320,8 +353,36 @@ export type DeepResearchConfig = z.infer<typeof deepResearchConfigSchema>;
 export type FeaturesConfig = z.infer<typeof featuresConfigSchema>;
 export type AuthenticationConfig = z.infer<typeof authenticationConfigSchema>;
 
-// Input types (with optionals for fields with defaults)
-export type ConfigInput = z.input<typeof configSchema>;
+// Gateway-aware input types: model IDs narrowed per gateway for autocomplete
+type ZodConfigInput = z.input<typeof configSchema>;
+
+// Use vercel variant as shape reference (all variants share the same structure)
+type ModelsShape = z.input<typeof gatewaySchemaMap.vercel>;
+
+type ModelsInputFor<G extends GatewayType> = {
+  [K in keyof ModelsShape]: K extends "gateway"
+    ? G
+    : K extends "defaults"
+      ? {
+          [D in keyof ModelsShape["defaults"]]: D extends "image"
+            ? GatewayImageModelIdMap[G]
+            : GatewayModelIdMap[G];
+        }
+      : K extends "disabledModels" | "curatedDefaults" | "anonymousModels"
+        ? GatewayModelIdMap[G][]
+        : ModelsShape[K];
+};
+
+type ConfigInputForGateway<G extends GatewayType> = Omit<
+  ZodConfigInput,
+  "models"
+> & {
+  models?: ModelsInputFor<G>;
+};
+
+export type ConfigInput = {
+  [G in GatewayType]: ConfigInputForGateway<G>;
+}[GatewayType];
 
 // Apply defaults to partial config
 export function applyDefaults(input: ConfigInput): Config {

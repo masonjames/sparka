@@ -14,14 +14,13 @@ export const ModelRow = memo(function PureModelRow({
   isEnabled: boolean;
   onToggle: (modelId: string, isEnabled: boolean) => void;
 }) {
-  const [provider] = model.id.split("/");
   const ReasoningIcon = AVAILABLE_FEATURES.reasoning.icon;
 
   return (
     <TableRow>
       <TableCell className="w-full py-2.5 pl-0">
         <div className="flex items-center gap-2.5">
-          {provider && <ModelSelectorLogo provider={provider} />}
+          <ModelSelectorLogo modelId={model.id} />
           <span className="font-medium text-sm">{model.name}</span>
           {model.reasoning && (
             <ReasoningIcon

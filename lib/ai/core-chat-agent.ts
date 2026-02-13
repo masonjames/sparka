@@ -107,7 +107,7 @@ export async function createCoreChatAgent({
   let providerOptions: Awaited<ReturnType<typeof getModelProviderOptions>>;
   try {
     [model, providerOptions] = await Promise.all([
-      getLanguageModel(modelDefinition.apiModelId),
+      getLanguageModel(selectedModelId),
       getModelProviderOptions(selectedModelId),
     ]);
   } catch (error) {

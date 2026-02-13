@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { Table, TableBody } from "@/components/ui/table";
+import type { AppModelId } from "@/lib/ai/app-model-id";
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
@@ -65,16 +66,16 @@ export function ModelsTable({
     const enabled = getDefaultEnabledModels(allModels);
     for (const pref of preferences ?? []) {
       if (pref.enabled) {
-        enabled.add(pref.modelId);
+        enabled.add(pref.modelId as AppModelId);
       } else {
-        enabled.delete(pref.modelId);
+        enabled.delete(pref.modelId as AppModelId);
       }
     }
     return enabled;
   }, [allModels, preferences]);
 
   // Stable sort order: computed once on initial load, never changes
-  const initialSortRef = useRef<string[] | null>(null);
+  const initialSortRef = useRef<AppModelId[] | null>(null);
   const sortedModels = useMemo(() => {
     if (initialSortRef.current === null) {
       // First render: enabled models first, then the rest

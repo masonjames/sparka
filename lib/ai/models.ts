@@ -1,63 +1,31 @@
 import { unstable_cache } from "next/cache";
+import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
-import {
-  type AiGatewayModel,
-  aiGatewayModelsResponseSchema,
-} from "./ai-gateway-models-schemas";
+import { getActiveGateway } from "./active-gateway";
+import type { AiGatewayModel } from "./ai-gateway-models-schemas";
 import type { ModelData } from "./model-data";
-import { models as fallbackModels } from "./models.generated";
 import { toModelData } from "./to-model-data";
 
 const log = createModuleLogger("ai/models");
 
 async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
-  const apiKey =
-    process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+  const activeGateway = getActiveGateway();
 
-  if (!apiKey) {
-    log.warn("No AI gateway API key found, using fallback models");
-    return fallbackModels as unknown as AiGatewayModel[];
-  }
-
-  const url = "https://ai-gateway.vercel.sh/v1/models";
-  log.debug({ url }, "Fetching models from AI gateway");
+  log.debug({ gateway: activeGateway.type }, "Fetching models from gateway");
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      next: { revalidate: 3600 },
-    });
-
-    if (!response.ok) {
-      log.error(
-        {
-          status: response.status,
-          statusText: response.statusText,
-          url,
-        },
-        "AI gateway returned non-OK response"
-      );
-      throw new Error(`Failed to fetch models: ${response.statusText}`);
-    }
-
-    const bodyRaw = await response.json();
-    const body = aiGatewayModelsResponseSchema.parse(bodyRaw);
-    const modelCount = body.data?.length ?? 0;
-
-    log.info({ modelCount }, "Successfully fetched models from AI gateway");
-    return body.data || [];
+    const models = await activeGateway.fetchModels();
+    log.info(
+      { gateway: activeGateway.type, modelCount: models.length },
+      "Successfully fetched models from gateway"
+    );
+    return models;
   } catch (error) {
     log.error(
-      {
-        err: error,
-        url,
-      },
-      "Error fetching models from gateway, falling back to generated models"
+      { err: error, gateway: activeGateway.type },
+      "Error fetching models from gateway"
     );
-    return fallbackModels as unknown as AiGatewayModel[];
+    throw error;
   }
 }
 
@@ -66,7 +34,7 @@ export const fetchModels = unstable_cache(
     const models = await fetchModelsRaw();
     return models.map(toModelData);
   },
-  ["ai-gateway-models"],
+  [`ai-gateway-models-${config.models.gateway}`],
   {
     revalidate: 3600,
     tags: ["ai-gateway-models"],

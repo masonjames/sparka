@@ -1,10 +1,12 @@
 import { unstable_cache as cache } from "next/cache";
 import { config } from "@/lib/config";
-import type { AnyImageModelId } from "@/lib/models/image-model-id";
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
-import { models as generatedModels } from "./models.generated";
+import {
+  generatedForGateway,
+  models as generatedModels,
+} from "./models.generated";
 
 export type { AppModelId, ModelId } from "./app-model-id";
 
@@ -24,7 +26,7 @@ function buildAppModels(models: ModelData[]): AppModelDefinition[] {
       // - Non-reasoning (original id, reasoning=false)
       // - Reasoning (id with -reasoning suffix, reasoning=true)
       if (model.reasoning === true) {
-        const reasoningId: AppModelId = `${modelId}-reasoning`;
+        const reasoningId = `${modelId}-reasoning` as AppModelId;
 
         return [
           {
@@ -107,34 +109,17 @@ export async function getAppModelDefinition(
   return model;
 }
 
-export const DEFAULT_CHAT_MODEL: ModelId = "openai/gpt-5-nano";
-export const DEFAULT_PDF_MODEL: ModelId = "openai/gpt-5-mini";
-export const DEFAULT_TITLE_MODEL: ModelId = "google/gemini-2.5-flash-lite";
-export const DEFAULT_ARTIFACT_MODEL: ModelId = "openai/gpt-5-nano";
-export const DEFAULT_FOLLOWUP_SUGGESTIONS_MODEL: ModelId =
-  "google/gemini-2.5-flash-lite";
-export const DEFAULT_IMAGE_MODEL: AnyImageModelId = "google/gemini-3-pro-image";
-export const DEFAULT_CHAT_IMAGE_COMPATIBLE_MODEL: ModelId =
-  "openai/gpt-4o-mini";
-export const DEFAULT_POLISH_TEXT_MODEL: ModelId = "openai/gpt-5-mini";
-export const DEFAULT_FORMAT_AND_CLEAN_SHEET_MODEL: ModelId =
-  "openai/gpt-5-mini";
-export const DEFAULT_ANALYZE_AND_VISUALIZE_SHEET_MODEL: ModelId =
-  "openai/gpt-5-mini";
-
-export const DEFAULT_CODE_EDITS_MODEL: ModelId = "openai/gpt-5-mini";
-
-export const ANONYMOUS_AVAILABLE_MODELS: AppModelId[] = [
-  "google/gemini-2.5-flash-lite",
-  "openai/gpt-5-mini",
-  "openai/gpt-5-nano",
-  "anthropic/claude-haiku-4.5",
-];
 /**
  * Set of model IDs from the generated models file.
  * Used to detect new models from the API that we haven't "decided" on yet.
+ * When the snapshot was generated for a different gateway the IDs won't match,
+ * so we fall back to an empty set (which auto-enables all models).
  */
-const KNOWN_MODEL_IDS = new Set<string>(generatedModels.map((m) => m.id));
+const KNOWN_MODEL_IDS = new Set<string>(
+  generatedForGateway === config.models.gateway
+    ? generatedModels.map((m) => m.id)
+    : []
+);
 
 /**
  * Returns the default enabled models for a given list of app models.
@@ -144,6 +129,13 @@ export function getDefaultEnabledModels(
   appModels: AppModelDefinition[]
 ): Set<AppModelId> {
   const enabled = new Set<AppModelId>(config.models.curatedDefaults);
+
+  // If a curated default has a -reasoning variant, enable it too
+  for (const model of appModels) {
+    if (model.id.endsWith("-reasoning") && enabled.has(model.apiModelId)) {
+      enabled.add(model.id);
+    }
+  }
 
   // Add any new models from the API that aren't in our generated snapshot
   for (const model of appModels) {

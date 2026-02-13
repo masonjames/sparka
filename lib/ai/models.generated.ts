@@ -1,4 +1,7 @@
 import type { AiGatewayModel } from "@/lib/ai/ai-gateway-models-schemas";
+import type { GatewayType } from "@/lib/ai/gateways/registry";
+
+export const generatedForGateway = "vercel" satisfies GatewayType;
 
 export const models = [
   {
@@ -23,7 +26,7 @@ export const models = [
     object: "model",
     created: 1_755_815_280,
     owned_by: "alibaba",
-    name: "Qwen3 235B A22b Instruct 2507",
+    name: "Qwen3-235B-A22B",
     description:
       "Qwen3-235B-A22B-Instruct-2507 is the updated version of the Qwen3-235B-A22B non-thinking mode, featuring Significant improvements in general capabilities, including instruction following, logical reasoning, text comprehension, mathematics, science, coding and tool usage.",
     context_window: 40_960,
@@ -57,7 +60,7 @@ export const models = [
     object: "model",
     created: 1_755_815_280,
     owned_by: "alibaba",
-    name: "Qwen 3.32B",
+    name: "Qwen 3 32B",
     description:
       "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models. Built upon extensive training, Qwen3 delivers groundbreaking advancements in reasoning, instruction-following, agent capabilities, and multilingual support",
     context_window: 40_960,
@@ -93,14 +96,14 @@ export const models = [
     owned_by: "alibaba",
     name: "Qwen3 Coder 480B A35B Instruct",
     description:
-      "Mixture-of-experts LLM with advanced coding and reasoning capabilities",
+      "Qwen3-Coder-480B-A35B-Instruct is Qwen's most agentic code model, featuring significant performance on Agentic Coding, Agentic Browser-Use and other foundational coding tasks, achieving results comparable to Claude Sonnet.",
     context_window: 262_144,
     max_tokens: 66_536,
     type: "language",
     tags: ["tool-use"],
     pricing: {
-      input: "0.00000038",
-      output: "0.00000153",
+      input: "0.0000004",
+      output: "0.0000016",
     },
   },
   {
@@ -121,6 +124,23 @@ export const models = [
     },
   },
   {
+    id: "alibaba/qwen3-coder-next",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "alibaba",
+    name: "Qwen3 Coder Next",
+    description:
+      "Qwen3-Coder-Next is an open-weight language model designed specifically for coding agents. With only 3B activated parameters (80B total), it achieves performance comparable to models with 10–20x more active parameters, making it highly cost-effective for production agent deployment. Through an elaborate training recipe, Qwen3-Coder-Next excels at long-horizon reasoning, complex tool usage, and recovery from execution failures, ensuring robust performance in dynamic coding tasks.",
+    context_window: 256_000,
+    max_tokens: 256_000,
+    type: "language",
+    tags: ["reasoning", "tool-use"],
+    pricing: {
+      input: "0.0000005",
+      output: "0.0000012",
+    },
+  },
+  {
     id: "alibaba/qwen3-coder-plus",
     object: "model",
     created: 1_755_815_280,
@@ -134,6 +154,8 @@ export const models = [
     tags: ["tool-use"],
     pricing: {
       input: "0.000001",
+      output: "0.000005",
+      input_cache_read: "0.0000002",
       input_tiers: [
         {
           cost: "0.000001",
@@ -155,7 +177,6 @@ export const models = [
           min: 256_001,
         },
       ],
-      output: "0.000005",
       output_tiers: [
         {
           cost: "0.000005",
@@ -177,7 +198,6 @@ export const models = [
           min: 256_001,
         },
       ],
-      input_cache_read: "0.0000002",
       input_cache_read_tiers: [
         {
           cost: "0.0000002",
@@ -263,6 +283,7 @@ export const models = [
     tags: [],
     pricing: {
       input: "0.000000845",
+      output: "0.00000338",
       input_tiers: [
         {
           cost: "0.000000845",
@@ -279,7 +300,6 @@ export const models = [
           min: 131_073,
         },
       ],
-      output: "0.00000338",
       output_tiers: [
         {
           cost: "0.00000338",
@@ -312,6 +332,8 @@ export const models = [
     tags: ["tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000012",
+      output: "0.000006",
+      input_cache_read: "0.00000024",
       input_tiers: [
         {
           cost: "0.0000012",
@@ -328,7 +350,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.000006",
       output_tiers: [
         {
           cost: "0.000006",
@@ -345,7 +366,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000024",
       input_cache_read_tiers: [
         {
           cost: "0.00000024",
@@ -378,6 +398,8 @@ export const models = [
     tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000012",
+      output: "0.000006",
+      input_cache_read: "0.00000024",
       input_tiers: [
         {
           cost: "0.0000012",
@@ -394,7 +416,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.000006",
       output_tiers: [
         {
           cost: "0.000006",
@@ -411,7 +432,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000024",
       input_cache_read_tiers: [
         {
           cost: "0.00000024",
@@ -471,13 +491,14 @@ export const models = [
     name: "Qwen3 VL 235B A22B Instruct",
     description:
       "The Qwen3 series VL models has been comprehensively upgraded in areas such as visual coding and spatial perception. Its visual perception and recognition capabilities have significantly improved, supporting the understanding of ultra-long videos, and its OCR functionality has undergone a major enhancement.",
-    context_window: 131_072,
-    max_tokens: 129_024,
+    context_window: 256_000,
+    max_tokens: 256_000,
     type: "language",
-    tags: ["vision"],
+    tags: ["file-input", "implicit-caching", "vision"],
     pricing: {
-      input: "0.0000004",
-      output: "0.0000016",
+      input: "0.00000022",
+      output: "0.00000088",
+      input_cache_read: "0.00000011",
     },
   },
   {
@@ -488,13 +509,13 @@ export const models = [
     name: "Qwen3 VL 235B A22B Thinking",
     description:
       "Qwen3 series VL models feature significantly enhanced multimodal reasoning capabilities, with a particular focus on optimizing the model for STEM and mathematical reasoning. Visual perception and recognition abilities have been comprehensively improved, and OCR capabilities have undergone a major upgrade.",
-    context_window: 131_072,
-    max_tokens: 32_768,
+    context_window: 256_000,
+    max_tokens: 256_000,
     type: "language",
-    tags: ["vision"],
+    tags: ["vision", "reasoning", "tool-use"],
     pricing: {
-      input: "0.0000007",
-      output: "0.0000084",
+      input: "0.00000022",
+      output: "0.00000088",
     },
   },
   {
@@ -767,6 +788,59 @@ export const models = [
     },
   },
   {
+    id: "anthropic/claude-opus-4.6",
+    object: "model",
+    created: 1_755_815_280,
+    owned_by: "anthropic",
+    name: "Claude Opus 4.6",
+    description:
+      "Opus 4.6 is the world’s best model for coding and professional work, built to power agents that take on whole categories of real-world work. It excels across the entire SDLC, breaking through on hard problems, identifying complex bugs, and demonstrating deeper codebase understanding. It also delivers a step-change in knowledge work, with near-production-ready documents, presentations, and spreadsheets on the first pass.",
+    context_window: 1_000_000,
+    max_tokens: 128_000,
+    type: "language",
+    tags: ["tool-use", "reasoning", "vision", "file-input"],
+    pricing: {
+      input: "0.000005",
+      output: "0.000025",
+      input_cache_read: "0.0000005",
+      input_cache_write: "0.00000625",
+      web_search: "10",
+      input_tiers: [
+        {
+          cost: "0.000005",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.00001",
+          min: 200_001,
+        },
+      ],
+      output_tiers: [
+        {
+          cost: "0.000025",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.0000375",
+          min: 200_001,
+        },
+      ],
+      input_cache_read_tiers: [
+        {
+          cost: "0.0000005",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.000001",
+          min: 200_001,
+        },
+      ],
+    },
+  },
+  {
     id: "anthropic/claude-sonnet-4",
     object: "model",
     created: 1_755_815_280,
@@ -780,6 +854,10 @@ export const models = [
     tags: ["file-input", "reasoning", "tool-use", "vision"],
     pricing: {
       input: "0.000003",
+      output: "0.000015",
+      input_cache_read: "0.0000003",
+      input_cache_write: "0.00000375",
+      web_search: "10",
       input_tiers: [
         {
           cost: "0.000003",
@@ -791,7 +869,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      output: "0.000015",
       output_tiers: [
         {
           cost: "0.000015",
@@ -803,9 +880,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      input_cache_read: "0.0000003",
-      input_cache_write: "0.00000375",
-      web_search: "10",
     },
   },
   {
@@ -822,6 +896,10 @@ export const models = [
     tags: ["file-input", "reasoning", "tool-use", "vision"],
     pricing: {
       input: "0.000003",
+      output: "0.000015",
+      input_cache_read: "0.0000003",
+      input_cache_write: "0.00000375",
+      web_search: "10",
       input_tiers: [
         {
           cost: "0.000003",
@@ -833,7 +911,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      output: "0.000015",
       output_tiers: [
         {
           cost: "0.000015",
@@ -845,9 +922,17 @@ export const models = [
           min: 200_001,
         },
       ],
-      input_cache_read: "0.0000003",
-      input_cache_write: "0.00000375",
-      web_search: "10",
+      input_cache_read_tiers: [
+        {
+          cost: "0.0000003",
+          min: 0,
+          max: 200_001,
+        },
+        {
+          cost: "0.0000006",
+          min: 200_001,
+        },
+      ],
     },
   },
   {
@@ -978,6 +1063,8 @@ export const models = [
     tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.00000025",
+      output: "0.000002",
+      input_cache_read: "0.00000005",
       input_tiers: [
         {
           cost: "0.00000025",
@@ -989,7 +1076,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.000002",
       output_tiers: [
         {
           cost: "0.000002",
@@ -1001,7 +1087,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000005",
     },
   },
   {
@@ -1018,6 +1103,8 @@ export const models = [
     tags: ["reasoning", "vision", "implicit-caching"],
     pricing: {
       input: "0.00000025",
+      output: "0.000002",
+      input_cache_read: "0.00000005",
       input_tiers: [
         {
           cost: "0.00000025",
@@ -1029,7 +1116,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.000002",
       output_tiers: [
         {
           cost: "0.000002",
@@ -1041,7 +1127,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000005",
     },
   },
   {
@@ -1374,6 +1459,9 @@ export const models = [
     tags: ["reasoning", "file-input", "vision", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000005",
+      output: "0.000003",
+      input_cache_read: "0.00000005",
+      web_search: "14",
       input_tiers: [
         {
           cost: "0.0000005",
@@ -1385,7 +1473,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      output: "0.000003",
       output_tiers: [
         {
           cost: "0.000003",
@@ -1397,7 +1484,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      input_cache_read: "0.00000005",
       input_cache_read_tiers: [
         {
           cost: "0.00000005",
@@ -1409,7 +1495,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      web_search: "14",
     },
   },
   {
@@ -1444,6 +1529,9 @@ export const models = [
     tags: ["file-input", "tool-use", "reasoning", "vision", "implicit-caching"],
     pricing: {
       input: "0.000002",
+      output: "0.000012",
+      input_cache_read: "0.0000002",
+      web_search: "14",
       input_tiers: [
         {
           cost: "0.000002",
@@ -1455,7 +1543,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      output: "0.000012",
       output_tiers: [
         {
           cost: "0.000012",
@@ -1467,7 +1554,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      input_cache_read: "0.0000002",
       input_cache_read_tiers: [
         {
           cost: "0.0000002",
@@ -1479,7 +1565,6 @@ export const models = [
           min: 200_001,
         },
       ],
-      web_search: "14",
     },
   },
   {
@@ -1603,11 +1688,11 @@ export const models = [
     context_window: 256_000,
     max_tokens: 32_000,
     type: "language",
-    tags: ["reasoning", "implicit-caching"],
+    tags: ["reasoning"],
     pricing: {
-      input: "0.000000207",
-      output: "0.000000828",
-      input_cache_read: "0.0000000414",
+      input: "0.00000003",
+      output: "0.0000012",
+      input_cache_read: "0.00000006",
     },
   },
   {
@@ -1800,13 +1885,15 @@ export const models = [
     name: "MiniMax M2",
     description:
       "MiniMax-M2 redefines efficiency for agents. It is a compact, fast, and cost-effective MoE model (230 billion total parameters with 10 billion active parameters) built for elite performance in coding and agentic tasks, all while maintaining powerful general intelligence.",
-    context_window: 262_114,
-    max_tokens: 262_114,
+    context_window: 205_000,
+    max_tokens: 205_000,
     type: "language",
-    tags: ["reasoning", "tool-use"],
+    tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
-      input: "0.00000027",
-      output: "0.00000115",
+      input: "0.0000003",
+      output: "0.0000012",
+      input_cache_read: "0.00000003",
+      input_cache_write: "0.000000375",
     },
   },
   {
@@ -1817,14 +1904,14 @@ export const models = [
     name: "MiniMax M2.1",
     description:
       "MiniMax 2.1 is MiniMax's latest model, optimized specifically for robustness in coding, tool use, instruction following, and long-horizon planning.",
-    context_window: 196_608,
-    max_tokens: 196_608,
+    context_window: 204_800,
+    max_tokens: 131_072,
     type: "language",
     tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
-      input: "0.00000028",
+      input: "0.0000003",
       output: "0.0000012",
-      input_cache_read: "0.00000014",
+      input_cache_read: "0.00000015",
     },
   },
   {
@@ -2238,11 +2325,10 @@ export const models = [
     context_window: 256_000,
     max_tokens: 256_000,
     type: "language",
-    tags: ["reasoning", "tool-use", "vision", "implicit-caching"],
+    tags: ["reasoning", "vision", "tool-use", "implicit-caching"],
     pricing: {
-      input: "0.0000006",
-      output: "0.000003",
-      input_cache_read: "0.0000001",
+      input: "0.0000005",
+      output: "0.0000028",
     },
   },
   {
@@ -3379,6 +3465,8 @@ export const models = [
     tags: ["tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      output: "0.0000005",
+      input_cache_read: "0.00000005",
       input_tiers: [
         {
           cost: "0.0000002",
@@ -3390,7 +3478,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.0000005",
       output_tiers: [
         {
           cost: "0.0000005",
@@ -3402,7 +3489,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000005",
     },
   },
   {
@@ -3419,6 +3505,8 @@ export const models = [
     tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      output: "0.0000005",
+      input_cache_read: "0.00000005",
       input_tiers: [
         {
           cost: "0.0000002",
@@ -3430,7 +3518,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.0000005",
       output_tiers: [
         {
           cost: "0.0000005",
@@ -3442,7 +3529,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000005",
     },
   },
   {
@@ -3459,6 +3545,8 @@ export const models = [
     tags: ["tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      output: "0.0000005",
+      input_cache_read: "0.00000005",
       input_tiers: [
         {
           cost: "0.0000002",
@@ -3470,7 +3558,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.0000005",
       output_tiers: [
         {
           cost: "0.0000005",
@@ -3482,7 +3569,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000005",
     },
   },
   {
@@ -3499,6 +3585,8 @@ export const models = [
     tags: ["reasoning", "tool-use", "implicit-caching"],
     pricing: {
       input: "0.0000002",
+      output: "0.0000005",
+      input_cache_read: "0.00000005",
       input_tiers: [
         {
           cost: "0.0000002",
@@ -3510,7 +3598,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      output: "0.0000005",
       output_tiers: [
         {
           cost: "0.0000005",
@@ -3522,7 +3609,6 @@ export const models = [
           min: 128_001,
         },
       ],
-      input_cache_read: "0.00000005",
     },
   },
   {

@@ -8,7 +8,7 @@ const isProd = process.env.NODE_ENV === "production";
  * Edit this file to customize your app. Run `bun chatjs:init` to reset to defaults.
  * @see https://chatjs.dev/docs/reference/config
  */
-const config: ConfigInput = {
+const config = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
   appName: "ChatJS",
@@ -76,6 +76,7 @@ const config: ConfigInput = {
     vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
   models: {
+    gateway: "vercel",
     providerOrder: ["openai", "google", "anthropic", "xai"],
     disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
     curatedDefaults: [
@@ -83,19 +84,16 @@ const config: ConfigInput = {
       "openai/gpt-5-nano",
       "openai/gpt-5-mini",
       "openai/gpt-5.2",
-      "openai/gpt-5.2-chat-latest",
-      "openai/gpt-5.2-chat-latest-reasoning",
+      "openai/gpt-5.2-chat",
       // Google
       "google/gemini-2.5-flash-lite",
       "google/gemini-3-flash",
       "google/gemini-3-pro-preview",
       // Anthropic
       "anthropic/claude-sonnet-4.5",
-      "anthropic/claude-sonnet-4.5-reasoning",
       "anthropic/claude-opus-4.5",
       // xAI
       "xai/grok-4",
-      "xai/grok-4-reasoning",
     ],
     anonymousModels: [
       "google/gemini-2.5-flash-lite",
@@ -104,12 +102,12 @@ const config: ConfigInput = {
       "anthropic/claude-haiku-4.5",
     ],
     defaults: {
-      chat: "openai/gpt-5-nano",
-      title: "google/gemini-2.5-flash-lite",
+      chat: "openai/gpt-5-mini",
+      title: "openai/gpt-5-nano",
       pdf: "openai/gpt-5-mini",
       artifact: "openai/gpt-5-nano",
       artifactSuggestion: "openai/gpt-5-mini",
-      followupSuggestions: "google/gemini-2.5-flash-lite",
+      followupSuggestions: "openai/gpt-5-nano",
       suggestions: "openai/gpt-5-mini",
       polishText: "openai/gpt-5-mini",
       formatSheet: "openai/gpt-5-mini",
@@ -138,6 +136,6 @@ const config: ConfigInput = {
       "application/pdf": [".pdf"],
     },
   },
-};
+} satisfies ConfigInput;
 
 export default config;

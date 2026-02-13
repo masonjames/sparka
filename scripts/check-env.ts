@@ -5,6 +5,8 @@
  * Run via `bun run check-env` or automatically in prebuild.
  */
 import "dotenv/config";
+import type { GatewayType } from "../lib/ai/gateways/registry";
+import { generatedForGateway } from "../lib/ai/models.generated";
 import { config } from "../lib/config";
 
 type ValidationError = { feature: string; missing: string[] };
@@ -52,14 +54,53 @@ function validateSandbox(env: NodeJS.ProcessEnv): ValidationError | null {
   };
 }
 
+function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
+  // Prevent TS from narrowing to the current literal config value.
+  const gateway = (() => config.models.gateway as GatewayType)();
+  switch (gateway) {
+    case "openrouter":
+      if (!env.OPENROUTER_API_KEY) {
+        return {
+          feature: "aiGateway (openrouter)",
+          missing: ["OPENROUTER_API_KEY"],
+        };
+      }
+      return null;
+    case "openai":
+      if (!env.OPENAI_API_KEY) {
+        return {
+          feature: "aiGateway (openai)",
+          missing: ["OPENAI_API_KEY"],
+        };
+      }
+      return null;
+    case "vercel":
+      if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
+        return {
+          feature: "aiGateway (vercel)",
+          missing: ["AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN"],
+        };
+      }
+      return null;
+    case "openai-compatible":
+      if (!env.OPENAI_COMPATIBLE_BASE_URL) {
+        return {
+          feature: "aiGateway (openai-compatible)",
+          missing: ["OPENAI_COMPATIBLE_BASE_URL"],
+        };
+      }
+      return null;
+    default:
+      return null;
+  }
+}
+
 function validateFeatures(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  if (!(env.AI_GATEWAY_API_KEY || env.VERCEL_OIDC_TOKEN)) {
-    errors.push({
-      feature: "aiGateway",
-      missing: ["AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN"],
-    });
+  const gatewayError = validateGatewayKey(env);
+  if (gatewayError) {
+    errors.push(gatewayError);
   }
 
   errors.push(...validateSearchApi(env));
@@ -176,6 +217,13 @@ function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
   };
 }
 
+function checkGatewaySnapshot(): string | null {
+  if (config.models.gateway === generatedForGateway) {
+    return null;
+  }
+  return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.models.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
+}
+
 function checkEnv(): void {
   const env = process.env;
   const baseUrlError = validateBaseUrl(env);
@@ -194,6 +242,11 @@ function checkEnv(): void {
       `❌ Environment validation failed:\n${message}\n\nEither set the env vars or disable the feature in chat.config.ts`
     );
     process.exit(1);
+  }
+
+  const snapshotWarning = checkGatewaySnapshot();
+  if (snapshotWarning) {
+    console.warn(`⚠️  ${snapshotWarning}`);
   }
 
   console.log("✅ Environment validation passed");

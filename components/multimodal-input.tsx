@@ -125,7 +125,10 @@ function PureMultimodalInput({
 
   const isAnonymous = !session?.user;
   const isModelDisallowedForAnonymous =
-    isAnonymous && !ANONYMOUS_LIMITS.AVAILABLE_MODELS.includes(selectedModelId);
+    isAnonymous &&
+    !(ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]).includes(
+      selectedModelId
+    );
   const { getModelById } = useChatModels();
   const stopStreamMutation = useMutation(
     trpc.chat.stopStream.mutationOptions()
