@@ -20,6 +20,9 @@
     "template:check": "bun scripts/sync-template.ts --check",
     "create-chat-app": "bun --filter create-chat-app start"
   },
+  "overrides": {
+    "@lobehub/ui": "~2.24.3"
+  },
   "devDependencies": {
     "turbo": "^2.5.8"
   }

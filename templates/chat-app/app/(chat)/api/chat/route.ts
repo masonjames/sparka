@@ -355,7 +355,7 @@ async function createChatStream({
         });
       }
 
-      const { result, contextForLLM } = await createCoreChatAgent({
+      const { result } = await createCoreChatAgent({
         system,
         userMessage,
         previousMessages,
@@ -414,12 +414,11 @@ async function createChatStream({
       const response = await result.response;
       const responseMessages = response.messages;
 
-      // Generate and stream follow-up suggestions
+      // Generate and stream follow-up suggestions (use only last 2 messages for speed)
       if (config.features.followupSuggestions) {
-        const followupSuggestionsResult = generateFollowupSuggestions([
-          ...contextForLLM,
-          ...responseMessages,
-        ]);
+        const followupSuggestionsResult = generateFollowupSuggestions(
+          responseMessages.slice(-2)
+        );
         await streamFollowupSuggestions({
           followupSuggestionsResult,
           writer: dataStream,
