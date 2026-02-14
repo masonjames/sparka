@@ -70,18 +70,24 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - `bun test:types`: run chat app typecheck
 - `bun template:sync`: regenerate template from `apps/chat`
 
-## create-chat-app
+## chatjs CLI
 
 Run the in-repo CLI:
 
 ```bash
-bun run create-chat-app
+bun run chatjs
 ```
 
-or:
+or scaffold from a git template:
 
 ```bash
-bun run create-chat-app -- --from-git https://github.com/your-org/your-template-repo.git
+bun run chatjs -- --from-git https://github.com/your-org/your-template-repo.git
+```
+
+Backward-compatible alias:
+
+```bash
+bun run create-chat-app
 ```
 
 The CLI asks for gateway/features/auth choices, generates `chat.config.ts`, and prints the env vars required by your selections.

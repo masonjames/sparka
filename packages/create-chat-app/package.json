@@ -1,6 +1,24 @@
 {
-  "name": "create-chat-app",
-  "version": "0.0.0",
+  "name": "@chatjs/cli",
+  "version": "0.1.0",
+  "description": "CLI for creating and extending ChatJS apps",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FranciscoMoretti/chatjs.git",
+    "directory": "packages/create-chat-app"
+  },
+  "homepage": "https://github.com/FranciscoMoretti/chatjs/tree/main/packages/create-chat-app",
+  "bugs": {
+    "url": "https://github.com/FranciscoMoretti/chatjs/issues"
+  },
+  "keywords": [
+    "chatjs",
+    "ai",
+    "cli",
+    "scaffold",
+    "nextjs"
+  ],
   "dependencies": {
     "@clack/prompts": "^1.0.1",
     "commander": "^14.0.0",
@@ -9,11 +27,20 @@
     "zod": "^4.3.6"
   },
   "bin": {
-    "create-chat-app": "./src/index.ts"
+    "chatjs": "./dist/index.js",
+    "create-chat-app": "./dist/index.js"
   },
-  "private": true,
+  "files": [
+    "dist"
+  ],
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "start": "bun src/index.ts"
+    "start": "bun src/index.ts",
+    "build": "bun build ./src/index.ts --target=node --format=esm --outfile ./dist/index.js",
+    "prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null"
   },
   "type": "module",
   "devDependencies": {
