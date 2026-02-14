@@ -15,6 +15,7 @@ export async function generateFollowupSuggestions(
 
 Rules:
 - Return JSON object: { "suggestions": string[] } only.
+- Respond with only valid JSON, with no surrounding text.
 - ${minQuestionCount}-${maxQuestionCount} suggestions total.
 - Each suggestion must be <= ${maxCharactersPerQuestion} characters.
 - Write each suggestion in first-person user voice, as if the user is typing it.

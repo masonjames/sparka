@@ -60,25 +60,32 @@ function FollowUpSuggestions({
 
   return (
     <div className={cn("mt-2 mb-1", className)}>
-      <div className="mb-1.5 font-medium text-muted-foreground text-sm">
+      <div
+        className="mb-1.5 font-medium text-muted-foreground text-sm"
+        id="followups-label"
+      >
         Follow-ups
       </div>
-      <div>
+      <ul aria-labelledby="followups-label">
         {suggestions.map((s, idx) => (
-          <button
+          <li
             className={cn(
-              "flex w-full cursor-pointer items-center gap-2 py-2 text-left text-muted-foreground text-sm transition-colors hover:text-foreground",
+              "list-none",
               idx !== suggestions.length - 1 && "border-border/60 border-b"
             )}
-            key={`${s}-${idx}`}
-            onClick={() => handleClick(s)}
-            type="button"
+            key={s}
           >
-            <CornerDownRightIcon className="size-3.5 shrink-0" />
-            <span>{s}</span>
-          </button>
+            <button
+              className="flex w-full cursor-pointer items-center gap-2 py-2 text-left text-muted-foreground text-sm transition-colors hover:text-foreground"
+              onClick={() => handleClick(s)}
+              type="button"
+            >
+              <CornerDownRightIcon className="size-3.5 shrink-0" />
+              <span>{s}</span>
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
