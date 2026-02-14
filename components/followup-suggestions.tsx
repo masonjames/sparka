@@ -73,7 +73,7 @@ function FollowUpSuggestions({
               "list-none",
               idx !== suggestions.length - 1 && "border-border/60 border-b"
             )}
-            key={s}
+            key={`${idx}-${s}`}
           >
             <button
               className="flex w-full cursor-pointer items-center gap-2 py-2 text-left text-muted-foreground text-sm transition-colors hover:text-foreground"
