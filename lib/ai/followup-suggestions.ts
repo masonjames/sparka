@@ -11,13 +11,33 @@ export async function generateFollowupSuggestions(
   const maxQuestionCount = 5;
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
+  const prompt = `Generate follow-up suggestions that can be sent directly as the user's next message.
+
+Rules:
+- Return JSON object: { "suggestions": string[] } only.
+- ${minQuestionCount}-${maxQuestionCount} suggestions total.
+- Each suggestion must be <= ${maxCharactersPerQuestion} characters.
+- Write each suggestion in first-person user voice, as if the user is typing it.
+- No meta prompts like "Would you like..." or "What topic...".
+- No assistant voice, no commentary, no numbering.
+- Keep each suggestion specific and actionable.
+
+Good:
+- "Help me debug this stack trace."
+- "Give me a 5-step plan to learn this."
+- "Rewrite that answer as a short email."
+
+Bad:
+- "Would you like a short answer or detailed steps?"
+- "What topic would you like to explore next?"`;
+
   return streamText({
     model: await getLanguageModel(config.models.defaults.followupSuggestions),
     messages: [
       ...modelMessages,
       {
         role: "user",
-        content: `What question should I ask next? Return an array of suggested questions (minimum ${minQuestionCount}, maximum ${maxQuestionCount}). Each question should be no more than ${maxCharactersPerQuestion} characters.`,
+        content: prompt,
       },
     ],
     output: Output.object({

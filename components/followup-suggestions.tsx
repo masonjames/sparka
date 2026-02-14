@@ -1,9 +1,8 @@
 "use client";
 
 import { useChatStoreApi } from "@ai-sdk-tools/store";
-import { PlusIcon } from "lucide-react";
+import { CornerDownRightIcon } from "lucide-react";
 import { memo, useCallback } from "react";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import {
@@ -60,24 +59,27 @@ function FollowUpSuggestions({
   }
 
   return (
-    <div className={cn("mt-2 mb-2 flex flex-col gap-2", className)}>
-      <div className="font-medium text-muted-foreground text-xs">Related</div>
-      <Suggestions className="gap-1.5">
-        {suggestions.map((s) => (
-          <Suggestion
-            className="h-7 text-muted-foreground hover:text-foreground"
-            key={s}
-            onClick={handleClick}
-            size="sm"
-            suggestion={s}
+    <div className={cn("mt-3 mb-2", className)}>
+      <div className="mb-2 font-medium text-base">Follow-ups</div>
+      <div className="overflow-hidden rounded-md border border-border/60 bg-transparent">
+        {suggestions.map((s, idx) => (
+          <button
+            className={cn(
+              "group flex w-full items-center gap-3 px-3 py-2.5 text-left text-base transition-colors",
+              "hover:bg-muted/40",
+              idx !== suggestions.length - 1 && "border-border/60 border-b"
+            )}
+            key={`${s}-${idx}`}
+            onClick={() => handleClick(s)}
             type="button"
-            variant="ghost"
           >
-            {s}
-            <PlusIcon className="size-3 opacity-70" />
-          </Suggestion>
+            <CornerDownRightIcon className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+            <span className="text-muted-foreground transition-colors group-hover:text-foreground">
+              {s}
+            </span>
+          </button>
         ))}
-      </Suggestions>
+      </div>
     </div>
   );
 }
