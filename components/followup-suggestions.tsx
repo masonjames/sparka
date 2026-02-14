@@ -59,24 +59,23 @@ function FollowUpSuggestions({
   }
 
   return (
-    <div className={cn("mt-3 mb-2", className)}>
-      <div className="mb-2 font-medium text-base">Follow-ups</div>
-      <div className="overflow-hidden rounded-md border border-border/60 bg-transparent">
+    <div className={cn("mt-2 mb-1", className)}>
+      <div className="mb-1.5 font-medium text-muted-foreground text-sm">
+        Follow-ups
+      </div>
+      <div>
         {suggestions.map((s, idx) => (
           <button
             className={cn(
-              "group flex w-full items-center gap-3 px-3 py-2.5 text-left text-base transition-colors",
-              "hover:bg-muted/40",
+              "flex w-full cursor-pointer items-center gap-2 py-2 text-left text-muted-foreground text-sm transition-colors hover:text-foreground",
               idx !== suggestions.length - 1 && "border-border/60 border-b"
             )}
             key={`${s}-${idx}`}
             onClick={() => handleClick(s)}
             type="button"
           >
-            <CornerDownRightIcon className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
-            <span className="text-muted-foreground transition-colors group-hover:text-foreground">
-              {s}
-            </span>
+            <CornerDownRightIcon className="size-3.5 shrink-0" />
+            <span>{s}</span>
           </button>
         ))}
       </div>
