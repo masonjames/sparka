@@ -22,8 +22,8 @@ export const gatewayEnvRequirements: Record<GatewayType, EnvRequirement> = {
     description: "AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN",
   },
   "openai-compatible": {
-    options: [["OPENAI_COMPATIBLE_BASE_URL"]],
-    description: "OPENAI_COMPATIBLE_BASE_URL",
+    options: [["OPENAI_COMPATIBLE_BASE_URL", "OPENAI_COMPATIBLE_API_KEY"]],
+    description: "OPENAI_COMPATIBLE_BASE_URL, OPENAI_COMPATIBLE_API_KEY",
   },
 };
 
