@@ -13,8 +13,7 @@ function PureMessageSiblings({
   isReadOnly: boolean;
 }) {
   const { data: session } = useSession();
-  const _isAuthenticated = !!session?.user;
-
+  
   const siblingInfo = useMessageSiblingInfo(messageId);
   const navigateToSibling = useNavigateToSibling();
   const hasSiblings = siblingInfo && siblingInfo.siblings.length > 1;
