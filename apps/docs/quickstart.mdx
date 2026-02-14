@@ -11,9 +11,9 @@ Before you begin, make sure you have:
 - **Bun** (install with `curl -fsSL https://bun.sh/install | bash`)
 - A **GitHub account** (for cloning and OAuth)
 
-## Understanding `bun chatjs:init`
+## Understanding `chat.config.ts`
 
-The `bun chatjs:init` command generates a `chat.config.ts` file with sensible defaults. This file controls all feature toggles, branding, and app settings.
+The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with `create-chat-app`.
 
 <Accordion title="What the default config includes">
   The default configuration gives you a minimal, working setup:
@@ -86,7 +86,6 @@ The `bun chatjs:init` command generates a `chat.config.ts` file with sensible de
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
     cd YOUR_REPO
     bun install
-    bun chatjs:init  # Generate chat.config.ts with minimal defaults (can re-run to reset)
     vercel link
     vercel env pull .env.local
     ```
@@ -117,7 +116,6 @@ The `bun chatjs:init` command generates a `chat.config.ts` file with sensible de
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
     cd YOUR_REPO
     bun install
-    bun chatjs:init  # Generate chat.config.ts with minimal defaults (can re-run to reset)
     ```
 
     ### 2. Set Up External Services

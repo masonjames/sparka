@@ -1,11 +1,12 @@
 import { z } from "zod";
-import {
-  DEFAULT_GATEWAY,
-  type GatewayImageModelIdMap,
-  type GatewayModelIdMap,
-  type GatewayType,
+import type {
+  GatewayImageModelIdMap,
+  GatewayModelIdMap,
+  GatewayType,
 } from "@/lib/ai/gateways/registry";
 import type { ToolName } from "./ai/types";
+
+const DEFAULT_GATEWAY = "vercel" as const satisfies GatewayType;
 
 // Helper to create typed model ID schemas
 const toolName = () => z.custom<ToolName>();

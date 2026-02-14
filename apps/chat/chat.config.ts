@@ -5,7 +5,7 @@ const isProd = process.env.NODE_ENV === "production";
 /**
  * ChatJS Configuration
  *
- * Edit this file to customize your app. Run `bun chatjs:init` to reset to defaults.
+ * Edit this file to customize your app.
  * @see https://chatjs.dev/docs/reference/config
  */
 const config = {

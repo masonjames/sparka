@@ -38,8 +38,7 @@
     "test:unit": "vitest run",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "ai:devtools": "bunx @ai-sdk/devtools",
-    "fetch:models": "bun scripts/fetch-models.ts && bun format",
-    "chatjs:init": "bun scripts/init.ts"
+    "fetch:models": "bun scripts/fetch-models.ts && bun format"
   },
   "dependencies": {
     "@ai-sdk-tools/store": "1.2.0",
