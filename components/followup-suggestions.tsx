@@ -2,7 +2,7 @@
 
 import { useChatStoreApi } from "@ai-sdk-tools/store";
 import { PlusIcon } from "lucide-react";
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { useMessageIds } from "@/lib/stores/hooks-base";
@@ -98,7 +98,7 @@ export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
   return <FollowUpSuggestionsPart messageId={messageId} partIdx={partIdx} />;
 }
 
-function FollowUpSuggestionsPart({
+const FollowUpSuggestionsPart = memo(function FollowUpSuggestionsPart({
   messageId,
   partIdx,
 }: {
@@ -113,4 +113,4 @@ function FollowUpSuggestionsPart({
   const { data } = part;
 
   return <FollowUpSuggestions suggestions={data.suggestions} />;
-}
+});
