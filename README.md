@@ -55,9 +55,40 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
 
 
+## Monorepo Layout
+
+- `apps/chat`: Next.js chat app
+- `apps/docs`: Mintlify docs
+- `packages/create-chat-app`: interactive scaffold CLI
+- `templates/chat-app`: generated scaffold template (synced from `apps/chat`)
+
+## Development
+
+- `bun dev:chat`: run chat app
+- `bun dev:docs`: run docs
+- `bun lint`: run workspace lint
+- `bun test:types`: run chat app typecheck
+- `bun template:sync`: regenerate template from `apps/chat`
+
+## create-chat-app
+
+Run the in-repo CLI:
+
+```bash
+bun run create-chat-app
+```
+
+or:
+
+```bash
+bun run create-chat-app -- --from-git https://github.com/your-org/your-template-repo.git
+```
+
+The CLI asks for gateway/features/auth choices, generates `chat.config.ts`, and prints the env vars required by your selections.
+
 ## Documentation
 
-Visit [chatjs.dev/docs](https://chatjs.dev/docs) to view the documentation.
+Visit [chatjs.dev/docs](https://chatjs.dev/docs) to view docs.
 
 ## License
 

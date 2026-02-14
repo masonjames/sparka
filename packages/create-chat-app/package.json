@@ -1,0 +1,12 @@
+{
+  "name": "create-chat-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "create-chat-app": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun src/index.ts"
+  }
+}

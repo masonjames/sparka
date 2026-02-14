@@ -10,6 +10,7 @@ coverage
 
 # next.js
 .next/
+apps/*/.next/
 out/
 build
 next-env.d.ts
@@ -43,6 +44,10 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 /playwright/*
+apps/*/test-results/
+apps/*/playwright-report/
+apps/*/blob-report/
+apps/*/playwright/*
 
 tsconfig.tsbuildinfo
 
@@ -50,6 +55,7 @@ packages/*/dist
 
 # Evalite DB
 evals/db/
+apps/*/evals/db/
 
 # Neon
 .neon
