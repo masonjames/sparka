@@ -1,9 +1,8 @@
 "use client";
 
 import { useChatStoreApi } from "@ai-sdk-tools/store";
-import { PlusIcon } from "lucide-react";
+import { CornerDownRightIcon } from "lucide-react";
 import { memo, useCallback } from "react";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import {
@@ -60,24 +59,33 @@ function FollowUpSuggestions({
   }
 
   return (
-    <div className={cn("mt-2 mb-2 flex flex-col gap-2", className)}>
-      <div className="font-medium text-muted-foreground text-xs">Related</div>
-      <Suggestions className="gap-1.5">
-        {suggestions.map((s) => (
-          <Suggestion
-            className="h-7 text-muted-foreground hover:text-foreground"
-            key={s}
-            onClick={handleClick}
-            size="sm"
-            suggestion={s}
-            type="button"
-            variant="ghost"
+    <div className={cn("mt-2 mb-1", className)}>
+      <div
+        className="mb-1.5 font-medium text-muted-foreground text-sm"
+        id="followups-label"
+      >
+        Follow-ups
+      </div>
+      <ul aria-labelledby="followups-label">
+        {suggestions.map((s, idx) => (
+          <li
+            className={cn(
+              "list-none",
+              idx !== suggestions.length - 1 && "border-border/60 border-b"
+            )}
+            key={`${idx}-${s}`}
           >
-            {s}
-            <PlusIcon className="size-3 opacity-70" />
-          </Suggestion>
+            <button
+              className="flex w-full cursor-pointer items-center gap-2 py-2 text-left text-muted-foreground text-sm transition-colors hover:text-foreground"
+              onClick={() => handleClick(s)}
+              type="button"
+            >
+              <CornerDownRightIcon className="size-3.5 shrink-0" />
+              <span>{s}</span>
+            </button>
+          </li>
         ))}
-      </Suggestions>
+      </ul>
     </div>
   );
 }
