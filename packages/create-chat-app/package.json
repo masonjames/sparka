@@ -15,5 +15,8 @@
   "scripts": {
     "start": "bun src/index.ts"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
 }
