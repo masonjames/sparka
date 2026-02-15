@@ -40,16 +40,14 @@ function validateFeatures(env: NodeJS.ProcessEnv): ValidationError[] {
     errors.push(gatewayError);
   }
 
-  const featureEntries = Object.entries(featureEnvRequirements) as Array<
-    [
-      keyof typeof featureEnvRequirements,
-      NonNullable<
-        (typeof featureEnvRequirements)[keyof typeof featureEnvRequirements]
-      >,
-    ]
-  >;
+  const featureEntries = Object.entries(featureEnvRequirements) as [
+    keyof typeof featureEnvRequirements,
+    NonNullable<
+      (typeof featureEnvRequirements)[keyof typeof featureEnvRequirements]
+    >,
+  ][];
   for (const [feature, requirement] of featureEntries) {
-    if (!requirement || !config.features[feature]) {
+    if (!(requirement && config.features[feature])) {
       continue;
     }
     const missing = getMissingRequirement(requirement, env);
@@ -77,7 +75,10 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
     const requirement = authEnvRequirements[provider];
     const missing = getMissingRequirement(requirement, env);
     if (missing) {
-      errors.push({ feature: `authentication.${provider}`, missing: [missing] });
+      errors.push({
+        feature: `authentication.${provider}`,
+        missing: [missing],
+      });
     }
   }
 

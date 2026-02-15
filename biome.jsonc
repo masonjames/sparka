@@ -1,23 +1,19 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "extends": ["./apps/chat/biome.jsonc"],
   "files": {
     "includes": [
-      "**/*",
-      "!components/ui",
-      "!components/ai-elements",
-      "!components/streamdown",
-      "!components/stick-to-bottom",
-      "!lib/utils.ts",
-      "!hooks/use-mobile.ts"
+      "apps/chat/**/*",
+      "!apps/chat/.next",
+      "!apps/chat/.next/**",
+      "!apps/chat/.devtools",
+      "!apps/chat/.devtools/**",
+      "!apps/chat/components/ui",
+      "!apps/chat/components/ai-elements",
+      "!apps/chat/components/streamdown",
+      "!apps/chat/components/stick-to-bottom",
+      "!apps/chat/lib/utils.ts",
+      "!apps/chat/hooks/use-mobile.ts"
     ]
-  },
-  "linter": {
-    "rules": {
-      "suspicious": {
-        /* Needs more work to fix */
-        "noExplicitAny": "off"
-      }
-    }
   }
 }

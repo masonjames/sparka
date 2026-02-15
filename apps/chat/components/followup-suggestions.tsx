@@ -63,20 +63,28 @@ function FollowUpSuggestions({
     <div className={cn("mt-2 mb-2 flex flex-col gap-2", className)}>
       <div className="font-medium text-muted-foreground text-xs">Related</div>
       <Suggestions className="gap-1.5">
-        {suggestions.map((s) => (
-          <Suggestion
-            className="h-7 text-muted-foreground hover:text-foreground"
-            key={s}
-            onClick={handleClick}
-            size="sm"
-            suggestion={s}
-            type="button"
-            variant="ghost"
-          >
-            {s}
-            <PlusIcon className="size-3 opacity-70" />
-          </Suggestion>
-        ))}
+        {(() => {
+          const seen = new Map<string, number>();
+          return suggestions.map((s) => {
+            const count = seen.get(s) ?? 0;
+            seen.set(s, count + 1);
+            const key = count === 0 ? s : `${s}-${count}`;
+            return (
+              <Suggestion
+                className="h-7 text-muted-foreground hover:text-foreground"
+                key={key}
+                onClick={handleClick}
+                size="sm"
+                suggestion={s}
+                type="button"
+                variant="ghost"
+              >
+                {s}
+                <PlusIcon className="size-3 opacity-70" />
+              </Suggestion>
+            );
+          });
+        })()}
       </Suggestions>
     </div>
   );

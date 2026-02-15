@@ -30,11 +30,18 @@ async function serializeSignedCookie(
   const signedValue = encodeURIComponent(`${value}.${base64Sig}`);
 
   let cookie = `${name}=${signedValue}`;
-  if (opt.path) cookie += `; Path=${opt.path}`;
-  if (opt.expires) cookie += `; Expires=${opt.expires.toUTCString()}`;
-  if (opt.httpOnly) cookie += "; HttpOnly";
-  if (opt.sameSite)
+  if (opt.path) {
+    cookie += `; Path=${opt.path}`;
+  }
+  if (opt.expires) {
+    cookie += `; Expires=${opt.expires.toUTCString()}`;
+  }
+  if (opt.httpOnly) {
+    cookie += "; HttpOnly";
+  }
+  if (opt.sameSite) {
     cookie += `; SameSite=${opt.sameSite.charAt(0).toUpperCase() + opt.sameSite.slice(1)}`;
+  }
   return cookie;
 }
 

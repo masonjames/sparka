@@ -12,10 +12,7 @@ import { z } from "zod";
  */
 export const serverEnvSchema = {
   // Required core
-  DATABASE_URL: z
-    .string()
-    .min(1)
-    .describe("Postgres connection string"),
+  DATABASE_URL: z.string().min(1).describe("Postgres connection string"),
   AUTH_SECRET: z
     .string()
     .min(1)
@@ -28,18 +25,12 @@ export const serverEnvSchema = {
     .describe("Vercel Blob storage token for file uploads"),
 
   // Authentication providers (enable in chat.config.ts)
-  AUTH_GOOGLE_ID: z
-    .string()
-    .optional()
-    .describe("Google OAuth client ID"),
+  AUTH_GOOGLE_ID: z.string().optional().describe("Google OAuth client ID"),
   AUTH_GOOGLE_SECRET: z
     .string()
     .optional()
     .describe("Google OAuth client secret"),
-  AUTH_GITHUB_ID: z
-    .string()
-    .optional()
-    .describe("GitHub OAuth app client ID"),
+  AUTH_GITHUB_ID: z.string().optional().describe("GitHub OAuth app client ID"),
   AUTH_GITHUB_SECRET: z
     .string()
     .optional()
@@ -62,10 +53,7 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel OIDC token (auto-set on Vercel deployments)"),
-  OPENROUTER_API_KEY: z
-    .string()
-    .optional()
-    .describe("OpenRouter API key"),
+  OPENROUTER_API_KEY: z.string().optional().describe("OpenRouter API key"),
   OPENAI_COMPATIBLE_BASE_URL: z
     .string()
     .url()
@@ -75,10 +63,7 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("API key for OpenAI-compatible provider"),
-  OPENAI_API_KEY: z
-    .string()
-    .optional()
-    .describe("OpenAI API key"),
+  OPENAI_API_KEY: z.string().optional().describe("OpenAI API key"),
 
   // Optional cleanup cron job secret
   CRON_SECRET: z
@@ -87,18 +72,12 @@ export const serverEnvSchema = {
     .describe("Secret for cleanup cron job endpoint"),
 
   // Optional features (enable in chat.config.ts)
-  REDIS_URL: z
-    .string()
-    .optional()
-    .describe("Redis URL for resumable streams"),
+  REDIS_URL: z.string().optional().describe("Redis URL for resumable streams"),
   TAVILY_API_KEY: z
     .string()
     .optional()
     .describe("Tavily API key for web search"),
-  EXA_API_KEY: z
-    .string()
-    .optional()
-    .describe("Exa API key for web search"),
+  EXA_API_KEY: z.string().optional().describe("Exa API key for web search"),
   FIRECRAWL_API_KEY: z
     .string()
     .optional()
@@ -130,11 +109,10 @@ export const serverEnvSchema = {
   APP_URL: z
     .url()
     .optional()
-    .describe("App URL for non-Vercel deployments (full URL including https://)"),
+    .describe(
+      "App URL for non-Vercel deployments (full URL including https://)"
+    ),
 
   // Vercel platform (auto-set by Vercel)
-  VERCEL_URL: z
-    .string()
-    .optional()
-    .describe("Auto-set by Vercel platform"),
+  VERCEL_URL: z.string().optional().describe("Auto-set by Vercel platform"),
 };
