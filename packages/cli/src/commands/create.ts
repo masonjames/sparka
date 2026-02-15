@@ -25,14 +25,28 @@ import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 
 function printEnvChecklist(entries: EnvVarEntry[]): void {
-  logger.info("Environment variables to configure:");
+  logger.info("Required for your configuration:");
   logger.break();
 
-  for (const entry of entries) {
-    const prefix = entry.isAlternative ? "or" : " *";
-    logger.log(
-      `  ${highlighter.warn(prefix)} ${highlighter.warn(entry.vars)} ${highlighter.dim(`- ${entry.description}`)}`
-    );
+  for (let i = 0; i < entries.length; i += 1) {
+    const entry = entries[i];
+
+    if (!entry.oneOfGroup) {
+      logger.log(
+        `  ${highlighter.warn("*")} ${highlighter.warn(entry.vars)} ${highlighter.dim(`- ${entry.description}`)}`
+      );
+      continue;
+    }
+
+    logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
+    while (i < entries.length && entries[i].oneOfGroup === entry.oneOfGroup) {
+      const option = entries[i];
+      logger.log(
+        `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
+      );
+      i += 1;
+    }
+    i -= 1;
   }
 }
 
@@ -73,6 +87,9 @@ export const create = new Command()
       );
       const targetDir = resolve(process.cwd(), projectName);
 
+      // 2. Validate target
+      await ensureTargetEmpty(targetDir);
+
       // Derive app details from project name
       const appName = projectName
         .split("-")
@@ -81,17 +98,14 @@ export const create = new Command()
       const appPrefix = projectName;
       const appUrl = "http://localhost:3000";
 
-      // 2. Gateway selection
+      // 3. Gateway selection
       const gateway = await promptGateway(options.yes);
 
-      // 3. Features
+      // 4. Features
       const features = await promptFeatures(options.yes);
 
-      // 4. Auth providers
+      // 5. Auth providers
       const auth = await promptAuth(options.yes);
-
-      // 5. Validate target
-      await ensureTargetEmpty(targetDir);
 
       // 6. Scaffold project
       logger.break();

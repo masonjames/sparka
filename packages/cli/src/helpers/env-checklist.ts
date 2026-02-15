@@ -13,13 +13,17 @@ import {
 } from "../types";
 
 export type EnvVarEntry = {
+  /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
   vars: string;
+  /** Human-readable description derived from the Zod schema */
   description: string;
-  isAlternative: boolean;
+  /** Group key used to render "one of" alternatives together */
+  oneOfGroup?: string;
 };
 
 /**
  * Extract descriptions from the server env Zod schema.
+ * Mirrors the approach used by config-builder.ts `extractDescriptions`.
  */
 function extractEnvDescriptions(): Map<string, string> {
   const result = new Map<string, string>();
@@ -35,15 +39,29 @@ function extractEnvDescriptions(): Map<string, string> {
 const envDescriptions = extractEnvDescriptions();
 
 /**
- * Expand an EnvRequirement into one or more EnvVarEntries,
- * marking the second+ option as an alternative.
+ * Expand an EnvRequirement into one or more EnvVarEntries, pulling
+ * descriptions from the Zod schema.
  */
 function requirementToEntries(requirement: EnvRequirement): EnvVarEntry[] {
-  return requirement.options.map((group, i) => ({
-    vars: group.map(String).join(" + "),
-    description: envDescriptions.get(String(group[0])) ?? String(group[0]),
-    isAlternative: i > 0,
-  }));
+  const oneOfGroup =
+    requirement.options.length > 1
+      ? requirement.options.map((group) => group.map(String).join("+")).join("|")
+      : undefined;
+
+  return requirement.options.map((group) => {
+    const description = group
+      .map((v) => {
+        const varName = String(v);
+        return envDescriptions.get(varName) ?? varName;
+      })
+      .join(", ");
+
+    return {
+      vars: group.map(String).join(" + "),
+      description: description || requirement.description,
+      oneOfGroup,
+    };
+  });
 }
 
 export function collectEnvChecklist(input: {
@@ -53,23 +71,23 @@ export function collectEnvChecklist(input: {
 }): EnvVarEntry[] {
   const entries: EnvVarEntry[] = [];
 
-  // Core (always required)
   entries.push({
     vars: "AUTH_SECRET",
     description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
-    isAlternative: false,
   });
   entries.push({
     vars: "DATABASE_URL",
     description: envDescriptions.get("DATABASE_URL") ?? "DATABASE_URL",
-    isAlternative: false,
   });
 
-  // AI Gateway
+  // --- AI Gateway ---
   const gwReq = gatewayEnvRequirements[input.gateway];
-  entries.push(...requirementToEntries(gwReq));
+  const gwEntries = requirementToEntries(gwReq);
 
-  // Features
+  entries.push(...gwEntries);
+
+  // --- Features ---
+  const featureItems: EnvVarEntry[] = [];
   const seen = new Set<string>();
 
   for (const feature of FEATURE_KEYS) {
@@ -78,17 +96,24 @@ export function collectEnvChecklist(input: {
       featureEnvRequirements[feature as keyof typeof featureEnvRequirements];
     if (!requirement) continue;
 
+    // Deduplicate — e.g. webSearch and deepResearch both need TAVILY_API_KEY
     if (seen.has(requirement.description)) continue;
     seen.add(requirement.description);
 
-    entries.push(...requirementToEntries(requirement));
+    featureItems.push(...requirementToEntries(requirement));
   }
 
-  // Authentication
+  entries.push(...featureItems);
+
+  // --- Authentication ---
+  const authItems: EnvVarEntry[] = [];
+
   for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
     if (!input.auth[provider]) continue;
-    entries.push(...requirementToEntries(authEnvRequirements[provider]));
+    authItems.push(...requirementToEntries(authEnvRequirements[provider]));
   }
+
+  entries.push(...authItems);
 
   return entries;
 }
