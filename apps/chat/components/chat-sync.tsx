@@ -35,9 +35,6 @@ export function ChatSync({
 
   const lastMessage = threadInitialMessages.at(-1);
   const isLastMessagePartial = !!lastMessage?.metadata?.activeStreamId;
-  const transportFetch = Object.assign(fetchWithErrorHandlers, {
-    preconnect: fetch.preconnect,
-  }) satisfies typeof fetch;
 
   // Backstop: if we remount ChatSync (e.g. threadEpoch changes), ensure the prior
   // in-flight stream is aborted and we don't replay old deltas.
@@ -65,7 +62,7 @@ export function ChatSync({
     resume: isLastMessagePartial,
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      fetch: transportFetch,
+      fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id: requestId, body }) {
         setAutoResume(true);
 
