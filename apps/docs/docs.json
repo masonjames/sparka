@@ -5,7 +5,7 @@
   "metadata": {
     "og:site_name": "ChatJS Documentation",
     "og:title": "ChatJS Docs - Build Production-Ready AI Chat Applications",
-    "og:description": "Complete documentation for ChatJS, the production-ready AI chat template. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
+    "og:description": "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
   },
   "colors": {
     "primary": "#171717",

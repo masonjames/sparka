@@ -52,6 +52,8 @@ apps/*/playwright/*
 tsconfig.tsbuildinfo
 
 packages/*/dist
+packages/cli/templates
+templates
 
 # Evalite DB
 evals/db/

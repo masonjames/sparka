@@ -37,7 +37,7 @@ export const create = new Command()
   .option("--no-install", "skip dependency installation")
   .option(
     "--from-git <url>",
-    "clone from a git repository instead of template"
+    "clone from a git repository instead of the built-in scaffold"
   )
   .action(async (directory, opts) => {
     try {

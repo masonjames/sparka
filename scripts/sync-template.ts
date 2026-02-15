@@ -6,7 +6,7 @@ import { join, relative, resolve, sep } from "node:path";
 
 const rootDir = resolve(import.meta.dir, "..");
 const sourceDir = join(rootDir, "apps", "chat");
-const templateDir = join(rootDir, "templates", "chat-app");
+const templateDir = join(rootDir, "packages", "cli", "templates", "chat-app");
 const isCheck = process.argv.includes("--check");
 
 const EXCLUDED_SEGMENTS = new Set([

@@ -59,7 +59,6 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - `apps/chat`: Next.js chat app
 - `apps/docs`: Mintlify docs
 - `packages/cli`: interactive scaffold CLI
-- `templates/chat-app`: generated scaffold template (synced from `apps/chat`)
 
 ## Development
 
@@ -67,23 +66,16 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - `bun dev:docs`: run docs
 - `bun lint`: run workspace lint
 - `bun test:types`: run chat app typecheck
-- `bun template:sync`: regenerate template from `apps/chat`
 
-## chatjs CLI
+## CLI
 
-Run the in-repo CLI:
-
-```bash
-bun run chatjs
-```
-
-or scaffold from a git template:
+Create a new ChatJS app:
 
 ```bash
-bun run chatjs -- --from-git https://github.com/your-org/your-template-repo.git
+npx @chat-js/cli@latest create my-app
 ```
 
-The CLI asks for gateway/features/auth choices, generates `chat.config.ts`, and prints the env vars required by your selections.
+The CLI walks you through gateway, features, and auth choices, generates `chat.config.ts`, and lists the env vars required by your selections.
 
 ## Documentation
 

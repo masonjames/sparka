@@ -12,7 +12,7 @@ const config = {
   githubUrl: "https://github.com/franciscomoretti/chatjs",
   appPrefix: "chatjs",
   appName: "ChatJS",
-  appTitle: "ChatJS - The prod ready AI chat template",
+  appTitle: "ChatJS - The prod ready AI chat app",
   appDescription:
     "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",
   appUrl: "https://chatjs.dev",
