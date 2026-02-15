@@ -54,7 +54,6 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - [AI Elements](https://ai-sdk.dev/elements/overview) - AI-native Components
 - [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
 
-
 ## Monorepo Layout
 
 - `apps/chat`: Next.js chat app

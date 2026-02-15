@@ -288,11 +288,14 @@ function _useDeleteTrailingMessages() {
 
   // Wrap tRPC mutation to include chatId for cache management
   return useMutation({
-    mutationFn: ({ messageId }: { messageId: string; chatId: string }) => {
+    mutationFn: (
+      { messageId }: { messageId: string; chatId: string },
+      context
+    ) => {
       if (!trpcMutation.mutationFn) {
         throw new Error("deleteTrailingMessages mutation not available");
       }
-      return trpcMutation.mutationFn({ messageId });
+      return trpcMutation.mutationFn({ messageId }, context);
     },
     onMutate: async ({
       messageId,
