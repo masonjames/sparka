@@ -118,7 +118,7 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/franciscomoretti/chatjs",
+          "href": "https://github.com/franciscomoretti/chat.js",
           "icon": "github"
         },
         {
@@ -142,13 +142,13 @@
     ],
     "primary": {
       "type": "github",
-      "href": "https://github.com/franciscomoretti/chatjs"
+      "href": "https://github.com/franciscomoretti/chat.js"
     }
   },
   "footer": {
     "socials": {
       "x": "https://x.com/franmoretti_",
-      "github": "https://github.com/franciscomoretti/chatjs"
+      "github": "https://github.com/franciscomoretti/chat.js"
     }
   },
   "contextual": {

@@ -1,16 +1,16 @@
 {
   "name": "@chat-js/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for creating and extending ChatJS apps",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FranciscoMoretti/chatjs.git",
+    "url": "https://github.com/franciscomoretti/chat.js.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/FranciscoMoretti/chatjs/tree/main/packages/cli",
+  "homepage": "https://github.com/franciscomoretti/chat.js/tree/main/packages/cli",
   "bugs": {
-    "url": "https://github.com/FranciscoMoretti/chatjs/issues"
+    "url": "https://github.com/franciscomoretti/chat.js/issues"
   },
   "keywords": [
     "chatjs",

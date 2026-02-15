@@ -101,14 +101,12 @@ export function buildConfigTs(input: {
   appName: string;
   appPrefix: string;
   appUrl: string;
-  githubUrl: string;
   gateway: Gateway;
   features: Record<FeatureKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }): string {
   const modelDefaults = GATEWAY_MODEL_DEFAULTS[input.gateway];
   const fullConfig: Record<string, unknown> = {
-    githubUrl: input.githubUrl,
     appPrefix: input.appPrefix,
     appName: input.appName,
     appDescription: "AI chat powered by ChatJS",

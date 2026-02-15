@@ -3,7 +3,10 @@ import { join, resolve } from "node:path";
 import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
 import { z } from "zod";
-import { collectEnvChecklist } from "../helpers/env-checklist";
+import {
+  collectEnvChecklist,
+  type EnvChecklistGroup,
+} from "../helpers/env-checklist";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
 import {
@@ -21,6 +24,27 @@ import { highlighter } from "../utils/highlighter";
 import { logger } from "../utils/logger";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
+
+function printEnvChecklist(groups: EnvChecklistGroup[]): void {
+  logger.info("Environment variables to configure:");
+  logger.break();
+
+  for (const group of groups) {
+    logger.log(`  ${highlighter.info(group.category)}`);
+
+    for (let i = 0; i < group.items.length; i++) {
+      const item = group.items[i];
+      const isAlternative = i > 0 && group.items.length > 1;
+      const bullet = isAlternative
+        ? highlighter.dim("  or ")
+        : `  ${highlighter.warn("*")} `;
+
+      logger.log(`${bullet}${highlighter.warn(item.vars)}`);
+      logger.log(`      ${highlighter.dim(item.description)}`);
+    }
+    logger.break();
+  }
+}
 
 const createOptionsSchema = z.object({
   target: z.string().optional(),
@@ -60,8 +84,9 @@ export const create = new Command()
       const targetDir = resolve(process.cwd(), projectName);
 
       // 2. App details
-      const { appName, appPrefix, appUrl, githubUrl } =
-        await promptAppDetails(options.yes);
+      const { appName, appPrefix, appUrl } = await promptAppDetails(
+        options.yes
+      );
 
       // 3. Gateway selection
       const gateway = await promptGateway(options.yes);
@@ -107,7 +132,6 @@ export const create = new Command()
           appName,
           appPrefix,
           appUrl,
-          githubUrl,
           gateway,
           features,
           auth,
@@ -137,21 +161,19 @@ export const create = new Command()
       }
 
       // 10. Success output
-      const envChecklist = collectEnvChecklist({ gateway, features, auth });
+      const envGroups = collectEnvChecklist({ gateway, features, auth });
 
       outro("Your ChatJS app is ready!");
 
       logger.info("Next steps:");
       logger.log(`  cd ${highlighter.info(projectName)}`);
+      logger.log(
+        `  Copy ${highlighter.info(".env.example")} to ${highlighter.info(".env.local")} and fill in the values below`
+      );
       logger.log(`  ${highlighter.info(`${packageManager} run dev`)}`);
       logger.break();
-      if (envChecklist.length > 0) {
-        logger.info("Required environment variables:");
-        for (const item of envChecklist) {
-          logger.log(`  ${highlighter.warn("*")} ${item}`);
-        }
-        logger.break();
-      }
+
+      printEnvChecklist(envGroups);
     } catch (error) {
       handleError(error);
     }

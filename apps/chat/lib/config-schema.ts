@@ -263,7 +263,6 @@ export const authenticationConfigSchema = z
   });
 
 export const configSchema = z.object({
-  githubUrl: z.url().default("https://github.com/your-username/your-repo"),
   appPrefix: z.string().default("chatjs"),
   appName: z.string().default("My AI Chat"),
   appTitle: z

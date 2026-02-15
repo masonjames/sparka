@@ -3,14 +3,13 @@
 import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
-import { GitIcon } from "@/components/icons";
+import { GitHubLink } from "@/components/github-link";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";
 
 function PureHeaderActions() {
@@ -39,16 +38,7 @@ function PureHeaderActions() {
           <TooltipContent>Sign in to your account</TooltipContent>
         </Tooltip>
       )}
-      <Button asChild size="icon" type="button" variant="ghost">
-        <a
-          className="flex items-center justify-center"
-          href={config.githubUrl}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <GitIcon size={20} />
-        </a>
-      </Button>
+      <GitHubLink />
     </div>
   );
 }

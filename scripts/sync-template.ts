@@ -1,6 +1,14 @@
 #!/usr/bin/env bun
 import { createHash } from "node:crypto";
-import { cp, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+import {
+  cp,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 
@@ -44,12 +52,42 @@ function shouldCopyFilePath(filePath: string): boolean {
   return true;
 }
 
+/** Files removed from the template after copying (relative to destination). */
+const TEMPLATE_REMOVED_FILES = ["components/github-link.tsx"];
+
+/** Import lines stripped from template files after copying. */
+const TEMPLATE_STRIPPED_IMPORTS = [
+  'import { GitHubLink } from "@/components/github-link";',
+];
+
+async function applyTemplateTransforms(destination: string): Promise<void> {
+  // Delete excluded files
+  await Promise.all(
+    TEMPLATE_REMOVED_FILES.map((file) =>
+      rm(join(destination, file), { force: true })
+    )
+  );
+
+  // Strip imports that reference removed files
+  if (TEMPLATE_STRIPPED_IMPORTS.length > 0) {
+    const headerPath = join(destination, "components", "header-actions.tsx");
+    let content = await readFile(headerPath, "utf8");
+    for (const imp of TEMPLATE_STRIPPED_IMPORTS) {
+      content = content.replace(`${imp}\n`, "");
+    }
+    // Remove JSX usage of the stripped component
+    content = content.replace(/\s*<GitHubLink \/>/g, "");
+    await writeFile(headerPath, content);
+  }
+}
+
 async function copyTemplate(destination: string): Promise<void> {
   await rm(destination, { recursive: true, force: true });
   await cp(sourceDir, destination, {
     recursive: true,
     filter: shouldCopyFilePath,
   });
+  await applyTemplateTransforms(destination);
 }
 
 async function collectSnapshot(

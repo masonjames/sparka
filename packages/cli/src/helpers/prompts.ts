@@ -90,14 +90,12 @@ export async function promptAppDetails(skipPrompt: boolean): Promise<{
   appName: string;
   appPrefix: string;
   appUrl: string;
-  githubUrl: string;
 }> {
   if (skipPrompt) {
     return {
       appName: "My Chat App",
       appPrefix: "chat",
       appUrl: "http://localhost:3000",
-      githubUrl: "https://github.com/your-org/your-repo",
     };
   }
 
@@ -119,17 +117,10 @@ export async function promptAppDetails(skipPrompt: boolean): Promise<{
   });
   handleCancel(appUrl);
 
-  const githubUrl = await text({
-    message: `What is your ${highlighter.info("GitHub repository URL")}?`,
-    initialValue: "https://github.com/your-org/your-repo",
-  });
-  handleCancel(githubUrl);
-
   return {
     appName: appName || "My Chat App",
     appPrefix: appPrefix || "chat",
     appUrl: appUrl || "http://localhost:3000",
-    githubUrl: githubUrl || "https://github.com/your-org/your-repo",
   };
 }
 
