@@ -62,6 +62,7 @@ export function ChatSync({
     resume: isLastMessagePartial,
     transport: new DefaultChatTransport({
       api: "/api/chat",
+      // @ts-expect-error CI has a stricter global fetch type (includes preconnect).
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id: requestId, body }) {
         setAutoResume(true);
