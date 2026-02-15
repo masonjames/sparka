@@ -2,7 +2,7 @@ name: Docs
 on:
   pull_request:
     paths:
-      - "docs/**"
+      - "apps/docs/**"
       - ".github/workflows/docs.yml"
 
 jobs:

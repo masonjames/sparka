@@ -3,7 +3,7 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "npx ultracite fix"
+        "command": "npx ultracite@6.3.3 fix"
       }
     ]
   }

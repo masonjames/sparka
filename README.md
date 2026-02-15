@@ -14,6 +14,16 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 
 <br />
 
+## CLI
+
+Create a new ChatJS app:
+
+```bash
+npx @chat-js/cli@latest create my-app
+```
+
+The CLI walks you through gateway, features, and auth choices, generates `chat.config.ts`, and lists the env vars required by your selections.
+
 ## Features
 
 - **120+ Models**: Claude, GPT, Gemini, Grok via one API
@@ -54,10 +64,22 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - [AI Elements](https://ai-sdk.dev/elements/overview) - AI-native Components
 - [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
 
+## Monorepo Layout
+
+- `apps/chat`: Next.js chat app
+- `apps/docs`: Mintlify docs
+- `packages/cli`: interactive scaffold CLI
+
+## Development
+
+- `bun dev:chat`: run chat app
+- `bun dev:docs`: run docs
+- `bun lint`: run workspace lint
+- `bun test:types`: run chat app typecheck
 
 ## Documentation
 
-Visit [chatjs.dev/docs](https://chatjs.dev/docs) to view the documentation.
+Visit [chatjs.dev/docs](https://chatjs.dev/docs) to view docs.
 
 ## License
 
