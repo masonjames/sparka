@@ -86,44 +86,6 @@ export async function promptProjectName(
   return toKebabCase(name) || "my-chat-app";
 }
 
-export async function promptAppDetails(skipPrompt: boolean): Promise<{
-  appName: string;
-  appPrefix: string;
-  appUrl: string;
-}> {
-  if (skipPrompt) {
-    return {
-      appName: "My Chat App",
-      appPrefix: "chat",
-      appUrl: "http://localhost:3000",
-    };
-  }
-
-  const appName = await text({
-    message: `What is the ${highlighter.info("display name")} of your app?`,
-    initialValue: "My Chat App",
-  });
-  handleCancel(appName);
-
-  const appPrefix = await text({
-    message: `What ${highlighter.info("prefix")} should be used?`,
-    initialValue: toKebabCase(appName) || "chat",
-  });
-  handleCancel(appPrefix);
-
-  const appUrl = await text({
-    message: `What is your ${highlighter.info("app URL")}?`,
-    initialValue: "http://localhost:3000",
-  });
-  handleCancel(appUrl);
-
-  return {
-    appName: appName || "My Chat App",
-    appPrefix: appPrefix || "chat",
-    appUrl: appUrl || "http://localhost:3000",
-  };
-}
-
 export async function promptGateway(skipPrompt: boolean): Promise<Gateway> {
   if (skipPrompt) return "vercel";
 

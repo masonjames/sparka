@@ -5,12 +5,11 @@ import { Command } from "commander";
 import { z } from "zod";
 import {
   collectEnvChecklist,
-  type EnvChecklistGroup,
+  type EnvVarEntry,
 } from "../helpers/env-checklist";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
 import {
-  promptAppDetails,
   promptAuth,
   promptFeatures,
   promptGateway,
@@ -25,24 +24,15 @@ import { logger } from "../utils/logger";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 
-function printEnvChecklist(groups: EnvChecklistGroup[]): void {
+function printEnvChecklist(entries: EnvVarEntry[]): void {
   logger.info("Environment variables to configure:");
   logger.break();
 
-  for (const group of groups) {
-    logger.log(`  ${highlighter.info(group.category)}`);
-
-    for (let i = 0; i < group.items.length; i++) {
-      const item = group.items[i];
-      const isAlternative = i > 0 && group.items.length > 1;
-      const bullet = isAlternative
-        ? highlighter.dim("  or ")
-        : `  ${highlighter.warn("*")} `;
-
-      logger.log(`${bullet}${highlighter.warn(item.vars)}`);
-      logger.log(`      ${highlighter.dim(item.description)}`);
-    }
-    logger.break();
+  for (const entry of entries) {
+    const prefix = entry.isAlternative ? "or" : " *";
+    logger.log(
+      `  ${highlighter.warn(prefix)} ${highlighter.warn(entry.vars)} ${highlighter.dim(`- ${entry.description}`)}`
+    );
   }
 }
 
@@ -83,24 +73,27 @@ export const create = new Command()
       );
       const targetDir = resolve(process.cwd(), projectName);
 
-      // 2. App details
-      const { appName, appPrefix, appUrl } = await promptAppDetails(
-        options.yes
-      );
+      // Derive app details from project name
+      const appName = projectName
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+      const appPrefix = projectName;
+      const appUrl = "http://localhost:3000";
 
-      // 3. Gateway selection
+      // 2. Gateway selection
       const gateway = await promptGateway(options.yes);
 
-      // 4. Features
+      // 3. Features
       const features = await promptFeatures(options.yes);
 
-      // 5. Auth providers
+      // 4. Auth providers
       const auth = await promptAuth(options.yes);
 
-      // 6. Validate target
+      // 5. Validate target
       await ensureTargetEmpty(targetDir);
 
-      // 7. Scaffold project
+      // 6. Scaffold project
       logger.break();
       const scaffoldSpinner = spinner("Scaffolding project...").start();
       try {
@@ -115,7 +108,7 @@ export const create = new Command()
         throw error;
       }
 
-      // 8. Write configuration
+      // 7. Write configuration
       const configSpinner = spinner("Writing configuration...").start();
       try {
         const packageJsonPath = join(targetDir, "package.json");
@@ -143,7 +136,7 @@ export const create = new Command()
         throw error;
       }
 
-      // 9. Install dependencies
+      // 8. Install dependencies
       const installNow = !options.install
         ? false
         : await promptInstall(packageManager, options.yes);
@@ -160,8 +153,8 @@ export const create = new Command()
         }
       }
 
-      // 10. Success output
-      const envGroups = collectEnvChecklist({ gateway, features, auth });
+      // 9. Success output
+      const envEntries = collectEnvChecklist({ gateway, features, auth });
 
       outro("Your ChatJS app is ready!");
 
@@ -173,7 +166,7 @@ export const create = new Command()
       logger.log(`  ${highlighter.info(`${packageManager} run dev`)}`);
       logger.break();
 
-      printEnvChecklist(envGroups);
+      printEnvChecklist(envEntries);
     } catch (error) {
       handleError(error);
     }

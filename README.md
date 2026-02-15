@@ -14,6 +14,16 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 
 <br />
 
+## CLI
+
+Create a new ChatJS app:
+
+```bash
+npx @chat-js/cli@latest create my-app
+```
+
+The CLI walks you through gateway, features, and auth choices, generates `chat.config.ts`, and lists the env vars required by your selections.
+
 ## Features
 
 - **120+ Models**: Claude, GPT, Gemini, Grok via one API
@@ -66,16 +76,6 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 - `bun dev:docs`: run docs
 - `bun lint`: run workspace lint
 - `bun test:types`: run chat app typecheck
-
-## CLI
-
-Create a new ChatJS app:
-
-```bash
-npx @chat-js/cli@latest create my-app
-```
-
-The CLI walks you through gateway, features, and auth choices, generates `chat.config.ts`, and lists the env vars required by your selections.
 
 ## Documentation
 
