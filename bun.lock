@@ -163,11 +163,12 @@
     "apps/docs": {
       "name": "@chatjs/docs",
     },
-    "packages/create-chat-app": {
-      "name": "create-chat-app",
-      "version": "0.0.0",
+    "packages/cli": {
+      "name": "@chatjs/cli",
+      "version": "0.1.0",
       "bin": {
-        "create-chat-app": "./src/index.ts",
+        "chatjs": "./dist/index.js",
+        "create-chat-app": "./dist/index.js",
       },
       "dependencies": {
         "@clack/prompts": "^1.0.1",
@@ -280,6 +281,8 @@
     "@braintree/sanitize-url": ["@braintree/sanitize-url@7.1.2", "", {}, "sha512-jigsZK+sMF/cuiB7sERuo9V7N9jx+dhmHHnQyDSVdpZwVutaBu7WvNYqMDLSgFgfB30n452TP3vjDAvFC973mA=="],
 
     "@chatjs/chat": ["@chatjs/chat@workspace:apps/chat"],
+
+    "@chatjs/cli": ["@chatjs/cli@workspace:packages/cli"],
 
     "@chatjs/docs": ["@chatjs/docs@workspace:apps/docs"],
 
@@ -1306,8 +1309,6 @@
     "cose-base": ["cose-base@1.0.3", "", { "dependencies": { "layout-base": "^1.0.0" } }, "sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg=="],
 
     "cosmiconfig": ["cosmiconfig@7.1.0", "", { "dependencies": { "@types/parse-json": "^4.0.0", "import-fresh": "^3.2.1", "parse-json": "^5.0.0", "path-type": "^4.0.0", "yaml": "^1.10.0" } }, "sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA=="],
-
-    "create-chat-app": ["create-chat-app@workspace:packages/create-chat-app"],
 
     "crelt": ["crelt@1.0.6", "", {}, "sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g=="],
 

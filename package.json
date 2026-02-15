@@ -18,7 +18,7 @@
     "docs:links": "turbo run docs:links --filter=@chatjs/docs",
     "template:sync": "bun scripts/sync-template.ts",
     "template:check": "bun scripts/sync-template.ts --check",
-    "chatjs": "bun --filter create-chat-app start",
+    "chatjs": "bun --filter @chatjs/cli start",
     "create-chat-app": "bun run chatjs"
   },
   "overrides": {

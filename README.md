@@ -59,7 +59,7 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-r
 
 - `apps/chat`: Next.js chat app
 - `apps/docs`: Mintlify docs
-- `packages/create-chat-app`: interactive scaffold CLI
+- `packages/cli`: interactive scaffold CLI
 - `templates/chat-app`: generated scaffold template (synced from `apps/chat`)
 
 ## Development

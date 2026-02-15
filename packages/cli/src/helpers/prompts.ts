@@ -160,7 +160,7 @@ export async function promptFeatures(
   const defaultFeatures = FEATURE_KEYS.filter((key) => FEATURE_DEFAULTS[key]);
 
   const selectedFeatures = await multiselect({
-    message: `Which ${highlighter.info("features")} would you like to enable?`,
+    message: `Which ${highlighter.info("features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
     options: FEATURE_KEYS.map((key) => ({
       value: key,
       label: FEATURE_LABELS[key],
@@ -199,7 +199,7 @@ export async function promptAuth(
 
   while (selectedProviders.length === 0) {
     const selected = await multiselect({
-      message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")}`,
+      message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
       options: providers.map((p) => ({
         value: p,
         label: AUTH_LABELS[p],

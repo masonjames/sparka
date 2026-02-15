@@ -6,9 +6,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/FranciscoMoretti/chatjs.git",
-    "directory": "packages/create-chat-app"
+    "directory": "packages/cli"
   },
-  "homepage": "https://github.com/FranciscoMoretti/chatjs/tree/main/packages/create-chat-app",
+  "homepage": "https://github.com/FranciscoMoretti/chatjs/tree/main/packages/cli",
   "bugs": {
     "url": "https://github.com/FranciscoMoretti/chatjs/issues"
   },

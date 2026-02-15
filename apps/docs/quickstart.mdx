@@ -13,22 +13,23 @@ Before you begin, make sure you have:
 
 ## Understanding `chat.config.ts`
 
-The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with `chatjs init` (or the legacy `create-chat-app` alias).
+The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with `chatjs init` (or the `create-chat-app` alias).
 
 <Accordion title="What the default config includes">
   The default configuration gives you a minimal, working setup:
 
-  | Setting | Default | Notes |
-  |---------|---------|-------|
-  | **Gateway** | Vercel AI Gateway | Set `gateway: "openrouter"` for OpenRouter |
-  | **Authentication** | GitHub only | Google and Vercel OAuth disabled |
-  | **Features** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
-  | **Anonymous users** | 10 credits | Limited access, no tools |
-  | **Models** | Curated list | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5 |
+| Setting             | Default           | Notes                                                         |
+| ------------------- | ----------------- | ------------------------------------------------------------- |
+| **Gateway**         | Vercel AI Gateway | Set `gateway: "openrouter"` for OpenRouter                    |
+| **Authentication**  | GitHub only       | Google and Vercel OAuth disabled                              |
+| **Features**        | All disabled      | No sandbox, web search, MCP, image generation, or attachments |
+| **Anonymous users** | 10 credits        | Limited access, no tools                                      |
+| **Models**          | Curated list      | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5     |
 
-  This keeps your initial setup simple—you only need `DATABASE_URL`, `AUTH_SECRET`, `AI_GATEWAY_API_KEY`, and GitHub OAuth credentials to get started.
+This keeps your initial setup simple—you only need `DATABASE_URL`, `AUTH_SECRET`, `AI_GATEWAY_API_KEY`, and GitHub OAuth credentials to get started.
 
-  Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
+Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
+
 </Accordion>
 
 <Tabs>
@@ -64,17 +65,17 @@ The `chat.config.ts` file controls all feature toggles, branding, and app settin
         6. Generate a **Client Secret** → `AUTH_GITHUB_SECRET`
       </Accordion>
       <Accordion title="Google">
-        1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+        7. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
         2. Create a new **OAuth 2.0 Client ID** (Web application)
         3. Add **Authorized redirect URI**: `https://YOUR_APP.vercel.app/api/auth/callback/google`
         4. Copy **Client ID** → `AUTH_GOOGLE_ID`
         5. Copy **Client Secret** → `AUTH_GOOGLE_SECRET`
       </Accordion>
       <Accordion title="Vercel">
-        1. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
-        2. Create a new integration with **Sign In with Vercel**
-        3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
-        4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
+        6. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
+        7. Create a new integration with **Sign In with Vercel**
+        8. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
+        9. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
       </Accordion>
     </AccordionGroup>
 
@@ -233,28 +234,32 @@ The `chat.config.ts` file controls all feature toggles, branding, and app settin
 
 <AccordionGroup>
   <Accordion title="Missing environment variables error">
-    ChatJS validates env vars at build time. Check `.env.local` has all required variables and restart the dev server.
+    ChatJS validates env vars at build time. Check `.env.local` has all required
+    variables and restart the dev server.
   </Accordion>
   <Accordion title="Database connection failed">
-    Verify `DATABASE_URL` is correct and the database is running. For local PostgreSQL, check the service is started.
+    Verify `DATABASE_URL` is correct and the database is running. For local
+    PostgreSQL, check the service is started.
   </Accordion>
   <Accordion title="OAuth redirect error">
-    Make sure the callback URL in your OAuth app matches exactly. For local dev, use `http://localhost:3000/api/auth/callback/{provider}`.
+    Make sure the callback URL in your OAuth app matches exactly. For local dev,
+    use `http://localhost:3000/api/auth/callback/{provider}`.
   </Accordion>
 </AccordionGroup>
 
 <Accordion title="Optional Features">
   These environment variables enable additional capabilities:
 
-  | Variable              | Feature              | Setup Guide |
-  | --------------------- | -------------------- | ----------- |
-  | `REDIS_URL`           | Resumable streams    | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) |
-  | `TAVILY_API_KEY`      | Web search           | [Tavily](https://app.tavily.com) |
-  | `FIRECRAWL_API_KEY`   | Web search           | [Firecrawl](https://firecrawl.dev) |
-  | `LANGFUSE_PUBLIC_KEY` | LLM observability    | [Langfuse](https://langfuse.com) |
-  | `LANGFUSE_SECRET_KEY` | LLM observability    | [Langfuse](https://langfuse.com) |
-  | `MCP_ENCRYPTION_KEY`  | MCP connectors       | `openssl rand -base64 32` (must be exactly 44 chars) |
-  | `CRON_SECRET`         | Cleanup cron job     | [Generate](https://generate-secret.vercel.app/32) |
+| Variable              | Feature           | Setup Guide                                            |
+| --------------------- | ----------------- | ------------------------------------------------------ |
+| `REDIS_URL`           | Resumable streams | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) |
+| `TAVILY_API_KEY`      | Web search        | [Tavily](https://app.tavily.com)                       |
+| `FIRECRAWL_API_KEY`   | Web search        | [Firecrawl](https://firecrawl.dev)                     |
+| `LANGFUSE_PUBLIC_KEY` | LLM observability | [Langfuse](https://langfuse.com)                       |
+| `LANGFUSE_SECRET_KEY` | LLM observability | [Langfuse](https://langfuse.com)                       |
+| `MCP_ENCRYPTION_KEY`  | MCP connectors    | `openssl rand -base64 32` (must be exactly 44 chars)   |
+| `CRON_SECRET`         | Cleanup cron job  | [Generate](https://generate-secret.vercel.app/32)      |
+
 </Accordion>
 
 ## Next Steps
