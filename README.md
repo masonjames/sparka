@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="app/icon.svg" alt="ChatJS" width="64" height="64">
+<img src="apps/chat/app/icon.svg" alt="ChatJS" width="64" height="64">
 
 # ChatJS
 
