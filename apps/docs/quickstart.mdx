@@ -9,11 +9,10 @@ Before you begin, make sure you have:
 
 - **Node.js 20+** ([download](https://nodejs.org))
 - **Bun** (install with `curl -fsSL https://bun.sh/install | bash`)
-- A **GitHub account** (for cloning and OAuth)
 
 ## Understanding `chat.config.ts`
 
-The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with `chat-js init`.
+The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with the CLI.
 
 <Accordion title="What the default config includes">
   The default configuration gives you a minimal, working setup:
@@ -81,7 +80,7 @@ Enable features incrementally by editing `chat.config.ts` and adding the require
 
     ### 3. Set Up Local Development
 
-    Clone your new repo and pull environment variables from Vercel:
+    Clone the repo that Vercel created in your GitHub account and pull environment variables:
 
     ```bash
     git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
@@ -111,13 +110,14 @@ Enable features incrementally by editing `chat.config.ts` and adding the require
 
     ### 1. Create Your Project
 
-    Clone the [ChatJS repo](https://github.com/franciscomoretti/chatjs):
+    Scaffold a new ChatJS app using the CLI:
 
     ```bash
-    git clone https://github.com/franciscomoretti/chatjs.git
-    cd chatjs
-    bun install
+    npx @chat-js/cli@latest create my-app
+    cd my-app
     ```
+
+    The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go.
 
     ### 2. Set Up External Services
 
