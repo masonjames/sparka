@@ -1,20 +1,19 @@
-# @chatjs/cli
+# @chat-js/cli
 
 CLI to scaffold and extend ChatJS apps.
 
 ## Usage
 
 ```bash
-npx @chatjs/cli@latest
+npx @chat-js/cli@latest
 ```
 
 Or with the command alias:
 
 ```bash
-npx @chatjs/cli@latest chatjs create
+npx @chat-js/cli@latest chat-js create
 ```
 
-After install, both binaries are available:
+After install, the binary is:
 
-- `chatjs`
-- `create-chat-app` (deprecated alias)
+- `chat-js`

@@ -1,5 +1,5 @@
 {
-  "name": "@chatjs/cli",
+  "name": "@chat-js/cli",
   "version": "0.1.0",
   "description": "CLI for creating and extending ChatJS apps",
   "license": "Apache-2.0",
@@ -27,8 +27,7 @@
     "zod": "^4.3.6"
   },
   "bin": {
-    "chatjs": "./dist/index.js",
-    "create-chat-app": "./dist/index.js"
+    "chat-js": "./dist/index.js"
   },
   "files": [
     "dist"

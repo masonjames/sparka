@@ -83,12 +83,6 @@ or scaffold from a git template:
 bun run chatjs -- --from-git https://github.com/your-org/your-template-repo.git
 ```
 
-Backward-compatible alias:
-
-```bash
-bun run create-chat-app
-```
-
 The CLI asks for gateway/features/auth choices, generates `chat.config.ts`, and prints the env vars required by your selections.
 
 ## Documentation
