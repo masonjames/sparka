@@ -10,9 +10,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
-      "@lobehub/icons",
       "lucide-react",
-      "@phosphor-icons/react",
     ],
   },
   serverExternalPackages: ["pino", "pino-pretty"],

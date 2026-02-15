@@ -1,6 +1,6 @@
 "use client";
 
-import cx from "classnames";
+import { cn } from "@/lib/utils";
 import { format, isWithinInterval } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { WeatherAtLocation } from "@/lib/ai/tools/get-weather";
@@ -208,7 +208,7 @@ function WeatherCard({
 
   return (
     <div
-      className={cx(
+      className={cn(
         "skeleton-bg flex max-w-[500px] flex-col gap-4 rounded-2xl p-4",
         {
           "bg-blue-400": isDay,
@@ -221,7 +221,7 @@ function WeatherCard({
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-2">
           <div
-            className={cx(
+            className={cn(
               "skeleton-div size-10 rounded-full",
               {
                 "bg-yellow-300": isDay,
@@ -247,7 +247,7 @@ function WeatherCard({
               {format(new Date(time), "ha")}
             </div>
             <div
-              className={cx(
+              className={cn(
                 "skeleton-div size-6 rounded-full",
                 {
                   "bg-yellow-300": isDay,
