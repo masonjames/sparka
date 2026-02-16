@@ -198,6 +198,11 @@ export const create = new Command()
 			logger.break();
 
 			printEnvChecklist(envEntries);
+
+			logger.break();
+			logger.log(
+				`  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`,
+			);
 		} catch (error) {
 			handleError(error);
 		}
