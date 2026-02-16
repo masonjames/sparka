@@ -25,7 +25,7 @@ The `chat.config.ts` file controls all feature toggles, branding, and app settin
 | **Anonymous users** | 10 credits        | Limited access, no tools                                      |
 | **Models**          | Curated list      | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5     |
 
-This keeps your initial setup simple—you only need `DATABASE_URL`, `AUTH_SECRET`, `AI_GATEWAY_API_KEY`, and GitHub OAuth credentials to get started.
+This keeps your initial setup simple — the CLI will tell you exactly which environment variables are needed based on your choices.
 
 Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
 
@@ -48,15 +48,9 @@ The CLI walks you through selecting your AI gateway, features, and auth provider
 cp .env.example .env.local
 ```
 
-Fill in the required variables:
+After scaffolding, the CLI prints the exact environment variables required for your configuration. Fill in those values in `.env.local`.
 
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
-| `AI_GATEWAY_API_KEY` | From [Vercel AI Gateway](/gateways/vercel) (or `OPENROUTER_API_KEY` for [OpenRouter](/gateways/openrouter)) |
-
-Expand the sections below to set up each service:
+Expand the sections below for setup instructions:
 
 <AccordionGroup>
   <Accordion title="Database (PostgreSQL)">
