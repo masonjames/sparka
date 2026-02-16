@@ -5,9 +5,21 @@ description: Deploy ChatJS on any platform
 
 ChatJS can be deployed to any platform that supports Next.js.
 
+## Getting Started
+
+Follow the [Quickstart](/quickstart) to scaffold your project and get it running locally. Then deploy to your platform of choice.
+
 ## Environment Variables
 
-See the **"Other Platforms"** tab in the [Quickstart](/quickstart#environment-setup) for required environment variables.
+See the [Quickstart](/quickstart#3-configure-environment-variables) for required environment variables.
+
+## Database Migrations
+
+For production deployments, use tracked migrations instead of `db:push`:
+
+```bash
+bun run db:migrate
+```
 
 ## Platform Guides
 
@@ -15,4 +27,4 @@ See the **"Other Platforms"** tab in the [Quickstart](/quickstart#environment-se
   Detailed deployment guides for specific platforms coming soon.
 </Note>
 
-For now, we recommend deploying to [Vercel](/deployment/vercel) for the simplest setup.
+For the simplest setup, we recommend deploying to [Vercel](/deployment/vercel). For containerized deployments, see [Docker](/deployment/docker).

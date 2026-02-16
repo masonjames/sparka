@@ -8,7 +8,7 @@ description: "Get ChatJS running in minutes"
 Before you begin, make sure you have:
 
 - **Node.js 20+** ([download](https://nodejs.org))
-- **Bun** (install with `curl -fsSL https://bun.sh/install | bash`)
+- A package manager: **npm**, **yarn**, **pnpm**, or **bun**
 
 ## Understanding `chat.config.ts`
 
@@ -31,204 +31,140 @@ Enable features incrementally by editing `chat.config.ts` and adding the require
 
 </Accordion>
 
-<Tabs>
-  <Tab title="Vercel (Recommended)">
-    The fastest path to production. Vercel handles database, blob storage, and AI Gateway automatically.
+### 1. Create Your Project
 
-    ### 1. Deploy to Vercel
+Scaffold a new ChatJS app using the CLI:
 
-    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/franciscomoretti/chat.js)
+```bash
+npx @chat-js/cli@latest create my-app
+cd my-app
+```
 
-    This creates a new repo in your GitHub account and deploys it to Vercel. During setup, Vercel provisions:
-    - PostgreSQL database
-    - Blob storage
-    - AI Gateway access (120+ models)
+The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It automatically detects your package manager and creates the appropriate lock file.
 
-    ### 2. Configure Authentication
+### 2. Configure Environment Variables
 
-    In the Vercel dashboard, go to **Settings → Environment Variables** and add:
+```bash
+cp .env.example .env.local
+```
 
-    | Variable | Description |
-    |----------|-------------|
-    | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
+Fill in the required variables:
 
-    Then add credentials for at least one OAuth provider:
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
+| `AI_GATEWAY_API_KEY` | From [Vercel AI Gateway](/gateways/vercel) (or `OPENROUTER_API_KEY` for [OpenRouter](/gateways/openrouter)) |
 
-    <AccordionGroup>
-      <Accordion title="GitHub (Recommended)">
-        1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-        2. Click **New OAuth App**
-        3. Set **Homepage URL** to your Vercel deployment URL
-        4. Set **Authorization callback URL** to `https://YOUR_APP.vercel.app/api/auth/callback/github`
-        5. Copy the **Client ID** → `AUTH_GITHUB_ID`
-        6. Generate a **Client Secret** → `AUTH_GITHUB_SECRET`
-      </Accordion>
-      <Accordion title="Google">
-        7. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-        2. Create a new **OAuth 2.0 Client ID** (Web application)
-        3. Add **Authorized redirect URI**: `https://YOUR_APP.vercel.app/api/auth/callback/google`
-        4. Copy **Client ID** → `AUTH_GOOGLE_ID`
-        5. Copy **Client Secret** → `AUTH_GOOGLE_SECRET`
-      </Accordion>
-      <Accordion title="Vercel">
-        6. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
-        7. Create a new integration with **Sign In with Vercel**
-        8. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
-        9. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
-      </Accordion>
-    </AccordionGroup>
+Expand the sections below to set up each service:
 
-    ### 3. Set Up Local Development
+<AccordionGroup>
+  <Accordion title="Database (PostgreSQL)">
+    **Option A: Neon** (generous free tier)
+    1. Go to [Neon](https://neon.tech)
+    2. Create a project and database
+    3. Copy the connection string → `DATABASE_URL`
 
-    Clone the repo that Vercel created in your GitHub account and pull environment variables:
+    **Option B: Vercel Postgres**
+    1. Go to [Vercel Storage](https://vercel.com/docs/storage/vercel-postgres/quickstart)
+    2. Create a new Postgres database
+    3. Copy the connection string → `DATABASE_URL`
 
+    **Option C: Local PostgreSQL**
     ```bash
-    git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-    cd YOUR_REPO
-    bun install
-    vercel link
-    vercel env pull .env.local
+    # macOS
+    brew install postgresql && brew services start postgresql
+    createdb chatjs
+    # DATABASE_URL=postgres://localhost:5432/chatjs
     ```
+  </Accordion>
+  <Accordion title="AI Gateway">
+    ChatJS supports multiple AI gateways. Pick one:
 
-    ### 4. Run Database Migrations
+    **Option A: Vercel AI Gateway** (default)
+    1. Go to [Vercel AI Gateway](https://vercel.com/ai-gateway)
+    2. Create an API key
+    3. Copy the key → `AI_GATEWAY_API_KEY`
 
-    ```bash
-    bun db:migrate
-    ```
+    **Option B: OpenRouter**
+    1. Go to [OpenRouter](https://openrouter.ai/keys)
+    2. Create an API key
+    3. Copy the key → `OPENROUTER_API_KEY`
 
-    ### 5. Start the Dev Server
+    **Option C: OpenAI**
+    1. Go to [OpenAI API Keys](https://platform.openai.com/api-keys)
+    2. Create an API key
+    3. Copy the key → `OPENAI_API_KEY`
 
-    ```bash
-    bun dev
-    ```
+    **Option D: OpenAI Compatible**
+    Use any endpoint that follows the OpenAI API format (Ollama, LM Studio, vLLM, Azure).
 
-    Open [http://localhost:3000](http://localhost:3000). You should see the ChatJS interface with a model selector and chat input.
+    See [Gateways Overview](/gateways/overview) for a full comparison and configuration details.
+  </Accordion>
+  <Accordion title="Authentication (at least one provider required)">
+    **GitHub (Recommended)**
+    1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+    2. Click **New OAuth App**
+    3. Set **Homepage URL** to `http://localhost:3000`
+    4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`
+    5. Copy the **Client ID** → `AUTH_GITHUB_ID`
+    6. Generate a **Client Secret** → `AUTH_GITHUB_SECRET`
 
-  </Tab>
-  <Tab title="Manual Setup">
-    For self-hosted deployments or when you want full control over infrastructure.
+    **Google**
+    1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+    2. Create a new **OAuth 2.0 Client ID** (Web application)
+    3. Add **Authorized redirect URI**: `http://localhost:3000/api/auth/callback/google`
+    4. Copy **Client ID** → `AUTH_GOOGLE_ID`
+    5. Copy **Client Secret** → `AUTH_GOOGLE_SECRET`
 
-    ### 1. Create Your Project
+    **Vercel**
+    1. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
+    2. Create a new integration with **Sign In with Vercel**
+    3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
+    4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
+  </Accordion>
+  <Accordion title="Blob Storage (Optional)">
+    Required for file attachments and image generation. Skip if you don't need these features.
 
-    Scaffold a new ChatJS app using the CLI:
+    1. Go to [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
+    2. Create a new blob store
+    3. Copy the token → `BLOB_READ_WRITE_TOKEN`
 
-    ```bash
-    npx @chat-js/cli@latest create my-app
-    cd my-app
-    ```
+    To disable, set `features.attachments: false` and `features.imageGeneration: false` in `chat.config.ts`.
+  </Accordion>
+</AccordionGroup>
 
-    The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go.
+### 3. Push Database Schema
 
-    ### 2. Set Up External Services
+```bash
+npm run db:push
+```
 
-    You need a PostgreSQL database and blob storage. Here are the recommended options:
+This pushes the Drizzle schema directly to your database. For production migrations, see [deployment guides](/deployment/vercel).
 
-    <AccordionGroup>
-      <Accordion title="Database (PostgreSQL)">
-        **Option A: Vercel Postgres** (easiest)
-        1. Go to [Vercel Storage](https://vercel.com/docs/storage/vercel-postgres/quickstart)
-        2. Create a new Postgres database
-        3. Copy the connection string → `DATABASE_URL`
+### 4. Start the Dev Server
 
-        **Option B: Neon** (generous free tier)
-        1. Go to [Neon](https://neon.tech)
-        2. Create a project and database
-        3. Copy the connection string → `DATABASE_URL`
+```bash
+npm run dev
+```
 
-        **Option C: Local PostgreSQL**
-        ```bash
-        # macOS
-        brew install postgresql && brew services start postgresql
-        createdb chatjs
-        # DATABASE_URL=postgres://localhost:5432/chatjs
-        ```
-      </Accordion>
-      <Accordion title="Blob Storage (Optional)">
-        Required for file attachments and image generation. Skip if you don't need these features.
+Open [http://localhost:3000](http://localhost:3000). You should see the ChatJS interface with a model selector and chat input.
 
-        1. Go to [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
-        2. Create a new blob store
-        3. Copy the token → `BLOB_READ_WRITE_TOKEN`
+## Deploying to Production
 
-        To disable, set `features.attachments: false` and `features.imageGeneration: false` in `chat.config.ts`.
-      </Accordion>
-      <Accordion title="AI Gateway">
-        ChatJS supports multiple AI gateways. Pick one:
+Once you're running locally, deploy your app:
 
-        **Option A: Vercel AI Gateway** (default)
-        1. Go to [Vercel AI Gateway](https://vercel.com/ai-gateway)
-        2. Create an API key
-        3. Copy the key → `AI_GATEWAY_API_KEY`
-
-        **Option B: OpenRouter**
-        1. Go to [OpenRouter](https://openrouter.ai/keys)
-        2. Create an API key
-        3. Copy the key → `OPENROUTER_API_KEY`
-        4. Set `gateway: "openrouter"` in `chat.config.ts`
-
-        See [Vercel Gateway](/gateways/vercel) and [OpenRouter Gateway](/gateways/openrouter) for details.
-      </Accordion>
-    </AccordionGroup>
-
-    ### 3. Configure Environment Variables
-
-    ```bash
-    cp .env.example .env.local
-    ```
-
-    Fill in the required variables:
-
-    | Variable | Description |
-    |----------|-------------|
-    | `DATABASE_URL` | PostgreSQL connection string |
-    | `AUTH_SECRET` | [Generate one](https://generate-secret.vercel.app/32) |
-    | `AI_GATEWAY_API_KEY` | From [Vercel AI Gateway](/gateways/vercel) (or `OPENROUTER_API_KEY` for [OpenRouter](/gateways/openrouter)) |
-    | `APP_URL` | Your app's public URL (e.g., `https://myapp.com`) |
-
-    ### 4. Configure Authentication
-
-    Add credentials for at least one OAuth provider:
-
-    <AccordionGroup>
-      <Accordion title="GitHub (Recommended)">
-        1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-        2. Click **New OAuth App**
-        3. Set **Homepage URL** to `http://localhost:3000`
-        4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`
-        5. Copy the **Client ID** → `AUTH_GITHUB_ID`
-        6. Generate a **Client Secret** → `AUTH_GITHUB_SECRET`
-      </Accordion>
-      <Accordion title="Google">
-        1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-        2. Create a new **OAuth 2.0 Client ID** (Web application)
-        3. Add **Authorized redirect URI**: `http://localhost:3000/api/auth/callback/google`
-        4. Copy **Client ID** → `AUTH_GOOGLE_ID`
-        5. Copy **Client Secret** → `AUTH_GOOGLE_SECRET`
-      </Accordion>
-      <Accordion title="Vercel">
-        1. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
-        2. Create a new integration with **Sign In with Vercel**
-        3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
-        4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
-      </Accordion>
-    </AccordionGroup>
-
-    ### 5. Run Database Migrations
-
-    ```bash
-    bun db:migrate
-    ```
-
-    ### 6. Start the Dev Server
-
-    ```bash
-    bun dev
-    ```
-
-    Open [http://localhost:3000](http://localhost:3000). You should see the ChatJS interface with a model selector and chat input.
-
-  </Tab>
-</Tabs>
+<CardGroup cols={3}>
+  <Card title="Vercel" icon="triangle" href="/deployment/vercel">
+    Recommended. Integrated database, blob storage, and AI Gateway.
+  </Card>
+  <Card title="Docker" icon="docker" href="/deployment/docker">
+    Containerized deployment for any platform.
+  </Card>
+  <Card title="Self-Hosted" icon="server" href="/deployment/self-hosted">
+    Deploy to any Node.js platform.
+  </Card>
+</CardGroup>
 
 ## Troubleshooting
 

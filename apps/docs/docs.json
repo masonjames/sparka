@@ -20,7 +20,7 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": ["index", "quickstart", "project-structure", "changelog"]
+            "pages": ["index", "quickstart", "changelog"]
           },
           {
             "group": "Core Concepts",
@@ -70,6 +70,7 @@
           {
             "group": "Reference",
             "pages": [
+              "project-structure",
               "reference/config",
               "reference/database",
               "reference/routing",
