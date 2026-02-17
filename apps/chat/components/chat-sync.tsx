@@ -62,7 +62,7 @@ export function ChatSync({
     resume: isLastMessagePartial,
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      fetch: fetchWithErrorHandlers,
+      fetch: fetchWithErrorHandlers as typeof fetch,
       prepareSendMessagesRequest({ messages, id: requestId, body }) {
         setAutoResume(true);
 

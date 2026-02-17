@@ -8,10 +8,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --parallel",
-    "dev:chat": "turbo run dev --filter=@chatjs/chat",
+    "dev": "set -a && source .env.local && set +a && turbo run dev --parallel",
+    "dev:chat": "set -a && source .env.local && set +a && turbo run dev --filter=@chatjs/chat",
     "dev:docs": "turbo run dev --filter=@chatjs/docs",
-    "build": "turbo run build",
+    "build": "set -a && source .env.local && set +a && turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test --filter=@chatjs/chat",
     "test:types": "turbo run test:types --filter=@chatjs/chat",
