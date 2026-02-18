@@ -5,6 +5,10 @@ description: Explore alternative conversation paths without losing context
 
 Branching lets you fork a conversation at any point and explore different directions. When you re-submit a message or the AI generates a new response, a branch is created automatically. You can navigate between branches using the sibling controls that appear on messages.
 
+<Frame>
+  <img src="/images/branching.gif" alt="Navigating between conversation branches" />
+</Frame>
+
 ## How It Works
 
 Every message stores a `parentMessageId` that forms a tree structure. When you edit a message or regenerate a response, a new child is added under the same parent, creating siblings. The UI displays the active thread (a single root-to-leaf path through the tree) while keeping all branches available.
