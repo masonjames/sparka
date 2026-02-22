@@ -76,6 +76,7 @@
               "reference/config",
               "reference/database",
               "reference/routing",
+              "reference/testing",
               "reference/evaluations",
               {
                 "group": "Gateways",
