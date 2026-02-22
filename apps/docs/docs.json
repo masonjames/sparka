@@ -73,6 +73,8 @@
             "pages": [
               "project-structure",
               "reference/config",
+              "reference/env-vars",
+              "reference/cli",
               "reference/database",
               "reference/routing",
               "reference/testing",
