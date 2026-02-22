@@ -69,33 +69,38 @@ async function processExtraPackages(
     )
     .filter((spec) => !basePackageNames.has(packageName(spec)));
 
-  let codeToRun = code;
-  if (extraPackages.length > 0) {
-    log.info({ requestId, extraPackages }, "installing extra packages");
-    const dynamicInstall = await sandbox.runCommand({
-      cmd: "pip",
-      args: ["install", ...extraPackages],
-    });
-    if (dynamicInstall.exitCode !== 0) {
-      const stderr = await dynamicInstall.stderr();
-      log.error({ requestId, stderr }, "dynamic package installation failed");
-      return {
-        codeToRun: code,
-        installResult: {
-          success: false,
-          result: {
-            message: `Failed to install packages: ${stderr}`,
-            chart: "",
-          },
-        },
-      };
-    }
-    codeToRun = lines
-      .filter((l) => !l.trim().startsWith("!pip install "))
-      .join("\n");
+  const codeWithoutPipLines = lines
+    .filter((l) => !l.trim().startsWith("!pip install "))
+    .join("\n");
+
+  if (extraPackages.length === 0) {
+    return { codeToRun: codeWithoutPipLines, installResult: { success: true } };
   }
 
-  return { codeToRun, installResult: { success: true } };
+  log.info({ requestId, extraPackages }, "installing extra packages");
+  const dynamicInstall = await sandbox.runCommand({
+    cmd: "pip",
+    args: ["install", ...extraPackages],
+  });
+  if (dynamicInstall.exitCode !== 0) {
+    const stderr = await dynamicInstall.stderr();
+    log.error({ requestId, stderr }, "dynamic package installation failed");
+    return {
+      codeToRun: code,
+      installResult: {
+        success: false,
+        result: {
+          message: `Failed to install packages: ${stderr}`,
+          chart: "",
+        },
+      },
+    };
+  }
+
+  return {
+    codeToRun: codeWithoutPipLines,
+    installResult: { success: true },
+  };
 }
 
 function createWrappedCode(codeToRun: string, chartPath: string): string {
