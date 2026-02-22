@@ -1,7 +1,6 @@
 ---
-description: TRPC with Tanstack Query patterns
-globs: '*.tsx'
-alwaysApply: false
+name: trpc-patterns
+description: 'Skill: trpc-patterns'
 ---
 
 # TRPC with Tanstack Query Integration
