@@ -46,10 +46,10 @@ function getSearchApi(): SearchAPI {
 }
 
 export function getDeepResearchConfig(): DeepResearchRuntimeConfig {
-  const deepResearchModel = config.models.defaults.deepResearch;
+  const deepResearchModel = config.ai.tools.deepResearch.defaultModel;
   const deepResearchFinalReportModel =
-    config.models.defaults.deepResearchFinalReport;
-  const deepResearchSettings = config.deepResearch;
+    config.ai.tools.deepResearch.finalReportModel;
+  const deepResearchSettings = config.ai.tools.deepResearch;
 
   return {
     // General Configuration
