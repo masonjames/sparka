@@ -75,4 +75,4 @@ const myFont = localFont({
 });
 ```
 
-Place font files in `app/fonts/` or `public/fonts/`.
+Place font files in `app/fonts/`. The `src` path in `next/font/local` is resolved relative to the file that calls it (typically `app/layout.tsx`), so `./fonts/MyFont.woff2` maps to `app/fonts/MyFont.woff2`.
