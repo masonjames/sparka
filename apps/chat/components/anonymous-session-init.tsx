@@ -29,42 +29,30 @@ export function AnonymousSessionInit() {
   const trpc = useTRPC();
 
   useEffect(() => {
-    // Only initialize for non-authenticated users after session is loaded
-    if (isPending) {
-      return;
-    }
-    if (session?.user) {
-      return;
-    }
+    if (isPending) return;
+    if (session?.user) return;
 
-    // Get raw session data and validate/migrate
     const existingSession = getAnonymousSession();
 
     if (existingSession) {
-      // Validate the existing session schema
       if (!isValidAnonymousSession(existingSession)) {
         console.warn(
           "Invalid session schema detected during init, clearing and creating new session"
         );
         clearAnonymousSession();
-        const newSession = createAnonymousSession();
-        setAnonymousSession(newSession);
-        // Ensure UI refetches credits after creating a valid anonymous session
+        setAnonymousSession(createAnonymousSession());
         queryClient.invalidateQueries({
           queryKey: trpc.credits.getAvailableCredits.queryKey(),
         });
         return;
       }
     } else {
-      // Create new session if none exists
-      const newSession = createAnonymousSession();
-      setAnonymousSession(newSession);
-      // Ensure UI refetches credits after first-time session creation
+      setAnonymousSession(createAnonymousSession());
       queryClient.invalidateQueries({
         queryKey: trpc.credits.getAvailableCredits.queryKey(),
       });
     }
-  }, [session, isPending, queryClient, trpc.credits.getAvailableCredits]);
+  }, [session?.user ? "authenticated" : "anonymous", isPending, queryClient, trpc]);
 
-  return null; // This component doesn't render anything
+  return null;
 }

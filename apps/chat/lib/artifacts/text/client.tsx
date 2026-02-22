@@ -1,10 +1,25 @@
 import { Copy, History, Pen, Redo2, Undo2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
-import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
-import { Editor } from "@/components/text-editor";
 import { config } from "@/lib/config";
+
+const DiffView = dynamic(
+  () => import("@/components/diffview").then((m) => ({ default: m.DiffView })),
+  {
+    loading: () => <DocumentSkeleton artifactKind="text" />,
+    ssr: false,
+  }
+);
+
+const Editor = dynamic(
+  () => import("@/components/text-editor").then((m) => ({ default: m.Editor })),
+  {
+    loading: () => <DocumentSkeleton artifactKind="text" />,
+    ssr: false,
+  }
+);
 export const textArtifact = new Artifact<"text">({
   kind: "text",
   description: "Useful for text content, like drafting essays and emails.",
