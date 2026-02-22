@@ -1,7 +1,6 @@
 ---
-description: React rules for the project
-globs: '**/*.tsx'
-alwaysApply: false
+name: react
+description: 'Skill: react'
 ---
 
 ## Components
@@ -27,4 +26,3 @@ alwaysApply: false
 - **Class merging**: Use the shared `cn` utility for conditional classes.
 - **Composition**: Prefer smaller composed components over deeply nested JSX in a single component.
 - **Responsive design**: Prefer Tailwind responsive classes (`md:hidden`, `hidden md:flex`, etc.) over JS-based checks like `isMobile`. Use `isMobile` from `useSidebar()` only when CSS cannot handle the logic (e.g., conditional rendering that affects data fetching or complex state).
-

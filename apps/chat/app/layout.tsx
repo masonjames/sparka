@@ -88,7 +88,7 @@ export default async function RootLayout({
       <body className="antialiased">
         <Script
           src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
         <NuqsAdapter>
           <ThemeProvider
