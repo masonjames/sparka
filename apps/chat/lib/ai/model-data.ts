@@ -4,7 +4,7 @@ export type ModelData = {
   owned_by: string;
   name: string;
   description: string;
-  type: "language" | "embedding" | "image";
+  type: "language" | "embedding" | "image" | "video";
   tags?: string[];
   context_window: number;
   max_tokens: number;

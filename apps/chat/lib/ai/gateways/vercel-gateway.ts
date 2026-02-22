@@ -4,6 +4,7 @@ import { createModuleLogger } from "@/lib/logger";
 import {
   type AiGatewayModel,
   aiGatewayModelsResponseSchema,
+  isAiGatewayModelType,
 } from "../ai-gateway-models-schemas";
 import { getFallbackModels } from "./fallback-models";
 import type { GatewayProvider } from "./gateway-provider";
@@ -68,13 +69,33 @@ export class VercelGateway
 
       const bodyRaw = await response.json();
       const body = aiGatewayModelsResponseSchema.parse(bodyRaw);
-      const modelCount = body.data?.length ?? 0;
+      const unsupportedTypes = new Set<string>();
+      const models: AiGatewayModel[] = [];
+
+      for (const model of body.data) {
+        if (!isAiGatewayModelType(model.type)) {
+          unsupportedTypes.add(model.type);
+          continue;
+        }
+        models.push({ ...model, type: model.type });
+      }
+
+      if (unsupportedTypes.size > 0) {
+        log.warn(
+          {
+            unsupportedTypes: [...unsupportedTypes],
+            skippedModelCount: body.data.length - models.length,
+            modelCount: body.data.length,
+          },
+          "Skipping models with unsupported types from Vercel AI Gateway"
+        );
+      }
 
       log.info(
-        { modelCount },
+        { modelCount: models.length },
         "Successfully fetched models from Vercel AI Gateway"
       );
-      return body.data || [];
+      return models;
     } catch (error) {
       log.error(
         { err: error, url },
