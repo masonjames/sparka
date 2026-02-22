@@ -90,6 +90,7 @@ export function getTools({
     ...(config.features.videoGeneration
       ? {
           generateVideo: generateVideoTool({
+            selectedModel,
             costAccumulator,
           }),
         }

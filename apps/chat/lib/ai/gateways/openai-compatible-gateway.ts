@@ -33,7 +33,7 @@ function toAiGatewayModel(
 }
 
 export class OpenAICompatibleGateway
-  implements GatewayProvider<"openai-compatible", string, string>
+  implements GatewayProvider<"openai-compatible", string, string, never>
 {
   readonly type = "openai-compatible" as const;
 
@@ -60,7 +60,7 @@ export class OpenAICompatibleGateway
     return provider.imageModel(modelId);
   }
 
-  createVideoModel(_modelId: string): Experimental_VideoModelV3 | null {
+  createVideoModel(_modelId: never): Experimental_VideoModelV3 | null {
     return null;
   }
 

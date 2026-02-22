@@ -96,7 +96,7 @@ function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
 }
 
 export class OpenRouterGateway
-  implements GatewayProvider<"openrouter", string, string>
+  implements GatewayProvider<"openrouter", string, string, never>
 {
   readonly type = "openrouter" as const;
 
@@ -119,7 +119,7 @@ export class OpenRouterGateway
     return null;
   }
 
-  createVideoModel(_modelId: string): Experimental_VideoModelV3 | null {
+  createVideoModel(_modelId: never): Experimental_VideoModelV3 | null {
     return null;
   }
 

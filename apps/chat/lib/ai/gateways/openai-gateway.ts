@@ -46,7 +46,7 @@ function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
 
 export class OpenAIGateway
   implements
-    GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId>
+    GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId, never>
 {
   readonly type = "openai" as const;
 
@@ -68,7 +68,7 @@ export class OpenAIGateway
     return provider.image(modelId);
   }
 
-  createVideoModel(_modelId: string): Experimental_VideoModelV3 | null {
+  createVideoModel(_modelId: never): Experimental_VideoModelV3 | null {
     return null;
   }
 
