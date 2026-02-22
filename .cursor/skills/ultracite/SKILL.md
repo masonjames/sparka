@@ -1,7 +1,6 @@
 ---
-description: Ultracite Rules - AI-Ready Formatter and Linter
-globs: '**/*.{ts,tsx,js,jsx,json,jsonc,html,vue,svelte,astro,css,yaml,yml,graphql,gql,md,mdx,grit}'
-alwaysApply: false
+name: ultracite
+description: 'Skill: ultracite'
 ---
 
 # Ultracite Code Standards
@@ -10,9 +9,9 @@ This project uses **Ultracite**, a zero-config Biome preset that enforces strict
 
 ## Quick Reference
 
-- **Format code**: `npx ultracite fix`
-- **Check for issues**: `npx ultracite check`
-- **Diagnose setup**: `npx ultracite doctor`
+- **Format code**: `npx ultracite@6.3.3 fix`
+- **Check for issues**: `npx ultracite@6.3.3 check`
+- **Diagnose setup**: `npx ultracite@6.3.3 doctor`
 
 Biome (the underlying engine) provides extremely fast Rust-based linting and formatting. Most issues are automatically fixable.
 
@@ -126,4 +125,4 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 
 ---
 
-Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix` before committing to ensure compliance.
+Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite@6.3.3 fix` before committing to ensure compliance.

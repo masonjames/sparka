@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: Typescript rules for the project Applies to files matching: *.tsx,*.ts.
+description: 'Skill: typescript'
 ---
 
-@.claude/rules/typescript.mdc
+@.claude/skills/typescript/typescript.mdc

@@ -1,6 +1,6 @@
 ---
 name: react
-description: React rules for the project Applies to files matching: **/*.tsx.
+description: 'Skill: react'
 ---
 
-@.claude/rules/react.mdc
+@.claude/skills/react/react.mdc

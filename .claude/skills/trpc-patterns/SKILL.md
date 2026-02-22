@@ -1,6 +1,6 @@
 ---
 name: trpc-patterns
-description: TRPC with Tanstack Query patterns Applies to files matching: *.tsx.
+description: 'Skill: trpc-patterns'
 ---
 
-@.claude/rules/trpc-patterns.mdc
+@.claude/skills/trpc-patterns/trpc-patterns.mdc

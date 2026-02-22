@@ -1,6 +1,6 @@
 ---
 name: lazy-prefetch-pattern
-description: React Query v5 lazy prefetch (dehydrate pending queries) Applies to files matching: *.tsx.
+description: 'Skill: lazy-prefetch-pattern'
 ---
 
-@.claude/rules/lazy-prefetch-pattern.mdc
+@.claude/skills/lazy-prefetch-pattern/lazy-prefetch-pattern.mdc
