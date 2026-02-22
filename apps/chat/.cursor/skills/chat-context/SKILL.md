@@ -19,7 +19,7 @@ description: 'Skill: chat-context'
 
 ## Database Migrations
 
-- To perform database migrations follow drizzle conventions. First make the desired changes to the schema in `lib/db/schema.ts`. Then run `bun db:generate` to generate the migration file. Then run `bun db:migrate` to apply the migration to the database.
+- To perform database migrations follow Drizzle conventions. First make the desired changes to the schema in `lib/db/schema.ts`. Then run `bun db:generate` to generate the migration file. Then run `bun db:migrate` to apply the migration to the database.
 
 ## Environment Variables
 

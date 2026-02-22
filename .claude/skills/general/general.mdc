@@ -4,13 +4,14 @@ description: General repo context and behavior guidelines
 
 # Repo Context
 
-- The package manager is bun
+- The package manager is Bun
 
 ## AI Rules (Skiller)
 
-- Skills live in `.claude/skills/<skillname>/`
-- ALWAYS run `bunx skiller@latest apply` after adding or modifying any skill
-- Skills use MDC format with frontmatter (description, globs, alwaysApply)
+- `.claude/skills/` is the source of truth — never edit propagated copies in `.cursor/skills/`, `.codex/skills/`, etc.
+- Canonical skill layout: `.claude/skills/<name>/SKILL.md` + `.claude/skills/<name>/<name>.mdc`
+- `SKILL.md` frontmatter is required; body is either a `@<name>.mdc` wrapper or full content
+- ALWAYS run `bunx skiller@latest apply` after adding or modifying any skill — this propagates to all agent dirs
 
 ## Behavior
 
