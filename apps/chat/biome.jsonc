@@ -2,11 +2,11 @@
   "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
   "files": {
     "includes": [
-      "**/*",
-      "!.next",
       "!.next",
       "!.devtools",
-      "!.devtools",
+      "!node_modules",
+      "!playwright-report",
+      "!test-results",
       "!components/ui",
       "!components/ai-elements",
       "!components/streamdown",
