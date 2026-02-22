@@ -1,3 +1,8 @@
+---
+name: review-docs
+description: Documentation review and fix workflow for MDX files
+---
+
 # Documentation Review & Fix Skill
 
 Review and **fix** all documentation issues. Only report issues requiring human decisions.
