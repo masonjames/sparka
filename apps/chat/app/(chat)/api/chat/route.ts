@@ -837,7 +837,7 @@ export async function POST(request: NextRequest) {
       }),
       config.features.mcp && userId && !isAnonymous
         ? getMcpConnectorsByUserId({ userId })
-        : Promise.resolve([] as McpConnector[]),
+        : Promise.resolve([]),
     ]);
 
     if (contextResult.error) {

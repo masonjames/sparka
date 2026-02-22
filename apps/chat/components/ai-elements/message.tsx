@@ -20,14 +20,7 @@ import {
   XIcon,
 } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
-import {
-  createContext,
-  memo,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createContext, memo, useContext, useEffect, useState } from "react";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
@@ -200,18 +193,15 @@ export const MessageBranchContent = ({
   children,
   ...props
 }: MessageBranchContentProps) => {
-  const { currentBranch, setBranches } = useMessageBranch();
+  const { currentBranch, setBranches, branches } = useMessageBranch();
   const childrenArray = Array.isArray(children) ? children : [children];
-  const lastBranchesSigRef = useRef<string>("");
 
+  // Use useEffect to update branches when they change
   useEffect(() => {
-    const sig = `${childrenArray.length}:${childrenArray
-      .map((c, i) => c?.key ?? i)
-      .join(",")}`;
-    if (sig === lastBranchesSigRef.current) return;
-    lastBranchesSigRef.current = sig;
-    setBranches(childrenArray);
-  }, [childrenArray, setBranches]);
+    if (branches.length !== childrenArray.length) {
+      setBranches(childrenArray);
+    }
+  }, [childrenArray, branches, setBranches]);
 
   return childrenArray.map((branch, index) => (
     <div
