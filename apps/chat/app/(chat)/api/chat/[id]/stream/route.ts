@@ -43,17 +43,18 @@ export async function GET(
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
-  // Get message and validate it exists with an active stream
-  const messageWithParts = await getChatMessageWithPartsById({ id: messageId });
+  const [messageWithParts, session, chat] = await Promise.all([
+    getChatMessageWithPartsById({ id: messageId }),
+    auth.api.getSession({ headers: await headers() }),
+    getChatById({ id: chatId }),
+  ]);
+
   if (!messageWithParts || messageWithParts.chatId !== chatId) {
     return new ChatSDKError("not_found:stream").toResponse();
   }
 
-  // Validate chat ownership
-  const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id || null;
 
-  const chat = await getChatById({ id: chatId });
   if (!chat) {
     return new ChatSDKError("not_found:chat").toResponse();
   }

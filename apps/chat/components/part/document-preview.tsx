@@ -2,6 +2,7 @@
 
 import equal from "fast-deep-equal";
 import { File, Loader2, Maximize, Pencil } from "lucide-react";
+import dynamic from "next/dynamic";
 import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
@@ -9,12 +10,29 @@ import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import type { UIArtifact } from "../artifact-panel";
-import { CodeEditor } from "../code-editor";
 import { InlineDocumentSkeleton } from "../document-skeleton";
-import { ImageEditor } from "../image-editor";
-import { SpreadsheetEditor } from "../sheet-editor";
-import { Editor } from "../text-editor";
 import { DocumentToolCall, DocumentToolResult } from "./document-common";
+
+const CodeEditor = dynamic(
+  () => import("../code-editor").then((m) => ({ default: m.CodeEditor })),
+  { loading: () => <InlineDocumentSkeleton />, ssr: false }
+);
+
+const Editor = dynamic(
+  () => import("../text-editor").then((m) => ({ default: m.Editor })),
+  { loading: () => <InlineDocumentSkeleton />, ssr: false }
+);
+
+const ImageEditor = dynamic(
+  () => import("../image-editor").then((m) => ({ default: m.ImageEditor })),
+  { loading: () => <InlineDocumentSkeleton />, ssr: false }
+);
+
+const SpreadsheetEditor = dynamic(
+  () =>
+    import("../sheet-editor").then((m) => ({ default: m.SpreadsheetEditor })),
+  { loading: () => <InlineDocumentSkeleton />, ssr: false }
+);
 
 type DocumentPreviewInput = {
   title: string;

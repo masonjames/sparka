@@ -1,7 +1,6 @@
 ---
-description: React Query v5 lazy prefetch (dehydrate pending queries)
-globs: "*.tsx"
-alwaysApply: false
+name: lazy-prefetch-pattern
+description: 'Skill: lazy-prefetch-pattern'
 ---
 
 # Lazy prefetch pattern (React Query v5 + Next RSC)

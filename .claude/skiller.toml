@@ -20,7 +20,7 @@ enabled = false
 merge_strategy = "cursor"
 
 [skills]
-generate_from_rules = true
+enabled = true
 
 
 # --- Agent Specific Configurations ---

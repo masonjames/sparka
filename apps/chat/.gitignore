@@ -16,7 +16,6 @@
 /.codex/skills
 /.crush.json
 /.crush.json.bak
-/.cursor/skills
 /.gemini/skills
 /.goosehints
 /.goosehints.bak
@@ -50,3 +49,4 @@
 /opencode.json.bak
 # END Skiller Generated Files
 .vercel
+.devtools
