@@ -7,7 +7,7 @@ ChatJS includes two testing layers: **Vitest** for unit tests and **Playwright**
 
 ## Unit Tests (Vitest)
 
-Unit tests cover individual functions and modules. They live alongside the source code as `*.test.ts` files.
+Unit tests cover individual functions and modules. They live alongside the source code as `*.test.ts` files. Vitest is configured in `vitest.config.ts` to exclude `*.e2e.ts` files so E2E tests never run as unit tests.
 
 ```bash
 # Run all unit tests
@@ -57,13 +57,13 @@ bun test:e2e
 
 The Playwright config defines five test projects that run in dependency order:
 
-| Project           | File                 | Depends On        | Purpose                       |
-| ----------------- | -------------------- | ----------------- | ----------------------------- |
-| `setup:auth`      | `auth.setup.ts`      | -                 | Authenticate and save session |
-| `setup:reasoning` | `reasoning.setup.ts` | `setup:auth`      | Prepare reasoning model state |
-| `chat`            | `chat.test.ts`       | `setup:auth`      | Core chat interactions        |
-| `reasoning`       | `reasoning.test.ts`  | `setup:reasoning` | Reasoning model tests         |
-| `artifacts`       | `artifacts.test.ts`  | `setup:auth`      | Canvas and document tests     |
+| Project           | File                      | Depends On        | Purpose                       |
+| ----------------- | ------------------------- | ----------------- | ----------------------------- |
+| `setup:auth`      | `auth.setup.e2e.ts`       | -                 | Authenticate and save session |
+| `setup:reasoning` | `reasoning.setup.e2e.ts`  | `setup:auth`      | Prepare reasoning model state |
+| `chat`            | `chat.e2e.ts`             | `setup:auth`      | Core chat interactions        |
+| `reasoning`       | `reasoning.e2e.ts`        | `setup:reasoning` | Reasoning model tests         |
+| `artifacts`       | `artifacts.e2e.ts`        | `setup:auth`      | Canvas and document tests     |
 
 ### CI behavior
 
@@ -76,7 +76,7 @@ The Playwright config defines five test projects that run in dependency order:
 
 ### Writing E2E tests
 
-Create test files in the `tests/` directory matching the patterns above. Tests have access to authenticated sessions via Playwright's [storage state](https://playwright.dev/docs/auth):
+Create test files in the `tests/` directory using the `*.e2e.ts` naming convention. Tests have access to authenticated sessions via Playwright's [storage state](https://playwright.dev/docs/auth):
 
 ```typescript
 import { test, expect } from "@playwright/test";
