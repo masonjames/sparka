@@ -40,6 +40,7 @@
               "features/deep-research",
               "features/code-execution",
               "features/image-generation",
+              "features/video-generation",
               "features/attachments",
               "features/mcp",
               "features/canvas",
