@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type BundledLanguage, codeToHtml, type ShikiTransformer } from "shiki";
+import type { BundledLanguage, ShikiTransformer } from "shiki";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,7 @@ export async function highlightCode(
   language: BundledLanguage,
   showLineNumbers = false
 ) {
+  const { codeToHtml } = await import("shiki");
   const transformers: ShikiTransformer[] = showLineNumbers
     ? [lineNumberTransformer]
     : [];

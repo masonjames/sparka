@@ -97,18 +97,35 @@ import json
 import traceback
 
 try:
+    import matplotlib.pyplot as _plt_module
+    _orig_savefig = _plt_module.savefig
+    def _intercepted_savefig(*args, **kwargs):
+        _orig_savefig('${chartPath}', format='png', bbox_inches='tight', dpi=100)
+        if args or kwargs.get('fname') not in (None, '${chartPath}'):
+            return _orig_savefig(*args, **kwargs)
+    _plt_module.savefig = _intercepted_savefig
+except ImportError:
+    pass
+
+try:
     exec(${JSON.stringify(codeToRun)})
     try:
         _locals = locals()
         _globals = globals()
-        if "result" in _locals:
-            print(_locals["result"])
-        elif "result" in _globals:
-            print(_globals["result"])
-        elif "results" in _locals:
-            print(_locals["results"])
-        elif "results" in _globals:
-            print(_globals["results"])
+        _chart_var = _locals.get("chart") or _globals.get("chart")
+        if (isinstance(_chart_var, dict)
+                and isinstance(_chart_var.get("type"), str)
+                and isinstance(_chart_var.get("elements"), list)):
+            print("__CHART_JSON__:" + json.dumps(_chart_var))
+        else:
+            if "result" in _locals:
+                print(_locals["result"])
+            elif "result" in _globals:
+                print(_globals["result"])
+            elif "results" in _locals:
+                print(_locals["results"])
+            elif "results" in _globals:
+                print(_globals["results"])
     except Exception:
         pass
     try:
@@ -126,11 +143,14 @@ except Exception as e:
 `;
 }
 
+const CHART_JSON_PREFIX = "__CHART_JSON__:";
+
 async function parseExecutionOutput(execResult: {
   stdout: () => Promise<string>;
   exitCode: number;
 }): Promise<{
   outputText: string;
+  chartData: Record<string, unknown> | null;
   execInfo: {
     success: boolean;
     error?: { name: string; value: string; traceback: string };
@@ -142,18 +162,33 @@ async function parseExecutionOutput(execResult: {
     error?: { name: string; value: string; traceback: string };
   } = { success: true };
   let outputText = "";
+  let chartData: Record<string, unknown> | null = null;
 
   try {
     const outLines = (stdout ?? "").trim().split("\n");
     const lastLine = outLines.at(-1);
     execInfo = JSON.parse(lastLine ?? "{}");
     outLines.pop();
+
+    const chartLineIdx = outLines.findIndex((l) =>
+      l.startsWith(CHART_JSON_PREFIX)
+    );
+    if (chartLineIdx !== -1) {
+      const raw = outLines[chartLineIdx].slice(CHART_JSON_PREFIX.length);
+      try {
+        chartData = JSON.parse(raw) as Record<string, unknown>;
+      } catch {
+        // ignore malformed chart JSON
+      }
+      outLines.splice(chartLineIdx, 1);
+    }
+
     outputText = outLines.join("\n");
   } catch {
     outputText = stdout ?? "";
   }
 
-  return { outputText, execInfo };
+  return { outputText, chartData, execInfo };
 }
 
 async function checkForChart(
@@ -248,7 +283,7 @@ async function executeInSandbox({
   requestId: string;
 }): Promise<{
   message: string;
-  chart: string | { base64: string; format: string };
+  chart: string | { base64: string; format: string } | Record<string, unknown>;
 }> {
   const baseInstallResult = await installBasePackages(
     sandbox,
@@ -276,8 +311,8 @@ async function executeInSandbox({
     args: ["-c", wrappedCode],
   });
 
-  const { outputText, execInfo } = await parseExecutionOutput(execResult);
-  const chartOut = await checkForChart(sandbox, chartPath, log, requestId);
+  const { outputText, chartData, execInfo } =
+    await parseExecutionOutput(execResult);
 
   const message = buildResponseMessage({
     outputText,
@@ -287,6 +322,12 @@ async function executeInSandbox({
     requestId,
   });
 
+  if (chartData) {
+    log.info({ requestId }, "interactive chart data returned");
+    return { message: message.trim(), chart: chartData };
+  }
+
+  const chartOut = await checkForChart(sandbox, chartPath, log, requestId);
   return {
     message: message.trim(),
     chart: chartOut ?? "",
@@ -319,23 +360,36 @@ export const codeExecution = ({
   costAccumulator?: CostAccumulator;
 }) =>
   tool({
-    description: `Python-only sandbox for calculations, data analysis & simple visualisations.
+    description: `Python-only sandbox for calculations, data analysis & visualisations.
 
 Use for:
 - Execute Python (matplotlib, pandas, numpy, sympy, yfinance pre-installed)
-- Produce line / scatter / bar charts (no need to call 'plt.show()')
+- Produce interactive line / scatter / bar charts OR matplotlib PNG charts
 - Install extra libs by adding lines like: '!pip install <pkg> [<pkg2> ...]' (we auto-install and strip these lines)
+
+Chart output — choose ONE:
+1. Interactive chart (preferred for line/scatter/bar): assign a 'chart' variable matching this schema:
+   chart = {
+     "type": "line" | "scatter" | "bar",
+     "title": "My Chart",
+     "x_label": "X",   # optional
+     "y_label": "Y",   # optional
+     "x_scale": "datetime" | None,  # optional, for time-series x axes
+     "elements": [
+       # for line/scatter: {"label": "Series A", "points": [[x1,y1],[x2,y2],...]}
+       # for bar: {"label": "Category", "group": "Group A", "value": 42}
+     ]
+   }
+2. Matplotlib PNG: use plt.plot()/plt.savefig() normally (no need to call plt.show())
 
 Restrictions:
 - No images in the assistant response; don't embed them
-
-Avoid:
-- Any non-Python language
-- Chart types other than line / scatter / bar
+- Interactive chart: only line / scatter / bar types
 
 Output rules:
-- Print the values you want returned (e.g. 'print(df.head())' or 'print(answer)')
-- Or assign to a variable named 'result' or 'results' and we'll print it automatically
+- Assign 'chart' dict for interactive charts (takes priority over matplotlib PNG)
+- Assign 'result' or 'results' for other computed values (auto-printed)
+- Or print explicitly: print(answer)
 - Don't rely on implicit REPL last-expression output`,
     inputSchema: z.object({
       title: z.string().describe("The title of the code snippet."),
