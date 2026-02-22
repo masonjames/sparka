@@ -1,7 +1,6 @@
 ---
-description: Typescript rules for the project
-globs: '*.tsx,*.ts'
-alwaysApply: false
+name: typescript
+description: 'Skill: typescript'
 ---
 
 ## Typing Guidelines

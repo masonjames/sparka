@@ -19,15 +19,16 @@ export default async function ChatLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const session = await auth.api.getSession({ headers: await headers() });
+  const [cookieStore, headersRes, chatModels] = await Promise.all([
+    cookies(),
+    headers(),
+    getChatModels(),
+  ]);
+  const session = await auth.api.getSession({ headers: headersRes });
   const isCollapsed = cookieStore.get("sidebar:state")?.value !== "true";
 
   const cookieModel = cookieStore.get("chat-model")?.value;
   const isAnonymous = !session?.user;
-
-  // Always fetch chat models - needed for ChatModelsProvider and cookie validation
-  const chatModels = await getChatModels();
 
   const default_chat_model = config.ai.workflows.chat;
   // Check if the model from cookie exists in available models

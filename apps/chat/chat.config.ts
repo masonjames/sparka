@@ -130,14 +130,18 @@ const config = {
         enabled: true, // Requires BLOB_READ_WRITE_TOKEN
         default: "google/gemini-3-pro-image",
       },
+      video: {
+        enabled: true, // Requires BLOB_READ_WRITE_TOKEN
+        default: "xai/grok-imagine-video",
+      },
       deepResearch: {
         enabled: true, // Requires webSearch
         defaultModel: "google/gemini-2.5-flash-lite",
         finalReportModel: "google/gemini-3-flash",
-      allowClarification: true,
-      maxResearcherIterations: 1,
-      maxConcurrentResearchUnits: 2,
-      maxSearchQueries: 2,
+        allowClarification: true,
+        maxResearcherIterations: 1,
+        maxConcurrentResearchUnits: 2,
+        maxSearchQueries: 2,
       },
     },
   },

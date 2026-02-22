@@ -826,26 +826,25 @@ export async function POST(request: NextRequest) {
     const explicitlyRequestedTools =
       determineExplicitlyRequestedTools(selectedTool);
 
-    const contextResult = await prepareRequestContext({
-      userMessage,
-      chatId,
-      isAnonymous,
-      anonymousPreviousMessages,
-      modelDefinition,
-      explicitlyRequestedTools,
-    });
+    const [contextResult, mcpConnectors] = await Promise.all([
+      prepareRequestContext({
+        userMessage,
+        chatId,
+        isAnonymous,
+        anonymousPreviousMessages,
+        modelDefinition,
+        explicitlyRequestedTools,
+      }),
+      config.ai.tools.mcp.enabled && userId && !isAnonymous
+        ? getMcpConnectorsByUserId({ userId })
+        : Promise.resolve([]),
+    ]);
 
     if (contextResult.error) {
       return contextResult.error;
     }
 
     const { previousMessages, allowedTools } = contextResult;
-
-    // Fetch MCP connectors for authenticated users (only if MCP integration enabled)
-    const mcpConnectors: McpConnector[] =
-      config.ai.tools.mcp.enabled && userId && !isAnonymous
-        ? await getMcpConnectorsByUserId({ userId })
-        : [];
 
     // Create AbortController with timeout
     const abortController = new AbortController();

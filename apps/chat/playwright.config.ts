@@ -53,11 +53,11 @@ export default defineConfig({
   projects: [
     {
       name: "setup:auth",
-      testMatch: /auth.setup.ts/,
+      testMatch: /auth.setup.e2e.ts/,
     },
     {
       name: "setup:reasoning",
-      testMatch: /reasoning.setup.ts/,
+      testMatch: /reasoning.setup.e2e.ts/,
       dependencies: ["setup:auth"],
       use: {
         ...devices["Desktop Chrome"],
@@ -66,7 +66,7 @@ export default defineConfig({
     },
     {
       name: "chat",
-      testMatch: /chat.test.ts/,
+      testMatch: /chat.e2e.ts/,
       dependencies: ["setup:auth"],
       use: {
         ...devices["Desktop Chrome"],
@@ -75,7 +75,7 @@ export default defineConfig({
     },
     {
       name: "reasoning",
-      testMatch: /reasoning.test.ts/,
+      testMatch: /reasoning.e2e.ts/,
       dependencies: ["setup:reasoning"],
       use: {
         ...devices["Desktop Chrome"],
@@ -84,7 +84,7 @@ export default defineConfig({
     },
     {
       name: "artifacts",
-      testMatch: /artifacts.test.ts/,
+      testMatch: /artifacts.e2e.ts/,
       dependencies: ["setup:auth"],
       use: {
         ...devices["Desktop Chrome"],

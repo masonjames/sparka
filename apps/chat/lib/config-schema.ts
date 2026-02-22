@@ -3,6 +3,7 @@ import type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
+  GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
 import type { ToolName } from "./ai/types";
 
@@ -21,6 +22,10 @@ function gatewayModelId<G extends GatewayType>() {
 
 function gatewayImageModelId<G extends GatewayType>() {
   return z.custom<GatewayImageModelIdMap[G]>((v) => typeof v === "string");
+}
+
+function gatewayVideoModelId<G extends GatewayType>() {
+  return z.custom<GatewayVideoModelIdMap[G]>((v) => typeof v === "string");
 }
 
 const deepResearchToolConfigSchema = z
@@ -104,6 +109,10 @@ function createAiSchema<G extends GatewayType>(g: G) {
         image: z.object({
           enabled: z.boolean(),
           default: gatewayImageModelId<G>(),
+        }),
+        video: z.object({
+          enabled: z.boolean(),
+          default: gatewayVideoModelId<G>(),
         }),
         deepResearch: deepResearchToolConfigSchema.extend({
           enabled: z.boolean(),
@@ -190,6 +199,10 @@ export const aiConfigSchema = z
       image: {
         enabled: false,
         default: "google/gemini-3-pro-image",
+      },
+      video: {
+        enabled: false,
+        default: "xai/grok-imagine-video",
       },
       deepResearch: {
         enabled: false,
@@ -402,6 +415,12 @@ type ImageToolInputFor<G extends GatewayType> = Omit<
 > & {
   default: GatewayImageModelIdMap[G];
 };
+type VideoToolInputFor<G extends GatewayType> = Omit<
+  AiToolsShape["video"],
+  "default"
+> & {
+  default: GatewayVideoModelIdMap[G];
+};
 type FollowupSuggestionsToolInputFor<G extends GatewayType> = Omit<
   AiToolsShape["followupSuggestions"],
   "default"
@@ -424,6 +443,7 @@ type AiToolsInputFor<G extends GatewayType> = {
     [P in keyof AiToolsShape["code"]]: GatewayModelIdMap[G];
   };
   image: ImageToolInputFor<G>;
+  video: VideoToolInputFor<G>;
   deepResearch: DeepResearchToolInputFor<G>;
 };
 

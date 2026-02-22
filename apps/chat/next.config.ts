@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
-const MODEL_REGISTRY_URL = "airegistry.app";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
   cacheComponents: true,
-
   experimental: {
     optimizePackageImports: [
       "react-tweet",
@@ -36,28 +34,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  redirects: async () => [
-    {
-      source: "/models",
-      destination: `https://${MODEL_REGISTRY_URL}`,
-      permanent: true,
-    },
-    {
-      source: "/models/:path*",
-      destination: `https://${MODEL_REGISTRY_URL}/models/:path*`,
-      permanent: true,
-    },
-    {
-      source: "/compare",
-      destination: `https://${MODEL_REGISTRY_URL}/compare`,
-      permanent: true,
-    },
-    {
-      source: "/compare/:path*",
-      destination: `https://${MODEL_REGISTRY_URL}/compare/:path*`,
-      permanent: true,
-    },
-  ],
 };
 
 export default nextConfig;
