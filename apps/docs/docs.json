@@ -37,6 +37,7 @@
             "pages": [
               "features/overview",
               "features/web-search",
+              "features/url-retrieval",
               "features/deep-research",
               "features/code-execution",
               "features/image-generation",
