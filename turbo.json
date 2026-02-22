@@ -62,10 +62,6 @@
     },
     "test:e2e": {
       "cache": false
-    },
-    "vercel:build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**"]
     }
   }
 }
