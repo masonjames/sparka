@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
-import { describe, it } from "vitest";
+import { describe, it, vi } from "vitest";
 import type { ChatMessage } from "./ai/types";
+
+vi.mock("@/lib/config", () => ({
+  config: { appPrefix: "test" },
+}));
+
 import { cloneMessagesWithDocuments } from "./clone-messages";
 
 function createMessage({
