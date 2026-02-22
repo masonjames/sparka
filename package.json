@@ -8,24 +8,28 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "set -a && source .env.local && set +a && turbo run dev --parallel",
-    "dev:chat": "set -a && source .env.local && set +a && turbo run dev --filter=@chatjs/chat",
+    "dev": "dotenv -e .env.local -- turbo run dev --parallel",
+    "dev:chat": "dotenv -e .env.local -- turbo run dev --filter=@chatjs/chat",
     "dev:docs": "turbo run dev --filter=@chatjs/docs",
-    "build": "set -a && source .env.local && set +a && turbo run build",
+    "build": "dotenv -e .env.local -- turbo run build",
+    "fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
+    "test:e2e": "dotenv -e .env.local -- turbo run test:e2e --filter=@chatjs/chat",
+    "format": "turbo run format",
     "lint": "turbo run lint",
-    "test": "turbo run test --filter=@chatjs/chat",
-    "test:types": "turbo run test:types --filter=@chatjs/chat",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:types": "turbo run test:types",
     "docs:links": "turbo run docs:links --filter=@chatjs/docs",
     "template:sync": "bun scripts/sync-template.ts",
     "template:check": "bun scripts/sync-template.ts --check",
     "chat-js": "bun --filter @chat-js/cli start",
-    "chatjs": "bun run chat-js",
     "publish:cli": "bun run template:sync && bun --filter @chat-js/cli build && npm publish --ignore-scripts -w packages/cli"
   },
   "overrides": {
     "@lobehub/ui": "~2.24.3"
   },
   "devDependencies": {
+    "dotenv-cli": "^8.0.0",
     "turbo": "^2.5.8"
   }
 }

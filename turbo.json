@@ -38,6 +38,9 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**", "build/**"]
     },
+    "format": {
+      "cache": false
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },
@@ -45,10 +48,19 @@
       "dependsOn": ["^test"],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
+    "test:unit": {
+      "dependsOn": ["^test:unit"]
+    },
     "test:types": {
       "dependsOn": ["^test:types"]
     },
     "docs:links": {
+      "cache": false
+    },
+    "fetch:models": {
+      "cache": false
+    },
+    "test:e2e": {
       "cache": false
     }
   }
