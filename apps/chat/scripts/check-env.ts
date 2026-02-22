@@ -87,16 +87,6 @@ function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
     }
   }
 
-  if (
-    config.ai.tools.deepResearch.enabled &&
-    !config.ai.tools.webSearch.enabled
-  ) {
-    errors.push({
-      feature: "ai.tools.deepResearch",
-      missing: ["webSearch tool must be enabled"],
-    });
-  }
-
   return errors;
 }
 
