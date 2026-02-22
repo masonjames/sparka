@@ -60,7 +60,7 @@
     "fetch:models": {
       "cache": false
     },
-    "test:playwright": {
+    "test:e2e": {
       "cache": false
     }
   }
