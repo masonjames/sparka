@@ -1,3 +1,5 @@
+"use client";
+
 import ReactECharts from "echarts-for-react/lib/index";
 import type { EChartsOption } from "echarts-for-react/lib/types";
 import { motion } from "motion/react";
@@ -15,14 +17,42 @@ const CHART_COLORS = [
   "#84cc16",
 ];
 
-export type BaseChart = {
-  type: string;
+type LineScatterElement = {
+  label: string;
+  points: [number | string, number][];
+};
+
+type BarElement = {
+  group: string;
+  label: string;
+  value: number;
+};
+
+type BaseChartCommon = {
   title: string;
   x_label?: string;
   y_label?: string;
-  elements: any[];
-  x_scale?: string;
 };
+
+export type LineChart = BaseChartCommon & {
+  type: "line";
+  x_scale?: "datetime";
+  elements: LineScatterElement[];
+};
+
+export type ScatterChart = BaseChartCommon & {
+  type: "scatter";
+  x_scale?: "datetime";
+  elements: LineScatterElement[];
+};
+
+export type BarChart = BaseChartCommon & {
+  type: "bar";
+  x_scale?: undefined;
+  elements: BarElement[];
+};
+
+export type BaseChart = LineChart | ScatterChart | BarChart;
 
 function InteractiveChart({ chart }: { chart: BaseChart }) {
   const { resolvedTheme } = useTheme();
@@ -159,7 +189,7 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
     }
 
     if (chart.type === "bar") {
-      const data = chart.elements.reduce((acc: Record<string, any[]>, item) => {
+      const data = chart.elements.reduce((acc: Record<string, BarElement[]>, item) => {
         const key = item.group;
         if (!acc[key]) {
           acc[key] = [];

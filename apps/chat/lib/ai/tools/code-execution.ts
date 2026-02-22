@@ -39,8 +39,13 @@ async function installBasePackages(
   return { success: true };
 }
 
+function packageName(spec: string): string {
+  return spec.split(/[=<>![\s]/)[0].toLowerCase();
+}
+
 async function processExtraPackages(
   code: string,
+  basePackages: readonly string[],
   sandbox: Sandbox,
   log: ReturnType<typeof createModuleLogger>,
   requestId: string
@@ -51,15 +56,18 @@ async function processExtraPackages(
     result?: { message: string; chart: string };
   };
 }> {
+  const basePackageNames = new Set(basePackages.map((p) => p.toLowerCase()));
   const lines = code.split("\n");
   const pipLines = lines.filter((l) => l.trim().startsWith("!pip install "));
-  const extraPackages = pipLines.flatMap((l) =>
-    l
-      .trim()
-      .slice("!pip install ".length)
-      .split(WHITESPACE_REGEX)
-      .filter(Boolean)
-  );
+  const extraPackages = pipLines
+    .flatMap((l) =>
+      l
+        .trim()
+        .slice("!pip install ".length)
+        .split(WHITESPACE_REGEX)
+        .filter(Boolean)
+    )
+    .filter((spec) => !basePackageNames.has(packageName(spec)));
 
   let codeToRun = code;
   if (extraPackages.length > 0) {
@@ -297,6 +305,7 @@ async function executeInSandbox({
 
   const { codeToRun, installResult } = await processExtraPackages(
     code,
+    basePackages,
     sandbox,
     log,
     requestId
@@ -363,9 +372,9 @@ export const codeExecution = ({
     description: `Python-only sandbox for calculations, data analysis & visualisations.
 
 Use for:
-- Execute Python (matplotlib, pandas, numpy, sympy, yfinance pre-installed)
+- Execute Python (matplotlib, pandas, numpy, sympy, yfinance pre-installed — do NOT reinstall them)
 - Produce interactive line / scatter / bar charts OR matplotlib PNG charts
-- Install extra libs by adding lines like: '!pip install <pkg> [<pkg2> ...]' (we auto-install and strip these lines)
+- Install extra libs by adding lines like: '!pip install <pkg> [<pkg2> ...]' (we auto-install and strip these lines; pre-installed packages are ignored)
 
 Chart output — choose ONE:
 1. Interactive chart (preferred for line/scatter/bar): assign a 'chart' variable matching this schema:
