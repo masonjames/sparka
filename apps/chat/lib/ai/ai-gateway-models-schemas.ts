@@ -11,6 +11,26 @@ type KnownTag =
 
 const tagSchema = z.string() as z.ZodType<KnownTag>;
 
+export const supportedAiGatewayModelTypes = [
+  "language",
+  "embedding",
+  "image",
+  "video",
+] as const;
+
+export type AiGatewayModelType = (typeof supportedAiGatewayModelTypes)[number];
+
+const aiGatewayModelTypeSchema = z.union([
+  z.literal("language"),
+  z.literal("embedding"),
+  z.literal("image"),
+]);
+
+const aiGatewayModelTypeInputSchema = z.union([
+  aiGatewayModelTypeSchema,
+  z.string(),
+]);
+
 // Single model schema
 const aiGatewayModelSchema = z.object({
   id: z.string(),
@@ -21,11 +41,7 @@ const aiGatewayModelSchema = z.object({
   description: z.string(),
   context_window: z.number(),
   max_tokens: z.number(),
-  type: z.union([
-    z.literal("language"),
-    z.literal("embedding"),
-    z.literal("image"),
-  ]),
+  type: aiGatewayModelTypeInputSchema,
   tags: z.array(tagSchema).optional(),
   pricing: z.object({
     input: z.string().optional(),
@@ -64,7 +80,15 @@ const aiGatewayModelSchema = z.object({
   }),
 });
 
-export type AiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
+type ParsedAiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
+
+export type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
+  type: AiGatewayModelType;
+};
+
+export function isAiGatewayModelType(type: string): type is AiGatewayModelType {
+  return supportedAiGatewayModelTypes.includes(type as AiGatewayModelType);
+}
 
 // Models response schema
 export const aiGatewayModelsResponseSchema = z.object({
