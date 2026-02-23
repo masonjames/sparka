@@ -101,7 +101,8 @@ type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
 type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 type retrieveUrlTool = InferUITool<typeof retrieveUrl>;
 
-export interface ChatTools {
+// biome-ignore lint/style/useConsistentTypeDefinitions: <explanation>
+export type ChatTools = {
   codeExecution: codeExecutionTool;
   createCodeDocument: createCodeDocumentToolType;
   createSheetDocument: createSheetDocumentToolType;
@@ -116,20 +117,21 @@ export interface ChatTools {
   readDocument: readDocumentTool;
   retrieveUrl: retrieveUrlTool;
   webSearch: webSearchTool;
-}
+};
 
 interface FollowupSuggestions {
   suggestions: string[];
 }
 
-export interface CustomUIDataTypes {
+// biome-ignore lint/style/useConsistentTypeDefinitions: <explanation>
+export type CustomUIDataTypes = {
   appendMessage: string;
   chatConfirmed: {
     chatId: string;
   };
   followupSuggestions: FollowupSuggestions;
   researchUpdate: ResearchUpdate;
-}
+};
 
 export type ChatMessage = Omit<
   UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>,
