@@ -4,6 +4,7 @@ import {
   Images,
   type LucideIcon,
   Telescope,
+  Video,
 } from "lucide-react";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
@@ -22,6 +23,7 @@ export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
     shortName: "Research",
   },
   generateImage: { name: "Create an image", icon: Images, shortName: "Image" },
+  generateVideo: { name: "Create a video", icon: Video, shortName: "Video" },
   createTextDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
   createCodeDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
   createSheetDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
@@ -37,10 +39,11 @@ export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
 export const enabledTools: UiToolName[] = [
   // Canvas tools are always available
   "createTextDocument",
-  // Web search tools require webSearch integration
-  ...(config.features.webSearch
-    ? (["webSearch", "deepResearch"] as const)
-    : []),
+  // Web search tool
+  ...(config.ai.tools.webSearch.enabled ? (["webSearch"] as const) : []),
+  // Deep research tool
+  ...(config.ai.tools.deepResearch.enabled ? (["deepResearch"] as const) : []),
   // Image generation requires imageGeneration integration
-  ...(config.features.imageGeneration ? (["generateImage"] as const) : []),
+  ...(config.ai.tools.image.enabled ? (["generateImage"] as const) : []),
+  ...(config.ai.tools.video.enabled ? (["generateVideo"] as const) : []),
 ];

@@ -6,7 +6,6 @@ import { uploadFile } from "@/lib/blob";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
-import { toolsDefinitions } from "./tools-definitions";
 
 type GenerateImageProps = {
   attachments?: FileUIPart[];
@@ -42,7 +41,7 @@ async function resolveImageModel(selectedModel?: string): Promise<{
   }
 
   // Fall back to the configured default image model
-  const defaultId = config.models.defaults.image;
+  const defaultId = config.ai.tools.image.default;
   try {
     const model = await getAppModelDefinition(defaultId as AppModelId);
     // Default could be a multimodal language model (e.g. gemini-3-pro-image)
@@ -126,12 +125,14 @@ async function runGenerateImageTraditional({
   imageParts,
   lastGeneratedImage,
   startMs,
+  costAccumulator,
 }: {
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
+  costAccumulator?: CostAccumulator;
 }): Promise<{ imageUrl: string; prompt: string }> {
   let promptInput:
     | string
@@ -160,7 +161,7 @@ async function runGenerateImageTraditional({
   }
 
   const res = await generateImage({
-    model: getImageModel(config.models.defaults.image),
+    model: getImageModel(config.ai.tools.image.default),
     prompt: promptInput,
     n: 1,
     providerOptions: {
@@ -180,6 +181,17 @@ async function runGenerateImageTraditional({
   const timestamp = Date.now();
   const filename = `generated-image-${timestamp}.png`;
   const result = await uploadFile(filename, buffer);
+
+  if (res.usage) {
+    costAccumulator?.addLLMCost(
+      config.ai.tools.image.default as AppModelId,
+      {
+        inputTokens: res.usage.inputTokens,
+        outputTokens: res.usage.outputTokens,
+      },
+      "generateImage-traditional"
+    );
+  }
 
   log.info(
     {
@@ -247,13 +259,24 @@ async function runGenerateImageMultimodal({
     "generateImage: using multimodal model"
   );
 
+  const isGoogleModel =
+    modelId.startsWith("google/") || modelId.includes("gemini");
+  const isOpenAIModel = modelId.startsWith("openai/");
+
   const res = await generateText({
     model: getMultimodalImageModel(modelId),
     messages: [{ role: "user", content: userContent }],
     providerOptions: {
-      google: {
-        responseModalities: ["TEXT", "IMAGE"],
-      },
+      ...(isGoogleModel && {
+        google: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      }),
+      ...(isOpenAIModel && {
+        openai: {
+          modalities: ["text", "image"],
+        },
+      }),
     },
   });
 
@@ -362,21 +385,14 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
         }
 
         // Traditional image generation for dedicated image models
-        const result = await runGenerateImageTraditional({
+        return await runGenerateImageTraditional({
           mode,
           prompt,
           imageParts,
           lastGeneratedImage,
           startMs,
+          costAccumulator,
         });
-
-        // Report API cost for traditional image generation
-        costAccumulator?.addAPICost(
-          "generateImage",
-          toolsDefinitions.generateImage.cost
-        );
-
-        return result;
       } catch (error) {
         const resolvedError = await resolveError(error);
         log.error(

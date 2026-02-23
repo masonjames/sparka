@@ -10,6 +10,7 @@ import { editCodeDocumentTool } from "@/lib/ai/tools/documents/edit-code-documen
 import { editSheetDocumentTool } from "@/lib/ai/tools/documents/edit-sheet-document";
 import { editTextDocumentTool } from "@/lib/ai/tools/documents/edit-text-document";
 import { generateImageTool } from "@/lib/ai/tools/generate-image";
+import { generateVideoTool } from "@/lib/ai/tools/generate-video";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { readDocument } from "@/lib/ai/tools/read-document";
 import { retrieveUrl } from "@/lib/ai/tools/retrieve-url";
@@ -62,8 +63,8 @@ export function getTools({
       session,
       dataStream,
     }),
-    ...(config.features.urlRetrieval ? { retrieveUrl } : {}),
-    ...(config.features.webSearch
+    ...(config.ai.tools.urlRetrieval.enabled ? { retrieveUrl } : {}),
+    ...(config.ai.tools.webSearch.enabled
       ? {
           webSearch: tavilyWebSearch({
             dataStream,
@@ -73,10 +74,10 @@ export function getTools({
         }
       : {}),
 
-    ...(config.features.sandbox
+    ...(config.ai.tools.codeExecution.enabled
       ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
-    ...(config.features.imageGeneration
+    ...(config.ai.tools.image.enabled
       ? {
           generateImage: generateImageTool({
             attachments,
@@ -86,13 +87,21 @@ export function getTools({
           }),
         }
       : {}),
-    ...(config.features.deepResearch
+    ...(config.ai.tools.deepResearch.enabled
       ? {
           deepResearch: deepResearch({
             session,
             dataStream,
             messageId,
             messages: contextForLLM,
+            costAccumulator,
+          }),
+        }
+      : {}),
+    ...(config.ai.tools.video.enabled
+      ? {
+          generateVideo: generateVideoTool({
+            selectedModel,
             costAccumulator,
           }),
         }
@@ -113,7 +122,7 @@ export async function getMcpTools({
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
 }> {
-  if (!config.features.mcp) {
+  if (!config.ai.tools.mcp.enabled) {
     return {
       tools: {},
       cleanup: async () => Promise.resolve(),

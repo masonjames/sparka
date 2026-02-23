@@ -22,20 +22,30 @@ const config: ConfigInput = {
     },
   },
 
-  models: {
+  ai: {
     gateway: "vercel", // "vercel" | "openrouter" | "openai" | "openai-compatible"
-    // ...
+    tools: {
+      webSearch: { enabled: true },
+      urlRetrieval: { enabled: true },
+      codeExecution: { enabled: true },
+      mcp: { enabled: false },
+      followupSuggestions: { enabled: true, default: "openai/gpt-5-nano" },
+      image: { enabled: true },
+      video: { enabled: true },
+      deepResearch: {
+        enabled: true,
+        defaultModel: "google/gemini-2.5-flash-lite",
+        finalReportModel: "google/gemini-3-flash",
+        allowClarification: true,
+        maxResearcherIterations: 1,
+        maxConcurrentResearchUnits: 2,
+        maxSearchQueries: 2,
+      },
+    },
   },
 
   features: {
-    sandbox: true,             // Code execution (Python/JS)
-    webSearch: true,           // Tavily/Firecrawl web search
-    urlRetrieval: true,        // Firecrawl URL content retrieval
-    deepResearch: true,        // Multi-step research agent
-    mcp: true,                 // MCP connector support
-    imageGeneration: true,     // AI image generation
-    attachments: true,         // File uploads (images, PDFs)
-    followupSuggestions: true, // Contextual follow-up questions
+    attachments: true, // File uploads (images and PDFs)
   },
 
   authentication: {
@@ -52,7 +62,7 @@ export default config;
 
 ## AI Gateway
 
-The `models.gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
+The `ai.gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
 
 | Value                 | Backend                                          | Env Dependency                              |
 | --------------------- | ------------------------------------------------ | ------------------------------------------- |
@@ -62,7 +72,7 @@ The `models.gateway` field selects which AI backend to use. All model routing, f
 | `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL`                |
 
 ```typescript
-models: {
+ai: {
   gateway: "openrouter", // Switch to OpenRouter
   // ...
 },
@@ -72,29 +82,35 @@ See [Gateways](/gateways/overview) for detailed setup and comparison.
 
 ## Features
 
-Toggle features on/off. Set to `true` to enable. Missing env vars are caught at build time via `bun run prebuild`.
+Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. `features` currently contains only attachments. Missing env vars are caught at build time via `bun run prebuild`.
 
-| Feature               | Config Key                      | Env Dependency                                                                         |
-| --------------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
-| Code Sandbox          | `features.sandbox`              | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
-| Web Search            | `features.webSearch`            | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                |
-| URL Retrieval         | `features.urlRetrieval`         | `FIRECRAWL_API_KEY`                                                                    |
-| Deep Research         | `features.deepResearch`         | Requires `features.webSearch: true`                                                    |
-| MCP Connectors        | `features.mcp`                  | `MCP_ENCRYPTION_KEY`                                                                   |
-| Image Generation      | `features.imageGeneration`      | `BLOB_READ_WRITE_TOKEN`                                                                |
-| Attachments           | `features.attachments`          | `BLOB_READ_WRITE_TOKEN`                                                                |
-| Follow-up Suggestions | `features.followupSuggestions`  | None                                                                                   |
+| Feature               | Config Key                            | Env Dependency                                                                           |
+| --------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Code Execution        | `ai.tools.codeExecution.enabled`      | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
+| Web Search            | `ai.tools.webSearch.enabled`          | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                 |
+| URL Retrieval         | `ai.tools.urlRetrieval.enabled`       | `FIRECRAWL_API_KEY`                                                                      |
+| MCP Connectors        | `ai.tools.mcp.enabled`                | `MCP_ENCRYPTION_KEY`                                                                     |
+| Image Generation      | `ai.tools.image.enabled`              | `BLOB_READ_WRITE_TOKEN`                                                                  |
+| Video Generation      | `ai.tools.video.enabled`              | `BLOB_READ_WRITE_TOKEN`                                                                  |
+| Deep Research         | `ai.tools.deepResearch.enabled`       | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                  |
+| Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider                                              |
+| Attachments           | `features.attachments`                | `BLOB_READ_WRITE_TOKEN`                                                                  |
 
 ```typescript
+ai: {
+  tools: {
+    webSearch: { enabled: true },          // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
+    urlRetrieval: { enabled: false },      // Requires FIRECRAWL_API_KEY
+    codeExecution: { enabled: true },      // Vercel-native
+    mcp: { enabled: false },               // Requires MCP_ENCRYPTION_KEY
+    image: { enabled: true },              // Requires BLOB_READ_WRITE_TOKEN
+    video: { enabled: false },             // Requires BLOB_READ_WRITE_TOKEN
+    deepResearch: { enabled: false },      // Requires search provider
+    followupSuggestions: { enabled: true } // Uses selected provider/model
+  },
+},
 features: {
-  sandbox: true,             // Vercel-native, requires VERCEL_OIDC_TOKEN
-  webSearch: true,           // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
-  urlRetrieval: false,       // Requires FIRECRAWL_API_KEY
-  deepResearch: false,       // Requires features.webSearch: true
-  mcp: false,                // Requires MCP_ENCRYPTION_KEY
-  imageGeneration: true,     // Requires BLOB_READ_WRITE_TOKEN
-  attachments: true,         // Requires BLOB_READ_WRITE_TOKEN
-  followupSuggestions: true, // No env var required
+  attachments: true, // Requires BLOB_READ_WRITE_TOKEN
 },
 ```
 
@@ -130,14 +146,21 @@ organization: {
 
 ## Deep Research
 
-Configure the deep research agent pipeline:
+Configure the deep research pipeline in `ai.tools.deepResearch`:
 
 ```typescript
-deepResearch: {
-  allowClarification: true,       // Ask clarifying questions before starting
-  maxResearcherIterations: 1,     // Supervisor loop iterations
-  maxConcurrentResearchUnits: 2,  // Topics researched in parallel
-  maxSearchQueries: 2,            // Queries per research topic
+ai: {
+  tools: {
+    deepResearch: {
+      enabled: true,                   // Requires webSearch provider config
+      defaultModel: "openai/gpt-5-mini",
+      finalReportModel: "openai/gpt-5-mini",
+      allowClarification: true,        // Ask clarifying questions before starting
+      maxResearcherIterations: 1,      // Supervisor loop iterations
+      maxConcurrentResearchUnits: 2,   // Topics researched in parallel
+      maxSearchQueries: 2,             // Queries per research topic
+    },
+  },
 },
 ```
 
