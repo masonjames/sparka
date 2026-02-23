@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-type ImageModalProps = {
+interface ImageModalProps {
+  imageName?: string;
+  imageUrl: string;
   isOpen: boolean;
   onClose: () => void;
-  imageUrl: string;
-  imageName?: string;
   showActions?: boolean;
-};
+}
 
 async function handleCopyImage(
   e: React.MouseEvent,

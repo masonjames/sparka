@@ -8,10 +8,10 @@ import type {
 
 // Minimal utilities to download assets from URL-based parts and inline them.
 
-type DownloadResult = {
-  mediaType: string | undefined;
+interface DownloadResult {
   data: Uint8Array;
-};
+  mediaType: string | undefined;
+}
 
 export type DownloadImplementation = (args: {
   url: URL;

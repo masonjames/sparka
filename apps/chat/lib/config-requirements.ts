@@ -1,12 +1,16 @@
 import type { GatewayType } from "./ai/gateways/registry";
-import type { AiConfig, AuthenticationConfig, FeaturesConfig } from "./config-schema";
+import type {
+  AiConfig,
+  AuthenticationConfig,
+  FeaturesConfig,
+} from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
 
-export type EnvRequirement = {
-  options: EnvVarName[][];
+export interface EnvRequirement {
   description: string;
-};
+  options: EnvVarName[][];
+}
 
 export const gatewayEnvRequirements: Record<GatewayType, EnvRequirement> = {
   openrouter: {

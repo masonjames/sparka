@@ -11,25 +11,18 @@ const mcpCacheTags = {
 } as const;
 
 // Types for cached results
-export type ConnectionStatusResult = {
+export interface ConnectionStatusResult {
+  error?: string;
+  needsAuth: boolean;
   status:
     | "disconnected"
     | "connecting"
     | "connected"
     | "authorizing"
     | "incompatible";
-  needsAuth: boolean;
-  error?: string;
-};
+}
 
-export type DiscoveryResult = {
-  tools: Array<{ name: string; description: string | null }>;
-  resources: Array<{
-    name: string;
-    uri: string;
-    description: string | null;
-    mimeType: string | null;
-  }>;
+export interface DiscoveryResult {
   prompts: Array<{
     name: string;
     description: string | null;
@@ -39,7 +32,14 @@ export type DiscoveryResult = {
       required: boolean;
     }>;
   }>;
-};
+  resources: Array<{
+    name: string;
+    uri: string;
+    description: string | null;
+    mimeType: string | null;
+  }>;
+  tools: Array<{ name: string; description: string | null }>;
+}
 
 /**
  * Create a cached connection status fetcher for a specific connector.

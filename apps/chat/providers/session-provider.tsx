@@ -4,10 +4,10 @@ import { createContext, useContext, useMemo } from "react";
 import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
-type SessionContextValue = {
+interface SessionContextValue {
   data: Session | null;
   isPending: boolean;
-};
+}
 
 const SessionContext = createContext<SessionContextValue | undefined>(
   undefined

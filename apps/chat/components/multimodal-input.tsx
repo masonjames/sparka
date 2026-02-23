@@ -920,13 +920,27 @@ const ChatInputBottomControls = memo(PureChatInputBottomControls);
 export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
-    if (prevProps.status !== nextProps.status) return false;
-    if (prevProps.autoFocus !== nextProps.autoFocus) return false;
-    if (prevProps.isEditMode !== nextProps.isEditMode) return false;
-    if (prevProps.chatId !== nextProps.chatId) return false;
-    if (prevProps.className !== nextProps.className) return false;
-    if (prevProps.parentMessageId !== nextProps.parentMessageId) return false;
-    if (prevProps.onSendMessage !== nextProps.onSendMessage) return false;
+    if (prevProps.status !== nextProps.status) {
+      return false;
+    }
+    if (prevProps.autoFocus !== nextProps.autoFocus) {
+      return false;
+    }
+    if (prevProps.isEditMode !== nextProps.isEditMode) {
+      return false;
+    }
+    if (prevProps.chatId !== nextProps.chatId) {
+      return false;
+    }
+    if (prevProps.className !== nextProps.className) {
+      return false;
+    }
+    if (prevProps.parentMessageId !== nextProps.parentMessageId) {
+      return false;
+    }
+    if (prevProps.onSendMessage !== nextProps.onSendMessage) {
+      return false;
+    }
     return true;
   }
 );

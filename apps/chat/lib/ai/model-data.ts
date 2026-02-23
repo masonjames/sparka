@@ -1,13 +1,24 @@
-export type ModelData = {
-  id: string;
-  object: string;
-  owned_by: string;
-  name: string;
-  description: string;
-  type: "language" | "embedding" | "image" | "video";
-  tags?: string[];
+export interface ModelData {
   context_window: number;
+  description: string;
+  id: string;
+  input: {
+    image: boolean;
+    text: boolean;
+    pdf: boolean;
+    video: boolean;
+    audio: boolean;
+  };
   max_tokens: number;
+  name: string;
+  object: string;
+  output: {
+    image: boolean;
+    text: boolean;
+    audio: boolean;
+    video: boolean;
+  };
+  owned_by: string;
   pricing: {
     input?: string;
     output?: string;
@@ -17,18 +28,7 @@ export type ModelData = {
     image?: string;
   };
   reasoning: boolean;
+  tags?: string[];
   toolCall: boolean;
-  input: {
-    image: boolean;
-    text: boolean;
-    pdf: boolean;
-    video: boolean;
-    audio: boolean;
-  };
-  output: {
-    image: boolean;
-    text: boolean;
-    audio: boolean;
-    video: boolean;
-  };
-};
+  type: "language" | "embedding" | "image" | "video";
+}

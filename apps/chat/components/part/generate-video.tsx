@@ -24,7 +24,7 @@ export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
     const fallbackPrompt = tool.input?.prompt ?? "the same idea";
 
     return (
-      <div className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border p-4 text-sm text-muted-foreground">
+      <div className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border p-4 text-muted-foreground text-sm">
         <div>Couldn&apos;t generate video.</div>
         <div className="text-xs">
           Try again with a different prompt: &quot;{fallbackPrompt}&quot;
@@ -35,7 +35,6 @@ export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
 
   return (
     <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">
-      {/* biome-ignore lint/a11y/useMediaCaption: generated video has no captions */}
       <video
         autoPlay
         className="h-auto w-full max-w-full"

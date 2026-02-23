@@ -21,12 +21,12 @@ type OpenaiImageModelId = StrictLiterals<
   ExtractImageModelIdFromProvider<typeof createOpenAI>
 >;
 
-type OpenAIModelResponse = {
+interface OpenAIModelResponse {
+  created: number;
   id: string;
   object: string;
-  created: number;
   owned_by: string;
-};
+}
 
 function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
   return {

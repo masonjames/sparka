@@ -1,11 +1,11 @@
 import type { ToolName } from "../ai/types";
 import { config } from "../config";
 
-export type AnonymousSession = {
+export interface AnonymousSession {
+  createdAt: Date;
   id: string;
   remainingCredits: number;
-  createdAt: Date;
-};
+}
 
 const anonConfig = config.anonymous;
 

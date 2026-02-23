@@ -1,16 +1,10 @@
 import type { GatewayType } from "./gateways/registry";
 
-type ModelDefaults = {
-  providerOrder: string[];
-  disabledModels: string[];
-  curatedDefaults: string[];
+interface ModelDefaults {
   anonymousModels: string[];
-  workflows: {
-    chat: string;
-    title: string;
-    pdf: string;
-    chatImageCompatible: string;
-  };
+  curatedDefaults: string[];
+  disabledModels: string[];
+  providerOrder: string[];
   tools: {
     webSearch: {
       enabled: boolean;
@@ -52,7 +46,13 @@ type ModelDefaults = {
       maxSearchQueries: number;
     };
   };
-};
+  workflows: {
+    chat: string;
+    title: string;
+    pdf: string;
+    chatImageCompatible: string;
+  };
+}
 
 const multiProviderDefaults = {
   providerOrder: ["openai", "google", "anthropic"],

@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/popover";
 import { useSession } from "@/providers/session-provider";
 
-type ShareMenuItemProps = {
-  onShare: () => void;
+interface ShareMenuItemProps {
   children?: ReactNode;
-};
+  onShare: () => void;
+}
 
 export function ShareMenuItem({ onShare, children }: ShareMenuItemProps) {
   const { data: session } = useSession();

@@ -4,10 +4,10 @@ import type { ToolSession } from "@/lib/ai/tools/types";
 import { getDocumentById } from "@/lib/db/queries";
 import type { StreamWriter } from "../types";
 
-type ReadDocumentProps = {
-  session: ToolSession;
+interface ReadDocumentProps {
   dataStream: StreamWriter;
-};
+  session: ToolSession;
+}
 
 export const readDocument = ({
   session,

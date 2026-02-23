@@ -1,11 +1,11 @@
 // Generic message type that works for both DB and anonymous messages
-export type MessageNode = {
+export interface MessageNode {
   id: string;
   metadata?: {
     parentMessageId: string | null;
     createdAt: Date;
   };
-};
+}
 
 /** Safely extract a numeric timestamp from a Date object or ISO string. */
 function toTimestamp(value: Date | string | undefined | null): number {

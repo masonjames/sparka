@@ -34,16 +34,16 @@ import { VersionFooter } from "./version-footer";
 
 export const artifactDefinitions = [textArtifact, codeArtifact, sheetArtifact];
 
-export type UIArtifact = {
-  title: string;
-  documentId: string;
-  kind: ArtifactKind;
+export interface UIArtifact {
   content: string;
-  messageId: string;
-  isVisible: boolean;
-  status: "streaming" | "idle";
   date?: string;
-};
+  documentId: string;
+  isVisible: boolean;
+  kind: ArtifactKind;
+  messageId: string;
+  status: "streaming" | "idle";
+  title: string;
+}
 
 function PureArtifactPanel({
   isReadonly,

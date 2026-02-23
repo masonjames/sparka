@@ -7,11 +7,11 @@ import { useArtifact } from "@/hooks/use-artifact";
 import type { Document } from "@/lib/db/schema";
 import { Button } from "./ui/button";
 
-type VersionFooterProps = {
-  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
-  documents: Document[] | undefined;
+interface VersionFooterProps {
   currentVersionIndex: number;
-};
+  documents: Document[] | undefined;
+  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
+}
 
 export const VersionFooter = ({
   handleVersionChange,

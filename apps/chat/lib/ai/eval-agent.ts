@@ -20,17 +20,17 @@ function createNoOpStreamWriter(): StreamWriter {
   } as unknown as StreamWriter;
 }
 
-export type EvalAgentResult = {
-  finalText: string;
+export interface EvalAgentResult {
   assistantMessage: ChatMessage;
-  usage: LanguageModelUsage | undefined;
+  finalText: string;
+  followupSuggestions: string[];
   toolResults: Array<{
     toolName: string;
     type: string;
     state?: string;
   }>;
-  followupSuggestions: string[];
-};
+  usage: LanguageModelUsage | undefined;
+}
 
 async function executeAgentAndGetOutput({
   userMessage,

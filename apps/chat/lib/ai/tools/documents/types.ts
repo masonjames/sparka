@@ -15,13 +15,13 @@ export type DocumentToolResult =
       error: string;
     };
 
-export type DocumentToolContext = {
-  session: ToolSession;
+export interface DocumentToolContext {
+  costAccumulator?: CostAccumulator;
   // dataStream: StreamWriter;
   messageId: string;
   selectedModel: ModelId;
-  costAccumulator?: CostAccumulator;
-};
+  session: ToolSession;
+}
 
 // Document tool type names as they appear in ChatMessage parts
 export const createDocumentToolTypes = [

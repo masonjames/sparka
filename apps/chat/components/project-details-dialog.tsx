@@ -18,11 +18,11 @@ import {
   DEFAULT_PROJECT_ICON,
 } from "@/lib/project-icons";
 
-export type ProjectDetailsData = {
-  name: string;
-  icon: ProjectIconName;
+export interface ProjectDetailsData {
   color: ProjectColorName;
-};
+  icon: ProjectIconName;
+  name: string;
+}
 
 export function ProjectDetailsDialog({
   open,

@@ -27,11 +27,11 @@ export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
   </div>
 );
 
-type StepWrapperProps = {
-  update: ResearchUpdate;
+interface StepWrapperProps {
   children: ReactNode;
   isLast: boolean;
-};
+  update: ResearchUpdate;
+}
 
 const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
   <div className="flex w-full flex-row items-stretch justify-start gap-2">

@@ -10,9 +10,9 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-type ChatLayoutContextValue = {
+interface ChatLayoutContextValue {
   isSecondaryPanelVisible: boolean;
-};
+}
 
 const ChatLayoutContext = createContext<ChatLayoutContextValue | null>(null);
 

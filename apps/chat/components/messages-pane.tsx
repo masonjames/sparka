@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 
-type MessagesPaneProps = {
+interface MessagesPaneProps {
   chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
-  isReadonly: boolean;
   className?: string;
-};
+  isReadonly: boolean;
+  status: UseChatHelpers<ChatMessage>["status"];
+}
 
 function PureMessagesPane({
   chatId,

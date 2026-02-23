@@ -4,30 +4,30 @@ import { deduplicateByDomainAndUrl } from "./search-utils";
 import type { SearchProviderOptions } from "./web-search";
 import { webSearchStep } from "./web-search";
 
-export type SearchQuery = {
-  query: string;
+export interface SearchQuery {
   maxResults: number;
-};
+  query: string;
+}
 
-export type MultiQuerySearchOptions = {
+export interface MultiQuerySearchOptions {
   baseProviderOptions: SearchProviderOptions;
-  topics?: string[];
   excludeDomains?: string[];
-};
+  topics?: string[];
+}
 
-type MultiQuerySearchResult = {
+interface MultiQuerySearchResult {
   query: SearchQuery;
   results: Array<{
     url: string;
     title: string;
     content: string;
   }>;
-};
+}
 
-export type MultiQuerySearchResponse = {
-  searches: MultiQuerySearchResult[];
+export interface MultiQuerySearchResponse {
   error?: string;
-};
+  searches: MultiQuerySearchResult[];
+}
 
 export async function multiQueryWebSearchStep({
   queries,

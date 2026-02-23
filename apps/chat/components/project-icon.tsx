@@ -57,12 +57,12 @@ const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
   rocket: Rocket,
 };
 
-type ProjectIconProps = {
-  icon: ProjectIconName;
-  color: ProjectColorName;
-  size?: number;
+interface ProjectIconProps {
   className?: string;
-};
+  color: ProjectColorName;
+  icon: ProjectIconName;
+  size?: number;
+}
 
 export function ProjectIcon({
   icon,

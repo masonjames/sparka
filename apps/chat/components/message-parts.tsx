@@ -28,11 +28,11 @@ import { TextMessagePart } from "./part/text-message-part";
 import { Weather } from "./part/weather";
 import { WebSearch } from "./part/web-search";
 
-type MessagePartsProps = {
-  messageId: string;
+interface MessagePartsProps {
   isLoading: boolean;
   isReadonly: boolean;
-};
+  messageId: string;
+}
 
 function ToolPart({
   part,

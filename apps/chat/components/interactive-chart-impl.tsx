@@ -17,22 +17,22 @@ const CHART_COLORS = [
   "#84cc16",
 ];
 
-type LineScatterElement = {
+interface LineScatterElement {
   label: string;
   points: [number | string, number][];
-};
+}
 
-type BarElement = {
+interface BarElement {
   group: string;
   label: string;
   value: number;
-};
+}
 
-type BaseChartCommon = {
+interface BaseChartCommon {
   title: string;
   x_label?: string;
   y_label?: string;
-};
+}
 
 export type LineChart = BaseChartCommon & {
   type: "line";
@@ -189,14 +189,17 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
     }
 
     if (chart.type === "bar") {
-      const data = chart.elements.reduce((acc: Record<string, BarElement[]>, item) => {
-        const key = item.group;
-        if (!acc[key]) {
-          acc[key] = [];
-        }
-        acc[key].push(item);
-        return acc;
-      }, {});
+      const data = chart.elements.reduce(
+        (acc: Record<string, BarElement[]>, item) => {
+          const key = item.group;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(item);
+          return acc;
+        },
+        {}
+      );
 
       const series = Object.entries(data).map(([group, elements], index) => ({
         name: group,

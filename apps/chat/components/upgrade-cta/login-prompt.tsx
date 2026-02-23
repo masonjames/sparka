@@ -4,11 +4,11 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type LoginPromptProps = {
-  title: string;
-  description: string;
+interface LoginPromptProps {
   className?: string;
-};
+  description: string;
+  title: string;
+}
 
 export function LoginPrompt({
   title,

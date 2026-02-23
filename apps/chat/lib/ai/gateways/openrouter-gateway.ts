@@ -1,5 +1,5 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { Experimental_VideoModelV3 } from "@ai-sdk/provider";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { ImageModel, LanguageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
@@ -8,21 +8,17 @@ import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/openrouter");
 
-type OpenRouterModelResponse = {
-  id: string;
-  name: string;
-  created: number;
-  description: string;
-  context_length: number | null;
+interface OpenRouterModelResponse {
   architecture: {
     modality?: string;
     input_modalities?: string[];
     output_modalities?: string[];
   } | null;
-  top_provider: {
-    context_length?: number | null;
-    max_completion_tokens: number | null;
-  } | null;
+  context_length: number | null;
+  created: number;
+  description: string;
+  id: string;
+  name: string;
   pricing: {
     prompt?: string;
     completion?: string;
@@ -33,7 +29,11 @@ type OpenRouterModelResponse = {
     input_cache_write?: string;
   } | null;
   supported_parameters?: string[] | null;
-};
+  top_provider: {
+    context_length?: number | null;
+    max_completion_tokens: number | null;
+  } | null;
+}
 
 function deriveTags(model: OpenRouterModelResponse): string[] {
   const inputMods = model.architecture?.input_modalities ?? ["text"];

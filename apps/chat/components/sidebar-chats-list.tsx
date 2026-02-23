@@ -13,14 +13,14 @@ import { DeleteChatDialog } from "./delete-chat-dialog";
 import { SidebarChatItem } from "./sidebar-chat-item";
 import { Skeleton } from "./ui/skeleton";
 
-type GroupedChats = {
+interface GroupedChats {
+  lastMonth: UIChat[];
+  lastWeek: UIChat[];
+  older: UIChat[];
   pinned: UIChat[];
   today: UIChat[];
   yesterday: UIChat[];
-  lastWeek: UIChat[];
-  lastMonth: UIChat[];
-  older: UIChat[];
-};
+}
 
 export function SidebarChatsList() {
   const pathname = usePathname();

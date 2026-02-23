@@ -16,14 +16,14 @@ import {
   parseChatIdFromPathname,
 } from "./parse-chat-id-from-pathname";
 
-type ChatIdContextType = {
-  id: string;
-  type: ChatIdType;
-  source: ParsedChatIdFromPathname["source"];
-  isPersisted: boolean;
+interface ChatIdContextType {
   confirmChatId: (chatId: string) => void;
+  id: string;
+  isPersisted: boolean;
   refreshChatID: () => void;
-};
+  source: ParsedChatIdFromPathname["source"];
+  type: ChatIdType;
+}
 
 const ChatIdContext = createContext<ChatIdContextType | undefined>(undefined);
 

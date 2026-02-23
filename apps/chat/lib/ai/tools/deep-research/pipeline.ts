@@ -163,10 +163,10 @@ async function clarifyWithUser(
 
 // Step 2: Research Brief
 
-type ResearchBrief = {
+interface ResearchBrief {
   research_brief: string;
   title: string;
-};
+}
 
 async function writeResearchBrief(
   messages: ModelMessage[],

@@ -9,12 +9,12 @@ import { ImageModal } from "./image-modal";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 
-export type BaseMessageProps = {
-  messageId: string;
+export interface BaseMessageProps {
   isLoading: boolean;
   isReadonly: boolean;
+  messageId: string;
   parentMessageId: string | null;
-};
+}
 
 const PureUserMessage = ({
   messageId,

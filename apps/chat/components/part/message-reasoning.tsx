@@ -6,10 +6,10 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 
-type MessageReasoningProps = {
-  isLoading: boolean;
+interface MessageReasoningProps {
   content: string;
-};
+  isLoading: boolean;
+}
 
 function PureReasoningPart({ isLoading, content }: MessageReasoningProps) {
   return (

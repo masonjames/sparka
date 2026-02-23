@@ -12,9 +12,9 @@ import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
 import { ThinkingMessage } from "./thinking-message";
 
-type PureMessagesInternalProps = {
+interface PureMessagesInternalProps {
   isReadonly: boolean;
-};
+}
 
 const PureMessagesInternal = memo(
   ({ isReadonly }: PureMessagesInternalProps) => {
@@ -55,11 +55,11 @@ const PureMessagesInternal = memo(
   }
 );
 
-type MessagesProps = {
+interface MessagesProps {
+  className?: string;
   isReadonly: boolean;
   onModelChange?: (modelId: string) => void;
-  className?: string;
-};
+}
 
 function PureMessages({ isReadonly, className }: MessagesProps) {
   return (

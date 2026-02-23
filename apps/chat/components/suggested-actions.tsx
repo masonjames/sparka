@@ -16,11 +16,11 @@ import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
-type SuggestedActionsProps = {
+interface SuggestedActionsProps {
   chatId: string;
-  selectedModelId: AppModelId;
   className?: string;
-};
+  selectedModelId: AppModelId;
+}
 
 function PureSuggestedActions({
   chatId,

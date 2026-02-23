@@ -7,16 +7,16 @@ import { Button } from "./ui/button";
 import { Toggle } from "./ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-type ArtifactActionsProps = {
+interface ArtifactActionsProps {
   artifact: UIArtifact;
-  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
   currentVersionIndex: number;
+  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
   isCurrentVersion: boolean;
-  mode: "edit" | "diff";
-  metadata: any;
-  setMetadata: Dispatch<SetStateAction<any>>;
   isReadonly: boolean;
-};
+  metadata: any;
+  mode: "edit" | "diff";
+  setMetadata: Dispatch<SetStateAction<any>>;
+}
 
 function PureArtifactActions({
   artifact,

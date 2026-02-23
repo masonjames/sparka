@@ -425,19 +425,19 @@
 
 .lexical-content-editable {
   position: relative;
-  outline: none;
-  user-select: text;
-  white-space: pre-wrap;
-  word-break: break-word;
+  overflow-y: auto;
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
   color: inherit;
+  word-break: break-word;
+  white-space: pre-wrap;
+  resize: none;
+  user-select: text;
+  outline: none;
+  scrollbar-width: thin;
   background: transparent;
   border: none;
-  resize: none;
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .lexical-content-editable::-webkit-scrollbar {
@@ -458,15 +458,15 @@
 }
 
 .lexical-placeholder {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
   color: var(--muted-foreground);
   pointer-events: none;
   user-select: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
 }
 
 .lexical-root {
@@ -474,8 +474,8 @@
 }
 
 .lexical-root p {
-  margin: 0;
   padding: 0;
+  margin: 0;
 }
 
 .lexical-root p:first-child {
@@ -505,25 +505,25 @@
 }
 
 .editor-container {
-  background: #fff;
-  margin: 20px auto 20px auto;
-  border-radius: 2px;
-  max-width: 600px;
-  color: #000;
   position: relative;
-  line-height: 20px;
+  max-width: 600px;
+  margin: 20px auto 20px auto;
   font-weight: 400;
+  line-height: 20px;
+  color: #000;
   text-align: left;
+  background: #fff;
+  border-radius: 2px;
 }
 
 .editor-input {
-  resize: none;
-  font-size: 15px;
   position: relative;
-  tab-size: 1;
-  outline: 0;
   padding: 10px 10px 5px;
+  font-size: 15px;
+  tab-size: 1;
   caret-color: currentColor;
+  resize: none;
+  outline: 0;
 }
 
 /*

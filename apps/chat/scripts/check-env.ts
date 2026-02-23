@@ -17,7 +17,10 @@ import {
   isRequirementSatisfied,
 } from "../lib/config-requirements";
 
-type ValidationError = { feature: string; missing: string[] };
+interface ValidationError {
+  feature: string;
+  missing: string[];
+}
 
 function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
   // Prevent TS from narrowing to the current literal config value.

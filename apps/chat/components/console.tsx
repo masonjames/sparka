@@ -4,16 +4,16 @@ import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
-export type ConsoleOutputContent = {
+export interface ConsoleOutputContent {
   type: "text" | "image";
   value: string;
-};
+}
 
-export type ConsoleOutput = {
+export interface ConsoleOutput {
+  contents: ConsoleOutputContent[];
   id: string;
   status: "in_progress" | "loading_packages" | "completed" | "failed";
-  contents: ConsoleOutputContent[];
-};
+}
 
 function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
   if (consoleOutput.status === "in_progress") {
