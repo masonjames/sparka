@@ -24,12 +24,15 @@
     "template:check": "bun scripts/sync-template.ts --check",
     "chat-js": "bun --filter @chat-js/cli start",
     "skiller:apply": "bunx skiller@latest apply && turbo run skiller:apply",
-    "publish:cli": "bun run template:sync && bun --filter @chat-js/cli build && npm publish --ignore-scripts -w packages/cli"
+    "publish:cli": "echo 'Legacy CLI-only publish path. Prefer bun run release for standard releases.' && bun run template:sync && bun --filter @chat-js/cli build && npm publish --ignore-scripts -w packages/cli",
+    "release": "changeset publish"
   },
   "overrides": {
     "@lobehub/ui": "~2.24.3"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
     "dotenv-cli": "^8.0.0",
     "turbo": "^2.5.8"
   }
