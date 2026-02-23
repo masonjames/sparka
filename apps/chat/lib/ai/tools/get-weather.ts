@@ -23,40 +23,40 @@ export const getWeather = tool({
   },
 });
 
-export type WeatherAtLocation = {
-  latitude: number;
-  longitude: number;
-  generationtime_ms: number;
-  utc_offset_seconds: number;
-  timezone: string;
-  timezone_abbreviation: string;
-  elevation: number;
-  current_units: {
-    time: string;
-    interval: string;
-    temperature_2m: string;
-  };
+export interface WeatherAtLocation {
   current: {
     time: string;
     interval: number;
     temperature_2m: number;
   };
-  hourly_units: {
+  current_units: {
     time: string;
+    interval: string;
     temperature_2m: string;
-  };
-  hourly: {
-    time: string[];
-    temperature_2m: number[];
-  };
-  daily_units: {
-    time: string;
-    sunrise: string;
-    sunset: string;
   };
   daily: {
     time: string[];
     sunrise: string[];
     sunset: string[];
   };
-};
+  daily_units: {
+    time: string;
+    sunrise: string;
+    sunset: string;
+  };
+  elevation: number;
+  generationtime_ms: number;
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+  };
+  hourly_units: {
+    time: string;
+    temperature_2m: string;
+  };
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  timezone_abbreviation: string;
+  utc_offset_seconds: number;
+}

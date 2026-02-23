@@ -16,11 +16,11 @@ import {
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
-type ChatModelsContextType = {
-  models: AppModelDefinition[];
+interface ChatModelsContextType {
   allModels: AppModelDefinition[];
   getModelById: (modelId: string) => AppModelDefinition | undefined;
-};
+  models: AppModelDefinition[];
+}
 
 const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
   undefined

@@ -9,15 +9,15 @@ import type { DeepResearchRuntimeConfig } from "./configuration";
 // Shared Agent Options
 //##################
 
-export type AgentOptions = {
+export interface AgentOptions {
+  abortSignal?: AbortSignal;
   config: DeepResearchRuntimeConfig;
+  costAccumulator?: CostAccumulator;
   dataStream: StreamWriter;
-  toolCallId: string;
   messageId: string;
   requestId: string;
-  costAccumulator?: CostAccumulator;
-  abortSignal?: AbortSignal;
-};
+  toolCallId: string;
+}
 
 //##################
 // Telemetry Helper
@@ -67,12 +67,12 @@ export const ResearchQuestionSchema = z.object({
 // Pipeline IO
 //##################
 
-export type DeepResearchInput = {
-  requestId: string;
+export interface DeepResearchInput {
   messageId: string;
-  toolCallId: string;
   messages: ModelMessage[];
-};
+  requestId: string;
+  toolCallId: string;
+}
 
 export type DeepResearchResult =
   | {

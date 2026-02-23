@@ -8,12 +8,12 @@ import type { GatewayProvider } from "./gateway-provider";
 
 const log = createModuleLogger("ai/gateways/openai-compatible");
 
-type OpenAICompatibleModelResponse = {
+interface OpenAICompatibleModelResponse {
+  created: number;
   id: string;
   object: string;
-  created: number;
   owned_by: string;
-};
+}
 
 function toAiGatewayModel(
   model: OpenAICompatibleModelResponse

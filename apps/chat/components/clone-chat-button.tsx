@@ -6,10 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCloneChat } from "@/hooks/chat-sync-hooks";
 
-type CloneChatButtonProps = {
+interface CloneChatButtonProps {
   chatId: string;
   className?: string;
-};
+}
 
 export function CloneChatButton({ chatId, className }: CloneChatButtonProps) {
   const router = useRouter();

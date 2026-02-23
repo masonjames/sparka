@@ -11,17 +11,17 @@ export type SearchProviderOptions =
       provider: "firecrawl";
     } & SearchParams);
 
-export type WebSearchResult = {
+export interface WebSearchResult {
+  content: string;
   source: "web";
   title: string;
   url: string;
-  content: string;
-};
+}
 
-export type WebSearchResponse = {
-  results: WebSearchResult[];
+export interface WebSearchResponse {
   error?: string;
-};
+  results: WebSearchResult[];
+}
 
 // Initialize search providers lazily to avoid runtime errors when keys are missing
 const tvly = env.TAVILY_API_KEY ? tavily({ apiKey: env.TAVILY_API_KEY }) : null;

@@ -19,14 +19,14 @@ import { memo, useEffect, useRef } from "react";
 
 import { createEditorConfig, handleEditorChange } from "@/lib/editor/config";
 
-type EditorProps = {
+interface EditorProps {
   content: string;
+  currentVersionIndex: number;
+  isCurrentVersion: boolean;
+  isReadonly?: boolean;
   onSaveContent: (updatedContent: string, debounce: boolean) => void;
   status: "streaming" | "idle";
-  isCurrentVersion: boolean;
-  currentVersionIndex: number;
-  isReadonly?: boolean;
-};
+}
 
 // Content update plugin
 function ContentUpdatePlugin({

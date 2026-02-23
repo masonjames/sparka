@@ -8,15 +8,15 @@ import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { memo, useEffect, useRef } from "react";
 
-type EditorProps = {
+interface EditorProps {
   content: string;
-  onSaveContent: (updatedContent: string, debounce: boolean) => void;
-  status: "streaming" | "idle";
-  isCurrentVersion: boolean;
   currentVersionIndex: number;
+  isCurrentVersion: boolean;
   isReadonly?: boolean;
   language?: string;
-};
+  onSaveContent: (updatedContent: string, debounce: boolean) => void;
+  status: "streaming" | "idle";
+}
 
 function getLanguageExtension(language: string) {
   switch (language) {

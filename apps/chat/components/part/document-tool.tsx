@@ -16,11 +16,11 @@ type DocumentTool = Extract<
   { type: DocumentToolType }
 >;
 
-type DocumentToolComponentProps = {
-  tool: DocumentTool;
+interface DocumentToolComponentProps {
   isReadonly: boolean;
   messageId: string;
-};
+  tool: DocumentTool;
+}
 
 function PureDocumentTool({
   tool,

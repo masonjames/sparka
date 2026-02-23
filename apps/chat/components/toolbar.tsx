@@ -36,19 +36,19 @@ import type {
 } from "./create-artifact";
 import { SummarizeIcon } from "./icons";
 
-type ToolProps = {
+interface ToolProps {
   description: string;
   icon: ReactNode;
-  selectedTool: string | null;
-  setSelectedTool: Dispatch<SetStateAction<string | null>>;
-  isToolbarVisible?: boolean;
-  setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
   isAnimating: boolean;
   isSingleTool?: boolean;
+  isToolbarVisible?: boolean;
   onClick: (context: ArtifactToolbarContext) => void;
+  selectedTool: string | null;
+  setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
+  setSelectedTool: Dispatch<SetStateAction<string | null>>;
 
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-};
+}
 
 function Tool({
   description,

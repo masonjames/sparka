@@ -11,19 +11,19 @@ import {
 import { toast } from "sonner";
 import type { AppModelId } from "@/lib/ai/app-models";
 
-type DefaultModelContextType = {
-  defaultModel: AppModelId;
+interface DefaultModelContextType {
   changeModel: (modelId: AppModelId) => Promise<void>;
-};
+  defaultModel: AppModelId;
+}
 
 const DefaultModelContext = createContext<DefaultModelContextType | undefined>(
   undefined
 );
 
-type DefaultModelClientProviderProps = {
+interface DefaultModelClientProviderProps {
   children: ReactNode;
   defaultModel: AppModelId;
-};
+}
 
 export function DefaultModelProvider({
   children,

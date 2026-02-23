@@ -279,61 +279,6 @@ export function usePinChat() {
   });
 }
 
-function _useDeleteTrailingMessages() {
-  const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
-  const trpc = useTRPC();
-  const qc = useQueryClient();
-  const trpcMutation = trpc.chat.deleteTrailingMessages.mutationOptions();
-
-  // Wrap tRPC mutation to include chatId for cache management
-  return useMutation({
-    mutationFn: (
-      { messageId }: { messageId: string; chatId: string },
-      context
-    ) => {
-      if (!trpcMutation.mutationFn) {
-        throw new Error("deleteTrailingMessages mutation not available");
-      }
-      return trpcMutation.mutationFn({ messageId }, context);
-    },
-    onMutate: async ({
-      messageId,
-      chatId,
-    }): Promise<{ previousMessages?: ChatMessage[]; chatId: string }> => {
-      if (!isAuthenticated) {
-        return { previousMessages: undefined, chatId };
-      }
-      const key = trpc.chat.getChatMessages.queryKey({ chatId });
-      await qc.cancelQueries({ queryKey: key });
-      const previousMessages = qc.getQueryData<ChatMessage[]>(key);
-      qc.setQueryData<ChatMessage[] | undefined>(key, (old) => {
-        if (!old) {
-          return old;
-        }
-        const idx = old.findIndex((msg) => msg.id === messageId);
-        return idx === -1 ? old : old.slice(0, idx);
-      });
-      return { previousMessages, chatId };
-    },
-    onError: (_err, { chatId }, ctx) => {
-      if (ctx?.previousMessages) {
-        qc.setQueryData(
-          trpc.chat.getChatMessages.queryKey({ chatId }),
-          ctx.previousMessages
-        );
-      }
-      toast.error("Failed to delete messages");
-    },
-    onSuccess: (_data, { chatId }) => {
-      qc.invalidateQueries({
-        queryKey: trpc.chat.getChatMessages.queryKey({ chatId }),
-      });
-      toast.success("Messages deleted");
-    },
-  });
-}
-
 export function useCloneChat() {
   const trpc = useTRPC();
   const qc = useQueryClient();

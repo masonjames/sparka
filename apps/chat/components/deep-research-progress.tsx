@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import type { ResearchUpdate } from "@/lib/ai/tools/research-updates-schema";
 import { ResearchProgress } from "./research-progress";
 
-type ReasonSearchResearchProgressProps = {
+interface ReasonSearchResearchProgressProps {
   updates: ResearchUpdate[];
-};
+}
 
 export const ReasonSearchResearchProgress = ({
   updates,

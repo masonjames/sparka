@@ -16,13 +16,13 @@ import {
 } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
 
-type ProjectIconPickerProps = {
-  icon: ProjectIconName | null;
-  color: ProjectColorName | null;
-  onIconChange: (icon: ProjectIconName) => void;
-  onColorChange: (color: ProjectColorName) => void;
+interface ProjectIconPickerProps {
   className?: string;
-};
+  color: ProjectColorName | null;
+  icon: ProjectIconName | null;
+  onColorChange: (color: ProjectColorName) => void;
+  onIconChange: (icon: ProjectIconName) => void;
+}
 
 export function ProjectIconPicker({
   icon,

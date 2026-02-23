@@ -8,10 +8,10 @@ import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import { toolsDefinitions } from "./tools-definitions";
 
-type GenerateVideoProps = {
-  selectedModel?: string;
+interface GenerateVideoProps {
   costAccumulator?: CostAccumulator;
-};
+  selectedModel?: string;
+}
 
 const log = createModuleLogger("ai.tools.generate-video");
 const DEFAULT_ASPECT_RATIO = "16:9";

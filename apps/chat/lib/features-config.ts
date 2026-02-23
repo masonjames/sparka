@@ -1,14 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import { Brain, Eye, FileText, Image, Mic, Zap } from "lucide-react";
 
-type FeatureConfig = {
+interface FeatureConfig {
+  category: "capability" | "input" | "output";
+  description: string;
+  enabled: boolean;
+  icon: LucideIcon;
   key: string;
   name: string;
-  description: string;
-  icon: LucideIcon;
-  enabled: boolean;
-  category: "capability" | "input" | "output";
-};
+}
 
 export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
   reasoning: {

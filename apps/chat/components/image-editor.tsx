@@ -1,14 +1,14 @@
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type ImageEditorProps = {
-  title: string;
+interface ImageEditorProps {
   content: string;
-  isCurrentVersion: boolean;
   currentVersionIndex: number;
-  status: string;
+  isCurrentVersion: boolean;
   isInline: boolean;
-};
+  status: string;
+  title: string;
+}
 
 export function ImageEditor({
   title,

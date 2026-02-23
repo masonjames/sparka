@@ -22,13 +22,13 @@ import {
 import { useGetAllChats } from "@/hooks/chat-sync-hooks";
 import type { UIChat } from "@/lib/types/ui-chat";
 
-type GroupedChats = {
+interface GroupedChats {
+  lastMonth: UIChat[];
+  lastWeek: UIChat[];
+  older: UIChat[];
   today: UIChat[];
   yesterday: UIChat[];
-  lastWeek: UIChat[];
-  lastMonth: UIChat[];
-  older: UIChat[];
-};
+}
 
 const groupChatsByDate = (chats: UIChat[]): GroupedChats => {
   const now = new Date();
@@ -71,10 +71,10 @@ const filterChats = (chats: UIChat[], query: string): UIChat[] => {
   return chats.filter((chat) => chat.title.toLowerCase().includes(lowerQuery));
 };
 
-type SearchChatsListProps = {
-  onSelectChat: (chatId: string) => void;
+interface SearchChatsListProps {
   deferredQuery: string;
-};
+  onSelectChat: (chatId: string) => void;
+}
 
 const SearchChatsList = memo(function SearchChatsListInner({
   onSelectChat,
@@ -147,11 +147,11 @@ const SearchChatsList = memo(function SearchChatsListInner({
   );
 });
 
-type SearchChatsDialogProps = {
-  open: boolean;
+interface SearchChatsDialogProps {
   onOpenChange: (open: boolean) => void;
   onSelectChat: () => void;
-};
+  open: boolean;
+}
 
 export function SearchChatsDialog({
   open,

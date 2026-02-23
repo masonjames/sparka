@@ -7,12 +7,12 @@ import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 
-type GenerateImageProps = {
+interface GenerateImageProps {
   attachments?: FileUIPart[];
+  costAccumulator?: CostAccumulator;
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
   selectedModel?: string;
-  costAccumulator?: CostAccumulator;
-};
+}
 
 const log = createModuleLogger("ai.tools.generate-image");
 
@@ -224,8 +224,14 @@ async function runGenerateImageMultimodal({
   costAccumulator?: CostAccumulator;
 }): Promise<{ imageUrl: string; prompt: string }> {
   // Build messages with image context if in edit mode
-  type ImageContent = { type: "image"; image: URL };
-  type TextContent = { type: "text"; text: string };
+  interface ImageContent {
+    image: URL;
+    type: "image";
+  }
+  interface TextContent {
+    text: string;
+    type: "text";
+  }
   const userContent: Array<TextContent | ImageContent> = [];
 
   // Add reference images if in edit mode

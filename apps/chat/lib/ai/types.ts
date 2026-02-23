@@ -101,34 +101,36 @@ type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
 type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 type retrieveUrlTool = InferUITool<typeof retrieveUrl>;
 
+// biome-ignore lint/style/useConsistentTypeDefinitions: <explanation>
 export type ChatTools = {
-  getWeather: weatherTool;
-  createTextDocument: createTextDocumentToolType;
+  codeExecution: codeExecutionTool;
   createCodeDocument: createCodeDocumentToolType;
   createSheetDocument: createSheetDocumentToolType;
-  editTextDocument: editTextDocumentToolType;
+  createTextDocument: createTextDocumentToolType;
+  deepResearch: deepResearchTool;
   editCodeDocument: editCodeDocumentToolType;
   editSheetDocument: editSheetDocumentToolType;
-  deepResearch: deepResearchTool;
-  readDocument: readDocumentTool;
+  editTextDocument: editTextDocumentToolType;
   generateImage: generateImageTool;
   generateVideo: generateVideoTool;
-  webSearch: webSearchTool;
-  codeExecution: codeExecutionTool;
+  getWeather: weatherTool;
+  readDocument: readDocumentTool;
   retrieveUrl: retrieveUrlTool;
+  webSearch: webSearchTool;
 };
 
-type FollowupSuggestions = {
+interface FollowupSuggestions {
   suggestions: string[];
-};
+}
 
+// biome-ignore lint/style/useConsistentTypeDefinitions: <explanation>
 export type CustomUIDataTypes = {
   appendMessage: string;
   chatConfirmed: {
     chatId: string;
   };
-  researchUpdate: ResearchUpdate;
   followupSuggestions: FollowupSuggestions;
+  researchUpdate: ResearchUpdate;
 };
 
 export type ChatMessage = Omit<
@@ -144,8 +146,8 @@ export type ToolOutput<T extends ToolName> = ChatTools[T]["output"];
 
 export type StreamWriter = UIMessageStreamWriter<ChatMessage>;
 
-export type Attachment = {
+export interface Attachment {
+  contentType: string;
   name: string;
   url: string;
-  contentType: string;
-};
+}

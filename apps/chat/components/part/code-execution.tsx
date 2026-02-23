@@ -19,7 +19,10 @@ function isBaseChart(input: unknown): input is BaseChart {
   return hasType && hasTitle && hasElements;
 }
 
-type PngChart = { base64: string; format: string };
+interface PngChart {
+  base64: string;
+  format: string;
+}
 
 function isPngChart(input: unknown): input is PngChart {
   if (typeof input !== "object" || input === null) {

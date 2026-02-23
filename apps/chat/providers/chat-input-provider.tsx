@@ -17,35 +17,35 @@ import type { Attachment, UiToolName } from "@/lib/ai/types";
 import { useChatModels } from "./chat-models-provider";
 import { useDefaultModel, useModelChange } from "./default-model-provider";
 
-type ChatInputContextType = {
-  editorRef: React.RefObject<LexicalChatInputRef | null>;
-  selectedTool: UiToolName | null;
-  setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
+interface ChatInputContextType {
   attachments: Attachment[];
-  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
-  selectedModelId: AppModelId;
-  handleModelChange: (modelId: AppModelId) => Promise<void>;
+  editorRef: React.RefObject<LexicalChatInputRef | null>;
+  getInitialInput: () => string;
   getInputValue: () => string;
   handleInputChange: (value: string) => void;
-  getInitialInput: () => string;
-  isEmpty: boolean;
+  handleModelChange: (modelId: AppModelId) => Promise<void>;
   handleSubmit: (submitFn: () => void, isEditMode?: boolean) => void;
+  isEmpty: boolean;
   isProjectContext: boolean;
-};
+  selectedModelId: AppModelId;
+  selectedTool: UiToolName | null;
+  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
+  setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
+}
 
 const ChatInputContext = createContext<ChatInputContextType | undefined>(
   undefined
 );
 
-type ChatInputProviderProps = {
+interface ChatInputProviderProps {
   children: ReactNode;
+  initialAttachments?: Attachment[];
   initialInput?: string;
   initialTool?: UiToolName | null;
-  initialAttachments?: Attachment[];
-  overrideModelId?: AppModelId; // For message editing where we want to use the original model
-  localStorageEnabled?: boolean;
   isProjectContext?: boolean;
-};
+  localStorageEnabled?: boolean;
+  overrideModelId?: AppModelId; // For message editing where we want to use the original model
+}
 
 export function ChatInputProvider({
   children,

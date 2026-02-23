@@ -28,32 +28,31 @@ function gatewayVideoModelId<G extends GatewayType>() {
   return z.custom<GatewayVideoModelIdMap[G]>((v) => typeof v === "string");
 }
 
-const deepResearchToolConfigSchema = z
-  .object({
-    defaultModel: z.string(),
-    finalReportModel: z.string(),
-    allowClarification: z
-      .boolean()
-      .describe("Whether to ask clarifying questions before starting research"),
-    maxResearcherIterations: z
-      .number()
-      .int()
-      .min(1)
-      .max(10)
-      .describe("Maximum supervisor loop iterations"),
-    maxConcurrentResearchUnits: z
-      .number()
-      .int()
-      .min(1)
-      .max(20)
-      .describe("Topics researched in parallel per iteration"),
-    maxSearchQueries: z
-      .number()
-      .int()
-      .min(1)
-      .max(10)
-      .describe("Max search queries per research topic"),
-  });
+const deepResearchToolConfigSchema = z.object({
+  defaultModel: z.string(),
+  finalReportModel: z.string(),
+  allowClarification: z
+    .boolean()
+    .describe("Whether to ask clarifying questions before starting research"),
+  maxResearcherIterations: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .describe("Maximum supervisor loop iterations"),
+  maxConcurrentResearchUnits: z
+    .number()
+    .int()
+    .min(1)
+    .max(20)
+    .describe("Topics researched in parallel per iteration"),
+  maxSearchQueries: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .describe("Max search queries per research topic"),
+});
 
 function createAiSchema<G extends GatewayType>(g: G) {
   return z.object({
@@ -384,7 +383,6 @@ export const configSchema = z.object({
   anonymous: anonymousConfigSchema,
 
   attachments: attachmentsConfigSchema,
-
 });
 
 // Output types (after defaults applied)
@@ -427,25 +425,25 @@ type FollowupSuggestionsToolInputFor<G extends GatewayType> = Omit<
 > & {
   default: GatewayModelIdMap[G];
 };
-type AiToolsInputFor<G extends GatewayType> = {
-  webSearch: AiToolsShape["webSearch"];
-  urlRetrieval: AiToolsShape["urlRetrieval"];
-  codeExecution: AiToolsShape["codeExecution"];
-  mcp: AiToolsShape["mcp"];
-  followupSuggestions: FollowupSuggestionsToolInputFor<G>;
-  text: {
-    [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G];
-  };
-  sheet: {
-    [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G];
-  };
+interface AiToolsInputFor<G extends GatewayType> {
   code: {
     [P in keyof AiToolsShape["code"]]: GatewayModelIdMap[G];
   };
-  image: ImageToolInputFor<G>;
-  video: VideoToolInputFor<G>;
+  codeExecution: AiToolsShape["codeExecution"];
   deepResearch: DeepResearchToolInputFor<G>;
-};
+  followupSuggestions: FollowupSuggestionsToolInputFor<G>;
+  image: ImageToolInputFor<G>;
+  mcp: AiToolsShape["mcp"];
+  sheet: {
+    [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G];
+  };
+  text: {
+    [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G];
+  };
+  urlRetrieval: AiToolsShape["urlRetrieval"];
+  video: VideoToolInputFor<G>;
+  webSearch: AiToolsShape["webSearch"];
+}
 
 type AiInputFor<G extends GatewayType> = {
   [K in keyof AiShape]: K extends "gateway"
@@ -456,9 +454,9 @@ type AiInputFor<G extends GatewayType> = {
         }
       : K extends "tools"
         ? AiToolsInputFor<G>
-      : K extends "disabledModels" | "curatedDefaults" | "anonymousModels"
-        ? GatewayModelIdMap[G][]
-        : AiShape[K];
+        : K extends "disabledModels" | "curatedDefaults" | "anonymousModels"
+          ? GatewayModelIdMap[G][]
+          : AiShape[K];
 };
 
 type ConfigInputForGateway<G extends GatewayType> = Omit<

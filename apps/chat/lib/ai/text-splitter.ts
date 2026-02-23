@@ -1,8 +1,7 @@
-type TextSplitterParams = {
-  chunkSize: number;
-
+interface TextSplitterParams {
   chunkOverlap: number;
-};
+  chunkSize: number;
+}
 
 abstract class TextSplitter implements TextSplitterParams {
   chunkSize = 1000;

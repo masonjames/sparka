@@ -10,12 +10,12 @@ import {
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 import { MultimodalInput } from "./multimodal-input";
 
-export type MessageEditorProps = {
+export interface MessageEditorProps {
   chatId: string;
   message: ChatMessage;
-  setMode: Dispatch<SetStateAction<"view" | "edit">>;
   parentMessageId: string | null;
-};
+  setMode: Dispatch<SetStateAction<"view" | "edit">>;
+}
 
 function MessageEditorContent({
   chatId,

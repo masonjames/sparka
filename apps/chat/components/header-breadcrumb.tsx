@@ -32,14 +32,14 @@ import { cn } from "@/lib/utils";
 import { useChatId } from "@/providers/chat-id-provider";
 import { ShareDialog } from "./share-button";
 
-type HeaderBreadcrumbProps = {
+interface HeaderBreadcrumbProps {
   chatId: string;
+  className?: string;
+  hasMessages?: boolean;
+  isReadonly: boolean;
   projectId?: string;
   user?: Session["user"];
-  isReadonly: boolean;
-  hasMessages?: boolean;
-  className?: string;
-};
+}
 
 export function HeaderBreadcrumb({
   chatId: _chatId,
@@ -181,7 +181,7 @@ export function HeaderBreadcrumb({
   );
 }
 
-type ChatBreadcrumbProps = {
+interface ChatBreadcrumbProps {
   canManageChat: boolean;
   chatLabel: string;
   chatTitleDraft: string;
@@ -195,7 +195,7 @@ type ChatBreadcrumbProps = {
   openChatDeleteDialog: () => void;
   showShare?: boolean;
   startChatRename: () => void;
-};
+}
 
 const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
   canManageChat,
@@ -258,14 +258,14 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
   return <BreadcrumbPage>{chatLabel}</BreadcrumbPage>;
 });
 
-type PerformChatRenameArgs = {
+interface PerformChatRenameArgs {
   chatId: string;
   chatTitleDraft: string;
   privateChat: { title?: string; isPinned?: boolean } | null | undefined;
   renameChat: (args: { chatId: string; title: string }) => Promise<unknown>;
   setChatTitleDraft: (value: string) => void;
   setIsChatEditing: (value: boolean) => void;
-};
+}
 
 async function performChatRename({
   chatId,
@@ -295,10 +295,10 @@ async function performChatRename({
   }
 }
 
-type InputKeyHandlerOptions = {
+interface InputKeyHandlerOptions {
   onEnter: () => void;
   onEscape: () => void;
-};
+}
 
 function createInputKeyDownHandler({
   onEnter,

@@ -29,8 +29,12 @@ export function AnonymousSessionInit() {
   const trpc = useTRPC();
 
   useEffect(() => {
-    if (isPending) return;
-    if (session?.user) return;
+    if (isPending) {
+      return;
+    }
+    if (session?.user) {
+      return;
+    }
 
     const existingSession = getAnonymousSession();
 
@@ -52,7 +56,7 @@ export function AnonymousSessionInit() {
         queryKey: trpc.credits.getAvailableCredits.queryKey(),
       });
     }
-  }, [session?.user ? "authenticated" : "anonymous", isPending, queryClient, trpc]);
+  }, [isPending, queryClient, trpc, session?.user]);
 
   return null;
 }
