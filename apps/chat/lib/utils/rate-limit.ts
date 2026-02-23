@@ -2,20 +2,20 @@ import "server-only";
 import { config } from "@/lib/config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
-type RateLimitResult = {
-  success: boolean;
+interface RateLimitResult {
+  error?: string;
   remaining: number;
   resetTime: number;
-  error?: string;
-};
+  success: boolean;
+}
 
-type RateLimitOptions = {
+interface RateLimitOptions {
   identifier: string;
-  limit: number;
-  windowSize: number;
-  redisClient: any;
   keyPrefix: string;
-};
+  limit: number;
+  redisClient: any;
+  windowSize: number;
+}
 
 async function checkRateLimit({
   identifier,

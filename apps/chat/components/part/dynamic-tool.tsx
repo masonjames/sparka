@@ -16,11 +16,11 @@ import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { useTRPC } from "@/trpc/react";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 
-type DynamicToolPartProps = {
-  messageId: string;
+interface DynamicToolPartProps {
   isReadonly: boolean;
+  messageId: string;
   part: DynamicToolUIPart;
-};
+}
 
 export function DynamicToolPart({ part }: DynamicToolPartProps) {
   const trpc = useTRPC();

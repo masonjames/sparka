@@ -16,11 +16,11 @@ import {
 import { useDeleteChat } from "@/hooks/chat-sync-hooks";
 import { useChatId } from "@/providers/chat-id-provider";
 
-type DeleteChatDialogProps = {
+interface DeleteChatDialogProps {
   deleteId: string | null;
-  showDeleteDialog: boolean;
   setShowDeleteDialog: (show: boolean) => void;
-};
+  showDeleteDialog: boolean;
+}
 
 export function DeleteChatDialog({
   deleteId,

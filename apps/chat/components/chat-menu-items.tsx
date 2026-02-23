@@ -4,14 +4,14 @@ import { Pencil, PinIcon, Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
-type ChatMenuItemsProps = {
+interface ChatMenuItemsProps {
   isPinned: boolean;
-  onRename: () => void;
-  onTogglePin: () => void;
   onDelete: () => void;
+  onRename: () => void;
   onShare?: () => void;
+  onTogglePin: () => void;
   showShare?: boolean;
-};
+}
 
 export function ChatMenuItems({
   isPinned,

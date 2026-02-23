@@ -9,11 +9,11 @@ import {
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 
-type ToolDefinition = {
-  name: string;
+interface ToolDefinition {
   icon: LucideIcon;
+  name: string;
   shortName: string;
-};
+}
 
 export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
   webSearch: { name: "Web Search", icon: GlobeIcon, shortName: "Search" },

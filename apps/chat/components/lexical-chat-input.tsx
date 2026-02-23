@@ -78,24 +78,24 @@ function EditorRefPlugin({
   return null;
 }
 
-type LexicalChatInputRef = {
-  focus: () => void;
+interface LexicalChatInputRef {
   clear: () => void;
+  focus: () => void;
   getValue: () => string;
-};
+}
 
-type LexicalChatInputProps = {
+interface LexicalChatInputProps {
+  autoFocus?: boolean;
+  className?: string;
+  "data-testid"?: string;
   initialValue?: string;
+  maxRows?: number;
+  onEnterSubmit?: (event: KeyboardEvent) => boolean;
   onInputChange?: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
   onPaste?: (event: ClipboardEvent<HTMLDivElement>) => void;
-  onEnterSubmit?: (event: KeyboardEvent) => boolean;
   placeholder?: string;
-  autoFocus?: boolean;
-  className?: string;
-  maxRows?: number;
-  "data-testid"?: string;
-};
+}
 
 const theme = {
   root: "lexical-root",

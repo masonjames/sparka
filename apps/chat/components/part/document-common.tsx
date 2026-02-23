@@ -48,16 +48,16 @@ const getActionText = (
   }
 };
 
-type DocumentToolResultProps = {
-  type: "create" | "update";
+interface DocumentToolResultProps {
+  isReadonly: boolean;
+  messageId: string;
   result: {
     id: string;
     title: string;
     kind: ArtifactKind;
   };
-  isReadonly: boolean;
-  messageId: string;
-};
+  type: "create" | "update";
+}
 
 function PureDocumentToolResult({
   type,
@@ -103,11 +103,11 @@ function PureDocumentToolResult({
 
 export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
 
-type DocumentToolCallProps = {
-  type: "create" | "update";
+interface DocumentToolCallProps {
   args: { title?: string };
   isReadonly: boolean;
-};
+  type: "create" | "update";
+}
 
 function PureDocumentToolCall({
   type,

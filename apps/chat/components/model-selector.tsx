@@ -168,7 +168,10 @@ function PureModelSelector({
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
 
-  type ModelItem = { model: AppModelDefinition; disabled: boolean };
+  interface ModelItem {
+    disabled: boolean;
+    model: AppModelDefinition;
+  }
 
   const models = useMemo<ModelItem[]>(
     () =>

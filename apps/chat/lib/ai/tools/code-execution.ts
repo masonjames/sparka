@@ -7,6 +7,7 @@ import { createModuleLogger } from "@/lib/logger";
 import { toolsDefinitions } from "./tools-definitions";
 
 const WHITESPACE_REGEX = /\s+/;
+const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/;
 
 async function installBasePackages(
   sandbox: Sandbox,
@@ -40,7 +41,7 @@ async function installBasePackages(
 }
 
 function packageName(spec: string): string {
-  return spec.split(/[=<>![\s]/)[0].toLowerCase();
+  return spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
 }
 
 async function processExtraPackages(

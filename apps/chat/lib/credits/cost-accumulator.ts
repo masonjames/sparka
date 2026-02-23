@@ -2,7 +2,10 @@ import type { AppModelDefinition, AppModelId } from "../ai/app-models";
 import { getAppModelDefinition } from "../ai/app-models";
 
 /** Minimal usage info needed for cost calculation */
-export type UsageInfo = { inputTokens?: number; outputTokens?: number };
+export interface UsageInfo {
+  inputTokens?: number;
+  outputTokens?: number;
+}
 
 /**
  * Calculate LLM cost in CENTS from AI SDK usage data and model pricing.
@@ -18,18 +21,18 @@ function calculateLLMCost(
   return (inputCost + outputCost) * 100;
 }
 
-type LLMCostEntry = {
-  type: "llm";
+interface LLMCostEntry {
   modelId: AppModelId;
-  usage: UsageInfo;
   source: string;
-};
+  type: "llm";
+  usage: UsageInfo;
+}
 
-type APICostEntry = {
-  type: "api";
+interface APICostEntry {
   apiName: string;
   cost: number;
-};
+  type: "api";
+}
 
 type CostEntry = LLMCostEntry | APICostEntry;
 

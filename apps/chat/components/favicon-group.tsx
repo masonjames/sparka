@@ -3,16 +3,16 @@ import { cn } from "@/lib/utils";
 import { Favicon } from "./favicon";
 
 // Define a simpler interface for the sources needed by this component
-type FaviconSource = {
-  url: string;
+interface FaviconSource {
   title?: string; // Title is optional, mainly for alt text
-};
+  url: string;
+}
 
-type FaviconGroupProps = {
-  sources: FaviconSource[]; // Use the simpler interface
-  maxVisible?: number;
+interface FaviconGroupProps {
   className?: string;
-};
+  maxVisible?: number;
+  sources: FaviconSource[]; // Use the simpler interface
+}
 
 export const FaviconGroup: React.FC<FaviconGroupProps> = ({
   sources,

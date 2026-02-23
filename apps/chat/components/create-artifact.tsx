@@ -7,59 +7,57 @@ import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { useTRPC } from "@/trpc/react";
 import type { UIArtifact } from "./artifact-panel";
 
-export type ArtifactActionContext<M = any> = {
+export interface ArtifactActionContext<M = any> {
   content: string;
-  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
   currentVersionIndex: number;
+  handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
   isCurrentVersion: boolean;
-  mode: "edit" | "diff";
-  metadata: M;
-  setMetadata: Dispatch<SetStateAction<M>>;
   isReadonly?: boolean;
-};
+  metadata: M;
+  mode: "edit" | "diff";
+  setMetadata: Dispatch<SetStateAction<M>>;
+}
 
-type ArtifactAction<M = any> = {
-  icon: ReactNode;
-  label?: string;
+interface ArtifactAction<M = any> {
   description: string;
-  onClick: (context: ArtifactActionContext<M>) => Promise<void> | void;
+  icon: ReactNode;
   isDisabled?: (context: ArtifactActionContext<M>) => boolean;
-};
+  label?: string;
+  onClick: (context: ArtifactActionContext<M>) => Promise<void> | void;
+}
 
-export type ArtifactToolbarContext = {
+export interface ArtifactToolbarContext {
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-};
+}
 
-export type ArtifactToolbarItem = {
+export interface ArtifactToolbarItem {
   description: string;
   icon: ReactNode;
   onClick: (context: ArtifactToolbarContext) => void;
-};
+}
 
-type ArtifactContent<M = any> = {
-  title: string;
+interface ArtifactContent<M = any> {
   content: string;
-  mode: "edit" | "diff";
-  isCurrentVersion: boolean;
   currentVersionIndex: number;
-  status: "streaming" | "idle";
-  onSaveContent: (updatedContent: string, debounce: boolean) => void;
-  isInline: boolean;
   getDocumentContentById: (index: number) => string;
+  isCurrentVersion: boolean;
+  isInline: boolean;
   isLoading: boolean;
-  metadata: M;
-  setMetadata: Dispatch<SetStateAction<M>>;
   isReadonly?: boolean;
-};
+  metadata: M;
+  mode: "edit" | "diff";
+  onSaveContent: (updatedContent: string, debounce: boolean) => void;
+  setMetadata: Dispatch<SetStateAction<M>>;
+  status: "streaming" | "idle";
+  title: string;
+}
 
-type ArtifactConfig<T extends string, M = any> = {
-  kind: T;
-  description: string;
-  content: ComponentType<ArtifactContent<M>>;
-  footer?: ComponentType<ArtifactContent<M>>;
+interface ArtifactConfig<T extends string, M = any> {
   actions: ArtifactAction<M>[];
-  toolbar: ArtifactToolbarItem[];
+  content: ComponentType<ArtifactContent<M>>;
+  description: string;
+  footer?: ComponentType<ArtifactContent<M>>;
   initialize?: ({
     documentId,
     setMetadata,
@@ -73,12 +71,14 @@ type ArtifactConfig<T extends string, M = any> = {
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
+  kind: T;
   onStreamPart?: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
     streamPart: DataUIPart<CustomUIDataTypes>;
   }) => void;
-};
+  toolbar: ArtifactToolbarItem[];
+}
 
 export class Artifact<T extends string, M = any> {
   readonly kind: T;

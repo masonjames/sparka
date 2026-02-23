@@ -14,10 +14,10 @@ import {
   findLeafDfsToRightFromMessageId,
 } from "@/lib/thread-utils";
 
-export type MessageSiblingInfo<UM> = {
-  siblings: UM[];
+export interface MessageSiblingInfo<UM> {
   siblingIndex: number;
-};
+  siblings: UM[];
+}
 
 export type ThreadAugmentedState<UM extends UIMessage> =
   BaseChatStoreState<UM> & {

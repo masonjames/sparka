@@ -3,10 +3,10 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-type ProjectMenuItemsProps = {
-  onRename: () => void;
+interface ProjectMenuItemsProps {
   onDelete: () => void;
-};
+  onRename: () => void;
+}
 
 export function ProjectMenuItems({
   onRename,

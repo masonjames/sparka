@@ -34,26 +34,26 @@ const SpreadsheetEditor = dynamic(
   { loading: () => <InlineDocumentSkeleton />, ssr: false }
 );
 
-type DocumentPreviewInput = {
-  title: string;
-  kind: ArtifactKind;
+interface DocumentPreviewInput {
   content: string;
-};
-
-type DocumentPreviewOutput = {
-  documentId: string;
-  title: string;
   kind: ArtifactKind;
-};
+  title: string;
+}
 
-type DocumentPreviewProps = {
-  isReadonly: boolean;
-  output?: DocumentPreviewOutput;
+interface DocumentPreviewOutput {
+  documentId: string;
+  kind: ArtifactKind;
+  title: string;
+}
+
+interface DocumentPreviewProps {
   input?: DocumentPreviewInput;
-  messageId: string;
-  type?: "create" | "update";
   isLastArtifact?: boolean;
-};
+  isReadonly: boolean;
+  messageId: string;
+  output?: DocumentPreviewOutput;
+  type?: "create" | "update";
+}
 
 export function DocumentPreview({
   isReadonly,

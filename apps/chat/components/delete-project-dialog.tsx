@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTRPC } from "@/trpc/react";
 
-type DeleteProjectDialogProps = {
+interface DeleteProjectDialogProps {
   deleteId: string | null;
-  showDeleteDialog: boolean;
   setShowDeleteDialog: (show: boolean) => void;
-};
+  showDeleteDialog: boolean;
+}
 
 export function DeleteProjectDialog({
   deleteId,

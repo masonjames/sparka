@@ -16,13 +16,13 @@ import {
   SandboxTabsTrigger,
 } from "@/components/ai-elements/sandbox";
 
-type SandboxComposedProps = {
+interface SandboxComposedProps {
   code: string;
-  output?: string;
   language?: BundledLanguage;
-  title?: string;
+  output?: string;
   state: ToolUIPart["state"];
-};
+  title?: string;
+}
 
 export function SandboxComposed({
   code,

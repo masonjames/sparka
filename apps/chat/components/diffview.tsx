@@ -167,10 +167,10 @@ function DiffContentPlugin({
   return null;
 }
 
-type DiffEditorProps = {
-  oldContent: string;
+interface DiffEditorProps {
   newContent: string;
-};
+  oldContent: string;
+}
 
 export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
   const initialConfig = {

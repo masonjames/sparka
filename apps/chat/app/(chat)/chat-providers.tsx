@@ -3,9 +3,9 @@
 import { AnonymousSessionInit } from "@/components/anonymous-session-init";
 import { ChatIdProvider } from "@/providers/chat-id-provider";
 
-type ChatProvidersProps = {
+interface ChatProvidersProps {
   children: React.ReactNode;
-};
+}
 
 export function ChatProviders({ children }: ChatProvidersProps) {
   return (

@@ -23,12 +23,12 @@ const initialArtifactData: UIArtifact = {
 
 type Selector<T> = (state: UIArtifact) => T;
 
-type ArtifactContextType = {
+interface ArtifactContextType {
   artifact: UIArtifact;
+  metadata: Record<string, any> | null;
   setArtifact: (
     updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)
   ) => void;
-  metadata: Record<string, any> | null;
   setMetadata: (
     documentId: string,
     metadata:
@@ -36,7 +36,7 @@ type ArtifactContextType = {
       | null
       | ((current: Record<string, any> | null) => Record<string, any> | null)
   ) => void;
-};
+}
 
 const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined

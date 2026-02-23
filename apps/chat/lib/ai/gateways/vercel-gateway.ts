@@ -38,9 +38,7 @@ export class VercelGateway
     return gateway.imageModel(modelId);
   }
 
-  createVideoModel(
-    modelId: VercelVideoModelId
-  ): Experimental_VideoModelV3 {
+  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV3 {
     return gateway.videoModel(modelId);
   }
 

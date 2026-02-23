@@ -7,13 +7,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type LoginCtaBannerProps = {
-  message: string;
+interface LoginCtaBannerProps {
   className?: string;
-  variant?: "default" | "amber" | "red";
-  dismissible?: boolean;
   compact?: boolean;
-};
+  dismissible?: boolean;
+  message: string;
+  variant?: "default" | "amber" | "red";
+}
 
 export function LoginCtaBanner({
   message,

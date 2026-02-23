@@ -3,28 +3,16 @@ import { env } from "@/lib/env";
 
 export type SearchAPI = "firecrawl" | "tavily" | "none";
 
-export type DeepResearchRuntimeConfig = {
-  // General Configuration
-  max_structured_output_retries: number;
+export interface DeepResearchRuntimeConfig {
   allow_clarification: boolean;
-  max_concurrent_research_units: number;
-
-  // Research Configuration
-  search_api: SearchAPI;
-  search_api_max_queries: number;
-  max_researcher_iterations: number;
-
-  // Model Configuration
-  summarization_model: string;
-  summarization_model_max_tokens: number;
-  research_model: string;
-  research_model_max_tokens: number;
   compression_model: string;
   compression_model_max_tokens: number;
   final_report_model: string;
   final_report_model_max_tokens: number;
-  status_update_model: string;
-  status_update_model_max_tokens: number;
+  max_concurrent_research_units: number;
+  max_researcher_iterations: number;
+  // General Configuration
+  max_structured_output_retries: number;
 
   // MCP server configuration (not yet implemented)
   mcp_config?: {
@@ -33,7 +21,19 @@ export type DeepResearchRuntimeConfig = {
     headers?: Record<string, string>;
   };
   mcp_prompt?: string;
-};
+  research_model: string;
+  research_model_max_tokens: number;
+
+  // Research Configuration
+  search_api: SearchAPI;
+  search_api_max_queries: number;
+  status_update_model: string;
+  status_update_model_max_tokens: number;
+
+  // Model Configuration
+  summarization_model: string;
+  summarization_model_max_tokens: number;
+}
 
 function getSearchApi(): SearchAPI {
   if (env.TAVILY_API_KEY) {
