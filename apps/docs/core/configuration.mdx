@@ -13,7 +13,6 @@ import type { ConfigInput } from "@/lib/config-schema";
 const config: ConfigInput = {
   appName: "Your App Name",
   appPrefix: "your-app",
-  githubUrl: "https://github.com/you/your-app",
 
   organization: {
     name: "Your Company",
@@ -27,9 +26,21 @@ const config: ConfigInput = {
     gateway: "vercel", // "vercel" | "openrouter" | "openai" | "openai-compatible"
     tools: {
       webSearch: { enabled: true },
+      urlRetrieval: { enabled: true },
       codeExecution: { enabled: true },
       mcp: { enabled: false },
+      followupSuggestions: { enabled: true, default: "openai/gpt-5-nano" },
       image: { enabled: true },
+      video: { enabled: true },
+      deepResearch: {
+        enabled: true,
+        defaultModel: "google/gemini-2.5-flash-lite",
+        finalReportModel: "google/gemini-3-flash",
+        allowClarification: true,
+        maxResearcherIterations: 1,
+        maxConcurrentResearchUnits: 2,
+        maxSearchQueries: 2,
+      },
     },
   },
 
@@ -80,6 +91,7 @@ Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. `featur
 | URL Retrieval         | `ai.tools.urlRetrieval.enabled`       | `FIRECRAWL_API_KEY`                                                                      |
 | MCP Connectors        | `ai.tools.mcp.enabled`                | `MCP_ENCRYPTION_KEY`                                                                     |
 | Image Generation      | `ai.tools.image.enabled`              | `BLOB_READ_WRITE_TOKEN`                                                                  |
+| Video Generation      | `ai.tools.video.enabled`              | `BLOB_READ_WRITE_TOKEN`                                                                  |
 | Deep Research         | `ai.tools.deepResearch.enabled`       | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                  |
 | Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider                                              |
 | Attachments           | `features.attachments`                | `BLOB_READ_WRITE_TOKEN`                                                                  |
@@ -92,6 +104,7 @@ ai: {
     codeExecution: { enabled: true },      // Vercel-native
     mcp: { enabled: false },               // Requires MCP_ENCRYPTION_KEY
     image: { enabled: true },              // Requires BLOB_READ_WRITE_TOKEN
+    video: { enabled: false },             // Requires BLOB_READ_WRITE_TOKEN
     deepResearch: { enabled: false },      // Requires search provider
     followupSuggestions: { enabled: true } // Uses selected provider/model
   },
@@ -121,7 +134,6 @@ Customize app name and organization details:
 appName: "ChatJS",
 appTitle: "ChatJS - The prod ready AI chat app",
 appPrefix: "chatjs",
-githubUrl: "https://github.com/franciscomoretti/chat.js",
 
 organization: {
   name: "Your Company",
@@ -131,6 +143,28 @@ organization: {
   },
 },
 ```
+
+## Deep Research
+
+Configure the deep research pipeline in `ai.tools.deepResearch`:
+
+```typescript
+ai: {
+  tools: {
+    deepResearch: {
+      enabled: true,                   // Requires webSearch provider config
+      defaultModel: "openai/gpt-5-mini",
+      finalReportModel: "openai/gpt-5-mini",
+      allowClarification: true,        // Ask clarifying questions before starting
+      maxResearcherIterations: 1,      // Supervisor loop iterations
+      maxConcurrentResearchUnits: 2,   // Topics researched in parallel
+      maxSearchQueries: 2,             // Queries per research topic
+    },
+  },
+},
+```
+
+See [Deep Research](/features/deep-research) for usage details.
 
 ## Using Config in Components
 
@@ -144,52 +178,4 @@ export function MyComponent() {
 }
 ```
 
-## Type Definition
-
-Full type reference:
-
-```typescript
-export type Config = {
-  ai: AiConfig; // includes gateway, model lists, workflows, and tool config
-  appPrefix: string;
-  appName: string;
-  /** Browser tab title (defaults to appName) */
-  appTitle?: string;
-  appDescription: string;
-  appUrl: string;
-  organization: {
-    name: string;
-    contact: {
-      privacyEmail: string;
-      legalEmail: string;
-    };
-  };
-  services: {
-    hosting: string;
-    aiProviders: string[];
-    paymentProcessors: string[];
-  };
-  features: {
-    attachments: boolean;
-  };
-  pricing?: PricingConfig;
-  legal: {
-    minimumAge: number;
-    governingLaw: string;
-    refundPolicy: string;
-  };
-  policies: {
-    privacy: { title: string; lastUpdated?: string };
-    terms: { title: string; lastUpdated?: string };
-  };
-  authentication: {
-    google: boolean;
-    github: boolean;
-    vercel: boolean;
-  };
-  anonymous: AnonymousConfig;
-  attachments: AttachmentsConfig;
-};
-```
-
-See [Config Reference](/reference/config) for full type definitions of `AiConfig`, `AnonymousConfig`, and `AttachmentsConfig`.
+See [Config Reference](/reference/config) for full type definitions.
