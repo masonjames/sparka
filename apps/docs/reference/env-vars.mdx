@@ -3,7 +3,7 @@ title: Environment Variables
 description: Complete reference for all environment variables used by ChatJS
 ---
 
-This page lists every environment variable recognized by ChatJS, grouped by category. The schema is defined in `apps/chat/lib/env-schema.ts` and validated at build time by `scripts/check-env.ts`.
+This page lists every environment variable recognized by ChatJS, grouped by category. The schema is defined in `apps/chat/lib/env-schema.ts` and validated at build time by `apps/chat/scripts/check-env.ts`.
 
 <Note>
   Missing required variables will cause the build to fail immediately. Variables
@@ -67,10 +67,10 @@ authentication: {
 
 ## AI Gateways
 
-Exactly one gateway must be active. Set `models.gateway` in `chat.config.ts` to select it.
+Exactly one gateway must be active. Set `ai.gateway` in `chat.config.ts` to select it.
 
 ```typescript title="chat.config.ts"
-models: {
+ai: {
   gateway: "vercel", // "vercel" | "openrouter" | "openai" | "openai-compatible"
 }
 ```
@@ -117,9 +117,9 @@ Works with any endpoint that follows the OpenAI API format: Ollama, LM Studio, v
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `OPENAI_COMPATIBLE_BASE_URL` | Yes | Base URL of the compatible API (e.g., `http://localhost:11434/v1`) |
-| `OPENAI_COMPATIBLE_API_KEY` | Optional | API key, if the provider requires one |
+| `OPENAI_COMPATIBLE_API_KEY` | Yes | API key for the compatible provider |
 
-**Setup:** Start your compatible server (for example, run `ollama serve` for Ollama) and set `OPENAI_COMPATIBLE_BASE_URL` to its `/v1` endpoint.
+**Setup:** Start your compatible server (for example, run `ollama serve` for Ollama), set `OPENAI_COMPATIBLE_BASE_URL` to its `/v1` endpoint, and provide `OPENAI_COMPATIBLE_API_KEY`.
 
 ---
 
@@ -141,8 +141,8 @@ features: {
 | Variable | Feature | Description | Get it |
 |----------|---------|-------------|--------|
 | `TAVILY_API_KEY` | `webSearch` | Tavily API key for web search (recommended) | [app.tavily.com](https://app.tavily.com) |
-| `EXA_API_KEY` | `webSearch` | Exa API key for web search | [dashboard.exa.ai](https://dashboard.exa.ai) |
 | `FIRECRAWL_API_KEY` | `webSearch`, `urlRetrieval` | Firecrawl API key for web search and URL content extraction | [firecrawl.dev](https://www.firecrawl.dev) |
+| `EXA_API_KEY` | _none_ | Recognized by env schema but not used by build-time `webSearch` validation | [dashboard.exa.ai](https://dashboard.exa.ai) |
 
 <Note>
   If both `TAVILY_API_KEY` and `FIRECRAWL_API_KEY` are set, Tavily is used for regular chat web search. Firecrawl is always used for URL retrieval.
@@ -277,7 +277,7 @@ All variables in one place:
 | `OPENROUTER_API_KEY` | Gateway | OpenRouter gateway |
 | `OPENAI_API_KEY` | Gateway | OpenAI gateway |
 | `OPENAI_COMPATIBLE_BASE_URL` | Gateway | OpenAI-compatible gateway |
-| `OPENAI_COMPATIBLE_API_KEY` | Gateway | OpenAI-compatible gateway (if provider requires it) |
+| `OPENAI_COMPATIBLE_API_KEY` | Gateway | OpenAI-compatible gateway |
 | `AUTH_GITHUB_ID` | Auth | If `authentication.github: true` |
 | `AUTH_GITHUB_SECRET` | Auth | If `authentication.github: true` |
 | `AUTH_GOOGLE_ID` | Auth | If `authentication.google: true` |
@@ -286,8 +286,8 @@ All variables in one place:
 | `VERCEL_APP_CLIENT_SECRET` | Auth | If `authentication.vercel: true` |
 | `BLOB_READ_WRITE_TOKEN` | Feature | If `attachments` or `imageGeneration` enabled |
 | `TAVILY_API_KEY` | Feature | If `webSearch` enabled (one search key required) |
-| `EXA_API_KEY` | Feature | If `webSearch` enabled (one search key required) |
 | `FIRECRAWL_API_KEY` | Feature | If `webSearch` or `urlRetrieval` enabled |
+| `EXA_API_KEY` | Optional | Recognized by env schema but not required by current validation |
 | `MCP_ENCRYPTION_KEY` | Feature | If `mcp` enabled |
 | `VERCEL_TEAM_ID` | Feature | If `sandbox` enabled on non-Vercel hosting |
 | `VERCEL_PROJECT_ID` | Feature | If `sandbox` enabled on non-Vercel hosting |

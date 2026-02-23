@@ -65,7 +65,7 @@ The tool returns a structured result:
       url: "https://example.com/article",
       language: "en",
     },
-  ];
+  ],
 }
 ```
 
@@ -76,11 +76,11 @@ The tool returns a structured result:
 | Config key       | `features.urlRetrieval`        |
 | Required env var | `FIRECRAWL_API_KEY`            |
 | Tool name        | `retrieveUrl`                  |
-| Tool file        | `lib/ai/tools/retrieve-url.ts` |
+| Tool file        | `apps/chat/lib/ai/tools/retrieve-url.ts` |
 
 ### Customization
 
-The tool description controls when the AI decides to invoke it. Edit `lib/ai/tools/retrieve-url.ts` to adjust:
+The tool description controls when the AI decides to invoke it. Edit `apps/chat/lib/ai/tools/retrieve-url.ts` to adjust:
 
 ```ts
 description: `Fetch structured information from a single URL via Firecrawl.

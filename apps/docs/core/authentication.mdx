@@ -26,7 +26,9 @@ authentication: {
 },
 ```
 
-Only providers set to `true` **and** with their env vars present are registered at runtime. At least one provider must be enabled.
+Provider toggles in `chat.config.ts` control validation and which sign-in buttons are shown. Runtime provider registration in `apps/chat/lib/auth.ts` is based on provider env vars being present.
+
+To fully disable a provider, set its toggle to `false` and remove its env vars.
 
 Config validation runs at build time via `bun run prebuild`. A missing env var for an enabled provider will fail the build early rather than causing a runtime error.
 
@@ -179,10 +181,10 @@ The chat API is public at the middleware level — anonymous session validation 
 
 Better Auth supports many OAuth 2.0 / OIDC providers (Discord, Twitter/X, Apple, LinkedIn, and more). To add one:
 
-1. Add it to the Better Auth config in `lib/auth.ts` with credentials from env vars.
-2. Add the new env vars to `lib/env-schema.ts`.
-3. Add a sign-in button to `components/social-auth-providers.tsx` using the Better Auth client.
+1. Add it to the Better Auth config in `apps/chat/lib/auth.ts` with credentials from env vars.
+2. Add the new env vars to `apps/chat/lib/env-schema.ts`.
+3. Add a sign-in button to `apps/chat/components/social-auth-providers.tsx` using the Better Auth client.
 4. Register the OAuth app with the provider, setting the redirect URI to `/api/auth/callback/[provider]`.
-5. Optionally, gate it behind a new flag in `authenticationConfigSchema` in `config-schema.ts`.
+5. Optionally, gate it behind a new flag in `authenticationConfigSchema` in `apps/chat/lib/config-schema.ts`.
 
 See the [Better Auth social providers docs](https://better-auth.com/docs/authentication/social-providers) for the full list and provider-specific options.
