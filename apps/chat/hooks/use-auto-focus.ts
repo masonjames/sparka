@@ -15,16 +15,48 @@ export function useAutoFocus({
       return;
     }
 
-    // Avoid stealing focus (e.g. user clicked a modal / another input during hydration).
-    const active = document.activeElement;
-    if (active && active !== document.body) {
-      return;
-    }
+    let fallbackTimeout: number | null = null;
 
     const raf = window.requestAnimationFrame(() => {
-      editor.focus();
+      const active = document.activeElement;
+      const isUserTypingElsewhere =
+        (active instanceof HTMLInputElement &&
+          !active.readOnly &&
+          !active.disabled &&
+          active.type !== "hidden") ||
+        (active instanceof HTMLTextAreaElement &&
+          !active.readOnly &&
+          !active.disabled) ||
+        (active instanceof HTMLElement && active.isContentEditable);
+
+      if (!isUserTypingElsewhere) {
+        editor.focus();
+        // Minimal fallback for hydration/layout races where focus is stolen.
+        fallbackTimeout = window.setTimeout(() => {
+          const currentActive = document.activeElement;
+          const stillNotTyping =
+            (currentActive instanceof HTMLInputElement &&
+              !currentActive.readOnly &&
+              !currentActive.disabled &&
+              currentActive.type !== "hidden") ||
+            (currentActive instanceof HTMLTextAreaElement &&
+              !currentActive.readOnly &&
+              !currentActive.disabled) ||
+            (currentActive instanceof HTMLElement &&
+              currentActive.isContentEditable);
+
+          if (!stillNotTyping) {
+            editor.focus();
+          }
+        }, 120);
+      }
     });
 
-    return () => window.cancelAnimationFrame(raf);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (fallbackTimeout !== null) {
+        window.clearTimeout(fallbackTimeout);
+      }
+    };
   }, [autoFocus, editor]);
 }
