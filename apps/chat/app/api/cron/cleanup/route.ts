@@ -4,9 +4,6 @@ import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";
 
-// Force dynamic rendering for this route (uses request.headers)
-export const dynamic = "force-dynamic";
-
 const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000; // 4 hours
 
 export async function GET(request: NextRequest) {
