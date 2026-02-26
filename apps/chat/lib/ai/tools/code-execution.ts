@@ -1,10 +1,12 @@
-import type { Sandbox } from "@vercel/sandbox";
 import { tool } from "ai";
 import z from "zod";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import { toolsDefinitions } from "./tools-definitions";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- @vercel/sandbox is optional
+type Sandbox = any;
 
 const WHITESPACE_REGEX = /\s+/;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/;
@@ -276,9 +278,7 @@ async function createSandbox(runtime: string): Promise<Sandbox> {
   // Dynamic import with webpackIgnore to prevent bundling.
   // @vercel/sandbox is only installed when codeExecution is enabled.
   const mod = "@vercel/sandbox";
-  const { Sandbox } = await (import(/* webpackIgnore: true */ mod) as Promise<
-    typeof import("@vercel/sandbox")
-  >);
+  const { Sandbox } = await import(/* webpackIgnore: true */ mod);
   return Sandbox.create({
     runtime,
     timeout: 5 * 60 * 1000,
