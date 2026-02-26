@@ -8,7 +8,7 @@
 # =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
-FROM node:22-slim AS deps
+FROM node:25-slim AS deps
 WORKDIR /app
 
 # Install build dependencies for native modules (better-sqlite3)
@@ -35,7 +35,7 @@ RUN bun install --frozen-lockfile || bun install
 # =============================================================================
 # Stage 2: Builder
 # =============================================================================
-FROM node:22-slim AS builder
+FROM node:25-slim AS builder
 WORKDIR /app
 
 # Install bun for turbo build
@@ -73,7 +73,7 @@ RUN cd apps/chat && bun run build
 # =============================================================================
 # Use Debian slim, NOT Alpine - native modules (better-sqlite3) compiled on
 # Debian (glibc) are incompatible with Alpine (musl)
-FROM node:22-slim AS runner
+FROM node:25-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
