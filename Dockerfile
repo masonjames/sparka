@@ -61,8 +61,9 @@ ENV SKIP_DB_MIGRATE=1
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV AUTH_SECRET="placeholder-auth-secret-will-be-replaced-at-runtime"
 
-# Build the chat app directly (skip turbo for Docker simplicity)
-RUN cd apps/chat && bun run build
+# Build the chat app - run next build directly, skipping prebuild env check
+# (env vars are set at runtime by Dokploy, not available during Docker build)
+RUN cd apps/chat && npx next build
 
 # =============================================================================
 # Stage 3: Production Runner
