@@ -11,11 +11,8 @@ import { z } from "zod";
  * without triggering `createEnv` runtime validation.
  */
 
-// Helper: trim whitespace (Dokploy pads env vars), treat empty as undefined
-const optionalUrl = z.preprocess(
-  (v) => (typeof v === "string" ? v.trim() || undefined : v),
-  z.string().url().optional()
-);
+// Optional URL — env vars are cleaned in env.ts before validation
+const optionalUrl = z.string().url().optional();
 
 export const serverEnvSchema = {
   // Required core
