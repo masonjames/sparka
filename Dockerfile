@@ -1,10 +1,9 @@
-# Dockerfile for Sparka AI Chat
+# Dockerfile for Sparka AI Chat (Monorepo)
 # Multi-stage build optimized for Next.js standalone output
 # Used by GitHub Actions to build and push to GHCR
 #
 # NOTE: Uses node:22-slim (Debian/glibc) throughout, NOT Alpine (musl).
 # This ensures native modules like better-sqlite3 work correctly.
-# Bun is not used because better-sqlite3 prebuild-install is unsupported.
 
 # =============================================================================
 # Stage 1: Dependencies
@@ -19,13 +18,19 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files (use package-lock.json for npm)
-COPY package.json package-lock.json* ./
+# Install bun for monorepo workspace support
+RUN npm install -g bun
 
-# Install dependencies with npm (includes devDependencies for build)
-# --legacy-peer-deps required due to @ai-sdk beta version peer conflicts
-# --ignore-scripts is NOT used since better-sqlite3 needs postinstall
-RUN npm ci --legacy-peer-deps
+# Copy workspace root files
+COPY package.json bun.lock turbo.json ./
+
+# Copy workspace package.json files
+COPY apps/chat/package.json ./apps/chat/
+COPY apps/docs/package.json ./apps/docs/ 2>/dev/null || true
+COPY packages/cli/package.json ./packages/cli/ 2>/dev/null || true
+
+# Install dependencies with bun (handles workspaces)
+RUN bun install --frozen-lockfile || bun install
 
 # =============================================================================
 # Stage 2: Builder
@@ -33,8 +38,12 @@ RUN npm ci --legacy-peer-deps
 FROM node:22-slim AS builder
 WORKDIR /app
 
+# Install bun for turbo build
+RUN npm install -g bun
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/chat/node_modules ./apps/chat/node_modules 2>/dev/null || true
 COPY . .
 
 # Set build-time environment variables
@@ -56,8 +65,8 @@ ENV R2_BUCKET="placeholder-bucket"
 ENV R2_ENDPOINT="https://placeholder.r2.cloudflarestorage.com"
 ENV R2_PUBLIC_URL="https://placeholder.example.com"
 
-# Build the application using npm (not bun - see header note)
-RUN npm run build
+# Build the chat app using turbo (builds only the chat workspace)
+RUN cd apps/chat && bun run build
 
 # =============================================================================
 # Stage 3: Production Runner
@@ -74,10 +83,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN groupadd --system --gid 1001 nodejs && \
     useradd --system --uid 1001 --gid nodejs nextjs
 
-# Copy standalone build output
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy standalone build output from monorepo
+COPY --from=builder /app/apps/chat/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/static ./apps/chat/.next/static
 
 USER nextjs
 
@@ -90,4 +99,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["node", "apps/chat/server.js"]

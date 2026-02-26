@@ -22,7 +22,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "coderabbit.autoReviewMode": "disabled",
-  "cSpell.words": ["firecrawl", "tavily"],
+  "cSpell.words": ["firecrawl", "isinstance", "tavily"],
   "[postcss]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

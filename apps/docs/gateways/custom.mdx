@@ -1,0 +1,270 @@
+---
+title: "Custom Gateway"
+description: "Add a new AI gateway to the multi-gateway system"
+---
+
+Add support for any AI provider by implementing the `GatewayProvider` interface and registering it. If your provider follows the OpenAI API format, consider using the built-in [OpenAI Compatible](/gateways/openai-compatible) gateway instead.
+
+## Steps
+
+### 1. Install the provider SDK
+
+If your provider has an AI SDK adapter, install it:
+
+```bash
+bun add @ai-sdk/openai-compatible
+```
+
+For providers with a dedicated SDK (like `@ai-sdk/openai` or `@openrouter/ai-sdk-provider`), install that instead.
+
+### 2. Add environment variables
+
+Register the required env vars in `lib/env.ts`:
+
+```ts title="lib/env.ts"
+server: {
+  // ... existing vars
+
+  // My Gateway (one required depending on config.models.gateway)
+  MY_GATEWAY_BASE_URL: z.string().url().optional(),
+  MY_GATEWAY_API_KEY: z.string().optional(),
+}
+```
+
+### 3. Create the gateway class
+
+Create `lib/ai/gateways/my-gateway.ts`. Every gateway implements the `GatewayProvider` interface:
+
+```ts
+type GatewayProvider<TGateway, TModelId, TImageModelId> = {
+  readonly type: TGateway;
+  createLanguageModel(modelId: TModelId): LanguageModel;
+  createImageModel(modelId: TImageModelId): ImageModel | null;
+  fetchModels(): Promise<AiGatewayModel[]>;
+};
+```
+
+Full example:
+
+```ts title="lib/ai/gateways/my-gateway.ts"
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import type { ImageModel, LanguageModel } from "ai";
+import { createModuleLogger } from "@/lib/logger";
+import type { AiGatewayModel } from "../ai-gateway-models-schemas";
+import { models as fallbackModels } from "../models.generated";
+import type { GatewayProvider } from "./gateway-provider";
+
+const log = createModuleLogger("ai/gateways/my-gateway");
+
+type MyProviderModelResponse = {
+  id: string;
+  object: string;
+  created: number;
+  owned_by: string;
+};
+
+function toAiGatewayModel(model: MyProviderModelResponse): AiGatewayModel {
+  return {
+    id: model.id,
+    object: "model",
+    created: model.created ?? 0,
+    owned_by: model.owned_by ?? "unknown",
+    name: model.id,
+    description: "",
+    context_window: 0,
+    max_tokens: 0,
+    type: "language",
+    pricing: {},
+  };
+}
+
+export class MyGateway implements GatewayProvider<
+  "my-gateway",
+  string,
+  string
+> {
+  readonly type = "my-gateway" as const;
+
+  private getProvider() {
+    const apiKey = this.getApiKey();
+    const baseURL = this.getBaseURL();
+    if (!baseURL) {
+      throw new Error("MY_GATEWAY_BASE_URL is not configured");
+    }
+    return createOpenAICompatible({
+      name: "my-gateway",
+      baseURL,
+      apiKey,
+    });
+  }
+
+  createLanguageModel(modelId: string): LanguageModel {
+    const provider = this.getProvider();
+    return provider(modelId);
+  }
+
+  createImageModel(modelId: string): ImageModel | null {
+    // Return null if your provider does not support image generation.
+    const provider = this.getProvider();
+    return provider.imageModel(modelId);
+  }
+
+  private getApiKey(): string | undefined {
+    return process.env.MY_GATEWAY_API_KEY;
+  }
+
+  private getBaseURL(): string | undefined {
+    return process.env.MY_GATEWAY_BASE_URL;
+  }
+
+  async fetchModels(): Promise<AiGatewayModel[]> {
+    const apiKey = this.getApiKey();
+    const baseURL = this.getBaseURL();
+
+    if (!baseURL) {
+      log.warn("No MY_GATEWAY_BASE_URL found, using fallback models");
+      return fallbackModels as unknown as AiGatewayModel[];
+    }
+
+    const url = `${baseURL}/models`;
+    log.debug({ url }, "Fetching models from my provider");
+
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (apiKey) {
+        headers.Authorization = `Bearer ${apiKey}`;
+      }
+
+      const response = await fetch(url, {
+        headers,
+        next: { revalidate: 3600 },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch models: ${response.statusText}`);
+      }
+
+      const body = await response.json();
+      const models = (body.data ?? []) as MyProviderModelResponse[];
+      const result = models.map(toAiGatewayModel);
+
+      log.info({ modelCount: result.length }, "Fetched models");
+      return result;
+    } catch (error) {
+      log.error({ err: error, url }, "Error fetching models, using fallback");
+      return fallbackModels as unknown as AiGatewayModel[];
+    }
+  }
+}
+```
+
+<Tip>
+  If your provider uses a dedicated SDK (not OpenAI-compatible), replace
+  `createOpenAICompatible` with the provider-specific factory. See the [OpenAI
+  gateway](https://github.com/franciscomoretti/chat.js/blob/main/lib/ai/gateways/openai-gateway.ts)
+  for an example that uses `createOpenAI`.
+</Tip>
+
+### 4. Register in the gateway registry
+
+Import your class and add it to the registry:
+
+```ts title="lib/ai/gateways/registry.ts"
+import { MyGateway } from "./my-gateway";
+
+export const gatewayRegistry = {
+  vercel: () => new VercelGateway(),
+  openrouter: () => new OpenRouterGateway(),
+  openai: () => new OpenAIGateway(),
+  "openai-compatible": () => new OpenAICompatibleGateway(),
+  "my-gateway": () => new MyGateway(), // add here
+} as const satisfies Record<string, () => GatewayProviderBase>;
+```
+
+### 5. Add the schema variant
+
+In `lib/config-schema.ts`, add your gateway to two places:
+
+**The schema map** (compile-time enforced):
+
+```ts title="lib/config-schema.ts"
+const gatewaySchemaMap: {
+  [G in GatewayType]: ReturnType<typeof createModelsSchema<G>>;
+} = {
+  vercel: createModelsSchema("vercel"),
+  openrouter: createModelsSchema("openrouter"),
+  openai: createModelsSchema("openai"),
+  "openai-compatible": createModelsSchema("openai-compatible"),
+  "my-gateway": createModelsSchema("my-gateway"), // add here
+};
+```
+
+**The discriminated union** (runtime validation):
+
+```ts title="lib/config-schema.ts"
+export const modelsConfigSchema = z.discriminatedUnion("gateway", [
+  gatewaySchemaMap.vercel,
+  gatewaySchemaMap.openrouter,
+  gatewaySchemaMap.openai,
+  gatewaySchemaMap["openai-compatible"],
+  gatewaySchemaMap["my-gateway"], // add here
+]);
+```
+
+<Note>
+  The `gatewaySchemaMap` record is typed as `[G in GatewayType]`, so TypeScript
+  shows an error if you add a gateway to the registry but forget to add it here.
+</Note>
+
+### 6. Configure your app
+
+Set the gateway and model defaults in `chat.config.ts`:
+
+```ts title="chat.config.ts"
+const config: ConfigInput = {
+  models: {
+    gateway: "my-gateway",
+    providerOrder: ["my-provider"],
+    disabledModels: [],
+    curatedDefaults: ["my-model-a", "my-model-b"],
+    anonymousModels: ["my-model-a"],
+    defaults: {
+      chat: "my-model-a",
+      title: "my-model-a",
+      // ... fill in all task defaults
+      image: "my-image-model",
+    },
+  },
+};
+```
+
+Add the env vars to `.env.local`:
+
+```bash title=".env.local"
+MY_GATEWAY_BASE_URL=https://api.my-provider.com/v1
+MY_GATEWAY_API_KEY=sk-...
+```
+
+### 7. Verify
+
+```bash
+bunx tsc --noEmit
+bun fetch:models
+```
+
+## Checklist
+
+1. Install the provider SDK (`bun add ...`)
+2. Add env vars to `lib/env.ts`
+3. Create the gateway class in `lib/ai/gateways/`
+4. Add it to `gatewayRegistry` in `registry.ts`
+5. Add the schema variant to `gatewaySchemaMap` and the discriminated union in `config-schema.ts`
+6. Set `gateway` in `chat.config.ts` and fill in model defaults
+7. Run `bunx tsc --noEmit` to verify types
+
+## Related
+
+- [Gateways Overview](/gateways/overview) for the gateway system architecture
+- [Multi-Model Support](/core/multi-model) for model configuration
