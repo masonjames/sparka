@@ -12,11 +12,10 @@ import { z } from "zod";
  */
 
 // Helper: trim whitespace (Dokploy pads env vars), treat empty as undefined
-const optionalUrl = z
-  .string()
-  .optional()
-  .transform((v) => v?.trim() || undefined)
-  .pipe(z.string().url().optional());
+const optionalUrl = z.preprocess(
+  (v) => (typeof v === "string" ? v.trim() || undefined : v),
+  z.string().url().optional()
+);
 
 export const serverEnvSchema = {
   // Required core
