@@ -14,11 +14,11 @@ const runMigrate = async () => {
     process.exit(0);
   }
 
-  // Only run migrations on production deployments
-  // Skip for preview deployments and local development
-  if (process.env.VERCEL_ENV !== "production") {
+  // On Vercel, only run migrations for production deployments
+  // On Docker/self-hosted, always run migrations (VERCEL_ENV won't be set)
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") {
     console.log(
-      `⏭️  Skipping migrations (VERCEL_ENV=${process.env.VERCEL_ENV ?? "undefined"})`
+      `⏭️  Skipping migrations (VERCEL_ENV=${process.env.VERCEL_ENV})`
     );
     process.exit(0);
   }

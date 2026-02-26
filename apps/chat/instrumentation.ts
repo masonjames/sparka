@@ -1,10 +1,8 @@
-import { registerOTel } from "@vercel/otel";
-import { LangfuseExporter } from "langfuse-vercel";
-import { config } from "@/lib/config";
+// Instrumentation for Docker/self-hosted deployment
+// Vercel OTel and Langfuse-Vercel are not available outside Vercel.
+// Add standard OpenTelemetry setup here if needed.
 
 export function register() {
-  registerOTel({
-    serviceName: config.appPrefix,
-    traceExporter: new LangfuseExporter(),
-  });
+  // No-op for Docker deployment
+  // To enable tracing, configure standard OpenTelemetry SDK here
 }

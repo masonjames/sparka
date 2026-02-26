@@ -1,4 +1,4 @@
-# Dockerfile for Sparka AI Chat (Monorepo)
+# Dockerfile for Chat by Mason James (Monorepo)
 # Multi-stage build optimized for Next.js standalone output
 # Used by GitHub Actions to build and push to GHCR
 #
@@ -52,7 +52,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Skip database migrations during Docker build
-# Migrations should run at container startup or via separate job
+# Migrations run at container startup via docker-entrypoint.sh
 ENV SKIP_DB_MIGRATE=1
 
 # Provide placeholder values for build-time env validation
@@ -85,6 +85,11 @@ COPY --from=builder /app/apps/chat/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/static ./apps/chat/.next/static
 
+# Copy migration files and entrypoint for runtime migrations
+COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/lib/db/migrations ./apps/chat/lib/db/migrations
+COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/lib/db/migrate.ts ./apps/chat/lib/db/migrate.ts
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -96,4 +101,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "apps/chat/server.js"]
+ENTRYPOINT ["./docker-entrypoint.sh"]

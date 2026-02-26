@@ -23,7 +23,7 @@ const config = {
     },
   },
   services: {
-    hosting: "Vercel",
+    hosting: "Docker",
     aiProviders: [
       "OpenAI",
       "Anthropic",
@@ -45,7 +45,7 @@ const config = {
     paymentProcessors: ["Stripe"],
   },
   features: {
-    attachments: true, // Requires BLOB_READ_WRITE_TOKEN
+    attachments: true, // Uses R2 storage (R2_* env vars)
   },
   legal: {
     minimumAge: 13,
@@ -65,7 +65,7 @@ const config = {
   authentication: {
     google: true, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
     github: true, // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-    vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+    vercel: false, // Disabled for Docker hosting
   },
   ai: {
     gateway: "vercel",
@@ -107,7 +107,7 @@ const config = {
         enabled: true, // Requires FIRECRAWL_API_KEY
       },
       codeExecution: {
-        enabled: true, // Vercel-native, no key needed
+        enabled: false, // Requires @vercel/sandbox — disabled for Docker
       },
       mcp: {
         enabled: true, // Requires MCP_ENCRYPTION_KEY
@@ -127,11 +127,11 @@ const config = {
         edits: "openai/gpt-5-mini",
       },
       image: {
-        enabled: true, // Requires BLOB_READ_WRITE_TOKEN
+        enabled: true, // Uses R2 storage (R2_* env vars)
         default: "google/gemini-3-pro-image",
       },
       video: {
-        enabled: true, // Requires BLOB_READ_WRITE_TOKEN
+        enabled: true, // Uses R2 storage (R2_* env vars)
         default: "xai/grok-imagine-video",
       },
       deepResearch: {
