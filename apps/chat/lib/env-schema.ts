@@ -11,11 +11,12 @@ import { z } from "zod";
  * without triggering `createEnv` runtime validation.
  */
 
-// Helper: treat empty strings as undefined (Docker/Dokploy often sets empty env vars)
+// Helper: trim whitespace (Dokploy pads env vars), treat empty as undefined
 const optionalUrl = z
-  .union([z.string().url(), z.literal("")])
+  .string()
   .optional()
-  .transform((v) => (v === "" ? undefined : v));
+  .transform((v) => v?.trim() || undefined)
+  .pipe(z.string().url().optional());
 
 export const serverEnvSchema = {
   // Required core

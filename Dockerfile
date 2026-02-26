@@ -85,9 +85,10 @@ COPY --from=builder /app/apps/chat/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/static ./apps/chat/.next/static
 
-# Copy migration files and entrypoint for runtime migrations
+# Copy migration files and postgres driver for runtime migrations
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/lib/db/migrations ./apps/chat/lib/db/migrations
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/scripts/docker-migrate.cjs ./apps/chat/scripts/docker-migrate.cjs
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres ./node_modules/postgres
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 
 USER nextjs
