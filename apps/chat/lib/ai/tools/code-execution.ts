@@ -1,4 +1,4 @@
-import { Sandbox } from "@vercel/sandbox";
+import type { Sandbox } from "@vercel/sandbox";
 import { tool } from "ai";
 import z from "zod";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -272,7 +272,8 @@ function getTokenAuth(): Record<string, string> {
   return {};
 }
 
-function createSandbox(runtime: string): Promise<Sandbox> {
+async function createSandbox(runtime: string): Promise<Sandbox> {
+  const { Sandbox } = await import("@vercel/sandbox");
   return Sandbox.create({
     runtime,
     timeout: 5 * 60 * 1000,

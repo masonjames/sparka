@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       "lucide-react",
     ],
   },
-  serverExternalPackages: ["pino", "pino-pretty"],
+  serverExternalPackages: ["pino", "pino-pretty", "@vercel/sandbox"],
   images: {
     remotePatterns: [
       {
