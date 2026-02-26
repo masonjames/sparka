@@ -24,10 +24,10 @@ RUN npm install -g bun
 # Copy workspace root files
 COPY package.json bun.lock turbo.json ./
 
-# Copy workspace package.json files
+# Copy workspace package.json files for all workspaces
 COPY apps/chat/package.json ./apps/chat/
-COPY apps/docs/package.json ./apps/docs/ 2>/dev/null || true
-COPY packages/cli/package.json ./packages/cli/ 2>/dev/null || true
+COPY apps/docs/package.json ./apps/docs/
+COPY packages/cli/package.json ./packages/cli/
 
 # Install dependencies with bun (handles workspaces)
 RUN bun install --frozen-lockfile || bun install
@@ -38,12 +38,13 @@ RUN bun install --frozen-lockfile || bun install
 FROM node:22-slim AS builder
 WORKDIR /app
 
-# Install bun for turbo build
+# Install bun for the build
 RUN npm install -g bun
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/chat/node_modules ./apps/chat/node_modules 2>/dev/null || true
+COPY --from=deps /app/apps/ ./apps/
+COPY --from=deps /app/packages/ ./packages/
 COPY . .
 
 # Set build-time environment variables
@@ -59,13 +60,8 @@ ENV SKIP_DB_MIGRATE=1
 # The @t3-oss/env-nextjs package validates at build time, requiring these
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV AUTH_SECRET="placeholder-auth-secret-will-be-replaced-at-runtime"
-ENV R2_ACCESS_KEY_ID="placeholder-r2-access-key"
-ENV R2_SECRET_ACCESS_KEY="placeholder-r2-secret-key"
-ENV R2_BUCKET="placeholder-bucket"
-ENV R2_ENDPOINT="https://placeholder.r2.cloudflarestorage.com"
-ENV R2_PUBLIC_URL="https://placeholder.example.com"
 
-# Build the chat app using turbo (builds only the chat workspace)
+# Build the chat app directly (skip turbo for Docker simplicity)
 RUN cd apps/chat && bun run build
 
 # =============================================================================
