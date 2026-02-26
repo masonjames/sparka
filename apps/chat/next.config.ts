@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone", // Required for Docker/Dokploy deployment
   typedRoutes: true,
-  cacheComponents: true,
   experimental: {
     optimizePackageImports: [
       "react-tweet",
