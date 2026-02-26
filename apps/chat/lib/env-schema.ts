@@ -10,6 +10,13 @@ import { z } from "zod";
  * Exported separately from `env.ts` so the CLI can import
  * without triggering `createEnv` runtime validation.
  */
+
+// Helper: treat empty strings as undefined (Docker/Dokploy often sets empty env vars)
+const optionalUrl = z
+  .union([z.string().url(), z.literal("")])
+  .optional()
+  .transform((v) => (v === "" ? undefined : v));
+
 export const serverEnvSchema = {
   // Required core
   DATABASE_URL: z.string().min(1).describe("Postgres connection string"),
@@ -36,16 +43,8 @@ export const serverEnvSchema = {
     .optional()
     .describe("Cloudflare R2 secret access key"),
   R2_BUCKET: z.string().min(1).optional().describe("Cloudflare R2 bucket name"),
-  R2_ENDPOINT: z
-    .string()
-    .url()
-    .optional()
-    .describe("Cloudflare R2 endpoint URL"),
-  R2_PUBLIC_URL: z
-    .string()
-    .url()
-    .optional()
-    .describe("Cloudflare R2 public URL for assets"),
+  R2_ENDPOINT: optionalUrl.describe("Cloudflare R2 endpoint URL"),
+  R2_PUBLIC_URL: optionalUrl.describe("Cloudflare R2 public URL for assets"),
 
   // Authentication providers (enable in chat.config.ts)
   AUTH_GOOGLE_ID: z.string().optional().describe("Google OAuth client ID"),
@@ -77,11 +76,9 @@ export const serverEnvSchema = {
     .optional()
     .describe("Vercel OIDC token (auto-set on Vercel deployments)"),
   OPENROUTER_API_KEY: z.string().optional().describe("OpenRouter API key"),
-  OPENAI_COMPATIBLE_BASE_URL: z
-    .string()
-    .url()
-    .optional()
-    .describe("Base URL for OpenAI-compatible provider"),
+  OPENAI_COMPATIBLE_BASE_URL: optionalUrl.describe(
+    "Base URL for OpenAI-compatible provider"
+  ),
   OPENAI_COMPATIBLE_API_KEY: z
     .string()
     .optional()
@@ -129,12 +126,9 @@ export const serverEnvSchema = {
     .describe("Vercel sandbox runtime identifier"),
 
   // App URL (for non-Vercel deployments) - full URL including https://
-  APP_URL: z
-    .url()
-    .optional()
-    .describe(
-      "App URL for non-Vercel deployments (full URL including https://)"
-    ),
+  APP_URL: optionalUrl.describe(
+    "App URL for non-Vercel deployments (full URL including https://)"
+  ),
 
   // Vercel platform (auto-set by Vercel)
   VERCEL_URL: z.string().optional().describe("Auto-set by Vercel platform"),
