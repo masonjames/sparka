@@ -273,7 +273,12 @@ function getTokenAuth(): Record<string, string> {
 }
 
 async function createSandbox(runtime: string): Promise<Sandbox> {
-  const { Sandbox } = await import("@vercel/sandbox");
+  // Dynamic import with webpackIgnore to prevent bundling.
+  // @vercel/sandbox is only installed when codeExecution is enabled.
+  const mod = "@vercel/sandbox";
+  const { Sandbox } = await (import(/* webpackIgnore: true */ mod) as Promise<
+    typeof import("@vercel/sandbox")
+  >);
   return Sandbox.create({
     runtime,
     timeout: 5 * 60 * 1000,
