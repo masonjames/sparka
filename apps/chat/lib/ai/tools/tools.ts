@@ -2,7 +2,6 @@ import type { FileUIPart, ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { codeExecution } from "@/lib/ai/tools/code-execution";
 import { createCodeDocumentTool } from "@/lib/ai/tools/documents/create-code-document";
 import { createSheetDocumentTool } from "@/lib/ai/tools/documents/create-sheet-document";
 import { createTextDocumentTool } from "@/lib/ai/tools/documents/create-text-document";
@@ -25,7 +24,7 @@ import type { ToolSession } from "./types";
 
 const log = createModuleLogger("tools:mcp");
 
-export function getTools({
+export async function getTools({
   dataStream,
   session,
   messageId,
@@ -74,8 +73,13 @@ export function getTools({
         }
       : {}),
 
+    // Code execution requires @vercel/sandbox — dynamically imported only when enabled
     ...(config.ai.tools.codeExecution.enabled
-      ? { codeExecution: codeExecution({ costAccumulator }) }
+      ? {
+          codeExecution: (
+            await import("@/lib/ai/tools/code-execution")
+          ).codeExecution({ costAccumulator }),
+        }
       : {}),
     ...(config.ai.tools.image.enabled
       ? {

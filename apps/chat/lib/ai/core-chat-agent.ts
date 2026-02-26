@@ -71,7 +71,7 @@ export async function createCoreChatAgent({
   });
 
   // Get base tools
-  const baseTools = getTools({
+  const baseTools = await getTools({
     dataStream,
     session: {
       user: userId ? { id: userId } : undefined,
