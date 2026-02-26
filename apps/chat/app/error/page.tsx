@@ -1,14 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-export const metadata: Metadata = {
-  title: "Something went wrong | Chat by Mason James",
-  description:
-    "We couldn't finish signing you in. Try again or contact the Mason James team.",
-};
 
 const errorCopy: Record<string, string> = {
   invalid_origin:
@@ -19,13 +15,9 @@ const errorCopy: Record<string, string> = {
     "That sign-in link is no longer valid. Request a fresh link and open it right away.",
 };
 
-async function ErrorContent({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
-  const params = await searchParams;
-  const errorCode = (params?.error || "unknown_error").toLowerCase();
+function ErrorContent() {
+  const searchParams = useSearchParams();
+  const errorCode = (searchParams.get("error") || "unknown_error").toLowerCase();
   const message =
     errorCopy[errorCode] ||
     "We couldn't complete your sign-in. Request a new magic link or try another method.";
@@ -57,11 +49,7 @@ async function ErrorContent({
   );
 }
 
-export default function AuthErrorPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default function AuthErrorPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-muted px-4">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-lg">
@@ -75,7 +63,7 @@ export default function AuthErrorPage({
             </h1>
           }
         >
-          <ErrorContent searchParams={searchParams} />
+          <ErrorContent />
         </Suspense>
       </div>
     </div>
