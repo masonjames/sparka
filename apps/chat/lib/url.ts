@@ -4,9 +4,12 @@ import { env } from "@/lib/env";
  * Returns the base URL for the application.
  * Priority: APP_URL > VERCEL_URL > localhost
  */
+const TRAILING_SLASH = /\/$/;
+
 export function getBaseUrl(): string {
-  console.log("env.APP_URL", env.APP_URL);
-  console.log("env.VERCEL_URL", env.VERCEL_URL);
+  if (env.APP_BASE_URL_OVERRIDE) {
+    return env.APP_BASE_URL_OVERRIDE.replace(TRAILING_SLASH, "");
+  }
   if (env.APP_URL) {
     return env.APP_URL;
   }

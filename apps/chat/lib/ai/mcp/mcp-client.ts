@@ -6,7 +6,7 @@ import type {
   ListPromptsResult,
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Tool } from "ai";
+import type { Tool, ToolSet } from "ai";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
@@ -91,6 +91,10 @@ export class MCPClient {
 
   getAuthorizationUrl(): URL | undefined {
     return this.authorizationUrl;
+  }
+
+  get serverInfo() {
+    return this.client?.serverInfo;
   }
 
   async connect(oauthState?: string): Promise<McpClientInstance | undefined> {
@@ -212,12 +216,17 @@ export class MCPClient {
   /**
    * Get tools from the MCP server, already in AI SDK format.
    */
-  async tools(): Promise<Record<string, Tool>> {
+  async tools(
+    ...args: Parameters<NonNullable<McpClientInstance>["tools"]>
+  ): Promise<Record<string, Tool>> {
     if (!this.client) {
       throw new Error("Client not connected");
     }
     try {
-      return await this.client.tools();
+      return (await this.client.tools(...args)) as ToolSet as Record<
+        string,
+        Tool
+      >;
     } catch (error) {
       this.handlePotentialAuthError(error);
       throw error;

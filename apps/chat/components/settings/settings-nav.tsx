@@ -1,11 +1,34 @@
 "use client";
 
-import { Cpu, Plug, Settings } from "lucide-react";
-import Link from "next/link";
+import { Cpu, type LucideIcon, Plug, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { InternalLink } from "@/components/internal-link";
 import { config } from "@/lib/config";
 import { cn } from "@/lib/utils";
+
+type SettingsNavItem = {
+  href: "/settings" | "/settings/models" | "/settings/connectors";
+  label: string;
+  icon: LucideIcon;
+};
+
+function getNavItems(): SettingsNavItem[] {
+  const items: SettingsNavItem[] = [
+    { href: "/settings", label: "General", icon: Settings },
+    { href: "/settings/models", label: "Models", icon: Cpu },
+  ];
+
+  if (config.ai.tools.mcp.enabled) {
+    items.push({
+      href: "/settings/connectors",
+      label: "Connectors",
+      icon: Plug,
+    });
+  }
+
+  return items;
+}
 
 export function SettingsNav({
   orientation = "vertical",
@@ -14,23 +37,7 @@ export function SettingsNav({
 }) {
   const pathname = usePathname();
 
-  const navItems = useMemo(
-    () =>
-      [
-        { href: "/settings" as const, label: "General", icon: Settings },
-        { href: "/settings/models" as const, label: "Models", icon: Cpu },
-        ...(config.ai.tools.mcp.enabled
-          ? [
-              {
-                href: "/settings/connectors" as const,
-                label: "Connectors",
-                icon: Plug,
-              },
-            ]
-          : []),
-      ] as const,
-    []
-  );
+  const navItems = useMemo(() => getNavItems(), []);
 
   return (
     <nav
@@ -46,7 +53,7 @@ export function SettingsNav({
             : pathname.startsWith(href);
 
         return (
-          <Link
+          <InternalLink
             className={cn(
               "flex items-center gap-2 rounded-md px-3 py-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               isActive && "bg-muted text-foreground"
@@ -56,7 +63,7 @@ export function SettingsNav({
           >
             <Icon className="size-4" />
             {label}
-          </Link>
+          </InternalLink>
         );
       })}
     </nav>

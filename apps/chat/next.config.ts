@@ -3,12 +3,18 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone", // Required for Docker/Dokploy deployment
   typedRoutes: true,
+  cacheComponents: true,
+  partialPrefetching: true,
   experimental: {
     optimizePackageImports: [
       "react-tweet",
       "echarts-for-react",
       "lucide-react",
     ],
+    staleTimes: {
+      dynamic: 0,
+      static: 30,
+    },
   },
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {

@@ -1,13 +1,10 @@
-import {
-  useChatActions,
-  useChatStatus,
-  useChatStoreApi,
-} from "@ai-sdk-tools/store";
 import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { Action } from "@/components/ai-elements/actions";
 import type { ChatMessage } from "@/lib/ai/types";
+import { getRetryMessageInput } from "@/lib/chat-tree-actions";
+import { useChatStatus, useChatStoreApi } from "@/lib/stores/base";
 
 export function RetryButton({
   messageId,
@@ -16,56 +13,46 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
   const chatStore = useChatStoreApi<ChatMessage>();
   const status = useChatStatus();
 
   const handleRetry = useCallback(() => {
-    if (!sendMessage) {
+    const { messages, regenerate } = chatStore.getState();
+    if (!regenerate) {
       toast.error("Cannot retry this message");
       return;
     }
 
-    // Find the current message (AI response) and its parent (user message)
-    const currentMessages = chatStore.getState().messages;
-    const currentMessageIdx = currentMessages.findIndex(
-      (msg) => msg.id === messageId
-    );
-    if (currentMessageIdx === -1) {
-      toast.error("Cannot find the message to retry");
+    const retryInput = getRetryMessageInput({
+      messageId,
+      messages,
+    });
+
+    if (!retryInput.ok) {
+      if (retryInput.reason === "message_not_found") {
+        toast.error("Cannot find the message to retry");
+      } else if (retryInput.reason === "parent_not_found") {
+        toast.error("Cannot find the user message to retry");
+      } else if (retryInput.reason === "parent_not_user") {
+        toast.error("Parent message is not from user");
+      } else {
+        toast.error("Cannot determine which model to retry");
+      }
       return;
     }
 
-    // Find the parent user message (should be the message before the AI response)
-    const parentMessageIdx = currentMessageIdx - 1;
-    if (parentMessageIdx < 0) {
-      toast.error("Cannot find the user message to retry");
-      return;
-    }
-
-    const parentMessage = currentMessages[parentMessageIdx];
-    if (parentMessage.role !== "user") {
-      toast.error("Parent message is not from user");
-      return;
-    }
-    setMessages(currentMessages.slice(0, parentMessageIdx));
-
-    // Resend the parent user message
-    sendMessage(
-      {
-        ...parentMessage,
-        metadata: {
-          ...parentMessage.metadata,
-          createdAt: parentMessage.metadata?.createdAt || new Date(),
-          selectedModel: parentMessage.metadata?.selectedModel || "",
-          parentMessageId: parentMessage.metadata?.parentMessageId || null,
-        },
+    regenerate({
+      body: {
+        isPrimaryParallel: retryInput.isPrimaryParallel,
+        parallelGroupId: retryInput.parallelGroupId,
+        parallelIndex: retryInput.parallelIndex,
+        selectedModelId: retryInput.selectedModelId,
       },
-      {}
-    );
-
-    toast.success("Retrying message...");
-  }, [sendMessage, messageId, setMessages, chatStore]);
+      messageId,
+    }).catch(() => {
+      toast.error("Could not retry this message");
+    });
+  }, [messageId, chatStore]);
 
   if (status === "streaming" || status === "submitted") {
     return null;

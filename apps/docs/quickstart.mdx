@@ -19,13 +19,14 @@ npx @chat-js/cli@latest create my-app
 cd my-app
 ```
 
-The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It automatically detects your package manager and creates the appropriate lock file.
+The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It also asks whether to include a [Desktop app](/platforms/desktop). It preserves `bun`, `pnpm`, and `yarn` when launched from those tools, and defaults `npx`/npm launches to npm unless you pass `--package-manager`.
 
 ## Understanding `chat.config.ts`
 
 The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with the CLI.
 
-<Accordion title="What the default config includes">
+<Accordion>
+<AccordionItem title="What the default config includes">
   The default configuration gives you a minimal, working setup:
 
 | Setting             | Default           | Notes                                                         |
@@ -36,10 +37,11 @@ The `chat.config.ts` file controls all feature toggles, branding, and app settin
 | **Anonymous users** | 10 credits        | Limited access, no tools                                      |
 | **Models**          | Curated list      | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5     |
 
-This keeps your initial setup simple — the CLI will tell you exactly which environment variables are needed based on your choices.
+This keeps your initial setup simple. The CLI will tell you exactly which environment variables are needed based on your choices.
 
 Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
 
+</AccordionItem>
 </Accordion>
 
 ### 2. Configure Environment Variables
@@ -52,8 +54,8 @@ After scaffolding, the CLI prints the exact environment variables required for y
 
 Expand the sections below for setup instructions:
 
-<AccordionGroup>
-  <Accordion title="Database (PostgreSQL)">
+<Accordion>
+  <AccordionItem title="Database (PostgreSQL)">
     **Option A: Neon** (generous free tier)
     1. Go to [Neon](https://neon.tech)
     2. Create a project and database
@@ -71,8 +73,8 @@ Expand the sections below for setup instructions:
     createdb chatjs
     # DATABASE_URL=postgres://localhost:5432/chatjs
     ```
-  </Accordion>
-  <Accordion title="AI Gateway">
+  </AccordionItem>
+  <AccordionItem title="AI Gateway">
     ChatJS supports multiple AI gateways. Pick one:
 
     **Option A: Vercel AI Gateway** (default)
@@ -86,7 +88,7 @@ Expand the sections below for setup instructions:
     3. Copy the key → `OPENROUTER_API_KEY`
 
     **Option C: OpenAI**
-    1. Go to [OpenAI API Keys](https://platform.openai.com/api-keys)
+    1. Follow the [OpenAI quickstart](https://developers.openai.com/api/docs/quickstart) to create an API key
     2. Create an API key
     3. Copy the key → `OPENAI_API_KEY`
 
@@ -94,8 +96,8 @@ Expand the sections below for setup instructions:
     Use any endpoint that follows the OpenAI API format (Ollama, LM Studio, vLLM, Azure).
 
     See [Gateways Overview](/gateways/overview) for a full comparison and configuration details.
-  </Accordion>
-  <Accordion title="Authentication (at least one provider required)">
+  </AccordionItem>
+  <AccordionItem title="Authentication (at least one provider required)">
     **GitHub (Recommended)**
     1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
     2. Click **New OAuth App**
@@ -116,17 +118,20 @@ Expand the sections below for setup instructions:
     2. Create a new integration with **Sign In with Vercel**
     3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
     4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
-  </Accordion>
-  <Accordion title="Blob Storage (Optional)">
-    Required for file attachments and image generation. Skip if you don't need these features.
+  </AccordionItem>
+  <AccordionItem title="File Storage (Optional)">
+    Required for file attachments, image generation, and video generation. The
+    installer asks you to select a Files SDK provider when you enable one of
+    these capabilities.
 
-    1. Go to [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
-    2. Create a new blob store
-    3. Copy the token → `BLOB_READ_WRITE_TOKEN`
+    Configure the environment variables printed by the CLI for your selected
+    provider. For Vercel Blob, connect a Blob store and copy its token to
+    `BLOB_READ_WRITE_TOKEN` for local development.
 
-    To disable, set `features.attachments: false` and `ai.tools.image.enabled: false` in `chat.config.ts`.
-  </Accordion>
-</AccordionGroup>
+    See [File storage](./core/file-storage) for provider configuration,
+    credentials, and migration behavior.
+  </AccordionItem>
+</Accordion>
 
 ### 3. Push Database Schema
 
@@ -142,7 +147,7 @@ This pushes the Drizzle schema directly to your database. For production migrati
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). You should see the ChatJS interface with a model selector and chat input.
+Open `http://localhost:3000`. You should see the ChatJS interface with a model selector and chat input.
 
 ## Deploying to Production
 
@@ -152,7 +157,7 @@ Once you're running locally, deploy your app:
   <Card title="Vercel" icon="triangle" href="/deployment/vercel">
     Recommended. Integrated database, blob storage, and AI Gateway.
   </Card>
-  <Card title="Docker" icon="docker" href="/deployment/docker">
+  <Card title="Docker" icon="container" href="/deployment/docker">
     Containerized deployment for any platform.
   </Card>
   <Card title="Self-Hosted" icon="server" href="/deployment/self-hosted">
@@ -162,22 +167,23 @@ Once you're running locally, deploy your app:
 
 ## Troubleshooting
 
-<AccordionGroup>
-  <Accordion title="Missing environment variables error">
+<Accordion>
+  <AccordionItem title="Missing environment variables error">
     ChatJS validates env vars at build time. Check `.env.local` has all required
     variables and restart the dev server.
-  </Accordion>
-  <Accordion title="Database connection failed">
+  </AccordionItem>
+  <AccordionItem title="Database connection failed">
     Verify `DATABASE_URL` is correct and the database is running. For local
     PostgreSQL, check the service is started.
-  </Accordion>
-  <Accordion title="OAuth redirect error">
+  </AccordionItem>
+  <AccordionItem title="OAuth redirect error">
     Make sure the callback URL in your OAuth app matches exactly. For local dev,
     use `http://localhost:3000/api/auth/callback/{provider}`.
-  </Accordion>
-</AccordionGroup>
+  </AccordionItem>
+</Accordion>
 
-<Accordion title="Optional Features">
+<Accordion>
+<AccordionItem title="Optional Features">
   These environment variables enable additional capabilities:
 
 | Variable              | Feature           | Setup Guide                                            |
@@ -190,17 +196,21 @@ Once you're running locally, deploy your app:
 | `MCP_ENCRYPTION_KEY`  | MCP connectors    | `openssl rand -base64 32` (must be exactly 44 chars)   |
 | `CRON_SECRET`         | Cleanup cron job  | [Generate](https://generate-secret.vercel.app/32)      |
 
+</AccordionItem>
 </Accordion>
 
 ## Next Steps
 
 You're up and running. Here's where to go next:
 
-<CardGroup cols={2}>
-  <Card title="Configuration" icon="gear" href="/core/configuration">
+<CardGroup cols={3}>
+  <Card title="Configuration" icon="settings" href="/core/configuration">
     Customize features, branding, and settings in chat.config.ts
   </Card>
   <Card title="AI Capabilities" icon="sparkles" href="/features/overview">
     Explore built-in tools: web search, image generation, code execution
+  </Card>
+  <Card title="Desktop App" icon="monitor" href="/platforms/desktop">
+    Package your app as a native desktop application with Electron
   </Card>
 </CardGroup>

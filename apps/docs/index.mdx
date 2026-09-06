@@ -1,27 +1,36 @@
 ---
 title: "Introduction"
 description: "The prod-ready AI chat app"
+seo:
+  title: "Build Production-Ready AI Chat Applications"
+  description: "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
 ---
 
 <img
-  className="block dark:hidden"
-  src="/images/hero-light.png"
+  class="block dark:hidden"
+  src="/docs/images/hero-light.png"
   alt="Hero Light"
 />
 <img
-  className="hidden dark:block"
-  src="/images/hero-dark.png"
+  class="hidden dark:block"
+  src="/docs/images/hero-dark.png"
   alt="Hero Dark"
 />
 
 Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-ready foundation with authentication, hundreds of models via pluggable gateways, streaming, and tools so you can focus on what makes your app unique.
 
 <CardGroup cols={2}>
-  <Card title="Live Demo" icon="sparkles" href="https://chatjs.dev">
+  <Card title="Live Demo" icon="sparkles" href="https://demo.chatjs.dev">
     See what you're building.
   </Card>
   <Card title="Get Started" icon="rocket" href="/quickstart">
     Create, configure, deploy. Go from zero to production in minutes.
+  </Card>
+  <Card title="Web Platform" icon="globe" href="/platforms/web">
+    Run ChatJS in the browser by default and deploy it like any Next.js app.
+  </Card>
+  <Card title="Desktop Platform" icon="monitor" href="/platforms/desktop">
+    Package the same app as a native macOS, Windows, or Linux desktop app.
   </Card>
 </CardGroup>
 
@@ -39,7 +48,7 @@ npx @chat-js/cli@latest create my-app
 ## What's Included
 
 <CardGroup cols={3}>
-  <Card title="Multi-Gateway" icon="robot" href="/core/multi-model">
+  <Card title="Multi-Gateway" icon="bot" href="/core/multi-model">
     Hundreds of models via Vercel AI Gateway or OpenRouter
   </Card>
   <Card title="Auth" icon="lock" href="/core/authentication">
@@ -51,7 +60,7 @@ npx @chat-js/cli@latest create my-app
   <Card title="Resumable Streams" icon="bolt" href="/cookbook/resumable-streams">
     Continue generation after page refresh
   </Card>
-  <Card title="Branching" icon="code-branch" href="/features/branching">
+  <Card title="Branching" icon="git-branch" href="/features/branching">
     Fork conversations, explore alternatives
   </Card>
   <Card title="Syntax Highlighting" icon="code" href="/core/syntax-highlighting">
@@ -73,7 +82,7 @@ npx @chat-js/cli@latest create my-app
     Organize chats into workspaces
   </Card>
   <Card title="Code Execution" icon="terminal" href="/features/code-execution">
-    Run code snippets in sandbox
+    Run Python and JavaScript in sandbox
   </Card>
 </CardGroup>
 
@@ -87,7 +96,7 @@ npx @chat-js/cli@latest create my-app
 - [Drizzle ORM](https://orm.drizzle.team) - Type-safe database queries
 - [PostgreSQL](https://www.postgresql.org) - Primary database
 - [Redis](https://redis.io) - Caching & resumable streams
-- [Vercel Blob](https://vercel.com/storage/blob) - Blob storage
+- [Files SDK](https://files-sdk.dev) - Provider-agnostic file storage
 - [Shadcn/UI](https://ui.shadcn.com) - Beautiful, accessible components
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 - [tRPC](https://trpc.io) - End-to-end type-safe APIs
@@ -103,3 +112,4 @@ npx @chat-js/cli@latest create my-app
 - [Streamdown](https://streamdown.ai/) - Markdown for AI streaming
 - [AI Elements](https://ai-sdk.dev/elements/overview) - AI-native Components
 - [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
+- [`@chat-js/thread`](./core/use-thread) - Branching conversations with a `useChat`-compatible interface

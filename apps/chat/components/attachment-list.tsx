@@ -4,11 +4,13 @@ import {
   Download,
   ExternalLink,
   FileTextIcon,
+  ImageOffIcon,
   Loader2Icon,
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   PromptInputHoverCard,
   PromptInputHoverCardContent,
@@ -16,7 +18,9 @@ import {
 import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
 import { HoverCardTrigger } from "@/components/ui/hover-card";
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 import type { Attachment } from "@/lib/ai/types";
+import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
 function AttachmentIcon({
@@ -30,13 +34,25 @@ function AttachmentIcon({
   url: string;
   name: string;
 }) {
+  const { handleImageError, imageUnavailable } = useImageLoadError(url);
   if (isImage) {
+    if (imageUnavailable) {
+      return (
+        <>
+          <ImageOffIcon className="size-3 text-muted-foreground" />
+          <span className="sr-only">Preview unavailable</span>
+        </>
+      );
+    }
+    const imageProps = getFileImageProps(url);
     return (
       <Image
         alt={name || "attachment"}
         className="size-5 object-cover"
         height={20}
-        src={url}
+        onError={handleImageError}
+        src={imageProps.src}
+        unoptimized={imageProps.unoptimized}
         width={20}
       />
     );
@@ -66,7 +82,7 @@ function AttachmentPill({
   return (
     <div
       className={cn(
-        "group relative flex h-8 cursor-default select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        "group relative flex h-8 cursor-default select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground",
         isUploading && "opacity-60"
       )}
       data-testid="input-attachment-preview"
@@ -191,6 +207,15 @@ function AttachmentItem({
                 e.stopPropagation();
                 try {
                   const response = await fetch(url);
+                  if (response.status === 404) {
+                    toast.error("File unavailable");
+                    return;
+                  }
+                  if (!response.ok) {
+                    throw new Error(
+                      `File download failed (${response.status})`
+                    );
+                  }
                   const blob = await response.blob();
                   const blobUrl = URL.createObjectURL(blob);
                   const link = document.createElement("a");

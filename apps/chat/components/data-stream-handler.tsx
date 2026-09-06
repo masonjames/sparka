@@ -1,23 +1,48 @@
 "use client";
+import type { DataUIPart } from "ai";
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+import type { ArtifactMetadata } from "@/components/create-artifact";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { UiToolName } from "@/lib/ai/types";
-import { useChatId } from "@/providers/chat-id-provider";
+import type {
+  ChatMessage,
+  CustomUIDataTypes,
+  UiToolName,
+} from "@/lib/ai/types";
+import {
+  codeArtifact,
+  getCodeArtifactMetadata,
+} from "@/lib/artifacts/code/client";
+import {
+  getSheetArtifactMetadata,
+  sheetArtifact,
+} from "@/lib/artifacts/sheet/client";
+import { textArtifact } from "@/lib/artifacts/text/client";
+import { isDataPartOnMessagePath } from "@/lib/data-stream";
+import { useChatStoreApi } from "@/lib/stores/base";
+import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useChatInput } from "@/providers/chat-input-provider";
-import { useSession } from "@/providers/session-provider";
-import { artifactDefinitions } from "./artifact-panel";
-import { useDataStream } from "./data-stream-provider";
+
+function createTypedMetadataSetter<M extends ArtifactMetadata>(
+  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+  coerce: (metadata: ArtifactMetadata) => M
+): Dispatch<SetStateAction<M>> {
+  return (value) => {
+    setMetadata((current) => {
+      const typedCurrent = coerce(current);
+      return typeof value === "function" ? value(typedCurrent) : value;
+    });
+  };
+}
 
 function handleResearchUpdate({
   delta,
   setSelectedTool,
 }: {
-  delta: any;
+  delta: DataUIPart<CustomUIDataTypes>;
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
 }): void {
   if (delta.type === "data-researchUpdate") {
-    // TODO: fix this type
-    const update: any = (delta as any).data;
+    const update = delta.data;
     if (update?.type === "completed") {
       setSelectedTool((current) =>
         current === "deepResearch" ? null : current
@@ -36,48 +61,76 @@ function processArtifactStreamPart({
   setArtifact,
   setMetadata,
 }: {
-  delta: any;
+  delta: DataUIPart<CustomUIDataTypes>;
   artifact: ReturnType<typeof useArtifact>["artifact"];
   setArtifact: ReturnType<typeof useArtifact>["setArtifact"];
   setMetadata: ReturnType<typeof useArtifact>["setMetadata"];
 }): void {
-  const artifactDefinition = artifactDefinitions.find(
-    (definition) => definition.kind === artifact.kind
-  );
-
-  if (artifactDefinition?.onStreamPart) {
-    artifactDefinition.onStreamPart({
-      streamPart: delta,
-      setArtifact,
-      setMetadata,
-    });
+  switch (artifact.kind) {
+    case "code":
+      codeArtifact.onStreamPart?.({
+        streamPart: delta,
+        setArtifact,
+        setMetadata: createTypedMetadataSetter(
+          setMetadata,
+          getCodeArtifactMetadata
+        ),
+      });
+      break;
+    case "sheet":
+      sheetArtifact.onStreamPart?.({
+        streamPart: delta,
+        setArtifact,
+        setMetadata: createTypedMetadataSetter(
+          setMetadata,
+          getSheetArtifactMetadata
+        ),
+      });
+      break;
+    case "text":
+      textArtifact.onStreamPart?.({
+        streamPart: delta,
+        setArtifact,
+        setMetadata,
+      });
+      break;
+    default:
+      break;
   }
 }
 
-export function DataStreamHandler({ id }: { id: string }) {
+export function DataStreamHandler() {
   const { dataStream } = useDataStream();
+  const chatStore = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, setMetadata } = useArtifact();
   const lastProcessedIndex = useRef(-1);
-  const { data: session } = useSession();
+  const lastProcessedPart = useRef<DataUIPart<CustomUIDataTypes> | undefined>(
+    undefined
+  );
   const { setSelectedTool } = useChatInput();
-  const { confirmChatId } = useChatId();
-  const isAuthenticated = !!session;
 
   useEffect(() => {
     if (!dataStream?.length) {
+      lastProcessedIndex.current = -1;
+      lastProcessedPart.current = undefined;
       return;
+    }
+
+    if (
+      lastProcessedIndex.current >= 0 &&
+      dataStream[lastProcessedIndex.current] !== lastProcessedPart.current
+    ) {
+      lastProcessedIndex.current = -1;
     }
 
     const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
     lastProcessedIndex.current = dataStream.length - 1;
+    lastProcessedPart.current = dataStream.at(-1);
+    const messages = chatStore.getState().messages;
 
     for (const delta of newDeltas) {
-      if (
-        delta.type === "data-chatConfirmed" &&
-        isAuthenticated &&
-        id === delta.data.chatId
-      ) {
-        confirmChatId(delta.data.chatId);
+      if (!isDataPartOnMessagePath(delta, messages)) {
+        continue;
       }
 
       handleResearchUpdate({ delta, setSelectedTool });
@@ -90,14 +143,12 @@ export function DataStreamHandler({ id }: { id: string }) {
       });
     }
   }, [
+    artifact,
+    chatStore,
     dataStream,
     setArtifact,
     setMetadata,
-    artifact,
-    isAuthenticated,
     setSelectedTool,
-    confirmChatId,
-    id,
   ]);
 
   return null;

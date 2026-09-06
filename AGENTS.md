@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Onboarding & Required References
-Read `CLAUDE.md` before contributing; it documents upstream sync rules, database guidance, and bd task policies. Treat the bd CLI (`bd list`, `bd show <id>`) as the canonical task tracker. You have preinstalled GitHub CLI, Vercel CLI, Neon CLI, and the project id `prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r`; prefer these tools for auth, deploys, and status checks.
+Read `CLAUDE.md` before contributing; it documents upstream sync rules and database guidance. Track work in GitHub issues and pull requests. You have preinstalled GitHub CLI, Vercel CLI, Neon CLI, and the project id `prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r`; prefer these tools for auth, deploys, and status checks.
 
 ## Project Structure & Module Organization
 Routes, layouts, and server actions sit in `app/` (use `app/api/*` for handlers). Shared UI resides in `components/`, hooks in `hooks/`, context/state providers in `providers/`, and reusable logic in `lib/`. Drizzle schemas plus migrations are under `lib/db/` with config in `drizzle.config.ts`. RPC routers live in `trpc/`, long-form docs in `docs/`, and static assets in `public/`.
@@ -22,7 +22,7 @@ Co-locate `<name>.test.ts(x)` beside the code they cover and run via `bun run te
 
 ## Git, Upstream, & Deployment
 
-This fork tracks `upstream=https://github.com/FranciscoMoretti/sparka.git` and includes custom Stripe/Ghost subscription integrations.
+This fork tracks `upstream=https://github.com/FranciscoMoretti/chat-js.git` and includes custom Stripe/Ghost subscription integrations.
 
 ### Upstream Merging Strategy
 **Use direct merge** (not rebase): `git fetch upstream && git merge upstream/main`
@@ -48,7 +48,12 @@ This fork tracks `upstream=https://github.com/FranciscoMoretti/sparka.git` and i
 - Migration conflicts: Renumber our migration if both created same number
 
 ### Deployment Workflow
-Use `gh` for status/PRs and `vercel link && vercel deploy --project prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r` for previews. Always `vercel env pull .env.local` before local testing. Never skip `CLAUDE.md` when onboarding new agents or planning deployments.
+Use `gh` for status/PRs and `vercel link && vercel deploy --project prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r` for previews. Use isolated Dagger fixtures for build and test; do not pull production environments. Never skip `CLAUDE.md` when onboarding new agents or planning deployments.
 
 ## Security & Configuration Tips
 Mirror `.env.example` into `.env.local`, populate secrets, and sync with `vercel env pull` before running `bun dev`. Set `APP_BASE_URL_OVERRIDE` + `NEXT_PUBLIC_APP_BASE_URL` to the canonical domain (e.g., `https://chat.masonjames.com`), `AUTH_COOKIE_DOMAIN_OVERRIDE` to `.masonjames.com` to share Better Auth cookies across subdomains, and keep `AUTH_TRUSTED_ORIGINS` updated for every future app host. `proxy.ts` assumes HTTPS headers, so configure preview deployments accordingly. Run migrations against a disposable database (`bun run db:migrate && bunx drizzle-kit studio`) before production pushes, and never commit AI keys, Better Auth secrets, or Ghost/Stripe credentials.
+
+## Current monorepo
+
+Application source is under `apps/chat/`. Read its `AGENTS.md` before changing it.
+Production is Hetzner/Dokploy; follow `docs/deployment.md` for Dagger builds and governed promotion.

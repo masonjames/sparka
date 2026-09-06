@@ -1,24 +1,18 @@
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { SearchResultItem } from "@/lib/ai/tools/research-updates-schema";
 import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
+import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 import { Favicon } from "./favicon";
 
 export function WebSourceBadge({ result }: { result: SearchResultItem }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link
-          // @ts-expect-error - result.url is a valid URL
-          href={result.url}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
+        <a href={result.url} rel="noopener noreferrer" target="_blank">
           <Badge
             className="max-w-[200px] gap-1 truncate text-xs"
             variant="secondary"
@@ -29,7 +23,7 @@ export function WebSourceBadge({ result }: { result: SearchResultItem }) {
               {result.title}
             </span>
           </Badge>
-        </Link>
+        </a>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs space-y-1 p-3" variant="base">
         <div className="flex items-center gap-2">

@@ -1,0 +1,17 @@
+.git
+**/node_modules
+**/.next
+**/.turbo
+**/.env*
+**/.vercel
+**/.neon
+**/*.pem
+**/*.key
+**/*.tsbuildinfo
+.dagger
+artifacts
+**/dist
+**/coverage
+**/test-results
+**/playwright-report
+**/.DS_Store

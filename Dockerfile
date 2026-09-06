@@ -1,105 +1,52 @@
-# Dockerfile for Chat by Mason James (Monorepo)
-# Multi-stage build optimized for Next.js standalone output
-# Used by GitHub Actions to build and push to GHCR
-#
-# NOTE: Uses node:22-slim (Debian/glibc) throughout, NOT Alpine (musl).
-# This ensures native modules like better-sqlite3 work correctly.
-
-# =============================================================================
-# Stage 1: Dependencies
-# =============================================================================
-FROM node:22-slim AS deps
+# Shared by local Dagger and CI; runtime secrets come from Dokploy.
+FROM node:22.22.0-bookworm-slim@sha256:dd9d21971ec4395903fa6143c2b9267d048ae01ca6d3ea96f16cb30df6187d94 AS deps
 WORKDIR /app
-
-# Install build dependencies for native modules (better-sqlite3)
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# Install bun for monorepo workspace support
-RUN npm install -g bun
-
-# Copy workspace root files
+RUN npm install -g bun@1.3.1
+ENV NEXT_TELEMETRY_DISABLED=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 TURBO_TELEMETRY_DISABLED=1
 COPY package.json bun.lock turbo.json ./
-
-# Copy workspace package.json files for all workspaces
 COPY apps/chat/package.json ./apps/chat/
 COPY apps/docs/package.json ./apps/docs/
+COPY apps/site/package.json ./apps/site/
+COPY apps/electron/package.json ./apps/electron/
 COPY packages/cli/package.json ./packages/cli/
+COPY packages/thread/package.json ./packages/thread/
+COPY packages/registry/package.json ./packages/registry/
+RUN bun install --frozen-lockfile
 
-# Install dependencies with bun (handles workspaces)
-RUN bun install --frozen-lockfile || bun install
-
-# =============================================================================
-# Stage 2: Builder
-# =============================================================================
-FROM node:22-slim AS builder
-WORKDIR /app
-
-# Install bun for the build
-RUN npm install -g bun
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/ ./apps/
-COPY --from=deps /app/packages/ ./packages/
+FROM deps AS source
 COPY . .
 
-# Set build-time environment variables
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+FROM source AS check
+RUN node scripts/check-fork.mjs
+RUN bun run --cwd packages/thread test:unit
+RUN bun run --cwd apps/chat test:unit
+RUN bun run test:types
 
-# Skip database migrations during Docker build
-# Migrations run at container startup via docker-entrypoint.sh
-ENV SKIP_DB_MIGRATE=1
+FROM source AS builder
+ENV NODE_ENV=production SKIP_DB_MIGRATE=1
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+ENV AUTH_SECRET=build-placeholder-never-use-in-production
+RUN bun run --cwd packages/thread build
+RUN cd apps/chat && bun run next build
+RUN bun build apps/chat/scripts/docker-migrate.cjs --target=node --format=cjs \
+    --external=postgres --outfile=/app/docker-migrate.cjs
+RUN cp -RL apps/chat/node_modules/postgres /app/postgres-runtime
 
-# Provide placeholder values for build-time env validation
-# These are server-only and will be replaced at runtime by Dokploy
-# The @t3-oss/env-nextjs package validates at build time, requiring these
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV AUTH_SECRET="placeholder-auth-secret-will-be-replaced-at-runtime"
-
-# Build the chat app - run next build directly, skipping prebuild env check
-# (env vars are set at runtime by Dokploy, not available during Docker build)
-RUN cd apps/chat && npx next build
-
-# =============================================================================
-# Stage 3: Production Runner
-# =============================================================================
-# Use Debian slim, NOT Alpine - native modules (better-sqlite3) compiled on
-# Debian (glibc) are incompatible with Alpine (musl)
-FROM node:22-slim AS runner
+FROM node:22.22.0-bookworm-slim@sha256:dd9d21971ec4395903fa6143c2b9267d048ae01ca6d3ea96f16cb30df6187d94 AS runner
 WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Create non-root user for security (Debian syntax)
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs nextjs
-
-# Copy standalone build output from monorepo
-COPY --from=builder /app/apps/chat/public ./public
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/public ./apps/chat/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/.next/static ./apps/chat/.next/static
-
-# Copy migration files and postgres driver for runtime migrations
 COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/lib/db/migrations ./apps/chat/lib/db/migrations
-COPY --from=builder --chown=nextjs:nodejs /app/apps/chat/scripts/docker-migrate.cjs ./apps/chat/scripts/docker-migrate.cjs
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres ./node_modules/postgres
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
-
+COPY --from=builder --chown=nextjs:nodejs /app/docker-migrate.cjs ./apps/chat/scripts/docker-migrate.cjs
+COPY --from=builder --chown=nextjs:nodejs /app/postgres-runtime ./node_modules/postgres
+COPY --chown=nextjs:nodejs --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 USER nextjs
-
 EXPOSE 3000
-
-# Health check - verify port is listening
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 || r.statusCode === 302 ? 0 : 1)).on('error', () => process.exit(1))"
-
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 ENTRYPOINT ["./docker-entrypoint.sh"]

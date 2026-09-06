@@ -1,15 +1,20 @@
 import type { GatewayType } from "./ai/gateways/registry";
-import type {
-  AiConfig,
-  AuthenticationConfig,
-  FeaturesConfig,
-} from "./config-schema";
+import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
 
 export interface EnvRequirement {
-  description: string;
+  description?: string;
   options: EnvVarName[][];
+}
+
+export function formatRequirementDescription(
+  requirement: EnvRequirement
+): string {
+  return (
+    requirement.description ??
+    requirement.options.map((option) => option.join(" + ")).join(" or ")
+  );
 }
 
 export const gatewayEnvRequirements: Record<GatewayType, EnvRequirement> = {
@@ -29,14 +34,9 @@ export const gatewayEnvRequirements: Record<GatewayType, EnvRequirement> = {
     options: [["OPENAI_COMPATIBLE_BASE_URL", "OPENAI_COMPATIBLE_API_KEY"]],
     description: "OPENAI_COMPATIBLE_BASE_URL, OPENAI_COMPATIBLE_API_KEY",
   },
-};
-
-export const featureEnvRequirements: Partial<
-  Record<keyof FeaturesConfig, EnvRequirement>
-> = {
-  attachments: {
-    options: [["BLOB_READ_WRITE_TOKEN"]],
-    description: "BLOB_READ_WRITE_TOKEN",
+  litellm: {
+    options: [["LITELLM_BASE_URL"]],
+    description: "LITELLM_BASE_URL",
   },
 };
 
@@ -51,10 +51,6 @@ export const aiToolEnvRequirements: Partial<
     options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
     description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
   },
-  urlRetrieval: {
-    options: [["FIRECRAWL_API_KEY"]],
-    description: "FIRECRAWL_API_KEY",
-  },
   mcp: {
     options: [["MCP_ENCRYPTION_KEY"]],
     description: "MCP_ENCRYPTION_KEY",
@@ -66,10 +62,6 @@ export const aiToolEnvRequirements: Partial<
     ],
     description:
       "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
-  },
-  image: {
-    options: [["BLOB_READ_WRITE_TOKEN"]],
-    description: "BLOB_READ_WRITE_TOKEN",
   },
 };
 
@@ -106,5 +98,5 @@ export function getMissingRequirement(
 ): string | null {
   return isRequirementSatisfied(requirement, env)
     ? null
-    : requirement.description;
+    : formatRequirementDescription(requirement);
 }

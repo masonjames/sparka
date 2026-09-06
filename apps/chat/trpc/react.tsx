@@ -5,30 +5,14 @@ import {
   type QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
-import dynamic from "next/dynamic";
 import { useState } from "react";
 import SuperJSON from "superjson";
+import { getBaseUrl } from "@/lib/url";
 import type { AppRouter } from "@/trpc/routers/_app";
 import { makeQueryClient } from "./query-client";
-
-// Conditionally load devtools - disabled by default due to Turbopack HMR issues
-// Set NEXT_PUBLIC_ENABLE_QUERY_DEVTOOLS=true in .env.local to enable
-// See: https://github.com/TanStack/query/issues/8159
-const shouldEnableDevtools =
-  process.env.NODE_ENV === "development" &&
-  process.env.NEXT_PUBLIC_ENABLE_QUERY_DEVTOOLS === "true";
-
-const ReactQueryDevtools = shouldEnableDevtools
-  ? dynamic(
-      () =>
-        import("@tanstack/react-query-devtools").then(
-          (mod) => mod.ReactQueryDevtools
-        ),
-      { ssr: false }
-    )
-  : () => null;
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();
@@ -50,19 +34,14 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
-const publicBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL?.replace(/\/$/, "");
-
 function getUrl() {
-  if (typeof window !== "undefined") {
-    return "/api/trpc";
-  }
-  if (publicBaseUrl) {
-    return `${publicBaseUrl}/api/trpc`;
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}/api/trpc`;
-  }
-  return "http://localhost:3000/api/trpc";
+  const base = (() => {
+    if (typeof window !== "undefined") {
+      return "";
+    }
+    return getBaseUrl();
+  })();
+  return `${base}/api/trpc`;
 }
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();

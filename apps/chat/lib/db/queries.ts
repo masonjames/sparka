@@ -7,6 +7,7 @@ import {
   gt,
   gte,
   inArray,
+  isNotNull,
   isNull,
   type SQL,
 } from "drizzle-orm";
@@ -16,7 +17,8 @@ import type {
   ToolName,
   ToolOutput,
 } from "@/lib/ai/types";
-import { deleteFilesByUrls } from "@/lib/blob";
+import { isSelectedModelValue } from "@/lib/ai/types";
+import { deleteFilesByUrls } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
 
@@ -32,6 +34,7 @@ import {
   chat,
   type DBMessage,
   document,
+  generationCancellation,
   message,
   type Part,
   part,
@@ -73,6 +76,35 @@ export async function saveChat({
       title,
       projectId: projectId ?? null,
     });
+  } catch (error) {
+    console.error("Failed to save chat in database");
+    throw error;
+  }
+}
+
+export async function saveChatIfNotExists({
+  id,
+  userId,
+  title,
+  projectId,
+}: {
+  id: string;
+  userId: string;
+  title: string;
+  projectId?: string;
+}) {
+  try {
+    return await db
+      .insert(chat)
+      .values({
+        id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId,
+        title,
+        projectId: projectId ?? null,
+      })
+      .onConflictDoNothing();
   } catch (error) {
     console.error("Failed to save chat in database");
     throw error;
@@ -341,6 +373,44 @@ export async function saveMessage({
   }
 }
 
+export async function saveMessageIfNotExists({
+  id,
+  chatId,
+  message: chatMessage,
+}: {
+  id: string;
+  chatId: string;
+  message: ChatMessage;
+}) {
+  try {
+    return await db.transaction(async (tx) => {
+      const dbMessage = chatMessageToDbMessage(chatMessage, chatId);
+      dbMessage.id = id;
+
+      const insertedMessages = await tx
+        .insert(message)
+        .values(dbMessage)
+        .onConflictDoNothing()
+        .returning({ id: message.id });
+
+      if (insertedMessages.length === 0) {
+        return false;
+      }
+
+      const mappedDBParts = mapUIMessagePartsToDBParts(chatMessage.parts, id);
+      if (mappedDBParts.length > 0) {
+        await tx.insert(part).values(mappedDBParts);
+      }
+
+      await updateChatUpdatedAt({ chatId });
+      return true;
+    });
+  } catch (error) {
+    logger.error({ error, chatId, id }, "saveMessageIfNotExists failed");
+    throw error;
+  }
+}
+
 export async function saveChatMessages({
   messages,
 }: {
@@ -406,17 +476,33 @@ export async function updateMessage({
       dbMessage.id = id;
 
       // Update message (without parts - parts are stored in Part table)
-      await tx
+      const updatedMessages = await tx
         .update(message)
         .set({
           annotations: dbMessage.annotations,
           attachments: dbMessage.attachments,
           createdAt: dbMessage.createdAt,
           parentMessageId: dbMessage.parentMessageId,
+          selectedModel: dbMessage.selectedModel,
+          selectedTool: dbMessage.selectedTool,
+          parallelGroupId: dbMessage.parallelGroupId,
+          parallelIndex: dbMessage.parallelIndex,
+          isPrimaryParallel: dbMessage.isPrimaryParallel,
           lastContext: dbMessage.lastContext,
           activeStreamId: dbMessage.activeStreamId,
         })
-        .where(eq(message.id, id));
+        .where(
+          and(
+            eq(message.id, id),
+            eq(message.chatId, chatId),
+            isNull(message.canceledAt)
+          )
+        )
+        .returning({ id: message.id });
+
+      if (updatedMessages.length === 0) {
+        return false;
+      }
 
       // Update parts in Part table
       // Delete existing parts
@@ -428,7 +514,7 @@ export async function updateMessage({
         await tx.insert(part).values(mappedDBParts);
       }
 
-      return;
+      return true;
     });
   } catch (error) {
     logger.error({ error, messageId: id, chatId }, "updateMessage failed");
@@ -492,8 +578,12 @@ export async function getAllMessagesByChatId({
           createdAt: msg.createdAt,
           activeStreamId: msg.activeStreamId,
           parentMessageId: msg.parentMessageId,
-          selectedModel: (msg.selectedModel ||
-            "") as ChatMessage["metadata"]["selectedModel"],
+          parallelGroupId: msg.parallelGroupId,
+          parallelIndex: msg.parallelIndex,
+          isPrimaryParallel: msg.isPrimaryParallel,
+          selectedModel: isSelectedModelValue(msg.selectedModel)
+            ? msg.selectedModel
+            : ("" as ChatMessage["metadata"]["selectedModel"]),
           selectedTool: (msg.selectedTool ||
             undefined) as ChatMessage["metadata"]["selectedTool"],
           usage: msg.lastContext as ChatMessage["metadata"]["usage"],
@@ -797,8 +887,12 @@ export async function getChatMessageWithPartsById({
           createdAt: dbMessage.createdAt,
           activeStreamId: dbMessage.activeStreamId,
           parentMessageId: dbMessage.parentMessageId,
-          selectedModel: (dbMessage.selectedModel ||
-            "") as ChatMessage["metadata"]["selectedModel"],
+          parallelGroupId: dbMessage.parallelGroupId,
+          parallelIndex: dbMessage.parallelIndex,
+          isPrimaryParallel: dbMessage.isPrimaryParallel,
+          selectedModel: isSelectedModelValue(dbMessage.selectedModel)
+            ? dbMessage.selectedModel
+            : ("" as ChatMessage["metadata"]["selectedModel"]),
           selectedTool: (dbMessage.selectedTool ||
             undefined) as ChatMessage["metadata"]["selectedTool"],
           usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
@@ -985,20 +1079,92 @@ export async function getMessageCanceledAt({
   }
 }
 
-export async function updateMessageCanceledAt({
-  messageId,
+export async function requestGenerationCancellation({
   canceledAt,
+  chatId,
+  messageId,
+  userId,
 }: {
+  canceledAt: Date;
+  chatId: string;
   messageId: string;
-  canceledAt: Date | null;
+  userId: string;
 }) {
   try {
-    return await db
-      .update(message)
-      .set({ canceledAt })
-      .where(eq(message.id, messageId));
+    await db
+      .insert(generationCancellation)
+      .values({ canceledAt, chatId, messageId, userId })
+      .onConflictDoUpdate({
+        target: [
+          generationCancellation.messageId,
+          generationCancellation.userId,
+        ],
+        set: { canceledAt, chatId },
+      });
   } catch (error) {
-    logger.error({ error, messageId }, "updateMessageCanceledAt failed");
+    logger.error({ error, messageId }, "requestGenerationCancellation failed");
+    throw error;
+  }
+}
+
+export async function isGenerationCancellationRequested({
+  chatId,
+  messageId,
+  userId,
+}: {
+  chatId: string;
+  messageId: string;
+  userId: string;
+}) {
+  try {
+    const [cancellation] = await db
+      .select({ messageId: generationCancellation.messageId })
+      .from(generationCancellation)
+      .where(
+        and(
+          eq(generationCancellation.chatId, chatId),
+          eq(generationCancellation.messageId, messageId),
+          eq(generationCancellation.userId, userId)
+        )
+      )
+      .limit(1);
+
+    return !!cancellation;
+  } catch (error) {
+    logger.error(
+      { error, messageId },
+      "isGenerationCancellationRequested failed"
+    );
+    throw error;
+  }
+}
+
+export async function cancelActiveMessage({
+  canceledAt,
+  chatId,
+  messageId,
+}: {
+  canceledAt: Date;
+  chatId: string;
+  messageId: string;
+}) {
+  try {
+    const canceledMessages = await db
+      .update(message)
+      .set({ activeStreamId: null, canceledAt })
+      .where(
+        and(
+          eq(message.chatId, chatId),
+          eq(message.id, messageId),
+          isNotNull(message.activeStreamId),
+          isNull(message.canceledAt)
+        )
+      )
+      .returning({ id: message.id });
+
+    return canceledMessages.length > 0;
+  } catch (error) {
+    logger.error({ error, messageId }, "cancelActiveMessage failed");
     throw error;
   }
 }
@@ -1132,7 +1298,7 @@ async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
       await deleteFilesByUrls(uniqueUrls);
     }
   } catch (error) {
-    console.error("Failed to delete attachments from R2:", error);
+    console.error("Failed to delete stored attachments:", error);
     // Don't throw here - we still want to proceed with message deletion
     // even if blob cleanup fails
   }

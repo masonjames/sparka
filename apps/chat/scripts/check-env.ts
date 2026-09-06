@@ -4,22 +4,210 @@
  * Validates that enabled features in config have their required env vars.
  * Run via `bun run check-env` or automatically in prebuild.
  */
-import "dotenv/config";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { config as loadEnvConfig } from "dotenv";
+import { getProvider } from "files-sdk/providers";
+// biome-ignore lint/performance/noNamespaceImport: TypeScript API requires namespace import due to extensive usage
+import * as ts from "typescript";
 import type { GatewayType } from "../lib/ai/gateways/registry";
 import { generatedForGateway } from "../lib/ai/models.generated";
 import { config } from "../lib/config";
 import {
   aiToolEnvRequirements,
   authEnvRequirements,
-  featureEnvRequirements,
   gatewayEnvRequirements,
   getMissingRequirement,
   isRequirementSatisfied,
 } from "../lib/config-requirements";
+import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
+import { storageProvider } from "../lib/storage-provider";
+import {
+  getStorageEnvironmentRequirements,
+  type StorageEnvironmentVariable,
+} from "../lib/storage-provider-metadata";
+
+loadEnvConfig({ path: ".env.local" });
+loadEnvConfig();
 
 interface ValidationError {
   feature: string;
   missing: string[];
+}
+
+type StaticToolEnvVar = {
+  description?: string;
+  options: string[][];
+};
+
+type StaticToolEnvVars = StaticToolEnvVar[];
+
+type StaticToolMetadata = {
+  toolEnvVars: StaticToolEnvVars;
+};
+
+const projectRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  ".."
+);
+
+function unwrapExpression(node: ts.Expression): ts.Expression {
+  if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node)) {
+    return unwrapExpression(node.expression);
+  }
+  return node;
+}
+
+function readString(node: ts.Expression): string | null {
+  const expr = unwrapExpression(node);
+  if (ts.isStringLiteral(expr) || ts.isNoSubstitutionTemplateLiteral(expr)) {
+    return expr.text;
+  }
+  return null;
+}
+
+function readStringArray(node: ts.Expression): string[] | null {
+  const expr = unwrapExpression(node);
+  if (!ts.isArrayLiteralExpression(expr)) {
+    return null;
+  }
+
+  const values: string[] = [];
+  for (const element of expr.elements) {
+    if (!ts.isExpression(element)) {
+      return null;
+    }
+    const value = readString(element);
+    if (value === null) {
+      return null;
+    }
+    values.push(value);
+  }
+
+  return values;
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: AST traversal logic is inherently complex
+function readToolEnvVar(node: ts.Expression): StaticToolEnvVar | null {
+  const expr = unwrapExpression(node);
+  if (!ts.isObjectLiteralExpression(expr)) {
+    return null;
+  }
+
+  let description: string | null = null;
+  let options: string[][] | null = null;
+
+  for (const property of expr.properties) {
+    if (!ts.isPropertyAssignment(property)) {
+      return null;
+    }
+
+    const nameNode = property.name;
+    const name =
+      ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode)
+        ? nameNode.text
+        : null;
+
+    if (name === "description") {
+      description = readString(property.initializer);
+    } else if (name === "options") {
+      const outer = unwrapExpression(property.initializer);
+      if (!ts.isArrayLiteralExpression(outer)) {
+        return null;
+      }
+
+      const groups: string[][] = [];
+      for (const element of outer.elements) {
+        if (!ts.isExpression(element)) {
+          return null;
+        }
+        const group = readStringArray(element);
+        if (group === null) {
+          return null;
+        }
+        groups.push(group);
+      }
+      options = groups;
+    }
+  }
+
+  return options ? { ...(description ? { description } : {}), options } : null;
+}
+
+function readToolEnvVars(node: ts.Expression): StaticToolEnvVars {
+  const expr = unwrapExpression(node);
+  if (!ts.isArrayLiteralExpression(expr)) {
+    return [];
+  }
+
+  const toolEnvVars: StaticToolEnvVars = [];
+  for (const element of expr.elements) {
+    if (!ts.isExpression(element)) {
+      return [];
+    }
+    const toolEnvVar = readToolEnvVar(element);
+    if (!toolEnvVar) {
+      return [];
+    }
+    toolEnvVars.push(toolEnvVar);
+  }
+
+  return toolEnvVars;
+}
+
+function readStaticToolMetadata(sourceText: string): StaticToolMetadata {
+  const sourceFile = ts.createSourceFile(
+    "tool.ts",
+    sourceText,
+    ts.ScriptTarget.ESNext,
+    true,
+    ts.ScriptKind.TS
+  );
+  const toolEnvVars: StaticToolEnvVars = [];
+
+  function visit(node: ts.Node): void {
+    if (
+      ts.isVariableStatement(node) &&
+      node.modifiers?.some(
+        (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword
+      )
+    ) {
+      for (const declaration of node.declarationList.declarations) {
+        if (declaration.name.getText() !== "toolEnvVars") {
+          continue;
+        }
+        const initializer = declaration.initializer;
+        if (initializer && ts.isExpression(initializer)) {
+          toolEnvVars.push(...readToolEnvVars(initializer));
+        }
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+
+  return {
+    toolEnvVars,
+  };
+}
+
+function resolveToolsDir(toolsPath: string): string {
+  if (toolsPath.startsWith("@/")) {
+    return path.resolve(projectRoot, toolsPath.slice(2));
+  }
+
+  if (toolsPath.startsWith("./") || toolsPath.startsWith("../")) {
+    return path.resolve(projectRoot, toolsPath);
+  }
+
+  if (path.isAbsolute(toolsPath)) {
+    return toolsPath;
+  }
+
+  return path.resolve(projectRoot, toolsPath);
 }
 
 function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
@@ -36,34 +224,60 @@ function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
   };
 }
 
-function validateFeatures(env: NodeJS.ProcessEnv): ValidationError[] {
-  const errors: ValidationError[] = [];
+function hasStorageEnvVariable(
+  variable: StorageEnvironmentVariable,
+  env: NodeJS.ProcessEnv
+) {
+  return [variable.key, ...(variable.aliases ?? [])].some((key) => !!env[key]);
+}
 
-  const gatewayError = validateGatewayKey(env);
-  if (gatewayError) {
-    errors.push(gatewayError);
+function validateStorage(env: NodeJS.ProcessEnv): ValidationError | null {
+  const enabled =
+    config.features.attachments ||
+    config.ai.tools.image.enabled ||
+    config.ai.tools.video.enabled;
+  if (!enabled) {
+    return null;
   }
 
-  const featureEntries = Object.entries(featureEnvRequirements) as [
-    keyof typeof featureEnvRequirements,
-    NonNullable<
-      (typeof featureEnvRequirements)[keyof typeof featureEnvRequirements]
-    >,
-  ][];
-  for (const [feature, requirement] of featureEntries) {
-    if (!(requirement && config.features[feature])) {
-      continue;
-    }
-    const missing = getMissingRequirement(requirement, env);
-    if (missing) {
-      errors.push({
-        feature: `features.${feature}`,
-        missing: [missing],
-      });
-    }
+  const metadata = getProvider(storageProvider.slug);
+  if (!metadata) {
+    return {
+      feature: "fileStorage",
+      missing: [`Unknown Files SDK provider: ${storageProvider.slug}`],
+    };
   }
 
-  return errors;
+  try {
+    storageProvider.createAdapter();
+  } catch (error) {
+    return {
+      feature: `fileStorage (${metadata.name})`,
+      missing: [
+        error instanceof Error ? error.message : "Invalid adapter options",
+      ],
+    };
+  }
+
+  const missing = getStorageEnvironmentRequirements(
+    storageProvider.slug,
+    storageProvider.options
+  )
+    .filter(
+      (requirement) =>
+        !requirement.options.some((option) =>
+          option.every((variable) => hasStorageEnvVariable(variable, env))
+        )
+    )
+    .map((requirement) =>
+      requirement.options
+        .map((option) => option.map(({ key }) => key).join(" + "))
+        .join(" or ")
+    );
+
+  return missing.length > 0
+    ? { feature: `fileStorage (${metadata.name})`, missing }
+    : null;
 }
 
 function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
@@ -130,6 +344,52 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   return errors;
 }
 
+async function validateInstalledTools(
+  env: NodeJS.ProcessEnv
+): Promise<ValidationError[]> {
+  const toolsDir = resolveToolsDir(config.paths.tools);
+  const entries = await fs
+    .readdir(toolsDir, { withFileTypes: true })
+    .catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        return [];
+      }
+      throw error;
+    });
+  const errors: ValidationError[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith("_")) {
+      continue;
+    }
+
+    const toolPath = path.join(toolsDir, entry.name, "tool.ts");
+    const exists = await fs
+      .access(toolPath)
+      .then(() => true)
+      .catch(() => false);
+
+    if (!exists) {
+      continue;
+    }
+
+    const toolSource = await fs.readFile(toolPath, "utf8");
+    const mod = readStaticToolMetadata(toolSource);
+
+    for (const toolEnvVar of mod.toolEnvVars) {
+      const missing = getMissingRequirement(toolEnvVar, env);
+      if (missing) {
+        errors.push({
+          feature: `tools.${entry.name}`,
+          missing: [missing],
+        });
+      }
+    }
+  }
+
+  return errors;
+}
+
 function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
   const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
   if (!isProduction) {
@@ -150,20 +410,34 @@ function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
 }
 
 function checkGatewaySnapshot(): string | null {
-  if (config.ai.gateway === generatedForGateway) {
+  if ((config.ai.gateway as GatewayType) === generatedForGateway) {
     return null;
   }
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
 }
 
-function checkEnv(): void {
+async function checkEnv(): Promise<void> {
   const env = process.env;
+  if (isPlaywrightTestEnvironment(env)) {
+    console.log(
+      "✅ Skipping optional environment validation in Playwright test mode"
+    );
+    // Playwright CI only exercises anonymous flows, so optional feature checks
+    // and the gateway snapshot warning stay enforced in non-Playwright builds.
+    return;
+  }
+
   const baseUrlError = validateBaseUrl(env);
+  const gatewayError = validateGatewayKey(env);
+  const storageError = validateStorage(env);
+  const installedToolErrors = await validateInstalledTools(env);
   const errors = [
     ...(baseUrlError ? [baseUrlError] : []),
-    ...validateFeatures(env),
+    ...(gatewayError ? [gatewayError] : []),
+    ...(storageError ? [storageError] : []),
     ...validateAiTools(env),
     ...validateAuthentication(env),
+    ...installedToolErrors,
   ];
 
   if (errors.length > 0) {
@@ -185,4 +459,7 @@ function checkEnv(): void {
   console.log("✅ Environment validation passed");
 }
 
-checkEnv();
+checkEnv().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -76,9 +76,9 @@ openssl rand -base64 32
    ```
 6. Enable in `chat.config.ts`: `authentication: { github: true }`
 
-<Note>
+<Callout type="note">
 For local development, create a separate GitHub OAuth App with the callback URL set to `http://localhost:3000/api/auth/callback/github`.
-</Note>
+</Callout>
 
 ---
 
@@ -99,9 +99,9 @@ For local development, create a separate GitHub OAuth App with the callback URL 
    ```
 6. Enable in `chat.config.ts`: `authentication: { google: true }`
 
-<Note>
+<Callout type="note">
 The Google OAuth consent screen must be configured and published before users outside your Google Workspace can sign in. For testing, add yourself as a test user without publishing.
-</Note>
+</Callout>
 
 ---
 
@@ -120,9 +120,9 @@ The Google OAuth consent screen must be configured and published before users ou
    ```
 5. Enable in `chat.config.ts`: `authentication: { vercel: true }`
 
-<Note>
+<Callout type="note">
 The Vercel provider is useful when your users are Vercel teams and you want to authenticate using their Vercel account. It is off by default.
-</Note>
+</Callout>
 
 ---
 
@@ -157,7 +157,7 @@ anonymous: {
 Available models for anonymous users are set separately:
 
 ```typescript title="chat.config.ts"
-models: {
+ai: {
   anonymousModels: [
     "google/gemini-2.5-flash-lite",
     "openai/gpt-5-nano",
@@ -187,4 +187,4 @@ Better Auth supports many OAuth 2.0 / OIDC providers (Discord, Twitter/X, Apple,
 4. Register the OAuth app with the provider, setting the redirect URI to `/api/auth/callback/[provider]`.
 5. Optionally, gate it behind a new flag in `authenticationConfigSchema` in `apps/chat/lib/config-schema.ts`.
 
-See the [Better Auth social providers docs](https://better-auth.com/docs/authentication/social-providers) for the full list and provider-specific options.
+See the [Better Auth OAuth guide](https://better-auth.com/docs/concepts/oauth) for the social-provider configuration model, then choose a provider from the Authentication section of the Better Auth docs for provider-specific options.

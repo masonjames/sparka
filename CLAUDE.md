@@ -1,3 +1,7 @@
+# Current deployment and source layout
+
+Production is Hetzner/Dokploy at `chat.masonjames.com`. Use [docs/deployment.md](docs/deployment.md) for Dagger builds, upstream sync and production promotion. The legacy Vercel deployment instructions below are historical and do not authorize deploying this production app. Source paths below are relative to `apps/chat/` unless they name a root workspace file. Never pull production environment files for image builds or tests; Dagger supplies isolated fixtures.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -8,13 +12,13 @@ Chat by Mason James is a production-ready AI chat application built with Next.js
 
 **Fork Information**:
 
-- Upstream: `https://github.com/FranciscoMoretti/sparka` (actively maintained)
+- Upstream: `https://github.com/FranciscoMoretti/chat-js` (actively maintained)
 - This fork adds: Custom branding, Stripe subscription system
 - Sync regularly with upstream to get latest features
 
 ## Package Manager & Development
 
-You have access to the github cli, vercel cli, and neon cli. Inspect and update tasks with the `bd` CLI; treat beads as the single source of truth for work tracking.
+You have access to the github cli, vercel cli, and neon cli. Track work in GitHub issues and pull requests.
 
 This project VERCEL_ID: `prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r`
 
@@ -25,61 +29,6 @@ This project VERCEL_ID: `prj_KsD9kDHclSMwZgZ5CUmMaopTtm1r`
 - **Linting**: `bun lint` or `bun lint:fix` (ESLint + Biome)
 - **Formatting**: `bun format` (Biome)
 - **Testing**: `bun test` (Playwright), `bun test:unit` (Vitest)
-
-## Task Management with BD CLI
-
-This project uses the `bd` (beads) CLI for issue tracking with first-class dependency support.
-
-### Quick Start
-
-```bash
-# List all tasks
-bd list
-
-# Create a new task
-bd create "Task title" -t task -p 1 -d "Optional description"
-
-# Show task details
-bd show <task-id>
-
-# Update task status
-bd update <task-id> --title "New title"
-
-# Close a task
-bd close <task-id> --reason "Completion reason"
-
-# Show ready work (no blockers)
-bd ready
-
-# Show blocked issues
-bd blocked
-```
-
-### Task Types & Priorities
-
-- **Types**: `task`, `bug`, `feature`, `epic`, `chore`
-- **Priorities**: `0` (P0 - highest) to `4` (P4 - lowest)
-
-### Working with Dependencies
-
-```bash
-# Create task with dependencies
-bd create "Implement feature" --deps "blocks:sparka-abc,discovered-from:sparka-xyz"
-
-# Add dependency to existing task
-bd dep add <task-id> blocks:<other-task-id>
-
-# List dependencies
-bd dep list <task-id>
-```
-
-### Best Practices
-
-- Use `bd list` to see all open tasks before starting work
-- Create tasks for significant features/bugs to track progress
-- Close tasks with `--reason` to document completion
-- Use dependencies to model task relationships
-- BD tasks are stored in `.beads/` directory (committed to git)
 
 ## Upstream Sync Workflow
 
@@ -93,7 +42,7 @@ git remote -v
 
 # Should show:
 # origin: git@github.com:masonjames/sparka.git
-# upstream: https://github.com/FranciscoMoretti/sparka.git
+# upstream: https://github.com/FranciscoMoretti/chat-js.git
 ```
 
 ### Syncing with Upstream (Merge Method)
@@ -154,12 +103,12 @@ git add -A
 git commit -m "merge: sync with upstream and fix conflicts"
 ```
 
-8. **Deploy to Vercel for testing**
+8. **Build a candidate for isolated testing**
 
 ```bash
-vercel  # Preview deployment
-# Test thoroughly before production
-vercel --prod  # Once validated
+dagger call check
+dagger call build export --path=artifacts/sparka.tar
+# Follow docs/deployment.md for Dockhand review and promotion.
 ```
 
 ### Conflict Resolution Guide
@@ -338,7 +287,7 @@ Then `rm -rf node_modules && bun install`
 ### Sync Frequency
 
 - **Recommended**: Monthly or when major upstream features are released
-- **Monitor**: Watch https://github.com/FranciscoMoretti/sparka for updates
+- **Monitor**: Watch https://github.com/FranciscoMoretti/chat-js for updates
 - **Before major features**: Sync first to avoid conflicts with new work
 - **After sync**: Test thoroughly in preview before production deploy
 

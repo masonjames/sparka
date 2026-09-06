@@ -1,117 +1,147 @@
 "use client";
 
-import { useChat, useChatActions } from "@ai-sdk-tools/store";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
-import { useDataStream } from "@/components/data-stream-provider";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
-import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
-import { ChatSDKError } from "@/lib/ai/errors";
+import { completeDataPart } from "@/lib/ai/complete-data-part";
+import { createCompletionQueue } from "@/lib/ai/completion-queue";
+import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
-import {
-  useAddMessageToTree,
-  useThreadInitialMessages,
-} from "@/lib/stores/hooks-threads";
-import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import type { ApplicationThread } from "@/lib/application-thread";
+import { createCancellationAwareChatTransport } from "@/lib/cancellation-aware-chat-transport";
+import { createGatedChatTransport } from "@/lib/gated-chat-transport";
+import { acknowledgeParallelUserMessagePersistence } from "@/lib/parallel-chat-requests";
+import { acknowledgeProvisionalUserMessagePersistence } from "@/lib/provisional-chat-confirmations";
+import { useChat } from "@/lib/stores/base";
+import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
+import { useDataStream } from "@/lib/stores/hooks-data-stream";
+import { fetchWithErrorHandlers } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+import { useTRPCClient } from "@/trpc/react";
+
+function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
+  return !!(activeStreamId && !activeStreamId.startsWith("pending:"));
+}
 
 export function ChatSync({
   id,
-  projectId,
+  thread,
 }: {
   id: string;
-  projectId?: string;
+  thread: ApplicationThread;
 }) {
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
+  const { setChatPersisted } = useChatPersistenceActions();
   const { setDataStream } = useDataStream();
-  const [, setAutoResume] = useState(true);
+  const trpcClient = useTRPCClient();
 
   const isAuthenticated = !!session?.user;
-  const { stop } = useChatActions<ChatMessage>();
-  const threadInitialMessages = useThreadInitialMessages();
-  const addMessageToTree = useAddMessageToTree();
+  const completionQueueRef = useRef(
+    createCompletionQueue((error) => {
+      console.error("Failed to reconcile completed message", error);
+      toast.error(
+        "Failed to synchronize a completed response. Refresh to retry."
+      );
+    })
+  );
+  const lastMessage = thread.getSnapshot().messages.at(-1);
+  const isLastMessagePartial = isResumableActiveStreamId(
+    lastMessage?.metadata?.activeStreamId
+  );
+  const partialMessageId = isLastMessagePartial
+    ? (lastMessage?.id ?? null)
+    : null;
+  const resumeAttemptRef = useRef<string | null>(null);
+  const transport = useMemo(
+    () =>
+      createGatedChatTransport(
+        createCancellationAwareChatTransport({
+          onCancel: (target) =>
+            isAuthenticated
+              ? trpcClient.chat.stopStream.mutate(target)
+              : Promise.resolve(),
+          transport: new DefaultChatTransport({
+            api: "/api/chat",
+            fetch: fetchWithErrorHandlers,
+            prepareSendMessagesRequest({ messages, id: chatId, body }) {
+              return {
+                body: {
+                  id: chatId,
+                  message: messages.at(-1),
+                  prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+                  ...body,
+                },
+              };
+            },
+            prepareReconnectToStreamRequest({ id: chatId }) {
+              const current = thread.getSnapshot().messages.at(-1);
+              const activeStreamId = current?.metadata?.activeStreamId ?? null;
+              const partialMessageId = isResumableActiveStreamId(activeStreamId)
+                ? (current?.id ?? null)
+                : null;
 
-  const lastMessage = threadInitialMessages.at(-1);
-  const isLastMessagePartial = !!lastMessage?.metadata?.activeStreamId;
-
-  // Backstop: if we remount ChatSync (e.g. threadEpoch changes), ensure the prior
-  // in-flight stream is aborted and we don't replay old deltas.
-  useEffect(
-    () => () => {
-      stop?.();
-      setDataStream([]);
-    },
-    [setDataStream, stop]
+              return {
+                api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
+              };
+            },
+          }),
+        })
+      ),
+    [isAuthenticated, thread, trpcClient]
   );
 
-  useChat<ChatMessage>({
+  const { resumeStream } = useChat<ChatMessage>({
     experimental_throttle: 100,
-    id,
-    // TODO: this is a special "snapshot" value in the store that is only updated
-    // on store init + sibling switch. Once the store can guarantee up-to-date
-    // messages at ChatSync remount time, we can likely remove this override.
-    messages: threadInitialMessages,
-    generateId: generateUUID,
+    thread,
     onFinish: ({ message }) => {
-      addMessageToTree(message);
-      saveChatMessage({ message, chatId: id });
-      setAutoResume(true);
+      return completionQueueRef.current.waitForIdle().then(() => {
+        saveChatMessage({ message, chatId: id });
+      });
     },
-    resume: isLastMessagePartial,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: fetchWithErrorHandlers as typeof fetch,
-      prepareSendMessagesRequest({ messages, id: requestId, body }) {
-        setAutoResume(true);
-
-        return {
-          body: {
-            id: requestId,
-            message: messages.at(-1),
-            prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-            projectId,
-            ...body,
-          },
-        };
-      },
-      prepareReconnectToStreamRequest({ id: chatId }) {
-        const partialMessageId = lastMessage?.metadata?.activeStreamId
-          ? lastMessage.id
-          : null;
-        return {
-          api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${partialMessageId}` : ""}`,
-        };
-      },
-    }),
+    transport,
     onData: (dataPart) => {
+      completionQueueRef.current.enqueue(() =>
+        completeDataPart({ dataPart, thread })
+      );
+      if (
+        dataPart.type === "data-userMessagePersisted" &&
+        dataPart.data.chatId === id
+      ) {
+        acknowledgeParallelUserMessagePersistence(dataPart.data);
+        acknowledgeProvisionalUserMessagePersistence(dataPart.data);
+        setChatPersisted(true);
+      }
       setDataStream((ds) =>
         ds ? [...ds, dataPart as (typeof ds)[number]] : []
       );
     },
     onError: (error) => {
-      if (
-        error instanceof ChatSDKError &&
-        error.type === "not_found" &&
-        error.surface === "stream"
-      ) {
-        setAutoResume(false);
-      }
-
-      console.error(error);
-      const cause = error.cause;
-      if (cause && typeof cause === "string") {
-        toast.error(error.message ?? "An error occured, please try again!", {
-          description: cause,
-        });
-      } else {
-        toast.error(error.message ?? "An error occured, please try again!");
-      }
+      const { message, description } = getStreamErrorToastContent(error);
+      toast.error(message, description ? { description } : undefined);
     },
   });
 
-  useCompleteDataPart();
+  useEffect(() => {
+    if (!partialMessageId) {
+      resumeAttemptRef.current = null;
+      return;
+    }
+    if (resumeAttemptRef.current === partialMessageId) {
+      return;
+    }
+
+    resumeAttemptRef.current = partialMessageId;
+    const run = thread.getRunForMessage(partialMessageId);
+    if (run?.status === "submitted" || run?.status === "streaming") {
+      return;
+    }
+
+    resumeStream({
+      body: { assistantMessageId: partialMessageId },
+    });
+  }, [partialMessageId, resumeStream, thread]);
 
   return null;
 }

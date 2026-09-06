@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,9 @@ const errorCopy: Record<string, string> = {
 
 function ErrorContent() {
   const searchParams = useSearchParams();
-  const errorCode = (searchParams.get("error") || "unknown_error").toLowerCase();
+  const errorCode = (
+    searchParams.get("error") || "unknown_error"
+  ).toLowerCase();
   const message =
     errorCopy[errorCode] ||
     "We couldn't complete your sign-in. Request a new magic link or try another method.";

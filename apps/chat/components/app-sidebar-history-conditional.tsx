@@ -1,7 +1,7 @@
 "use client";
 
 import { LogIn } from "lucide-react";
-import Link from "next/link";
+import { InternalLink } from "@/components/internal-link";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,14 +16,28 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/providers/session-provider";
 
 export function AppSidebarHistoryConditional() {
   const { open, openMobile } = useSidebar();
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
 
   if (!(open || openMobile)) {
     return null;
+  }
+
+  if (isPending) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupContent className="flex flex-col gap-2 px-2">
+          <Skeleton className="h-7 w-full" />
+          <Skeleton className="h-7 w-5/6" />
+          <Skeleton className="h-7 w-4/5" />
+          <Skeleton className="h-7 w-full" />
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
   }
 
   if (!session?.user) {
@@ -39,10 +53,10 @@ export function AppSidebarHistoryConditional() {
             </EmptyHeader>
             <EmptyContent>
               <Button asChild size="sm" variant="outline">
-                <Link href="/login">
+                <InternalLink href="/login">
                   <LogIn />
                   Sign In
-                </Link>
+                </InternalLink>
               </Button>
             </EmptyContent>
           </Empty>

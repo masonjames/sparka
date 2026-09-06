@@ -13,10 +13,10 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getAnonymousSession } from "@/lib/anonymous-session-client";
+import { useCurrentChatRoute } from "@/lib/chat-route";
 import type { Document, Project } from "@/lib/db/schema";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import type { UIChat } from "@/lib/types/ui-chat";
-import { useChatId } from "@/providers/chat-id-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -65,15 +65,13 @@ export function useProject(
   });
 }
 
-export function useGetChatMessagesQueryOptions() {
+export function useGetChatMessagesQueryOptions(chatId: string) {
   const { data: session } = useSession();
   const trpc = useTRPC();
-  const { id: chatId, isPersisted, source } = useChatId();
-  const isShared = source === "share";
 
   return {
     ...trpc.chat.getChatMessages.queryOptions({ chatId: chatId || "" }),
-    enabled: !!chatId && isPersisted && (isShared || !!session?.user),
+    enabled: !!chatId && !!session?.user,
   };
 }
 
@@ -171,7 +169,9 @@ export function useRenameChat() {
         (old) => old?.map((c) => (c.id === chatId ? { ...c, title } : c)) ?? old
       );
       if (previousChatById) {
-        qc.setQueryData<UIChat | null>(byIdKey, { ...previousChatById, title });
+        qc.setQueryData<UIChat | null>(byIdKey, (old) =>
+          old ? { ...old, title } : old
+        );
       }
 
       return { previousAllChats, previousChatById };
@@ -331,6 +331,16 @@ export function useSaveMessageMutation() {
         }
       }
     },
+    onSettled: (_data, _error, { message, chatId }) => {
+      if (message.role === "assistant" && isAuthenticated) {
+        // Sync the full message tree after the mutation settles so parallel
+        // response siblings get their updated activeStreamId from the server.
+        // Placed in onSettled (not onSuccess) so this runs after the real
+        // backend write when the mutationFn is eventually made server-side.
+        const key = trpc.chat.getChatMessages.queryKey({ chatId });
+        qc.invalidateQueries({ queryKey: key });
+      }
+    },
   });
 }
 
@@ -407,7 +417,7 @@ export function useSaveDocument(
 
 export function useDocuments(id: string, disable: boolean) {
   const trpc = useTRPC();
-  const { source } = useChatId();
+  const { source } = useCurrentChatRoute();
   const isShared = source === "share";
   const { data: session } = useSession();
 
@@ -436,18 +446,19 @@ export function useGetAllChats(opts?: {
   });
 }
 
-export function useGetChatByIdQueryOptions(chatId: string) {
+export function useGetChatByIdQueryOptions(chatId?: string | null) {
   const { data: session } = useSession();
   const trpc = useTRPC();
+  const normalizedChatId = chatId ?? "";
 
   return {
-    ...trpc.chat.getChatById.queryOptions({ chatId }),
-    enabled: !!chatId && !!session?.user,
+    ...trpc.chat.getChatById.queryOptions({ chatId: normalizedChatId }),
+    enabled: !!normalizedChatId && !!session?.user,
   };
 }
 
 export function useGetChatById(
-  chatId: string,
+  chatId?: string | null,
   { enabled }: { enabled?: boolean } = {}
 ) {
   const options = useGetChatByIdQueryOptions(chatId);

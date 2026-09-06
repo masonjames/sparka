@@ -1,103 +1,86 @@
 "use client";
 
+import type { MessageTreeSnapshot } from "@chat-js/thread";
 import { memo } from "react";
 import { Chat } from "@/components/chat";
-import { ChatSync } from "@/components/chat-sync";
 import { DataStreamHandler } from "@/components/data-stream-handler";
-import { DataStreamProvider } from "@/components/data-stream-provider";
-import { MessageTreeSync } from "@/components/message-tree-sync";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
-import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
-import { useThreadEpoch } from "@/lib/stores/hooks-threads";
+import type { ApplicationThread } from "@/lib/application-thread";
+import type { ChatRouteSource } from "@/lib/chat-route";
+import {
+  type CustomChatStoreApi,
+  CustomStoreProvider,
+} from "@/lib/stores/custom-store-provider";
+import type { UIChat } from "@/lib/types/ui-chat";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 
-function ChatThreadSync({
-  id,
-  projectId,
-  withHandler,
-}: {
-  id: string;
-  projectId?: string;
-  withHandler: boolean;
-}) {
-  const threadEpoch = useThreadEpoch();
-  return (
-    <>
-      <ChatSync
-        id={id}
-        key={`chat-sync:${id}:${threadEpoch}`}
-        projectId={projectId}
-      />
-      {withHandler ? (
-        <DataStreamHandler id={id} key={`stream:${id}:${threadEpoch}`} />
-      ) : null}
-    </>
-  );
-}
-
 export const ChatSystem = memo(function PureChatSystem({
+  chat,
   id,
   initialMessages,
+  initialTree,
   isReadonly,
   initialTool = null,
   overrideModelId,
   projectId,
+  routeSource = projectId ? "project" : "chat",
+  runtimeKey,
+  store,
+  thread,
 }: {
+  chat?: UIChat | null;
   id: string;
   initialMessages: ChatMessage[];
+  initialTree?: MessageTreeSnapshot<ChatMessage>;
   isReadonly: boolean;
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
   projectId?: string;
+  routeSource?: ChatRouteSource;
+  runtimeKey: string;
+  store?: CustomChatStoreApi<ChatMessage>;
+  thread?: ApplicationThread;
 }) {
   return (
-    <ArtifactProvider key={id}>
-      <DataStreamProvider key={id}>
-        <CustomStoreProvider<ChatMessage>
-          initialMessages={initialMessages}
-          key={id}
-        >
-          <MessageTreeSync />
-          {isReadonly ? (
-            <>
-              <ChatThreadSync
-                id={id}
-                projectId={projectId}
-                withHandler={false}
-              />
-              <Chat
-                id={id}
-                initialMessages={initialMessages}
-                isReadonly={isReadonly}
-                key={id}
-                projectId={projectId}
-              />
-            </>
-          ) : (
-            <ChatInputProvider
-              initialTool={initialTool ?? null}
-              isProjectContext={!!projectId}
-              localStorageEnabled={true}
-              overrideModelId={overrideModelId}
-            >
-              <ChatThreadSync
-                id={id}
-                projectId={projectId}
-                withHandler={true}
-              />
-              <Chat
-                id={id}
-                initialMessages={initialMessages}
-                isReadonly={isReadonly}
-                key={id}
-                projectId={projectId}
-              />
-            </ChatInputProvider>
-          )}
-        </CustomStoreProvider>
-      </DataStreamProvider>
+    <ArtifactProvider key={runtimeKey}>
+      <CustomStoreProvider
+        initialMessages={initialMessages}
+        initialTree={initialTree}
+        key={runtimeKey}
+        store={store}
+        thread={thread}
+        threadId={id}
+      >
+        {isReadonly ? (
+          <Chat
+            chat={chat}
+            id={id}
+            isReadonly={isReadonly}
+            key={runtimeKey}
+            projectId={projectId}
+            routeSource={routeSource}
+          />
+        ) : (
+          <ChatInputProvider
+            initialTool={initialTool ?? null}
+            isProjectContext={!!projectId}
+            localStorageEnabled={true}
+            overrideModelId={overrideModelId}
+          >
+            <DataStreamHandler key={`stream:${runtimeKey}`} />
+            <Chat
+              chat={chat}
+              id={id}
+              isReadonly={isReadonly}
+              key={runtimeKey}
+              projectId={projectId}
+              routeSource={routeSource}
+            />
+          </ChatInputProvider>
+        )}
+      </CustomStoreProvider>
     </ArtifactProvider>
   );
 });
