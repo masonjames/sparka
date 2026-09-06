@@ -1,269 +1,99 @@
-# Sparka Upstream Sync PR Creator
-# Automatically creates a PR when upstream has new commits
-# Validates that custom fork changes are preserved
 name: Upstream Sync PR
-
 on:
   workflow_dispatch:
-    inputs:
-      force_pr:
-        description: 'Create PR even if already up to date'
-        required: false
-        default: false
-        type: boolean
-  # Can also be called from upstream-sync-check workflow
   workflow_call:
-
-env:
-  UPSTREAM_REPO: FranciscoMoretti/sparka
-  UPSTREAM_BRANCH: main
-
+permissions: {}
+concurrency:
+  group: upstream-chat-js-pr
+  cancel-in-progress: false
 jobs:
-  create-sync-pr:
+  sync:
+    if: github.repository == 'masonjames/sparka'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
       pull-requests: write
       issues: write
-
     steps:
-      - name: Checkout fork
-        uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: main
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Add upstream remote
-        run: |
-          git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git
-          git fetch upstream ${{ env.UPSTREAM_BRANCH }}
-
-      - name: Check if sync needed
-        id: check
-        run: |
-          COMMITS_BEHIND=$(git rev-list --count HEAD..upstream/${{ env.UPSTREAM_BRANCH }} 2>/dev/null || echo "0")
-          echo "commits_behind=$COMMITS_BEHIND" >> $GITHUB_OUTPUT
-          
-          if [ "$COMMITS_BEHIND" -eq 0 ] && [ "${{ inputs.force_pr }}" != "true" ]; then
-            echo "Already up to date with upstream"
-            echo "needs_sync=false" >> $GITHUB_OUTPUT
-          else
-            echo "Sync needed: $COMMITS_BEHIND commits behind"
-            echo "needs_sync=true" >> $GITHUB_OUTPUT
-          fi
-          
-          # Get upstream commit info for PR description
-          LATEST_SHA=$(git rev-parse --short upstream/${{ env.UPSTREAM_BRANCH }})
-          LATEST_DATE=$(git log -1 --format=%cd --date=short upstream/${{ env.UPSTREAM_BRANCH }})
-          echo "latest_sha=$LATEST_SHA" >> $GITHUB_OUTPUT
-          echo "latest_date=$LATEST_DATE" >> $GITHUB_OUTPUT
-          
-          # Get commit log
-          COMMIT_LOG=$(git log --oneline HEAD..upstream/${{ env.UPSTREAM_BRANCH }} | head -20)
-          echo "commit_log<<EOF" >> $GITHUB_OUTPUT
-          echo "$COMMIT_LOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Check for existing PR
-        id: existing_pr
-        if: steps.check.outputs.needs_sync == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Look for open PRs with sync branch pattern
-          EXISTING=$(gh pr list --head "sync/" --state open --json number --jq '.[0].number')
-          if [ -n "$EXISTING" ]; then
-            echo "Existing sync PR: #$EXISTING"
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "pr_number=$EXISTING" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create sync branch
-        if: steps.check.outputs.needs_sync == 'true' && steps.existing_pr.outputs.exists != 'true'
-        id: branch
-        run: |
-          BRANCH_NAME="sync/upstream-$(date +%Y%m%d)"
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-          
-          git checkout -b "$BRANCH_NAME"
-
-      - name: Attempt merge
-        if: steps.check.outputs.needs_sync == 'true' && steps.existing_pr.outputs.exists != 'true'
+          persist-credentials: false
+      - name: Prepare direct merge
         id: merge
-        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Attempt to merge upstream
-          if git merge upstream/${{ env.UPSTREAM_BRANCH }} --no-edit; then
-            echo "merge_status=success" >> $GITHUB_OUTPUT
-          else
-            echo "merge_status=conflict" >> $GITHUB_OUTPUT
-            # Abort the failed merge
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git remote add upstream https://github.com/FranciscoMoretti/chat-js.git
+          git fetch upstream main
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo 'Up to date' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -n "$(gh pr list --head codex/upstream-chat-js --state open --json number --jq '.[0].number // empty')" ]; then
+            echo 'Existing upstream PR awaits review' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git branch "backup-before-upstream-merge-$(date +%Y%m%d)"
+          git switch -c codex/upstream-chat-js
+          if ! git merge --no-ff --no-edit upstream/main; then
+            git diff --name-only --diff-filter=U > /tmp/upstream-conflicts.txt
             git merge --abort
+            exit 1
           fi
-
-      - name: Validate fork customizations
-        if: steps.merge.outputs.merge_status == 'success'
-        id: validate
+          echo 'needed=true' >> "$GITHUB_OUTPUT"
+      - name: Validate merged candidate with Dagger
+        if: steps.merge.outputs.needed == 'true'
+        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
+        with:
+          version: v0.21.9
+          verb: call
+          args: check
+      - name: Build and smoke-test merged candidate with Dagger
+        if: steps.merge.outputs.needed == 'true'
+        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
+        with:
+          version: v0.21.9
+          verb: call
+          args: smoke
+      - name: Publish draft PR
+        if: steps.merge.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Validate that critical fork customizations are preserved
-          ERRORS=""
-          
-          # Check for entitlements directory
-          if [ ! -d "lib/entitlements" ]; then
-            ERRORS="$ERRORS\n- lib/entitlements/ directory missing"
+          set -euo pipefail
+          gh auth setup-git
+          git remote set-url origin https://github.com/masonjames/sparka.git
+          # A closed prior PR may leave a branch: replace only the observed ref.
+          old=$(git ls-remote origin refs/heads/codex/upstream-chat-js | cut -f1)
+          git push --force-with-lease="refs/heads/codex/upstream-chat-js:$old" origin HEAD:refs/heads/codex/upstream-chat-js
+          cat > /tmp/upstream-pr.md <<'BODY'
+          Merge the latest FranciscoMoretti/chat-js main while retaining the Sparka fork.
+
+          Dagger passed fork contracts, unit tests, types, disposable migration rehearsal, and the Linux/AMD64 image build on this merge commit. Review the subscription, authentication, storage, and migration changes before merging. GITHUB_TOKEN-created PRs do not automatically trigger other PR workflows; the checks above ran explicitly here.
+
+          After review, publish an immutable candidate with Build and Push to GHCR or local Dagger. Production promotion requires Dockhand's exact approved plan and runtime verification. No deployment is triggered by this PR.
+          BODY
+          gh pr create --draft --base main --head codex/upstream-chat-js --title 'Sync latest chat-js upstream' --body-file /tmp/upstream-pr.md
+      - name: Report actionable failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          printf 'Upstream merge or Dagger validation failed. Review %s before retrying.\n' "$RUN_URL" > /tmp/upstream-failure.md
+          if [ -f /tmp/upstream-conflicts.txt ]; then
+            cat /tmp/upstream-conflicts.txt >> /tmp/upstream-failure.md
           fi
-          
-          # Check for blob.ts
-          if [ ! -f "lib/blob.ts" ]; then
-            ERRORS="$ERRORS\n- lib/blob.ts missing"
-          fi
-          
-          # Check for entitlements router
-          if [ ! -f "trpc/routers/entitlements.router.ts" ]; then
-            ERRORS="$ERRORS\n- trpc/routers/entitlements.router.ts missing"
-          fi
-          
-          # Check that entitlements router is registered
-          if [ -f "trpc/routers/_app.ts" ]; then
-            if ! grep -q "entitlements" "trpc/routers/_app.ts"; then
-              ERRORS="$ERRORS\n- entitlements router not registered in _app.ts"
-            fi
-          fi
-          
-          # Check for stripe dependency
-          if [ -f "package.json" ]; then
-            if ! grep -q '"stripe"' "package.json"; then
-              ERRORS="$ERRORS\n- stripe dependency missing from package.json"
-            fi
-          fi
-          
-          if [ -n "$ERRORS" ]; then
-            echo "validation_status=failed" >> $GITHUB_OUTPUT
-            echo "validation_errors<<EOF" >> $GITHUB_OUTPUT
-            echo -e "$ERRORS" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+          issue=$(gh issue list --state open --search '"Chat-js upstream sync blocked" in:title' --json number --jq '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue edit "$issue" --body-file /tmp/upstream-failure.md
           else
-            echo "validation_status=passed" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Push sync branch
-        if: steps.merge.outputs.merge_status == 'success' && steps.validate.outputs.validation_status == 'passed'
-        run: |
-          git push -u origin "${{ steps.branch.outputs.branch_name }}"
-
-      - name: Create Pull Request (clean merge)
-        if: steps.merge.outputs.merge_status == 'success' && steps.validate.outputs.validation_status == 'passed'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr create \
-            --title "🔄 Sync with upstream (${{ steps.check.outputs.latest_date }})" \
-            --body "## Upstream Sync
-
-          Merges **${{ steps.check.outputs.commits_behind }}** commits from [upstream](${{ env.UPSTREAM_REPO }}).
-
-          **Latest upstream commit:** \`${{ steps.check.outputs.latest_sha }}\` (${{ steps.check.outputs.latest_date }})
-
-          ### Commits included:
-          \`\`\`
-          ${{ steps.check.outputs.commit_log }}
-          \`\`\`
-
-          ### Validation
-          ✅ All fork customizations preserved:
-          - \`lib/entitlements/\` directory
-          - \`lib/blob.ts\` (R2 storage)
-          - \`trpc/routers/entitlements.router.ts\`
-          - Entitlements router registration
-          - Stripe dependency
-
-          ### After Merging
-          The build-push-ghcr workflow will automatically:
-          1. Build and push to GHCR
-          2. Trigger Dokploy webhook (if configured)
-
-          ---
-          *Automatically created by upstream-sync-pr workflow*"
-
-      - name: Create issue for conflicts
-        if: steps.merge.outputs.merge_status == 'conflict'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Check if issue already exists
-          EXISTING=$(gh issue list --search "Upstream sync" --state open --json number --jq '.[0].number')
-
-          if [ -z "$EXISTING" ]; then
-            gh issue create \
-              --title "🔄 Upstream sync requires manual resolution" \
-              --body "## Merge Conflicts Detected
-
-          The automated sync with upstream encountered merge conflicts.
-
-          **Commits behind:** ${{ steps.check.outputs.commits_behind }}
-          **Latest upstream:** \`${{ steps.check.outputs.latest_sha }}\` (${{ steps.check.outputs.latest_date }})
-
-          ### Manual sync required
-
-          Follow the [Sparka Upstream Sync Runbook](https://github.com/masonjames/platform-infra/blob/main/docs/runbooks/workflows/sparka-upstream-sync.md).
-
-          \`\`\`bash
-          git fetch upstream
-          git merge upstream/main
-          # Resolve conflicts manually
-          # Pay special attention to:
-          # - lib/entitlements/
-          # - lib/blob.ts
-          # - trpc/routers/
-          \`\`\`
-
-          ---
-          *Automatically created by upstream-sync-pr workflow*"
-          fi
-
-      - name: Create issue for validation failure
-        if: steps.validate.outputs.validation_status == 'failed'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh issue create \
-            --title "⚠️ Upstream sync validation failed" \
-            --body "## Validation Failed
-
-          The upstream merge succeeded but validation of fork customizations failed.
-
-          ### Issues detected:
-          ${{ steps.validate.outputs.validation_errors }}
-
-          ### Action required
-
-          Review the upstream changes to ensure they didn't accidentally remove our customizations.
-
-          See [Sparka Upstream Sync Runbook](https://github.com/masonjames/platform-infra/blob/main/docs/runbooks/workflows/sparka-upstream-sync.md) for the list of files to preserve.
-
-          ---
-          *Automatically created by upstream-sync-pr workflow*"
-
-      - name: Summary
-        run: |
-          echo "## Upstream Sync PR Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.check.outputs.needs_sync }}" != "true" ]; then
-            echo "✅ Already up to date with upstream" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ steps.existing_pr.outputs.exists }}" == "true" ]; then
-            echo "ℹ️ Sync PR already exists: #${{ steps.existing_pr.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ steps.merge.outputs.merge_status }}" == "conflict" ]; then
-            echo "⚠️ Merge conflicts detected - issue created for manual resolution" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ steps.validate.outputs.validation_status }}" == "failed" ]; then
-            echo "❌ Validation failed - fork customizations may be missing" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ Sync PR created successfully" >> $GITHUB_STEP_SUMMARY
+            gh issue create --title 'Chat-js upstream sync blocked' --body-file /tmp/upstream-failure.md
           fi

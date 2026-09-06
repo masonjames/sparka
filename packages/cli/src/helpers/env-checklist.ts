@@ -1,119 +1,141 @@
 import {
-  authEnvRequirements,
-  type EnvRequirement,
-  featureEnvRequirements,
-  gatewayEnvRequirements,
-} from "../../../../apps/chat/lib/config-requirements";
-import { serverEnvSchema } from "../../../../apps/chat/lib/env-schema";
+	authEnvRequirements,
+	builtInToolEnvRequirements,
+	coreFeatureEnvRequirements,
+	type EnvRequirement,
+	envVarDescriptions,
+	gatewayEnvRequirements,
+} from "./config-requirements";
 import {
-  FEATURE_KEYS,
-  type AuthProvider,
-  type FeatureKey,
-  type Gateway,
+	type AuthProvider,
+	BUILT_IN_TOOL_KEYS,
+	CORE_FEATURE_KEYS,
+	type BuiltInToolKey,
+	type CoreFeatureKey,
+	type Gateway,
 } from "../types";
 
-export type EnvVarEntry = {
-  /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
-  vars: string;
-  /** Human-readable description derived from the Zod schema */
-  description: string;
-  /** Group key used to render "one of" alternatives together */
-  oneOfGroup?: string;
+type EnvRequirementLike = {
+	description?: string;
+	options: string[][];
 };
 
-/**
- * Extract descriptions from the server env Zod schema.
- * Mirrors the approach used by config-builder.ts `extractDescriptions`.
- */
-function extractEnvDescriptions(): Map<string, string> {
-  const result = new Map<string, string>();
-  for (const [key, schema] of Object.entries(serverEnvSchema)) {
-    const desc = (schema as { description?: string }).description;
-    if (desc) {
-      result.set(key, desc);
-    }
-  }
-  return result;
-}
+export type EnvVarEntry = {
+	/** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
+	vars: string;
+	/** Human-readable description derived from the Zod schema */
+	description: string;
+	/** Group key used to render "one of" alternatives together */
+	oneOfGroup?: string;
+};
 
-const envDescriptions = extractEnvDescriptions();
+const envDescriptions = new Map(Object.entries(envVarDescriptions));
 
 /**
  * Expand an EnvRequirement into one or more EnvVarEntries, pulling
  * descriptions from the Zod schema.
  */
-function requirementToEntries(requirement: EnvRequirement): EnvVarEntry[] {
-  const oneOfGroup =
-    requirement.options.length > 1
-      ? requirement.options.map((group) => group.map(String).join("+")).join("|")
-      : undefined;
+function requirementToEntries(requirement: EnvRequirementLike): EnvVarEntry[] {
+	const oneOfGroup =
+		requirement.options.length > 1
+			? requirement.options
+					.map((group) => group.map(String).join("+"))
+					.join("|")
+			: undefined;
 
-  return requirement.options.map((group) => {
-    const description = group
-      .map((v) => {
-        const varName = String(v);
-        return envDescriptions.get(varName) ?? varName;
-      })
-      .join(", ");
+	return requirement.options.map((group) => {
+		const description = group
+			.map((v) => {
+				const varName = String(v);
+				return envDescriptions.get(varName) ?? varName;
+			})
+			.join(", ");
 
-    return {
-      vars: group.map(String).join(" + "),
-      description: description || requirement.description,
-      oneOfGroup,
-    };
-  });
+		return {
+			vars: group.map(String).join(" + "),
+			description: description || requirement.description,
+			oneOfGroup,
+		};
+	});
 }
 
 export function collectEnvChecklist(input: {
-  gateway: Gateway;
-  features: Record<FeatureKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
+	gateway: Gateway;
+	coreFeatures: Record<CoreFeatureKey, boolean>;
+	builtInTools: Record<BuiltInToolKey, boolean>;
+	auth: Record<AuthProvider, boolean>;
+	installableToolEnvRequirements?: EnvRequirementLike[];
 }): EnvVarEntry[] {
-  const entries: EnvVarEntry[] = [];
+	const entries: EnvVarEntry[] = [];
 
-  entries.push({
-    vars: "AUTH_SECRET",
-    description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
-  });
-  entries.push({
-    vars: "DATABASE_URL",
-    description: envDescriptions.get("DATABASE_URL") ?? "DATABASE_URL",
-  });
+	entries.push({
+		vars: "AUTH_SECRET",
+		description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
+	});
+	entries.push({
+		vars: "DATABASE_URL",
+		description: envDescriptions.get("DATABASE_URL") ?? "DATABASE_URL",
+	});
 
-  // --- AI Gateway ---
-  const gwReq = gatewayEnvRequirements[input.gateway];
-  const gwEntries = requirementToEntries(gwReq);
+	// --- AI Gateway ---
+	const gwReq = gatewayEnvRequirements[input.gateway];
+	const gwEntries = requirementToEntries(gwReq);
 
-  entries.push(...gwEntries);
+	entries.push(...gwEntries);
 
-  // --- Features ---
-  const featureItems: EnvVarEntry[] = [];
-  const seen = new Set<string>();
+	// --- Top-level features ---
+	const featureItems: EnvVarEntry[] = [];
+	const seen = new Set<string>();
 
-  for (const feature of FEATURE_KEYS) {
-    if (!input.features[feature]) continue;
-    const requirement =
-      featureEnvRequirements[feature as keyof typeof featureEnvRequirements];
-    if (!requirement) continue;
+	for (const feature of CORE_FEATURE_KEYS) {
+		if (!input.coreFeatures[feature]) continue;
+		const requirement =
+			coreFeatureEnvRequirements[
+				feature as keyof typeof coreFeatureEnvRequirements
+			];
+		if (!requirement) continue;
 
-    // Deduplicate — e.g. webSearch and deepResearch both need TAVILY_API_KEY
-    if (seen.has(requirement.description)) continue;
-    seen.add(requirement.description);
+		// Deduplicate repeated env requirements across feature/tool selections.
+		if (seen.has(requirement.description)) continue;
+		seen.add(requirement.description);
 
-    featureItems.push(...requirementToEntries(requirement));
-  }
+		featureItems.push(...requirementToEntries(requirement));
+	}
 
-  entries.push(...featureItems);
+	for (const tool of BUILT_IN_TOOL_KEYS) {
+		if (!input.builtInTools[tool]) continue;
+		const requirement =
+			builtInToolEnvRequirements[
+				tool as keyof typeof builtInToolEnvRequirements
+			];
+		if (!requirement) continue;
+		if (seen.has(requirement.description)) continue;
+		seen.add(requirement.description);
 
-  // --- Authentication ---
-  const authItems: EnvVarEntry[] = [];
+		featureItems.push(...requirementToEntries(requirement));
+	}
 
-  for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
-    if (!input.auth[provider]) continue;
-    authItems.push(...requirementToEntries(authEnvRequirements[provider]));
-  }
+	for (const requirement of input.installableToolEnvRequirements ?? []) {
+		const dedupeKey =
+			requirement.description ??
+			requirement.options.map((option) => option.join("+")).join("|");
+		if (seen.has(dedupeKey)) continue;
+		seen.add(dedupeKey);
 
-  entries.push(...authItems);
+		featureItems.push(...requirementToEntries(requirement));
+	}
 
-  return entries;
+	entries.push(...featureItems);
+
+	// --- Authentication ---
+	const authItems: EnvVarEntry[] = [];
+
+	for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
+		if (!input.auth[provider]) continue;
+		authItems.push(...requirementToEntries(authEnvRequirements[provider]));
+	}
+
+	entries.push(...authItems);
+
+	return entries;
 }

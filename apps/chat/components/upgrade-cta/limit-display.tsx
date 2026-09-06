@@ -2,17 +2,14 @@
 
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import Link from "next/link";
 import { useState } from "react";
+import { InternalLink } from "@/components/internal-link";
 import { useEntitlementStatus, useGetCredits } from "@/hooks/chat-sync-hooks";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { Button } from "../ui/button";
 
-const GHOST_PORTAL_URL =
-  typeof window !== "undefined"
-    ? (window as any).__GHOST_PORTAL_URL__ || "https://masonjames.com/#/portal"
-    : "https://masonjames.com/#/portal";
+const GHOST_PORTAL_URL = "https://masonjames.com/#/portal";
 
 const VARIANT_CONFIG: Record<
   "credits" | "model" | "image",
@@ -55,7 +52,7 @@ const VARIANT_CONFIG: Record<
             <span>
               You only have{" "}
               <strong>
-                {remaining} credit{remaining !== 1 ? "s" : ""}
+                {remaining} credit{remaining === 1 ? "" : "s"}
               </strong>{" "}
               left.{" "}
               <a
@@ -75,26 +72,26 @@ const VARIANT_CONFIG: Record<
       return isAtLimit ? (
         <span>
           You&apos;ve reached your credit limit.{" "}
-          <Link
+          <InternalLink
             className="font-medium text-red-700 underline hover:no-underline dark:text-red-300"
             href="/login"
           >
-            Sign in to continue
-          </Link>
+            Sign in to reset your limits
+          </InternalLink>
         </span>
       ) : (
         <span>
           You only have{" "}
           <strong>
-            {remaining} credit{remaining !== 1 ? "s" : ""}
+            {remaining} credit{remaining === 1 ? "" : "s"}
           </strong>{" "}
           left.{" "}
-          <Link
+          <InternalLink
             className="font-medium text-amber-700 underline hover:no-underline dark:text-amber-300"
             href="/login"
           >
-            Sign in for more
-          </Link>
+            Sign in to reset your limits
+          </InternalLink>
         </span>
       );
     },
@@ -108,12 +105,12 @@ const VARIANT_CONFIG: Record<
     getMessage: () => (
       <span>
         This model isn&apos;t available for anonymous users.{" "}
-        <Link
+        <InternalLink
           className="font-medium text-amber-700 underline hover:no-underline dark:text-amber-300"
           href="/login"
         >
           Log in to use this model
-        </Link>
+        </InternalLink>
       </span>
     ),
     getClasses: () =>

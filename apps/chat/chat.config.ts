@@ -1,4 +1,4 @@
-import type { ConfigInput } from "@/lib/config-schema";
+import { defineConfig } from "@/lib/config-schema";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -8,7 +8,7 @@ const isProd = process.env.NODE_ENV === "production";
  * Edit this file to customize your app.
  * @see https://chatjs.dev/docs/reference/config
  */
-const config = {
+const config = defineConfig({
   appPrefix: "chat",
   appName: "Chat by Mason James",
   appTitle: "Chat by Mason James - AI Chat with 120+ Models",
@@ -46,6 +46,7 @@ const config = {
   },
   features: {
     attachments: true, // Uses R2 storage (R2_* env vars)
+    parallelResponses: true,
   },
   legal: {
     minimumAge: 13,
@@ -67,36 +68,31 @@ const config = {
     github: true, // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
     vercel: false, // Disabled for Docker hosting
   },
+  desktopApp: {
+    enabled: true,
+  },
   ai: {
     gateway: "vercel",
-    providerOrder: ["openai", "google", "anthropic", "xai"],
-    disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
-    curatedDefaults: [
-      // OpenAI
-      "openai/gpt-5-nano",
-      "openai/gpt-5-mini",
-      "openai/gpt-5.2",
-      "openai/gpt-5.2-chat",
-      // Google
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-3-flash",
-      "google/gemini-3-pro-preview",
-      // Anthropic
-      "anthropic/claude-sonnet-4.5",
-      "anthropic/claude-opus-4.5",
-      // xAI
-      "xai/grok-4",
+    providerOrder: [
+      "openai",
+      "anthropic",
+      "google",
+      "xai",
+      "meta",
+      "mistral",
+      "deepseek",
+      "perplexity",
+      "cohere",
+      "alibaba",
+      "amazon",
+      "inception",
+      "moonshot",
+      "morph",
+      "zai",
     ],
-    anonymousModels: [
-      "google/gemini-2.5-flash-lite",
-      "openai/gpt-5-mini",
-      "openai/gpt-5-nano",
-      "anthropic/claude-haiku-4.5",
-    ],
+    disabledModels: [],
+    anonymousModels: ["openai/gpt-5-nano"],
     workflows: {
-      chat: "openai/gpt-5-mini",
-      title: "openai/gpt-5-nano",
-      pdf: "openai/gpt-5-mini",
       chatImageCompatible: "openai/gpt-4o-mini",
     },
     tools: {
@@ -114,7 +110,6 @@ const config = {
       },
       followupSuggestions: {
         enabled: true,
-        default: "openai/gpt-5-nano",
       },
       text: {
         polish: "openai/gpt-5-mini",
@@ -130,20 +125,19 @@ const config = {
         enabled: true, // Uses R2 storage (R2_* env vars)
         default: "google/gemini-3-pro-image",
       },
-      video: {
-        enabled: true, // Uses R2 storage (R2_* env vars)
-        default: "xai/grok-imagine-video",
-      },
       deepResearch: {
         enabled: true, // Requires webSearch
-        defaultModel: "google/gemini-2.5-flash-lite",
-        finalReportModel: "google/gemini-3-flash",
+        defaultModel: "openai/gpt-5-nano",
+        finalReportModel: "openai/gpt-5-mini",
         allowClarification: true,
         maxResearcherIterations: 1,
         maxConcurrentResearchUnits: 2,
         maxSearchQueries: 2,
       },
     },
+  },
+  paths: {
+    tools: "@/tools/chatjs",
   },
   anonymous: {
     credits: isProd ? 10 : 1000,
@@ -162,6 +156,6 @@ const config = {
       "application/pdf": [".pdf"],
     },
   },
-} satisfies ConfigInput;
+});
 
 export default config;

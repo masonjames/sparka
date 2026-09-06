@@ -1,8 +1,11 @@
 "use client";
-import { useChatId, useChatStatus } from "@ai-sdk-tools/store";
 import { memo } from "react";
 import { config } from "@/lib/config";
-import { useMessageMetadataById } from "@/lib/stores/hooks-base";
+import { useChatId, useChatStatus } from "@/lib/stores/base";
+import {
+  useLastMessageId,
+  useMessageMetadataById,
+} from "@/lib/stores/hooks-base";
 import { Message, MessageContent } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
 import { MessageActions } from "./message-actions";
@@ -19,8 +22,18 @@ const PureAssistantMessage = ({
   const chatId = useChatId();
   const metadata = useMessageMetadataById(messageId);
   const status = useChatStatus();
+  const lastMessageId = useLastMessageId();
+  const isPendingLastMessage =
+    messageId === lastMessageId &&
+    (status === "submitted" || status === "streaming");
+  const activeStreamId = metadata.activeStreamId;
+  const hasActiveResponse = activeStreamId !== null;
+  const shouldHideCompletionActions =
+    isLoading || hasActiveResponse || isPendingLastMessage;
   const isReconnectingToMessageStream =
-    metadata.activeStreamId !== null && status === "submitted";
+    hasActiveResponse &&
+    !activeStreamId.startsWith("pending:") &&
+    status === "submitted";
 
   if (!chatId || isReconnectingToMessageStream) {
     return null;
@@ -43,12 +56,14 @@ const PureAssistantMessage = ({
 
         <MessageActions
           chatId={chatId}
-          isLoading={isLoading}
+          isLoading={shouldHideCompletionActions}
           isReadOnly={isReadonly}
           key={`action-${messageId}`}
           messageId={messageId}
         />
-        {isReadonly || !config.ai.tools.followupSuggestions.enabled ? null : (
+        {isReadonly ||
+        shouldHideCompletionActions ||
+        !config.ai.tools.followupSuggestions.enabled ? null : (
           <FollowUpSuggestionsParts messageId={messageId} />
         )}
       </MessageContent>

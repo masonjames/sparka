@@ -1,27 +1,34 @@
+import { electron } from "@better-auth/electron";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { magicLink } from "better-auth/plugins";
+import { lastLoginMethod, magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
 import {
   appBaseUrl,
   authCookieDomain,
   authTrustedOrigins,
 } from "@/lib/app-url";
+import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
+import {
+  ELECTRON_AUTH_CLIENT_ID,
+  ELECTRON_AUTH_COOKIE_PREFIX,
+  ELECTRON_TRUSTED_ORIGINS,
+} from "./electron-auth";
 
-export interface Session {
-  expires?: string;
-  user?: {
-    id?: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
-}
+type BetterAuthOptions = Parameters<typeof betterAuth>[0];
+type BetterAuthPlugin = NonNullable<BetterAuthOptions["plugins"]>[number];
+
+const electronAuthPlugin = electron({
+  clientID: ELECTRON_AUTH_CLIENT_ID,
+  cookiePrefix: ELECTRON_AUTH_COOKIE_PREFIX,
+}) as unknown as BetterAuthPlugin;
+
+export type Session = typeof auth.$Infer.Session;
 
 const magicLinkLogger = createModuleLogger("magic-link");
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
@@ -76,7 +83,10 @@ export const auth = betterAuth({
     schema,
   }),
   baseURL: appBaseUrl,
-  trustedOrigins: authTrustedOrigins,
+  trustedOrigins: [
+    ...authTrustedOrigins,
+    ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
+  ],
   secret: env.AUTH_SECRET,
 
   socialProviders: (() => {
@@ -128,6 +138,8 @@ export const auth = betterAuth({
     : undefined,
 
   plugins: [
+    lastLoginMethod(),
+    ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
     nextCookies(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {

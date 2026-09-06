@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { cookies } from "next/headers";
 import Script from "next/script";
 
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
+import { ElectronAuthHandler } from "@/components/electron-auth-handler";
 import { ThemeProvider } from "@/components/theme-provider";
 import { config } from "@/lib/config";
 
@@ -64,9 +64,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Force dynamic rendering by accessing cookies - ensures env vars are read at request time
-  await cookies();
-
   return (
     <html
       className={`${geist.variable} ${geistMono.variable}`}
@@ -81,14 +78,15 @@ export default async function RootLayout({
         <Script id="theme-color-script" strategy="beforeInteractive">
           {THEME_COLOR_SCRIPT}
         </Script>
-        {process.env.NODE_ENV !== "production" ? (
+        {process.env.NODE_ENV === "production" ? null : (
           <Script
             src="https://unpkg.com/react-scan/dist/auto.global.js"
             strategy="beforeInteractive"
           />
-        ) : null}
+        )}
       </head>
       <body className="antialiased">
+        <ElectronAuthHandler />
         <Script
           src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
           strategy="afterInteractive"

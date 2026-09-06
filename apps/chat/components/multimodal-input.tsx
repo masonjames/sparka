@@ -1,7 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useChatActions, useChatStoreApi } from "@ai-sdk-tools/store";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import {
@@ -25,18 +24,37 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
-import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import type { Attachment, ChatMessage, UiToolName } from "@/lib/ai/types";
+import {
+  type Attachment,
+  type ChatMessage,
+  expandSelectedModelValue,
+  type SelectedModelValue,
+  type UiToolName,
+} from "@/lib/ai/types";
+import { useCurrentChatRoute } from "@/lib/chat-route";
 import { config } from "@/lib/config";
+import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import { useLastMessageId } from "@/lib/stores/hooks-base";
-import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
+import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
+import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
+import {
+  clearResponseActiveStream,
+  isPendingResponseStream,
+} from "@/lib/stop-response";
+import { useChatActions } from "@/lib/stores/base";
+import {
+  useApplicationThread,
+  useCustomChatStoreApi,
+} from "@/lib/stores/custom-store-provider";
+import {
+  useLastMessageId,
+  useLastMessageMetadata,
+} from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-import { cn, generateUUID } from "@/lib/utils";
-import { useChatId } from "@/providers/chat-id-provider";
+import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
@@ -44,6 +62,7 @@ import { useTRPC } from "@/trpc/react";
 import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
+import { getResponseAwareStatus } from "./parallel-response-status";
 import { ResponsiveTools } from "./responsive-tools";
 import {
   DropdownMenu,
@@ -55,8 +74,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LimitDisplay } from "./upgrade-cta/limit-display";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
-
-const PROJECT_ROUTE_REGEX = /^\/project\/([^/]+)$/;
 
 /** Derive accept string for images only */
 function getAcceptImages(acceptedTypes: Record<string, string[]>): string {
@@ -96,20 +113,22 @@ function PureMultimodalInput({
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
 }) {
-  const storeApi = useChatStoreApi<ChatMessage>();
+  const thread = useApplicationThread();
+  const storeApi = useCustomChatStoreApi<ChatMessage>();
   const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const { mutate: saveChatMessage } = useSaveMessageMutation();
-  const addMessageToTree = useAddMessageToTree();
-  useChatId();
-  const {
-    setMessages,
-    sendMessage,
-    stop: stopHelper,
-  } = useChatActions<ChatMessage>();
+  const currentRoute = useCurrentChatRoute();
+  const startProvisionalChat = useStartProvisionalChat(chatId);
+  const { startRun, stop: stopHelper } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
+  const lastMessageMetadata = useLastMessageMetadata();
+  const responseAwareStatus = getResponseAwareStatus(
+    status,
+    lastMessageMetadata ? { metadata: lastMessageMetadata } : null
+  );
   const {
     editorRef,
     selectedTool,
@@ -117,7 +136,9 @@ function PureMultimodalInput({
     attachments,
     setAttachments,
     selectedModelId,
+    selectedModelSelection,
     handleModelChange,
+    handleModelSelectionChange,
     getInputValue,
     handleInputChange,
     getInitialInput,
@@ -135,6 +156,18 @@ function PureMultimodalInput({
   const stopStreamMutation = useMutation(
     trpc.chat.stopStream.mutationOptions()
   );
+  const normalizedSelectedModel = useMemo<SelectedModelValue>(() => {
+    const expanded = expandSelectedModelValue(selectedModelSelection);
+
+    return expanded.length > 1 ? selectedModelSelection : selectedModelId;
+  }, [selectedModelId, selectedModelSelection]);
+  const requestedModelIds = useMemo(
+    () => expandSelectedModelValue(normalizedSelectedModel),
+    [normalizedSelectedModel]
+  );
+  const parallelResponsesEnabled = config.features.parallelResponses;
+  const isParallelModelRequest =
+    parallelResponsesEnabled && requestedModelIds.length > 1;
 
   // Attachment configuration from site config
   const { maxBytes, maxDimension, acceptedTypes } = config.attachments;
@@ -181,10 +214,22 @@ function PureMultimodalInput({
   const submission = useMemo(():
     | { enabled: false; message: string }
     | { enabled: true } => {
+    if (isParallelModelRequest && !session?.user) {
+      return {
+        enabled: false,
+        message: "Log in to use multiple models",
+      };
+    }
+    if (isParallelModelRequest && attachments.length > 0) {
+      return {
+        enabled: false,
+        message: "Multiple models with attachments are not supported yet",
+      };
+    }
     if (isModelDisallowedForAnonymous) {
       return { enabled: false, message: "Log in to use this model" };
     }
-    if (status !== "ready" && status !== "error") {
+    if (responseAwareStatus !== "ready" && responseAwareStatus !== "error") {
       return {
         enabled: false,
         message: "Please wait for the model to finish its response!",
@@ -203,7 +248,15 @@ function PureMultimodalInput({
       };
     }
     return { enabled: true };
-  }, [isEmpty, isModelDisallowedForAnonymous, status, uploadQueue.length]);
+  }, [
+    attachments.length,
+    isEmpty,
+    isModelDisallowedForAnonymous,
+    isParallelModelRequest,
+    session?.user,
+    responseAwareStatus,
+    uploadQueue.length,
+  ]);
 
   // Helper function to process and validate files
   const processFiles = useCallback(
@@ -247,82 +300,30 @@ function PureMultimodalInput({
     ]
   );
 
-  // Update URL when sending message in new chat or project
-  // Anonymous users stay on / - no URL redirect for them
-  const updateChatUrl = useCallback(
-    (chatIdToAdd: string) => {
-      if (!session?.user) {
-        return;
-      }
-
-      const currentPath = window.location.pathname;
-      if (currentPath === "/") {
-        window.history.pushState({}, "", `/chat/${chatIdToAdd}`);
-        return;
-      }
-
-      // Handle project routes: /project/:projectId -> /project/:projectId/chat/:chatId
-      const projectMatch = currentPath.match(PROJECT_ROUTE_REGEX);
-      if (projectMatch) {
-        const [, projectId] = projectMatch;
-        window.history.pushState(
-          {},
-          "",
-          `/project/${projectId}/chat/${chatIdToAdd}`
-        );
-      }
-    },
-    [session?.user]
-  );
-
   // Trim messages in edit mode
   const trimMessagesInEditMode = useCallback(
     (parentId: string | null) => {
-      if (parentId === null) {
-        setMessages([]);
-        // Close artifact if it was visible since all messages are removed
-        if (artifact.isVisible) {
-          closeArtifact();
-        }
-        return;
-      }
-
-      const parentIndex = storeApi
-        .getState()
-        .getThrottledMessages()
-        .findIndex((msg: ChatMessage) => msg.id === parentId);
-
-      if (parentIndex !== -1) {
-        const messagesUpToParent = storeApi
-          .getState()
-          .getThrottledMessages()
-          .slice(0, parentIndex + 1);
-
-        // Close artifact if its message will not be in the trimmed messages
-        if (
-          artifact.isVisible &&
-          artifact.messageId &&
-          !messagesUpToParent.some((m) => m.id === artifact.messageId)
-        ) {
-          closeArtifact();
-        }
-
-        setMessages(messagesUpToParent);
+      thread.setCursor(parentId);
+      const selectedMessages = thread.getSnapshot().messages;
+      if (
+        artifact.isVisible &&
+        artifact.messageId &&
+        !selectedMessages.some((message) => message.id === artifact.messageId)
+      ) {
+        closeArtifact();
       }
     },
-    [
-      artifact.isVisible,
-      artifact.messageId,
-      closeArtifact,
-      setMessages,
-      storeApi,
-    ]
+    [artifact.isVisible, artifact.messageId, closeArtifact, thread]
   );
+
+  const invalidatePersistedMessages = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: trpc.chat.getChatMessages.queryKey({ chatId }),
+    });
+  }, [chatId, queryClient, trpc]);
 
   const coreSubmitLogic = useCallback(() => {
     const input = getInputValue();
-
-    updateChatUrl(chatId);
 
     // Get the appropriate parent message ID
     const effectiveParentMessageId = isEditMode
@@ -334,57 +335,83 @@ function PureMultimodalInput({
       trimMessagesInEditMode(parentMessageId);
     }
 
-    const message: ChatMessage = {
-      id: generateUUID(),
-      parts: [
-        ...attachments.map((attachment) => ({
-          type: "file" as const,
-          url: attachment.url,
-          name: attachment.name,
-          mediaType: attachment.contentType,
-        })),
-        {
-          type: "text",
-          text: input,
-        },
-      ],
-      metadata: {
-        createdAt: new Date(),
-        parentMessageId: effectiveParentMessageId,
-        selectedModel: selectedModelId,
-        activeStreamId: null,
-        selectedTool: selectedTool || undefined,
-      },
-      role: "user",
-    };
+    const { message, requestSpecs } = buildDraftChatSubmission({
+      attachments,
+      input,
+      normalizedSelectedModel,
+      parallelResponsesEnabled,
+      parentMessageId: effectiveParentMessageId,
+      selectedTool,
+    });
 
     onSendMessage?.(message);
 
-    addMessageToTree(message);
-    saveChatMessage({ message, chatId });
+    const primaryRequest = requestSpecs[0] ?? null;
 
-    sendMessage(message);
+    if (
+      startProvisionalChat({
+        message,
+        onStarted: () => {
+          if (!isMobile) {
+            editorRef.current?.focus();
+          }
+        },
+        requestSpecs,
+      })
+    ) {
+      return;
+    }
+
+    if (primaryRequest) {
+      handleModelChange(primaryRequest.modelId);
+
+      runParallelThreadRequestSpecs({
+        chatId,
+        isAuthenticated: !!session?.user,
+        message,
+        onRunStarted: storeApi.getState().registerParallelRun,
+        projectId: currentRoute.projectId,
+        requestSpecs,
+        startRun,
+      })
+        .then(async (failedRequestSpecs) => {
+          if (failedRequestSpecs.length > 0) {
+            toast.error("Failed to complete all parallel responses");
+          }
+
+          await invalidatePersistedMessages();
+        })
+        .catch(() => {
+          toast.error("Failed to complete all parallel responses");
+        });
+    } else {
+      toast.error("No model selected");
+    }
 
     // Refocus after submit
     if (!isMobile) {
       editorRef.current?.focus();
     }
   }, [
-    addMessageToTree,
     attachments,
     isMobile,
     chatId,
-    selectedTool,
-    isEditMode,
-    getInputValue,
-    saveChatMessage,
-    parentMessageId,
-    selectedModelId,
+    currentRoute.projectId,
     editorRef,
+    handleModelChange,
+    invalidatePersistedMessages,
+    getInputValue,
+    isEditMode,
     lastMessageId,
+    normalizedSelectedModel,
     onSendMessage,
-    sendMessage,
-    updateChatUrl,
+    parentMessageId,
+    parallelResponsesEnabled,
+    selectedTool,
+    session?.user,
+    startProvisionalChat,
+    startRun,
+    storeApi,
     trimMessagesInEditMode,
   ]);
 
@@ -460,7 +487,7 @@ function PureMultimodalInput({
 
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent) => {
-      if (status !== "ready") {
+      if (responseAwareStatus !== "ready") {
         return;
       }
 
@@ -518,7 +545,7 @@ function PureMultimodalInput({
     [
       setAttachments,
       processFiles,
-      status,
+      responseAwareStatus,
       session,
       uploadFile,
       attachmentsEnabled,
@@ -573,17 +600,49 @@ function PureMultimodalInput({
       }
     },
     noClick: true, // Prevent click to open file dialog since we have the button
-    disabled: status !== "ready" || !attachmentsEnabled,
+    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
     noDrag: !attachmentsEnabled,
     accept: acceptedTypes,
   });
 
   const handleStop = useCallback(() => {
-    if (session?.user && lastMessageId) {
-      stopStreamMutation.mutate({ messageId: lastMessageId });
+    const isPendingResponse = isPendingResponseStream(
+      lastMessageMetadata?.activeStreamId
+    );
+    const lastMessage = thread.getSnapshot().messages.at(-1);
+    if (
+      session?.user &&
+      lastMessage?.role === "assistant" &&
+      !isPendingResponse
+    ) {
+      stopStreamMutation.mutate({
+        chatId,
+        messageId: lastMessage.id,
+        type: "message",
+      });
     }
     stopHelper?.();
-  }, [lastMessageId, session?.user, stopHelper, stopStreamMutation]);
+    if (lastMessageId) {
+      if (isPendingResponse) {
+        thread.removeMessage(lastMessageId);
+      } else {
+        thread.setMessages(
+          clearResponseActiveStream(
+            thread.getSnapshot().messages,
+            lastMessageId
+          )
+        );
+      }
+    }
+  }, [
+    chatId,
+    lastMessageId,
+    lastMessageMetadata?.activeStreamId,
+    session?.user,
+    stopHelper,
+    stopStreamMutation,
+    thread,
+  ]);
 
   return (
     <div className="relative">
@@ -603,10 +662,10 @@ function PureMultimodalInput({
         <PromptInput
           className={cn(
             "@container relative transition-colors",
-            isDragActive && "border-blue-500 bg-blue-50 dark:bg-blue-950/20",
+            isDragActive && "border-primary bg-accent",
             className
           )}
-          inputGroupClassName="dark:bg-muted bg-muted"
+          inputGroupClassName="bg-muted dark:bg-muted"
           {...getRootProps({ onError: undefined, onSubmit: undefined })}
           onSubmit={(_message, event) => {
             event.preventDefault();
@@ -622,8 +681,8 @@ function PureMultimodalInput({
           <input {...getInputProps()} />
 
           {isDragActive && attachmentsEnabled && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-blue-500 border-dashed bg-blue-50/80 dark:bg-blue-950/40">
-              <div className="font-medium text-blue-600 dark:text-blue-400">
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-primary border-dashed bg-accent/80">
+              <div className="font-medium text-primary">
                 Drop images or PDFs here to attach
               </div>
             </div>
@@ -680,13 +739,14 @@ function PureMultimodalInput({
             acceptImages={acceptImages}
             attachmentsEnabled={attachmentsEnabled}
             fileInputRef={fileInputRef}
-            onModelChange={handleModelChange}
+            onModelSelectionChange={handleModelSelectionChange}
             onStop={handleStop}
             parentMessageId={parentMessageId}
             selectedModelId={selectedModelId}
+            selectedModelSelection={selectedModelSelection}
             selectedTool={selectedTool}
             setSelectedTool={setSelectedTool}
-            status={status}
+            status={responseAwareStatus}
             submission={submission}
             submitForm={submitForm}
           />
@@ -831,7 +891,8 @@ const AttachmentsButton = memo(PureAttachmentsButton);
 
 function PureChatInputBottomControls({
   selectedModelId,
-  onModelChange,
+  selectedModelSelection,
+  onModelSelectionChange,
   selectedTool,
   setSelectedTool,
   fileInputRef,
@@ -846,7 +907,8 @@ function PureChatInputBottomControls({
   onStop,
 }: {
   selectedModelId: AppModelId;
-  onModelChange: (modelId: AppModelId) => void;
+  selectedModelSelection: SelectedModelValue;
+  onModelSelectionChange: (selection: SelectedModelValue) => void;
   selectedTool: UiToolName | null;
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
@@ -874,8 +936,9 @@ function PureChatInputBottomControls({
         )}
         <ModelSelector
           className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
-          onModelChangeAction={onModelChange}
+          onModelSelectionChangeAction={onModelSelectionChange}
           selectedModelId={selectedModelId}
+          selectedModelSelection={selectedModelSelection}
         />
         <ConnectorsDropdown />
         <ResponsiveTools

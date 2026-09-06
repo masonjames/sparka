@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { generateText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   cloneAttachmentsInMessages,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/clone-messages";
 import { config } from "@/lib/config";
 import {
+  cancelActiveMessage,
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
   getAllMessagesByChatId,
@@ -16,13 +18,13 @@ import {
   getChatsByUserId,
   getDocumentsByMessageIds,
   getMessageById,
+  requestGenerationCancellation,
   saveChat,
   saveChatMessages,
   saveDocuments,
   updateChatIsPinnedById,
   updateChatTitleById,
   updateChatVisiblityById,
-  updateMessageCanceledAt,
 } from "@/lib/db/queries";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
@@ -187,30 +189,56 @@ export const chatRouter = createTRPCRouter({
 
   stopStream: protectedProcedure
     .input(
-      z.object({
-        messageId: z.string().uuid(),
-      })
+      z.discriminatedUnion("type", [
+        z.object({
+          chatId: z.string().uuid(),
+          messageId: z.string().uuid(),
+          type: z.literal("message"),
+        }),
+        z.object({
+          chatId: z.string().uuid(),
+          messageId: z.string().uuid(),
+          type: z.literal("request"),
+        }),
+      ])
     )
     .mutation(async ({ ctx, input }) => {
-      const [msg] = await getMessageById({ id: input.messageId });
-      if (!msg) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Message not found",
-        });
-      }
-
-      const chat = await getChatById({ id: msg.chatId });
-      if (!chat || chat.userId !== ctx.user.id) {
+      const chat = await getChatById({ id: input.chatId });
+      if (chat && chat.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Chat not found or access denied",
         });
       }
 
-      await updateMessageCanceledAt({
+      const canceledAt = new Date();
+      if (input.type === "message") {
+        const [targetMessage] = await getMessageById({ id: input.messageId });
+        if (!(chat && targetMessage) || targetMessage.chatId !== input.chatId) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Message not found",
+          });
+        }
+
+        await cancelActiveMessage({
+          canceledAt,
+          chatId: input.chatId,
+          messageId: input.messageId,
+        });
+        return { success: true };
+      }
+
+      await requestGenerationCancellation({
+        canceledAt,
+        chatId: input.chatId,
         messageId: input.messageId,
-        canceledAt: new Date(),
+        userId: ctx.user.id,
+      });
+      await cancelActiveMessage({
+        canceledAt,
+        chatId: input.chatId,
+        messageId: input.messageId,
       });
 
       return { success: true };
@@ -296,13 +324,13 @@ export const chatRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { text: title } = await generateText({
         model: await getLanguageModel(config.ai.workflows.title),
-        system: `\n
+        instructions: `\n
         - you will generate a short title based on the first message a user begins a conversation with
         - ensure it is not more than 80 characters long
         - the title should be a summary of the user's message
         - do not use quotes or colons`,
         prompt: input.message,
-        experimental_telemetry: { isEnabled: true },
+        telemetry: { integrations: chatTelemetry, isEnabled: true },
       });
 
       return { title };

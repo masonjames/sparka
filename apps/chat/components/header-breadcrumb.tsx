@@ -4,6 +4,7 @@ import { type KeyboardEvent, memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { DeleteChatDialog } from "@/components/delete-chat-dialog";
+import { InternalLink } from "@/components/internal-link";
 import { ProjectIcon } from "@/components/project-icon";
 import {
   Breadcrumb,
@@ -19,43 +20,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  useGetChatById,
-  usePinChat,
-  useProject,
-  useRenameChat,
-} from "@/hooks/chat-sync-hooks";
+import { usePinChat, useProject, useRenameChat } from "@/hooks/chat-sync-hooks";
 import { usePublicChat } from "@/hooks/use-shared-chat";
 import type { Session } from "@/lib/auth";
+import type { ChatRouteSource } from "@/lib/chat-route";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+import type { UIChat } from "@/lib/types/ui-chat";
 import { cn } from "@/lib/utils";
-import { useChatId } from "@/providers/chat-id-provider";
 import { ShareDialog } from "./share-button";
 
 interface HeaderBreadcrumbProps {
+  chat?: UIChat | null;
   chatId: string;
   className?: string;
   hasMessages?: boolean;
   isReadonly: boolean;
   projectId?: string;
+  routeSource: ChatRouteSource;
   user?: Session["user"];
 }
 
 export function HeaderBreadcrumb({
-  chatId: _chatId,
-  projectId: _projectId,
+  chat,
+  chatId,
   user,
   isReadonly,
   hasMessages,
   className,
+  routeSource,
 }: HeaderBreadcrumbProps) {
-  const { id: chatId, isPersisted, source } = useChatId();
-  const isShared = source === "share";
+  const isShared = routeSource === "share";
   const isAuthenticated = !!user;
 
-  const { data: chat } = useGetChatById(chatId, {
-    enabled: !isShared && isPersisted,
-  });
   const { data: publicChat } = usePublicChat(chatId, {
     enabled: isShared,
   });
@@ -349,17 +345,19 @@ function ProjectBreadcrumb({
   return (
     <>
       <BreadcrumbItem>
-        <BreadcrumbLink
-          aria-label={projectLabel}
-          className="flex items-center"
-          href={`/project/${projectId}`}
-          title={projectLabel}
-        >
-          {projectIcon && projectColor ? (
-            <ProjectIcon color={projectColor} icon={projectIcon} size={16} />
-          ) : (
-            projectLabel
-          )}
+        <BreadcrumbLink asChild>
+          <InternalLink
+            aria-label={projectLabel}
+            className="flex items-center"
+            href={`/project/${projectId}`}
+            title={projectLabel}
+          >
+            {projectIcon && projectColor ? (
+              <ProjectIcon color={projectColor} icon={projectIcon} size={16} />
+            ) : (
+              projectLabel
+            )}
+          </InternalLink>
         </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator />

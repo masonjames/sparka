@@ -1,10 +1,40 @@
+import type { MessageTreeSnapshot } from "@chat-js/thread";
+import type { UIMessage } from "ai";
+
 // Generic message type that works for both DB and anonymous messages
 export interface MessageNode {
   id: string;
   metadata?: {
     parentMessageId: string | null;
+    parallelGroupId?: string | null;
+    parallelIndex?: number | null;
+    activeStreamId?: string | null;
     createdAt: Date;
   };
+}
+
+export function getParallelResponseForSlot<T extends MessageNode>(
+  messages: T[],
+  parallelIndex: number,
+  selectedMessageId: string | null
+): T | null {
+  const selected = messages.find(
+    (message) =>
+      message.id === selectedMessageId &&
+      message.metadata?.parallelIndex === parallelIndex
+  );
+  if (selected) {
+    return selected;
+  }
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message.metadata?.parallelIndex === parallelIndex) {
+      return message;
+    }
+  }
+
+  return null;
 }
 
 /** Safely extract a numeric timestamp from a Date object or ISO string. */
@@ -88,6 +118,69 @@ export function getDefaultThread<T extends MessageNode>(allMessages: T[]): T[] {
   return buildThreadFromLeaf(allMessages, defaultLeaf.id);
 }
 
+export function buildTreeSnapshotFromMessages<
+  TMessage extends UIMessage & MessageNode,
+>(
+  allMessages: TMessage[],
+  cursorId: string | null = getDefaultLeafMessage(allMessages)?.id ?? null
+): MessageTreeSnapshot<TMessage> {
+  const childrenByParentId = buildChildrenMap(allMessages);
+  const messagesById = new Map(
+    allMessages.map((message) => [message.id, message])
+  );
+  const nodes: MessageTreeSnapshot<TMessage>["nodes"] = [];
+  const visited = new Set<string>();
+
+  const visit = (message: TMessage, parentId: string | null) => {
+    if (visited.has(message.id)) {
+      return;
+    }
+
+    visited.add(message.id);
+    nodes.push({ message, parentId });
+    for (const child of childrenByParentId.get(message.id) ?? []) {
+      visit(child, message.id);
+    }
+  };
+
+  for (const root of childrenByParentId.get(null) ?? []) {
+    visit(root, null);
+  }
+
+  const recovering = new Set<string>();
+  const recover = (message: TMessage) => {
+    if (visited.has(message.id) || recovering.has(message.id)) {
+      return;
+    }
+
+    recovering.add(message.id);
+    const declaredParentId = message.metadata?.parentMessageId ?? null;
+    const parent =
+      declaredParentId && declaredParentId !== message.id
+        ? messagesById.get(declaredParentId)
+        : undefined;
+    if (parent) {
+      recover(parent);
+    }
+    recovering.delete(message.id);
+
+    if (visited.has(message.id)) {
+      return;
+    }
+
+    const parentId = parent && visited.has(parent.id) ? parent.id : null;
+    visit(message, parentId);
+  };
+
+  // Missing or cyclic parent metadata should not make messages disappear or
+  // discard valid edges between messages that are present.
+  for (const message of allMessages) {
+    recover(message);
+  }
+
+  return { cursorId, nodes, version: 1 };
+}
+
 // Build parent->children mapping sorted by createdAt
 export function buildChildrenMap<T extends MessageNode>(
   allMessages: T[]
@@ -101,10 +194,26 @@ export function buildChildrenMap<T extends MessageNode>(
     map.get(parentId)?.push(message);
   }
   for (const siblings of map.values()) {
-    siblings.sort(
-      (a, b) =>
+    siblings.sort((a, b) => {
+      const aParallelIndex = a.metadata?.parallelIndex;
+      const bParallelIndex = b.metadata?.parallelIndex;
+      const sameParallelGroup =
+        a.metadata?.parallelGroupId &&
+        a.metadata?.parallelGroupId === b.metadata?.parallelGroupId;
+
+      if (
+        sameParallelGroup &&
+        typeof aParallelIndex === "number" &&
+        typeof bParallelIndex === "number" &&
+        aParallelIndex !== bParallelIndex
+      ) {
+        return aParallelIndex - bParallelIndex;
+      }
+
+      return (
         toTimestamp(a.metadata?.createdAt) - toTimestamp(b.metadata?.createdAt)
-    );
+      );
+    });
   }
   return map;
 }

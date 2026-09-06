@@ -1,6 +1,5 @@
 "use client";
 
-import { useChatActions } from "@ai-sdk-tools/store";
 import {
   Code2Icon,
   GraduationCapIcon,
@@ -14,7 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
+import { useCurrentChatRoute } from "@/lib/chat-route";
+import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
+import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
+import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
+import { useChatActions } from "@/lib/stores/base";
+import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/session-provider";
 
 interface SuggestedActionsProps {
   chatId: string;
@@ -27,7 +33,11 @@ function PureSuggestedActions({
   selectedModelId,
   className,
 }: SuggestedActionsProps) {
-  const { sendMessage } = useChatActions<ChatMessage>();
+  const { startRun } = useChatActions<ChatMessage>();
+  const storeApi = useCustomChatStoreApi<ChatMessage>();
+  const startProvisionalChat = useStartProvisionalChat(chatId);
+  const { data: session } = useSession();
+  const currentRoute = useCurrentChatRoute();
   const containerRef = useRef<HTMLDivElement>(null);
   const categories = useMemo(
     () =>
@@ -112,36 +122,39 @@ function PureSuggestedActions({
   }, [selectedCategoryId]);
 
   const sendPrompt = (text: string) => {
-    if (!sendMessage) {
+    setSelectedCategoryId(null);
+    const submission = buildDraftChatSubmission({
+      attachments: [],
+      input: text,
+      normalizedSelectedModel: selectedModelId,
+      parallelResponsesEnabled: false,
+      parentMessageId: null,
+      selectedTool: null,
+    });
+
+    if (
+      startProvisionalChat({
+        message: submission.message,
+        requestSpecs: submission.requestSpecs,
+      })
+    ) {
       return;
     }
 
-    setSelectedCategoryId(null);
-    window.history.pushState({}, "", `/chat/${chatId}`);
-
-    sendMessage(
-      {
-        role: "user",
-        parts: [{ type: "text", text }],
-        metadata: {
-          selectedModel: selectedModelId,
-          createdAt: new Date(),
-          parentMessageId: null,
-          activeStreamId: null,
-        },
-      },
-      {
-        body: {
-          data: {
-            deepResearch: false,
-            webSearch: false,
-            reason: false,
-            generateImage: false,
-            writeOrCode: false,
-          },
-        },
-      }
-    );
+    const primaryRequest = submission.requestSpecs[0];
+    if (primaryRequest) {
+      runParallelThreadRequestSpecs({
+        chatId,
+        isAuthenticated: !!session?.user,
+        message: submission.message,
+        onRunStarted: storeApi.getState().registerParallelRun,
+        projectId: currentRoute.projectId,
+        requestSpecs: submission.requestSpecs,
+        startRun,
+      }).catch(() => {
+        // The chat-level error callback owns user-facing request errors.
+      });
+    }
   };
 
   return (

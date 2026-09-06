@@ -1,102 +1,37 @@
 name: Build and Push to GHCR
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      deploy_to_dokploy:
-        description: 'Trigger Dokploy deployment after push'
-        required: false
-        default: 'true'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
+permissions: {}
+concurrency:
+  group: sparka-candidate-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  build-and-push:
+  candidate:
+    if: github.repository == 'masonjames/sparka'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-
-      - name: Output image info
-        run: |
-          echo "## Docker Image Published" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Pull command:**" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-  # Optional: Trigger Dokploy deployment via webhook
-  # To enable: add DOKPLOY_WEBHOOK_URL secret to the repository
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.event.inputs.deploy_to_dokploy != 'false'
-    steps:
-      - name: Trigger Dokploy Webhook
+          persist-credentials: false
+      - name: Check and publish exact revision
+        id: candidate
+        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
         env:
-          DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
+          GHCR_TOKEN: ${{ github.token }}
+        with:
+          version: v0.21.9
+          verb: call
+          args: publish --revision=${{ github.sha }} --registry-username=${{ github.actor }} --registry-token=env:GHCR_TOKEN
+      - name: Record immutable candidate for Dockhand review
+        env:
+          IMAGE: ${{ steps.candidate.outputs.output }}
+          REVISION: ${{ github.sha }}
         run: |
-          if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
-            curl -X POST "$DOKPLOY_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d '{"image": "ghcr.io/${{ github.repository }}:latest"}' \
-              --fail --silent --show-error || echo "Webhook failed"
-          else
-            echo "DOKPLOY_WEBHOOK_URL not configured - skipping deployment trigger"
-          fi
-        continue-on-error: true
+          # shellcheck disable=SC2016 # Markdown backticks are literal.
+          printf 'Source: `%s`\n\nCandidate: `%s`\n\nPublish only. Dockhand must bind an exact approved deployment plan, backup, migration rehearsal, rollback digest and runtime verification.\n' "$REVISION" "$IMAGE" >> "$GITHUB_STEP_SUMMARY"

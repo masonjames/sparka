@@ -1,5 +1,6 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
+import type Stripe from "stripe";
 import { db } from "@/lib/db/client";
 import { grantCredits } from "@/lib/db/credits";
 import type { Entitlement } from "@/lib/db/schema";
@@ -63,7 +64,7 @@ async function logWebhookEvent({
         source,
         eventId,
         eventType,
-        payload: payload as any,
+        payload,
         processed: false,
         createdAt: new Date(),
       })
@@ -174,7 +175,17 @@ async function ensureUser(email: string, name?: string): Promise<string> {
  *   }
  * }
  */
-export async function provisionFromGhost(payload: any): Promise<void> {
+export async function provisionFromGhost(payload: {
+  member?: {
+    current?: {
+      id: string;
+      email: string;
+      name?: string;
+      status: string;
+      tiers?: Array<{ slug: string }>;
+    };
+  };
+}): Promise<void> {
   const eventId = payload.member?.current?.id || crypto.randomUUID();
   const eventType = "member.updated";
 
@@ -304,7 +315,12 @@ export async function provisionFromGhost(payload: any): Promise<void> {
  *   }
  * }
  */
-export async function provisionFromStripe(event: any): Promise<void> {
+export async function provisionFromStripe(
+  event:
+    | Stripe.CustomerSubscriptionCreatedEvent
+    | Stripe.CustomerSubscriptionUpdatedEvent
+    | Stripe.CustomerSubscriptionDeletedEvent
+): Promise<void> {
   const eventId = event.id;
   const eventType = event.type;
 
@@ -330,7 +346,8 @@ export async function provisionFromStripe(event: any): Promise<void> {
     const customerId = subscription.customer;
     const status = subscription.status; // "active" | "canceled" | "past_due" etc.
     const priceId = subscription.items?.data?.[0]?.price?.id;
-    const productId = subscription.items?.data?.[0]?.price?.product;
+    const product = subscription.items?.data?.[0]?.price?.product;
+    const productId = typeof product === "string" ? product : product?.id;
 
     // Try to get user from metadata or lookup by customer ID
     const userId = subscription.metadata?.userId;
@@ -347,7 +364,7 @@ export async function provisionFromStripe(event: any): Promise<void> {
 
     // Determine credits based on price/product
     // TODO: Map Stripe price IDs to tier credits
-    const tier = priceId || productId;
+    const tier = priceId || productId || null;
     const credits = getCreditsForTier(tier);
 
     if (status === "active") {

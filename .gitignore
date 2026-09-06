@@ -55,6 +55,11 @@ packages/*/dist
 packages/cli/templates
 templates
 
+# Blume
+apps/docs/.blume/
+apps/docs/.blume-verify/
+apps/docs/dist/
+
 # Evalite DB
 evals/db/
 apps/*/evals/db/
@@ -62,10 +67,15 @@ apps/*/evals/db/
 # Neon
 .neon
 
-/.skillz
-/AGENTS.md
-/AGENTS.md.bak
-/CLAUDE.md
-/CLAUDE.md.bak
-# END Skiller Generated Files
+# Electron
+apps/electron/dist/
+apps/electron/release/
+apps/electron/out/
+apps/electron/branding.json
+
 .devtools
+.cursor/hooks/state
+.codex/environments/
+
+# Local Dagger image exports and evidence
+/artifacts/

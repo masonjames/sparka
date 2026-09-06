@@ -113,8 +113,11 @@ export const message = pgTable("Message", {
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
   annotations: json("annotations"),
-  selectedModel: varchar("selectedModel", { length: 256 }).default(""),
+  selectedModel: json("selectedModel"),
   selectedTool: varchar("selectedTool", { length: 256 }).default(""),
+  parallelGroupId: uuid("parallelGroupId"),
+  parallelIndex: integer("parallelIndex"),
+  isPrimaryParallel: boolean("isPrimaryParallel"),
   lastContext: json("lastContext"),
   activeStreamId: varchar("activeStreamId", { length: 64 }),
   /** Timestamp when this message's stream was canceled by the user. Null means not canceled. */
@@ -314,6 +317,21 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
+export const generationCancellation = pgTable(
+  "GenerationCancellation",
+  {
+    messageId: uuid("messageId").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    chatId: uuid("chatId").notNull(),
+    canceledAt: timestamp("canceledAt").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.messageId, table.userId] }),
+  })
+);
+
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -387,7 +405,7 @@ export const entitlement = pgTable(
   },
   (table) => ({
     userIdIdx: index("entitlement_user_id_idx").on(table.userId),
-    sourceExternalIdIdx: index("entitlement_source_external_id_idx").on(
+    sourceExternalIdIdx: uniqueIndex("entitlement_source_external_id_idx").on(
       table.source,
       table.externalId
     ),
@@ -412,7 +430,7 @@ export const webhookEvent = pgTable(
     createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => ({
-    sourceEventIdIdx: index("webhook_event_source_event_id_idx").on(
+    sourceEventIdIdx: uniqueIndex("webhook_event_source_event_id_idx").on(
       table.source,
       table.eventId
     ),

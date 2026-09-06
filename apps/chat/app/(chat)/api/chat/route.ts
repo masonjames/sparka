@@ -25,13 +25,19 @@ import {
   streamFollowupSuggestions,
 } from "@/lib/ai/followup-suggestions";
 import { systemPrompt } from "@/lib/ai/prompts";
+import { getStreamErrorMessage } from "@/lib/ai/stream-errors";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
-import { allTools } from "@/lib/ai/tools/tools-definitions";
-import type { ChatMessage, ToolName } from "@/lib/ai/types";
+import {
+  type ChatMessage,
+  getPrimarySelectedModelId,
+  isSelectedModelValue,
+  type ToolName,
+} from "@/lib/ai/types";
 import {
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
+import { createAssistantRequestMessageId } from "@/lib/assistant-request-id";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
@@ -39,13 +45,15 @@ import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { canSpend, deductCredits } from "@/lib/db/credits";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
+  cancelActiveMessage,
   getChatById,
   getMessageById,
   getMessageCanceledAt,
   getProjectById,
   getUserById,
-  saveChat,
-  saveMessage,
+  isGenerationCancellationRequested,
+  saveChatIfNotExists,
+  saveMessageIfNotExists,
   updateMessage,
   updateMessageActiveStreamId,
 } from "@/lib/db/queries";
@@ -179,7 +187,14 @@ async function handleChatValidation({
 
   if (chat) {
     if (chat.userId !== userId) {
-      log.warn("Unauthorized - chat ownership mismatch");
+      log.warn(
+        {
+          chatId,
+          userId,
+          chatUserId: chat.userId,
+        },
+        "Unauthorized - chat ownership mismatch"
+      );
       return {
         error: new Response("Unauthorized", { status: 401 }),
         isNewChat,
@@ -191,26 +206,52 @@ async function handleChatValidation({
       message: userMessage,
     });
 
-    await saveChat({ id: chatId, userId, title, projectId });
+    await saveChatIfNotExists({ id: chatId, userId, title, projectId });
   }
 
   const [existentMessage] = await getMessageById({ id: userMessage.id });
 
   if (existentMessage && existentMessage.chatId !== chatId) {
-    log.warn("Unauthorized - message chatId mismatch");
+    log.warn(
+      {
+        chatId,
+        userMessageId: userMessage.id,
+        existentMessageChatId: existentMessage.chatId,
+      },
+      "Unauthorized - message chatId mismatch"
+    );
     return { error: new Response("Unauthorized", { status: 401 }), isNewChat };
   }
 
-  if (!existentMessage) {
-    // If the message does not exist, save it
-    await saveMessage({
-      id: userMessage.id,
-      chatId,
-      message: userMessage,
-    });
-  }
+  await saveMessageIfNotExists({
+    id: userMessage.id,
+    chatId,
+    message: userMessage,
+  });
 
   return { error: null, isNewChat };
+}
+
+function resolveSelectedModelId({
+  requestSelectedModelId,
+  selectedModel,
+}: {
+  requestSelectedModelId?: AppModelId;
+  selectedModel: ChatMessage["metadata"]["selectedModel"];
+}): AppModelId | null {
+  if (typeof selectedModel === "string") {
+    return requestSelectedModelId ?? selectedModel;
+  }
+
+  if (requestSelectedModelId) {
+    if (!selectedModel || typeof selectedModel !== "object") {
+      return null;
+    }
+    const requestedCount = selectedModel[requestSelectedModelId];
+    return requestedCount && requestedCount > 0 ? requestSelectedModelId : null;
+  }
+
+  return getPrimarySelectedModelId(selectedModel);
 }
 
 async function checkUserCanSpend(userId: string): Promise<Response | null> {
@@ -250,39 +291,6 @@ async function handleUserValidationAndCredits({
   return { isNewChat: validationResult.isNewChat };
 }
 
-/**
- * Determines which built-in tools are allowed based on model capabilities.
- * MCP tools are handled separately in core-chat-agent.
- */
-function determineAllowedTools({
-  isAnonymous,
-  modelDefinition,
-  explicitlyRequestedTools,
-}: {
-  isAnonymous: boolean;
-  modelDefinition: AppModelDefinition;
-  explicitlyRequestedTools: ToolName[] | null;
-}): ToolName[] {
-  // Start with all tools or anonymous-limited tools
-  const allowedTools: ToolName[] = isAnonymous
-    ? [...ANONYMOUS_LIMITS.AVAILABLE_TOOLS]
-    : [...allTools];
-
-  // Disable all tools for models with unspecified features
-  if (!modelDefinition?.input) {
-    return [];
-  }
-
-  // If specific tools were requested, filter them against allowed tools
-  if (explicitlyRequestedTools && explicitlyRequestedTools.length > 0) {
-    return explicitlyRequestedTools.filter((tool) =>
-      allowedTools.includes(tool)
-    );
-  }
-
-  return allowedTools;
-}
-
 async function getSystemPrompt({
   isAnonymous,
   chatId,
@@ -309,12 +317,13 @@ async function createChatStream({
   userMessage,
   previousMessages,
   selectedModelId,
+  parallelGroupId,
+  parallelIndex,
+  isPrimaryParallel,
   explicitlyRequestedTools,
   userId,
-  allowedTools,
   abortController,
   isAnonymous,
-  isNewChat,
   timeoutId,
   mcpConnectors,
   streamId,
@@ -325,12 +334,13 @@ async function createChatStream({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
+  parallelGroupId: string | null;
+  parallelIndex: number | null;
+  isPrimaryParallel: boolean | null;
   explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
-  allowedTools: ToolName[];
   abortController: AbortController;
   isAnonymous: boolean;
-  isNewChat: boolean;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
@@ -345,12 +355,32 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Confirm chat persistence on first message (chat + user message are persisted before streaming begins)
-      if (isNewChat) {
+      if (!isAnonymous) {
+        const canceledAt = await getMessageCanceledAt({ messageId });
+        const cancellationRequested =
+          !!userId &&
+          (await isGenerationCancellationRequested({
+            chatId,
+            messageId,
+            userId,
+          }));
+        if (canceledAt || cancellationRequested) {
+          abortController.abort();
+          return;
+        }
+      }
+
+      // Release provisional parallel responses only after this exact user
+      // message has been persisted by the primary request.
+      if (userId && isPrimaryParallel !== false) {
         dataStream.write({
           id: generateUUID(),
-          type: "data-chatConfirmed",
-          data: { chatId },
+          type: "data-userMessagePersisted",
+          data: {
+            chatId,
+            parallelGroupId,
+            userMessageId: userMessage.id,
+          },
           transient: true,
         });
       }
@@ -362,7 +392,7 @@ async function createChatStream({
         selectedModelId,
         explicitlyRequestedTools,
         userId,
-        budgetAllowedTools: allowedTools,
+        isAnonymous,
         abortSignal: abortController.signal,
         messageId,
         dataStream,
@@ -377,6 +407,9 @@ async function createChatStream({
       const initialMetadata: ChatMessage["metadata"] = {
         createdAt: new Date(),
         parentMessageId: userMessage.id,
+        parallelGroupId,
+        parallelIndex,
+        isPrimaryParallel,
         selectedModel: selectedModelId,
         activeStreamId: isAnonymous ? null : streamId,
       };
@@ -411,8 +444,7 @@ async function createChatStream({
       );
       await result.consumeStream();
 
-      const response = await result.response;
-      const responseMessages = response.messages;
+      const responseMessages = await result.responseMessages;
 
       // Generate and stream follow-up suggestions
       if (config.ai.tools.followupSuggestions.enabled) {
@@ -435,6 +467,10 @@ async function createChatStream({
         isAnonymous,
         chatId,
         costAccumulator,
+        selectedModelId,
+        parallelGroupId,
+        parallelIndex,
+        isPrimaryParallel,
       });
     },
     onError: (error) => {
@@ -445,7 +481,10 @@ async function createChatStream({
       if (!isAnonymous) {
         after(() =>
           Promise.resolve(
-            updateMessageActiveStreamId({ id: messageId, activeStreamId: null })
+            updateMessageActiveStreamId({
+              id: messageId,
+              activeStreamId: null,
+            })
           ).catch((dbError) => {
             log.error(
               { error: dbError },
@@ -456,23 +495,39 @@ async function createChatStream({
       }
 
       log.error({ error }, "onError");
-      return "Oops, an error occured!";
+      return getStreamErrorMessage(error);
     },
   });
 
   return stream;
 }
 
+function emptyChatStreamResponse() {
+  const stream = createUIMessageStream<ChatMessage>({
+    execute: () => undefined,
+  });
+
+  return new Response(stream.pipeThrough(new JsonToSseTransformStream()), {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
+}
+
 async function executeChatRequest({
   chatId,
   userMessage,
   previousMessages,
+  requestId,
   selectedModelId,
+  parallelGroupId,
+  parallelIndex,
+  isPrimaryParallel,
   explicitlyRequestedTools,
   userId,
   isAnonymous,
-  isNewChat,
-  allowedTools,
   abortController,
   timeoutId,
   mcpConnectors,
@@ -480,23 +535,44 @@ async function executeChatRequest({
   chatId: string;
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
+  requestId: string | undefined;
   selectedModelId: AppModelId;
+  parallelGroupId: string | null;
+  parallelIndex: number | null;
+  isPrimaryParallel: boolean | null;
   explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   isAnonymous: boolean;
-  isNewChat: boolean;
-  allowedTools: ToolName[];
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute");
-  const messageId = generateUUID();
+  const messageId = requestId
+    ? createAssistantRequestMessageId({
+        chatId,
+        parallelGroupId,
+        parallelIndex,
+        requestId,
+        selectedModelId,
+        userMessageId: userMessage.id,
+      })
+    : generateUUID();
   const streamId = generateUUID();
 
+  if (
+    !isAnonymous &&
+    userId &&
+    (await isGenerationCancellationRequested({ chatId, messageId, userId }))
+  ) {
+    clearTimeout(timeoutId);
+    return emptyChatStreamResponse();
+  }
+
   if (!isAnonymous) {
-    // Save placeholder assistant message immediately (needed for document creation)
-    await saveMessage({
+    // The first provisional request can replay before its persistence acknowledgment arrives, so
+    // placeholder creation must be idempotent.
+    const insertedMessage = await saveMessageIfNotExists({
       id: messageId,
       chatId,
       message: {
@@ -506,12 +582,33 @@ async function executeChatRequest({
         metadata: {
           createdAt: new Date(),
           parentMessageId: userMessage.id,
+          parallelGroupId,
+          parallelIndex,
+          isPrimaryParallel,
           selectedModel: selectedModelId,
           selectedTool: undefined,
           activeStreamId: streamId,
         },
       },
     });
+
+    if (!insertedMessage) {
+      clearTimeout(timeoutId);
+      return emptyChatStreamResponse();
+    }
+
+    if (
+      userId &&
+      (await isGenerationCancellationRequested({ chatId, messageId, userId }))
+    ) {
+      await cancelActiveMessage({
+        canceledAt: new Date(),
+        chatId,
+        messageId,
+      });
+      clearTimeout(timeoutId);
+      return emptyChatStreamResponse();
+    }
   }
 
   // Create throttled cancel check (max once per second) for authenticated users
@@ -532,12 +629,13 @@ async function executeChatRequest({
     userMessage,
     previousMessages,
     selectedModelId,
+    parallelGroupId,
+    parallelIndex,
+    isPrimaryParallel,
     explicitlyRequestedTools,
     userId,
-    allowedTools,
     abortController,
     isAnonymous,
-    isNewChat,
     timeoutId,
     mcpConnectors,
     streamId,
@@ -653,27 +751,16 @@ async function prepareRequestContext({
   chatId,
   isAnonymous,
   anonymousPreviousMessages,
-  modelDefinition,
-  explicitlyRequestedTools,
 }: {
   userMessage: ChatMessage;
   chatId: string;
   isAnonymous: boolean;
   anonymousPreviousMessages: ChatMessage[];
-  modelDefinition: AppModelDefinition;
-  explicitlyRequestedTools: ToolName[] | null;
 }): Promise<{
   previousMessages: ChatMessage[];
-  allowedTools: ToolName[];
   error: Response | null;
 }> {
   const log = createModuleLogger("api:chat:prepare");
-
-  const allowedTools = determineAllowedTools({
-    isAnonymous,
-    modelDefinition,
-    explicitlyRequestedTools,
-  });
 
   // Validate input token limit (50k tokens for user message)
   const totalTokens = calculateMessagesTokens(
@@ -688,7 +775,6 @@ async function prepareRequestContext({
     );
     return {
       previousMessages: [],
-      allowedTools: [],
       error: error.toResponse(),
     };
   }
@@ -701,9 +787,8 @@ async function prepareRequestContext({
       );
 
   const previousMessages = messageThreadToParent.slice(-5);
-  log.debug({ allowedTools }, "allowed tools");
 
-  return { previousMessages, allowedTools, error: null };
+  return { previousMessages, error: null };
 }
 
 async function finalizeMessageAndCredits({
@@ -712,14 +797,23 @@ async function finalizeMessageAndCredits({
   isAnonymous,
   chatId,
   costAccumulator,
+  selectedModelId,
+  parallelGroupId,
+  parallelIndex,
+  isPrimaryParallel,
 }: {
   messages: ChatMessage[];
   userId: string | null;
   isAnonymous: boolean;
   chatId: string;
   costAccumulator: CostAccumulator;
+  selectedModelId: AppModelId;
+  parallelGroupId: string | null;
+  parallelIndex: number | null;
+  isPrimaryParallel: boolean | null;
 }): Promise<void> {
   const log = createModuleLogger("api:chat:finalize");
+  let messageSaved = true;
 
   try {
     const assistantMessage = messages.at(-1);
@@ -729,17 +823,35 @@ async function finalizeMessageAndCredits({
     }
 
     if (!isAnonymous) {
-      await updateMessage({
+      messageSaved = await updateMessage({
         id: assistantMessage.id,
         chatId,
         message: {
           ...assistantMessage,
           metadata: {
             ...assistantMessage.metadata,
+            parallelGroupId:
+              parallelGroupId ??
+              assistantMessage.metadata.parallelGroupId ??
+              null,
+            parallelIndex:
+              parallelIndex ?? assistantMessage.metadata.parallelIndex ?? null,
+            isPrimaryParallel:
+              isPrimaryParallel ??
+              assistantMessage.metadata.isPrimaryParallel ??
+              null,
+            selectedModel: selectedModelId,
             activeStreamId: null,
           },
         },
       });
+      if (!messageSaved) {
+        log.info(
+          { messageId: assistantMessage.id },
+          "Skipped finalizing canceled message"
+        );
+        return;
+      }
     }
 
     // Get total cost from accumulator (includes all LLM calls + external API costs)
@@ -750,7 +862,7 @@ async function finalizeMessageAndCredits({
     log.info({ totalCost }, "Cost accumulator total cost");
 
     // Deduct credits for authenticated users
-    if (userId && !isAnonymous) {
+    if (userId && !isAnonymous && messageSaved) {
       await deductCredits(userId, totalCost);
     }
 
@@ -760,28 +872,267 @@ async function finalizeMessageAndCredits({
   }
 }
 
+type ChatPostBody = {
+  id: string;
+  isPrimaryParallel?: boolean | null;
+  message: ChatMessage;
+  parallelGroupId?: string | null;
+  parallelIndex?: number | null;
+  prevMessages: ChatMessage[];
+  projectId?: string;
+  requestId?: string;
+  selectedModelId?: AppModelId;
+};
+
+type ChatPostBodyResult =
+  | { success: false; error: Response }
+  | { success: true; body: ChatPostBody };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseMessageDate(value: unknown): Date | null {
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function normalizeChatMessage(value: unknown): ChatMessage | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const metadata = value.metadata;
+
+  if (
+    typeof value.id !== "string" ||
+    !Array.isArray(value.parts) ||
+    typeof value.role !== "string" ||
+    !isRecord(metadata) ||
+    !isSelectedModelValue(metadata.selectedModel)
+  ) {
+    return null;
+  }
+
+  const createdAt = parseMessageDate(metadata.createdAt);
+  if (!createdAt) {
+    return null;
+  }
+
+  const parentMessageId = metadata.parentMessageId;
+  const activeStreamId = metadata.activeStreamId;
+
+  const hasValidParentMessageId =
+    parentMessageId === null || typeof parentMessageId === "string";
+  const hasValidActiveStreamId =
+    activeStreamId === null || typeof activeStreamId === "string";
+
+  if (!(hasValidParentMessageId && hasValidActiveStreamId)) {
+    return null;
+  }
+
+  return {
+    ...(value as ChatMessage),
+    metadata: {
+      ...(metadata as ChatMessage["metadata"]),
+      createdAt,
+      parentMessageId,
+      activeStreamId,
+      selectedModel: metadata.selectedModel,
+    },
+  };
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function optionalNullableString(value: unknown): string | null | undefined {
+  if (value === null || typeof value === "string") {
+    return value;
+  }
+  return undefined;
+}
+
+function optionalNullableInteger(value: unknown): number | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  return typeof value === "number" && Number.isInteger(value)
+    ? value
+    : undefined;
+}
+
+function optionalNullableBoolean(value: unknown): boolean | null | undefined {
+  if (value === null || typeof value === "boolean") {
+    return value;
+  }
+  return undefined;
+}
+
+async function readChatPostBody(
+  request: NextRequest
+): Promise<ChatPostBodyResult> {
+  let rawBody: unknown;
+
+  try {
+    rawBody = await request.json();
+  } catch {
+    return {
+      success: false,
+      error: new ChatSDKError("bad_request:api").toResponse(),
+    };
+  }
+
+  if (!isRecord(rawBody)) {
+    return {
+      success: false,
+      error: new ChatSDKError("bad_request:api").toResponse(),
+    };
+  }
+
+  const userMessage = normalizeChatMessage(rawBody.message);
+  const anonymousPreviousMessages = Array.isArray(rawBody.prevMessages)
+    ? rawBody.prevMessages.map(normalizeChatMessage)
+    : null;
+
+  if (
+    typeof rawBody.id !== "string" ||
+    !userMessage ||
+    userMessage.role !== "user" ||
+    !anonymousPreviousMessages ||
+    anonymousPreviousMessages.some((message) => !message)
+  ) {
+    return {
+      success: false,
+      error: new ChatSDKError("bad_request:api").toResponse(),
+    };
+  }
+
+  return {
+    success: true,
+    body: {
+      id: rawBody.id,
+      isPrimaryParallel: optionalNullableBoolean(rawBody.isPrimaryParallel),
+      message: userMessage,
+      parallelGroupId: optionalNullableString(rawBody.parallelGroupId),
+      parallelIndex: optionalNullableInteger(rawBody.parallelIndex),
+      prevMessages: anonymousPreviousMessages as ChatMessage[],
+      projectId: optionalString(rawBody.projectId),
+      requestId: optionalString(rawBody.requestId),
+      selectedModelId: optionalString(rawBody.selectedModelId) as
+        | AppModelId
+        | undefined,
+    },
+  };
+}
+
+async function prepareChatPersistenceAndCredits({
+  chatId,
+  projectId,
+  userId,
+  userMessage,
+}: {
+  chatId: string;
+  projectId?: string;
+  userId: string | null;
+  userMessage: ChatMessage;
+}): Promise<{ error: Response } | { isNewChat: boolean }> {
+  if (userId) {
+    return await handleUserValidationAndCredits({
+      chatId,
+      userId,
+      userMessage,
+      projectId,
+    });
+  }
+
+  return { isNewChat: false };
+}
+
+async function consumeAnonymousCreditBeforeStream(
+  anonymousSession: AnonymousSession | null
+) {
+  if (!anonymousSession) {
+    return;
+  }
+
+  // Cookies must be updated before streaming starts, but only after request
+  // context validation has succeeded.
+  await setAnonymousSession({
+    ...anonymousSession,
+    remainingCredits: anonymousSession.remainingCredits - 1,
+  });
+}
+
+async function prepareChatExecutionInputs({
+  anonymousPreviousMessages,
+  chatId,
+  isAnonymous,
+  userId,
+  userMessage,
+}: {
+  anonymousPreviousMessages: ChatMessage[];
+  chatId: string;
+  isAnonymous: boolean;
+  userId: string | null;
+  userMessage: ChatMessage;
+}): Promise<
+  | { error: Response }
+  | { mcpConnectors: McpConnector[]; previousMessages: ChatMessage[] }
+> {
+  const [contextResult, mcpConnectors] = await Promise.all([
+    prepareRequestContext({
+      userMessage,
+      chatId,
+      isAnonymous,
+      anonymousPreviousMessages,
+    }),
+    config.ai.tools.mcp.enabled && userId && !isAnonymous
+      ? getMcpConnectorsByUserId({ userId })
+      : Promise.resolve([]),
+  ]);
+
+  if (contextResult.error) {
+    return { error: contextResult.error };
+  }
+
+  return {
+    previousMessages: contextResult.previousMessages,
+    mcpConnectors,
+  };
+}
+
 export async function POST(request: NextRequest) {
   const log = createModuleLogger("api:chat");
   try {
+    const bodyResult = await readChatPostBody(request);
+
+    if (!bodyResult.success) {
+      log.warn("No user message found");
+      return bodyResult.error;
+    }
+
     const {
       id: chatId,
       message: userMessage,
       prevMessages: anonymousPreviousMessages,
       projectId,
-    }: {
-      id: string;
-      message: ChatMessage;
-      prevMessages: ChatMessage[];
-      projectId?: string;
-    } = await request.json();
+      requestId,
+      selectedModelId: requestSelectedModelId,
+      parallelGroupId,
+      parallelIndex,
+      isPrimaryParallel,
+    } = bodyResult.body;
 
-    if (!userMessage) {
-      log.warn("No user message found");
-      return new ChatSDKError("bad_request:api").toResponse();
-    }
-
-    // Extract selectedModel from user message metadata
-    const selectedModelId = userMessage.metadata?.selectedModel as AppModelId;
+    const selectedModelId = resolveSelectedModelId({
+      requestSelectedModelId,
+      selectedModel: userMessage.metadata.selectedModel,
+    });
+    const responseParallelGroupId =
+      parallelGroupId === undefined
+        ? (userMessage.metadata.parallelGroupId ?? null)
+        : parallelGroupId;
 
     if (!selectedModelId) {
       log.warn("No selectedModel in user message metadata");
@@ -797,54 +1148,35 @@ export async function POST(request: NextRequest) {
       return sessionSetup.error;
     }
 
-    const { userId, isAnonymous, anonymousSession, modelDefinition } =
-      sessionSetup;
+    const { userId, isAnonymous, anonymousSession } = sessionSetup;
+    const persistenceResult = await prepareChatPersistenceAndCredits({
+      chatId,
+      projectId,
+      userId,
+      userMessage,
+    });
 
-    const selectedTool = userMessage.metadata.selectedTool ?? null;
-    let isNewChat = false;
-
-    // Handle authenticated user validation and credit check
-    if (userId) {
-      const result = await handleUserValidationAndCredits({
-        chatId,
-        userId,
-        userMessage,
-        projectId,
-      });
-      if ("error" in result) {
-        return result.error;
-      }
-      isNewChat = result.isNewChat;
-    } else if (anonymousSession) {
-      // Pre-deduct credits for anonymous users (cookies must be set before streaming)
-      await setAnonymousSession({
-        ...anonymousSession,
-        remainingCredits: anonymousSession.remainingCredits - 1,
-      });
+    if ("error" in persistenceResult) {
+      return persistenceResult.error;
     }
 
-    const explicitlyRequestedTools =
-      determineExplicitlyRequestedTools(selectedTool);
+    const executionInputs = await prepareChatExecutionInputs({
+      anonymousPreviousMessages,
+      chatId,
+      isAnonymous,
+      userId,
+      userMessage,
+    });
 
-    const [contextResult, mcpConnectors] = await Promise.all([
-      prepareRequestContext({
-        userMessage,
-        chatId,
-        isAnonymous,
-        anonymousPreviousMessages,
-        modelDefinition,
-        explicitlyRequestedTools,
-      }),
-      config.ai.tools.mcp.enabled && userId && !isAnonymous
-        ? getMcpConnectorsByUserId({ userId })
-        : Promise.resolve([]),
-    ]);
-
-    if (contextResult.error) {
-      return contextResult.error;
+    if ("error" in executionInputs) {
+      return executionInputs.error;
     }
 
-    const { previousMessages, allowedTools } = contextResult;
+    await consumeAnonymousCreditBeforeStream(anonymousSession);
+
+    const explicitlyRequestedTools = determineExplicitlyRequestedTools(
+      userMessage.metadata.selectedTool ?? null
+    );
 
     // Create AbortController with timeout
     const abortController = new AbortController();
@@ -855,16 +1187,18 @@ export async function POST(request: NextRequest) {
     return await executeChatRequest({
       chatId,
       userMessage,
-      previousMessages,
+      previousMessages: executionInputs.previousMessages,
+      requestId,
       selectedModelId,
+      parallelGroupId: responseParallelGroupId,
+      parallelIndex: parallelIndex ?? null,
+      isPrimaryParallel: isPrimaryParallel ?? null,
       explicitlyRequestedTools,
       userId,
       isAnonymous,
-      isNewChat,
-      allowedTools,
       abortController,
       timeoutId,
-      mcpConnectors,
+      mcpConnectors: executionInputs.mcpConnectors,
     });
   } catch (error) {
     log.error(

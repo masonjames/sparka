@@ -1,15 +1,17 @@
-import { convertToModelMessages, stepCountIs, streamText } from "ai";
+import { convertToModelMessages, isStepCount, streamText } from "ai";
 import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/add-explicit-tool-request-to-messages";
 import { filterPartsForLLM } from "@/app/(chat)/api/chat/filter-reasoning-parts";
 import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-generated-image";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
-import { getMcpTools, getTools } from "@/lib/ai/tools/tools";
+import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
+import { getMcpTools, getTools } from "@/tools/platform/tools";
 
 export async function createCoreChatAgent({
   system,
@@ -18,7 +20,7 @@ export async function createCoreChatAgent({
   selectedModelId,
   explicitlyRequestedTools,
   userId,
-  budgetAllowedTools,
+  isAnonymous = false,
   abortSignal,
   messageId,
   dataStream,
@@ -33,8 +35,7 @@ export async function createCoreChatAgent({
   selectedModelId: AppModelId;
   explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
-  /** Budget-allowed base tools from route.ts (static ToolNames only) */
-  budgetAllowedTools: ToolName[];
+  isAnonymous?: boolean;
   abortSignal?: AbortSignal;
   messageId: string;
   dataStream: StreamWriter;
@@ -90,16 +91,28 @@ export async function createCoreChatAgent({
     ...mcpTools,
   };
 
-  // Compute final activeTools for streamText:
-  // 1. Filter budget-allowed base tools to only those that actually exist in baseTools
-  const existingBaseActiveTools = budgetAllowedTools.filter(
-    (toolName) => toolName in baseTools
-  );
-  // 2. Always allow all MCP tools that exist at runtime
-  const mcpToolNames = Object.keys(mcpTools);
-  // 3. Build the final activeTools list (cast needed because MCP tools are dynamic)
+  // Compute final activeTools for streamText
+  let activeBaseTools = Object.keys(baseTools) as ToolName[];
+  let activeMcpTools = Object.keys(mcpTools) as ToolName[];
+  if (!modelDefinition?.input) {
+    activeBaseTools = [];
+    activeMcpTools = [];
+  } else if (isAnonymous) {
+    activeBaseTools = activeBaseTools.filter((k) =>
+      (ANONYMOUS_LIMITS.AVAILABLE_TOOLS as ToolName[]).includes(k)
+    );
+    activeMcpTools = [];
+  }
+  if (explicitlyRequestedTools !== null) {
+    activeBaseTools = explicitlyRequestedTools.filter((k) =>
+      activeBaseTools.includes(k)
+    );
+    activeMcpTools = explicitlyRequestedTools.filter((k) =>
+      activeMcpTools.includes(k)
+    );
+  }
   const activeTools = [
-    ...new Set([...existingBaseActiveTools, ...mcpToolNames]),
+    ...new Set([...activeBaseTools, ...activeMcpTools]),
   ] as (keyof typeof allTools)[];
 
   // Resolve async model config before streamText to ensure cleanup on failure
@@ -115,13 +128,12 @@ export async function createCoreChatAgent({
     throw error;
   }
 
-  // Create the streamText result
   const result = streamText({
     model,
-    system,
+    instructions: system,
     messages: contextForLLM,
     stopWhen: [
-      stepCountIs(5),
+      isStepCount(5),
       ({ steps }) => {
         return steps.some((step) => {
           const toolResults = step.content;
@@ -137,7 +149,8 @@ export async function createCoreChatAgent({
     ],
     activeTools,
     experimental_transform: markdownJoinerTransform(),
-    experimental_telemetry: {
+    telemetry: {
+      integrations: chatTelemetry,
       isEnabled: true,
       functionId: "chat-response",
     },
@@ -148,8 +161,8 @@ export async function createCoreChatAgent({
     onChunk,
     abortSignal,
     providerOptions,
-    onFinish: async () => {
-      // Clean up MCP clients when streaming is done (onFinish runs for both success and error)
+    onEnd: async () => {
+      // Release MCP clients after generation completes.
       await mcpCleanup();
     },
   });

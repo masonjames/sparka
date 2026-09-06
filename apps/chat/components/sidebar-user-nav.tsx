@@ -9,9 +9,9 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { InternalLink } from "@/components/internal-link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -30,11 +30,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useGetCredits } from "@/hooks/chat-sync-hooks";
 import authClient from "@/lib/auth-client";
+import { isElectronRenderer } from "@/lib/electron-auth";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 export function SidebarUserNav() {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
   const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
@@ -42,6 +43,25 @@ export function SidebarUserNav() {
   const isDesktopCollapsed = !isMobile && state === "collapsed";
 
   const user = session?.user;
+
+  if (isPending) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div
+            aria-hidden="true"
+            className="flex h-12 items-center gap-2 rounded-md p-2"
+          >
+            <div className="size-8 animate-pulse rounded-lg bg-sidebar-accent" />
+            <div className="grid flex-1 gap-1 group-data-[collapsible=icon]:hidden">
+              <div className="h-3 w-20 animate-pulse rounded bg-sidebar-accent" />
+              <div className="h-3 w-28 animate-pulse rounded bg-sidebar-accent" />
+            </div>
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   if (!user) {
     return (
@@ -128,10 +148,10 @@ export function SidebarUserNav() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/settings">
+                <InternalLink href="/settings">
                   <Settings className="mr-2 size-4" />
                   Settings
-                </Link>
+                </InternalLink>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
@@ -149,7 +169,15 @@ export function SidebarUserNav() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={async () => {
-                await authClient.signOut();
+                if (
+                  isElectronRenderer() &&
+                  typeof window.signOut === "function"
+                ) {
+                  await window.signOut();
+                  await window.electronAPI?.syncAuthSession?.();
+                } else {
+                  await authClient.signOut();
+                }
                 window.location.href = "/";
               }}
             >

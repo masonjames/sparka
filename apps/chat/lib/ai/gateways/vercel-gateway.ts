@@ -1,10 +1,15 @@
 import { gateway } from "@ai-sdk/gateway";
-import type { Experimental_VideoModelV3 } from "@ai-sdk/provider";
-import type { ImageModel, LanguageModel } from "ai";
+import type {
+  Experimental_VideoModelV4,
+  LanguageModelV4,
+} from "@ai-sdk/provider";
+import type { ImageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import {
   type AiGatewayModel,
-  aiGatewayModelsResponseSchema,
+  aiGatewayModelDiscriminatorSchema,
+  aiGatewayModelSchema,
+  aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "../ai-gateway-models-schemas";
 import { getFallbackModels } from "./fallback-models";
@@ -30,7 +35,7 @@ export class VercelGateway
 {
   readonly type = "vercel" as const;
 
-  createLanguageModel(modelId: VercelLanguageModelId): LanguageModel {
+  createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
     return gateway(modelId);
   }
 
@@ -38,7 +43,7 @@ export class VercelGateway
     return gateway.imageModel(modelId);
   }
 
-  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV3 {
+  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV4 {
     return gateway.videoModel(modelId);
   }
 
@@ -79,16 +84,18 @@ export class VercelGateway
       }
 
       const bodyRaw = await response.json();
-      const body = aiGatewayModelsResponseSchema.parse(bodyRaw);
+      const body = aiGatewayModelsEnvelopeSchema.parse(bodyRaw);
       const unsupportedTypes = new Set<string>();
       const models: AiGatewayModel[] = [];
 
-      for (const model of body.data) {
-        if (!isAiGatewayModelType(model.type)) {
-          unsupportedTypes.add(model.type);
+      for (const candidate of body.data) {
+        const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
+        if (!isAiGatewayModelType(type)) {
+          unsupportedTypes.add(type);
           continue;
         }
-        models.push({ ...model, type: model.type });
+        const model = aiGatewayModelSchema.parse(candidate);
+        models.push({ ...model, type });
       }
 
       if (unsupportedTypes.size > 0) {
