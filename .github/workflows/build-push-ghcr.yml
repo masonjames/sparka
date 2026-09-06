@@ -33,4 +33,5 @@ jobs:
           IMAGE: ${{ steps.candidate.outputs.output }}
           REVISION: ${{ github.sha }}
         run: |
+          # shellcheck disable=SC2016 # Markdown backticks are literal.
           printf 'Source: `%s`\n\nCandidate: `%s`\n\nPublish only. Dockhand must bind an exact approved deployment plan, backup, migration rehearsal, rollback digest and runtime verification.\n' "$REVISION" "$IMAGE" >> "$GITHUB_STEP_SUMMARY"

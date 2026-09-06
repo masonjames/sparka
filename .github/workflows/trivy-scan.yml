@@ -63,6 +63,8 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Security Scan Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check the **Security** tab for detailed vulnerability results." >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Security Scan Complete"
+            echo ""
+            echo "Check the **Security** tab for detailed vulnerability results."
+          } >> "$GITHUB_STEP_SUMMARY"

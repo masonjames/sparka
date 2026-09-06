@@ -66,9 +66,11 @@ jobs:
             fi
           fi
 
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=@chat-js/electron@$VERSION" >> "$GITHUB_OUTPUT"
-          echo "should_release=$SHOULD_RELEASE" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$VERSION"
+            echo "tag=@chat-js/electron@$VERSION"
+            echo "should_release=$SHOULD_RELEASE"
+          } >> "$GITHUB_OUTPUT"
 
   build:
     name: Build ${{ matrix.label }}
