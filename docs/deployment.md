@@ -41,11 +41,11 @@ an exact image identity and the same approval/verification evidence.
 
 ## Regular upstream updates
 
-`upstream-sync-check.yml` runs daily at 06:00 UTC and calls
-`upstream-sync-pr.yml`. Dockhand or an operator can request the same preparation:
+`upstream-sync-pr.yml` runs daily at 06:00 UTC. Dockhand or an operator can
+request the same preparation:
 
 ```sh
-gh workflow run upstream-sync-check.yml --repo masonjames/sparka --ref main
+gh workflow run upstream-sync-pr.yml --repo masonjames/sparka --ref main
 ```
 
 The workflow fetches chat-js, checks ancestry, creates a backup branch and
