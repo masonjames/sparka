@@ -174,12 +174,12 @@ describe("scaffoldFromTemplate", () => {
 
 		expect(packageJson.dependencies["files-sdk"]).toBe("2.1.0");
 		expect(packageJson.dependencies["@vercel/blob"]).toBeUndefined();
-		expect(packageJson.dependencies["@aws-sdk/client-s3"]).toBe("^3.700.0");
+		expect(packageJson.dependencies["@aws-sdk/client-s3"]).toBe("^3.947.0");
 		expect(packageJson.dependencies["@aws-sdk/s3-presigned-post"]).toBe(
-			"^3.700.0",
+			"^3.947.0",
 		);
 		expect(packageJson.dependencies["@aws-sdk/s3-request-presigner"]).toBe(
-			"^3.700.0",
+			"^3.947.0",
 		);
 		expect(providerSource).toContain('import { s3 } from "files-sdk/s3"');
 		expect(providerSource).toContain("createAdapter: () => s3(options)");

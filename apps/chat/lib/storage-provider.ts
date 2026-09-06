@@ -1,3 +1,4 @@
+// ChatJS storage peer dependencies: ["@aws-sdk/client-s3","@aws-sdk/s3-presigned-post","@aws-sdk/s3-request-presigner"]
 // Keep the existing Dokploy R2 environment contract through the S3 adapter.
 import { s3 } from "files-sdk/s3";
 import { env } from "./env";

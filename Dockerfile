@@ -20,6 +20,7 @@ COPY . .
 
 FROM source AS check
 RUN node scripts/check-fork.mjs
+RUN bun run --cwd packages/cli test:unit
 RUN bun run --cwd packages/thread test:unit
 RUN bun run --cwd apps/chat test:unit
 RUN bun run test:types
