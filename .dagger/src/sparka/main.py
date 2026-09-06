@@ -5,7 +5,7 @@ import dagger
 from dagger import DefaultPath, Ignore, dag, function, object_type
 
 SOURCE_EXCLUDES = [
-    ".git", "**/node_modules", "**/.next", "**/.turbo", "**/.env*",
+    ".git", ".claude", ".codex", "**/node_modules", "**/.next", "**/.turbo", "**/.env*",
     "**/.vercel", "**/.neon", "**/*.pem", "**/*.key", "**/*.tsbuildinfo",
     ".dagger", "artifacts", "**/dist", "**/coverage",
     "**/test-results", "**/playwright-report", "**/.DS_Store",

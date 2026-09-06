@@ -19,6 +19,8 @@ FROM deps AS source
 COPY . .
 
 FROM source AS check
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
 RUN node scripts/check-fork.mjs
 RUN bun run --cwd packages/cli test:unit
 RUN bun run --cwd packages/thread test:unit
