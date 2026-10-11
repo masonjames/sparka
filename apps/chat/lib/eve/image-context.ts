@@ -1,7 +1,6 @@
 import type { FileUIPart, ModelMessage } from "ai";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
 
 /** SDK fields this reader does not inspect remain optional and opaque. */
@@ -59,8 +58,6 @@ type ImageContextMessage = IgnoredSdkFields<ModelMessage> &
     | { readonly role: Exclude<ModelMessage["role"], "user" | "tool"> }
   );
 
-/* oxlint-enable sort-imports */
-
 /** Preserve the native array check while retaining the readonly content element contract. */
 const isImageContentArray: (
   content: ImageContextUserMessage["content"]
@@ -101,12 +98,7 @@ const latestImageAttachments = (
 
   return attachments;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
-/* oxlint-disable max-statements, no-continue --
- * max-statements (#512): eveImageContext keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): eveImageContext skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- */
 /** Derive image references from the native branch, without another image-history store.
  * @param {readonly ModelMessage[]} messages Ordered native branch messages. Only the latest user message supplies inline image attachments.
  * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
@@ -118,12 +110,10 @@ export const eveImageContext = (
   lastGeneratedImage: { imageUrl: string; name: string } | null;
 } => {
   const attachments = latestImageAttachments(messages);
-  /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
   let lastGeneratedImage: {
     imageUrl: string;
     name: string;
   } | null = null;
-  /* oxlint-enable unicorn/no-null */
   for (const message of messages) {
     if (message.role !== "tool") {
       continue;
@@ -151,5 +141,3 @@ export const eveImageContext = (
   }
   return { attachments, lastGeneratedImage };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-statements, no-continue */

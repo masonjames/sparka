@@ -26,7 +26,6 @@ const schemaDependencies: Readonly<
 const isGatewayType = (id: string): id is keyof typeof environment =>
   Object.hasOwn(environment, id);
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (builtInGateways); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const builtInGateways = Object.entries(gatewayMetadata).map(
   ([id, metadata]: Readonly<
     [string, (typeof gatewayMetadata)[keyof typeof gatewayMetadata]]
@@ -74,4 +73,3 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
     };
   }
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -20,11 +20,9 @@ const fencedTables = [
 // Only lifecycle string/number values, string-list helpers and native array
 // parameters may be interpolated. Preserve the original callable connection and
 // native query/helper outputs; no fragments, custom parameters or pool state.
-/* oxlint-disable import/no-named-export -- App modules use named exports; the pinned import/no-default-export rule rejects the alternative. */
 export interface PostgresLifecycleQuery {
   <Rows extends readonly (object | undefined)[] = Row[]>(
     template: Readonly<TemplateStringsArray>,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native list helpers retain their private NotAPromise brand and mutable rest tuple; array parameters retain native mutable raw arrays. Readonly mappings erase the brand, and readonly rest types reject native tag assignment.
     ...parameters: readonly (
       | string
       | number
@@ -34,10 +32,6 @@ export interface PostgresLifecycleQuery {
   ): PendingQuery<Rows>;
   (values: readonly string[]): Helper<readonly string[], []>;
 }
-/* oxlint-enable import/no-named-export */
-
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertPostgresLifecycleCompatibility); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPostgresLifecycleCompatibility's awaited sequencing and rejected-Promise behavior. */
 
 export const assertPostgresLifecycleCompatibility = async (
   connection: PostgresLifecycleQuery
@@ -49,9 +43,7 @@ export const assertPostgresLifecycleCompatibility = async (
     select max(id) as boundary from graphile_worker.migrations
   `;
   if (
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading boundary from workflow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     workflow?.boundary !== workflowMigrationBoundary ||
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading boundary from graphile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     graphile?.boundary !== graphileMigrationBoundary
   ) {
     throw new Error(
@@ -90,5 +82,3 @@ export const assertPostgresLifecycleCompatibility = async (
     );
   }
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

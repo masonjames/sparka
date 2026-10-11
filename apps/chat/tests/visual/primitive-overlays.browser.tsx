@@ -1,22 +1,16 @@
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable eslint/sort-imports -- Preserve pinned Oxfmt declaration ordering and runtime module evaluation order. */
 import React, { act } from "react";
-/* oxlint-enable eslint/sort-imports */
 import { expect, test } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import { LayoutPrimitivesVisualFixture } from "@/components/ui/layout-primitives-visual-fixture";
 import { UiPrimitivesVisualFixture } from "@/components/ui/ui-primitives-visual-fixture";
 
-/* oxlint-disable eslint/sort-imports -- Preserve pinned Oxfmt declaration ordering and runtime module evaluation order. */
 import { mount, unmount } from "./primitive-mount";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Preserve pinned Oxfmt declaration ordering and runtime module evaluation order. */
 import "./sandbox.css";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async -- eslint/max-statements: Keep this ordered browser interaction and its cleanup in one observable scenario; oxc/no-async-await: Browser lifecycle and interactions await React commits before captures and cleanup; typescript/promise-function-async: Return the browser interaction promise directly to React act without another async wrapper. */
+/* oxlint-disable typescript/promise-function-async -- eslint/max-statements: Keep this ordered browser interaction and its cleanup in one observable scenario; oxc/no-async-await: Browser lifecycle and interactions await React commits before captures and cleanup; typescript/promise-function-async: Return the browser interaction promise directly to React act without another async wrapper. */
 test("existing primitives preserve anchored overlay states", async () => {
   const fixture = await mount(<UiPrimitivesVisualFixture />);
   try {
@@ -34,8 +28,8 @@ test("existing primitives preserve anchored overlay states", async () => {
     await unmount(fixture);
   }
 });
-/* oxlint-enable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async */
-/* oxlint-disable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async -- eslint/max-statements: Keep this ordered browser interaction and its cleanup in one observable scenario; oxc/no-async-await: Browser lifecycle and interactions await React commits before captures and cleanup; typescript/promise-function-async: Return the browser interaction promise directly to React act without another async wrapper. */
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-disable typescript/promise-function-async -- eslint/max-statements: Keep this ordered browser interaction and its cleanup in one observable scenario; oxc/no-async-await: Browser lifecycle and interactions await React commits before captures and cleanup; typescript/promise-function-async: Return the browser interaction promise directly to React act without another async wrapper. */
 test("layout primitives preserve alert dialog and sheet portals", async () => {
   let fixture = await mount(<LayoutPrimitivesVisualFixture />);
   try {
@@ -61,7 +55,7 @@ test("layout primitives preserve alert dialog and sheet portals", async () => {
     await unmount(fixture);
   }
 });
-/* oxlint-enable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 const readProgressTransforms = (
   container: Readonly<Pick<HTMLElement, "querySelectorAll">>
@@ -75,7 +69,6 @@ const readProgressTransforms = (
   return transforms;
 };
 
-/* oxlint-disable oxc/no-async-await -- This browser scenario awaits React commits, state assertions and captures before cleanup. */
 test("progress states preserve numeric fallbacks and updates", async () => {
   const fixture = await mount(
     <UiPrimitivesVisualFixture includeProgress progressValue={25} />
@@ -92,7 +85,7 @@ test("progress states preserve numeric fallbacks and updates", async () => {
       "translateX(-75%)",
     ]);
     await takeSnapshot("primitives-progress-initial");
-    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- React act's async overload returns the completion promise for this synchronous render commit.
+    // oxlint-disable-next-line eslint/require-await -- React act's async overload returns the completion promise for this synchronous render commit.
     await act(async () => {
       fixture.root.render(
         <UiPrimitivesVisualFixture includeProgress progressValue={75} />
@@ -113,4 +106,3 @@ test("progress states preserve numeric fallbacks and updates", async () => {
     await unmount(fixture);
   }
 });
-/* oxlint-enable oxc/no-async-await */

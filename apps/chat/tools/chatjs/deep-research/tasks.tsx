@@ -21,18 +21,9 @@ const StepTypeIcon = ({
   update: Readonly<Pick<ResearchUpdate, "type">>;
 }>): React.JSX.Element => {
   const Icon = icons[update.type];
-  return (
-    <Icon
-      // oxlint-disable-next-line react/forbid-component-props -- Icon is selected from the closed Lucide SVG icon map; className sets its size and color.
-      className="text-muted-foreground h-4 w-4"
-    />
-  );
+  return <Icon className="text-muted-foreground h-4 w-4" />;
 };
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const StepWrapper = ({
   update,
   children,
@@ -64,13 +55,7 @@ const StepWrapper = ({
     </motion.div>
   </div>
 );
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const ResearchTasks = ({
   updates,
 }: ReadonlyNativeSurface<{ updates: ResearchUpdate[] }>): React.JSX.Element => {
@@ -101,14 +86,10 @@ const ResearchTasks = ({
     </div>
   );
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
 
 interface StepWrapperProps {
   readonly children: ReadonlyNativeSurface<ReactNode>;
   readonly isLast: boolean;
   readonly update: ReadonlyNativeSurface<ResearchUpdate>;
 }
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResearchTasks); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ResearchTasks };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

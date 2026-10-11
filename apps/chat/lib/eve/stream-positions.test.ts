@@ -21,10 +21,6 @@ beforeEach(() => {
   mocks.env.VERCEL_ENV = "";
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("uses PostgreSQL locally and propagates lookup failures") uses 12 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("uses PostgreSQL locally and propagates lookup failures", async () => {
   const positions = new Map([["session", 12]]);
   mocks.positions.mockResolvedValueOnce(positions);
@@ -38,9 +34,6 @@ it("uses PostgreSQL locally and propagates lookup failures", async () => {
     "database unavailable"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it("rejects an empty local workflow URL before loading PostgreSQL", async () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "";
@@ -56,4 +49,3 @@ it("never queries PostgreSQL on Vercel, including when a stale URL remains", asy
   expect(await getEveStreamPositions(["session"])).toEqual(new Map());
   expect(mocks.positions).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

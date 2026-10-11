@@ -1,6 +1,4 @@
-/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 // A session refresh failure cannot undo a completed native sign-out.
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Repository guidance requires this named helper; the pinned import/no-default-export rule rejects the suggested default export. */
 export const signOutAndNavigate = async ({
   signOut,
   syncSession,
@@ -29,7 +27,3 @@ export const signOutAndNavigate = async ({
   }
   navigate();
 };
-
-/* oxlint-enable oxc/no-async-await */
-
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

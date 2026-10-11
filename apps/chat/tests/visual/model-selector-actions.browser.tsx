@@ -1,5 +1,3 @@
-/* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
-/* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -13,7 +11,6 @@ import { config } from "@/lib/config";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
 
 const primary = config.ai.workflows.title;
 const secondary = config.ai.tools.code.edits;
@@ -65,12 +62,9 @@ class SelectionBoundary extends React.Component<
     return { failed: true };
   }
   public override render(): React.ReactNode {
-    // oxlint-disable-next-line no-ternary -- Preserve lazy React branch selection; pinned unicorn/prefer-ternary rejects an if/else value assignment.
     return this.state.failed ? (
-      /* oxlint-disable react/jsx-no-literals -- Fixed boundary fallback is authored fixture copy; no translation layer exists here. */
       <p role="alert">Selection failed. Try again.</p>
     ) : (
-      /* oxlint-enable react/jsx-no-literals */
       this.props.children
     );
   }
@@ -88,7 +82,6 @@ const mount = async (
   const root = createRoot(container, {
     onCaughtError: vi.fn<(error: unknown) => void>(),
   });
-  /* oxlint-disable react/no-multi-comp, react/only-export-components -- This local controlled consumer and its error boundary are mounted only by the browser test; exporting them would add unused fixture APIs. */
   const Fixture = (): React.JSX.Element => {
     const [value, setValue] = React.useState(selection);
     /* oxlint-disable typescript/promise-function-async -- Return the producer's original promise and preserve synchronous throws in this controlled consumer fixture. */
@@ -110,16 +103,18 @@ const mount = async (
           selectedModelSelection={value}
         />
         {onSend && (
-          /* oxlint-disable react/jsx-no-literals, react-perf/jsx-no-new-function-as-prop -- This fixture's Send control reads its current committed selection, just like the composer. */
-          <button type="button" onClick={() => onSend(value)}>
+          <button
+            type="button"
+            onClick={() => {
+              onSend(value);
+            }}
+          >
             Send
           </button>
-          /* oxlint-enable react/jsx-no-literals, react-perf/jsx-no-new-function-as-prop */
         )}
       </SelectionBoundary>
     );
   };
-  /* oxlint-enable react/no-multi-comp, react/only-export-components */
   await act(async () => {
     await Promise.resolve();
     root.render(<Fixture />);
@@ -133,7 +128,6 @@ const mount = async (
   };
 };
 
-/* oxlint-disable max-statements -- Verify deferred selection completion, immediate menu close, and rejection routing using the actual React 19 transition. */
 test("model selection keeps optimism while pending and routes rejection to React", async () => {
   const pending = Promise.withResolvers<undefined>();
   const action = vi.fn().mockReturnValue(pending.promise);
@@ -161,20 +155,16 @@ test("model selection keeps optimism while pending and routes rejection to React
     await cleanup();
   }
 });
-/* oxlint-enable max-statements */
 
 const modes = ["multiple-on", "multiple-off", "toggle-model", "increase-count"];
-/* oxlint-disable max-statements -- Select and send through every native picker control while the preference request remains deferred. */
 test.each(["single", ...modes])(
   "%s uses the new selection for Send before preference saving completes",
   async (mode) => {
     const pending = Promise.withResolvers<never>();
     const action = vi.fn().mockReturnValue(pending.promise);
     const send = vi.fn<(selection: SelectedModelValue) => void>();
-    /* oxlint-disable no-ternary -- Preserve lazy fixture selection; pinned unicorn/prefer-ternary rejects if/else value assignment. */
     const selection =
       mode === "single" || mode === "multiple-on" ? primary : { [primary]: 1 };
-    /* oxlint-enable no-ternary */
     const cleanup = await mount(action, selection, send);
     try {
       await page.getByTestId("model-selector").click();
@@ -212,14 +202,11 @@ test.each(["single", ...modes])(
     }
   }
 );
-/* oxlint-enable max-statements */
-/* oxlint-disable max-statements -- Drive each selection input through the same native React Action rejection boundary. */
 test.each(modes)(
   "%s forwards its promise to the React rejection owner",
   async (mode) => {
     const pending = Promise.withResolvers<undefined>();
     const action = vi.fn().mockReturnValue(pending.promise);
-    // oxlint-disable-next-line no-ternary -- Preserve lazy fixture selection; pinned unicorn/prefer-ternary rejects if/else value assignment.
     const selection = mode === "multiple-on" ? primary : { [primary]: 1 };
     const cleanup = await mount(action, selection);
     try {
@@ -247,8 +234,6 @@ test.each(modes)(
   }
 );
 
-/* oxlint-enable max-statements */
-
 test("a synchronous action throw retains the React error boundary owner", async () => {
   const action = vi.fn<(selection: SelectedModelValue) => void | Promise<void>>(
     () => {
@@ -266,5 +251,3 @@ test("a synchronous action throw retains the React error boundary owner", async 
     await cleanup();
   }
 });
-
-/* oxlint-enable oxc/no-async-await */

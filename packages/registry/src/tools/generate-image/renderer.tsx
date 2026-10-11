@@ -13,15 +13,7 @@ type GenerateImageTool = ToolRendererProps<
   typeof generateImageInput,
   typeof generateImageResult
 >["tool"];
-/* oxlint-disable react/jsx-no-literals -- GenerateImageView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GenerateImageView = ({
   tool,
@@ -29,7 +21,6 @@ const GenerateImageView = ({
   tool: GenerateImageTool;
 }>): React.JSX.Element | null => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading imageUrl from tool.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
 
@@ -39,11 +30,7 @@ const GenerateImageView = ({
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
           Generating image: &quot;
-          {
-            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from tool.input; preserve one receiver evaluation, skipped accesses and the existing "Preparing prompt…" fallback. */
-            tool.input?.prompt ?? "Preparing prompt…"
-            /* oxlint-enable oxc/no-optional-chaining */
-          }
+          {tool.input?.prompt ?? "Preparing prompt…"}
           &quot;
         </div>
       </div>
@@ -58,43 +45,37 @@ const GenerateImageView = ({
     <>
       <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">
         <div className="group relative">
-          {
-            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            imageUnavailable ? (
-              <output className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2">
-                <ImageOffIcon
-                  // oxlint-disable-next-line react/forbid-component-props -- ImageOffIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-8"
+          {imageUnavailable ? (
+            <output className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2">
+              <ImageOffIcon className="size-8" />
+              <span>Generated image unavailable</span>
+            </output>
+          ) : (
+            <>
+              <button
+                className="w-full cursor-pointer text-left"
+                onClick={(): void => {
+                  setDialogOpen(true);
+                }}
+                type="button"
+              >
+                <Image
+                  alt={output.prompt}
+                  loading="eager"
+                  unoptimized
+                  className="h-auto w-full max-w-full"
+                  height={512}
+                  onError={handleImageError}
+                  src={output.imageUrl}
+                  width={512}
                 />
-                <span>Generated image unavailable</span>
-              </output>
-            ) : (
-              <>
-                <button
-                  className="w-full cursor-pointer text-left"
-                  onClick={(): void => setDialogOpen(true)}
-                  type="button"
-                >
-                  <Image
-                    alt={output.prompt}
-                    loading="eager"
-                    unoptimized
-                    // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
-                    className="h-auto w-full max-w-full"
-                    height={512}
-                    onError={handleImageError}
-                    src={output.imageUrl}
-                    width={512}
-                  />
-                </button>
-                <ImageActions
-                  // oxlint-disable-next-line react/forbid-component-props -- ImageActions accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="absolute top-2 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-                  imageUrl={output.imageUrl}
-                />
-              </>
-            )
-          }
+              </button>
+              <ImageActions
+                className="absolute top-2 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                imageUrl={output.imageUrl}
+              />
+            </>
+          )}
         </div>
         <div className="p-4 pt-0">
           <p className="text-muted-foreground text-sm">
@@ -107,25 +88,17 @@ const GenerateImageView = ({
         imageName={output.prompt}
         imageUrl={output.imageUrl}
         isOpen={dialogOpen}
-        onClose={(): void => setDialogOpen(false)}
+        onClose={(): void => {
+          setDialogOpen(false);
+        }}
       />
     </>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GenerateImageRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/only-export-components */
 
 export const GenerateImageRenderer = defineToolRenderer({
   inputSchema: generateImageInput,
   outputSchema: generateImageResult,
   render: GenerateImageView,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -35,7 +35,6 @@ test("Langfuse keeps exporter defaults and optional custom parameters", () => {
     NODE_ENV: "test" as const,
   };
   const defaults = getLangfuseEnvironment(credentials);
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding rest excludes baseUrl from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { baseUrl, ...rest } = defaults;
   expect(Object.hasOwn(defaults, "baseUrl")).toBe(true);
   expect(baseUrl).toBeUndefined();
@@ -46,7 +45,6 @@ test("Langfuse keeps exporter defaults and optional custom parameters", () => {
   });
   expect(
     getLangfuseEnvironment({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...credentials,
       LANGFUSE_BASE_URL: "https://langfuse.example",
       LANGFUSE_DEBUG: "true",
@@ -59,7 +57,6 @@ for (const { runtime, playwright } of [
   { playwright: false, runtime: "edge" },
   { playwright: true, runtime: "nodejs" },
 ]) {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`Langfuse validates credentials only in its Node runtime: ${runtime}, Playwright ${playwright}`, async () => {
     const child = await runTestProcess(
       [
@@ -87,10 +84,8 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
       expect(child.stdout.trim()).toBe("registered");
     }
   });
-  /* oxlint-enable oxc/no-async-await */
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("successful Node registration configures one exporter with application identity and explicit options", async () => {
   const child = await runTestProcess(
     [
@@ -135,4 +130,3 @@ console.log("registered once");`,
   expect(child.stdout.trim()).toBe("registered once");
   expect(child.stderr).toBe("");
 });
-/* oxlint-enable oxc/no-async-await */

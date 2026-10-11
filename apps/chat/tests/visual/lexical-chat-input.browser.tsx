@@ -8,8 +8,6 @@ import type { LexicalChatInputRef } from "@/components/lexical-chat-input";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 
-/* oxlint-disable oxc/no-async-await -- Await native React commits, Lexical updates, browser editing and capture before cleanup. */
-/* oxlint-disable max-lines-per-function, max-statements -- One two-editor lifecycle checks independent state through native typing, parent rerender, imperative clear and ref cleanup. */
 test("lexical inputs keep independent native editor lifecycles", async () => {
   const editableRef = createRef<LexicalChatInputRef>();
   const readOnlyRef = createRef<LexicalChatInputRef>();
@@ -18,7 +16,6 @@ test("lexical inputs keep independent native editor lifecycles", async () => {
       <section>
         <LexicalChatInput
           aria-label="Editable message"
-          // oxlint-disable-next-line react/forbid-component-props -- LexicalChatInput forwards className to native ContentEditable for fixture layout.
           className="min-h-16 rounded-md border p-3"
           data-testid="editable-input"
           initialValue={initialValue}
@@ -29,7 +26,6 @@ test("lexical inputs keep independent native editor lifecycles", async () => {
       <section>
         <LexicalChatInput
           aria-label="Read-only message"
-          // oxlint-disable-next-line react/forbid-component-props -- LexicalChatInput forwards className to native ContentEditable for fixture layout.
           className="min-h-16 rounded-md border p-3"
           data-testid="read-only-input"
           initialValue="Read-only message remains independent."
@@ -100,5 +96,3 @@ test("lexical inputs keep independent native editor lifecycles", async () => {
   expect(editableRef.current).toBeNull();
   expect(readOnlyRef.current).toBeNull();
 });
-/* oxlint-enable max-lines-per-function, max-statements */
-/* oxlint-enable oxc/no-async-await */

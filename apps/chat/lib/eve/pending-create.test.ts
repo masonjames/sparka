@@ -5,7 +5,6 @@ import {
   readCreation,
 } from "./pending-create";
 
-/* oxlint-disable unicorn/no-null -- Storage.getItem returns null for a missing key. */
 const storageFixture = (): Pick<
   Storage,
   "getItem" | "removeItem" | "setItem"
@@ -21,12 +20,7 @@ const storageFixture = (): Pick<
     },
   };
 };
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-undefined --
- * max-lines-per-function (#510): describe("rejected project draft recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): describe("rejected project draft recovery") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 describe("rejected project draft recovery", () => {
   it("moves the exact model and message to a fresh ordinary operation", () => {
     const storage = storageFixture();
@@ -92,4 +86,3 @@ describe("rejected project draft recovery", () => {
     ).toThrow("saved request changed");
   });
 });
-/* oxlint-enable max-lines-per-function, no-undefined */

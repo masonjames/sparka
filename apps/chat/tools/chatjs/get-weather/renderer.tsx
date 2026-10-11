@@ -16,7 +16,6 @@ type GetWeatherRendererTool = ToolRendererProps<
   typeof weatherResult
 >["tool"];
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const SAMPLE = {
   current: { interval: 900, temperature_2m: 29.3, time: "2024-10-07T19:30" },
   current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
@@ -171,14 +170,9 @@ const SAMPLE = {
   timezone_abbreviation: "GMT",
   utc_offset_seconds: 0,
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const roundUp = (num: number): number => Math.ceil(num);
 
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 const WeatherCard = ({
   weatherAtLocation,
 }: ReadonlyNativeSurface<{
@@ -197,14 +191,12 @@ const WeatherCard = ({
   });
 
   const isMobile = useIsMobile();
-  // oxlint-disable-next-line no-ternary -- Keep hoursToShow as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const hoursToShow = isMobile ? 5 : 6;
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
     (time): boolean =>
       new Date(time) >= new Date(weatherAtLocation.current.time)
   );
   const displayStartIndex =
-    // oxlint-disable-next-line no-ternary -- Keep displayStartIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     currentTimeIndex === -1
       ? Math.max(0, weatherAtLocation.hourly.time.length - hoursToShow)
       : currentTimeIndex;
@@ -266,13 +258,7 @@ const WeatherCard = ({
     </div>
   );
 };
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/only-export-components */
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
   tool,
@@ -295,14 +281,10 @@ const GetWeatherView = ({
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GetWeatherRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
 
 export const GetWeatherRenderer = defineToolRenderer({
   inputSchema: weatherInput,
   outputSchema: weatherResult,
   render: GetWeatherView,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -2,7 +2,6 @@ import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
 import {
   applyDefaults,
   configDescriptionSchema,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../../apps/chat/lib/config-schema";
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import type { ReadonlyInput } from "./readonly-input";
@@ -15,17 +14,17 @@ const defaultsFor = (
     gatewayDefaults?: GatewayDefinition["defaults"];
   }>
 ): ReadonlyInput<GatewayDefinition["defaults"]> => {
-  const defaults =
-    input.gatewayDefaults ??
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading meta from builtInGateways.find(...); preserve one receiver evaluation, skipped accesses and the existing builtInGateways.find(       (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>         item.meta.chatjs.id === input.gateway     )?.meta.chatjs.defaults fallback.
-    builtInGateways.find(
-      (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
-        item.meta.chatjs.id === input.gateway
-    )?.meta.chatjs.defaults;
-  if (!defaults) {
+  if (input.gatewayDefaults) {
+    return input.gatewayDefaults;
+  }
+  const gateway = builtInGateways.find(
+    (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
+      item.meta.chatjs.id === input.gateway
+  );
+  if (!gateway) {
     throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
   }
-  return defaults;
+  return gateway.meta.chatjs.defaults;
 };
 
 const configPropertyPath = (prefix: string, key: string): string => {
@@ -253,7 +252,6 @@ const toConfigInput = (
   },
 });
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (buildConfigTs); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const buildConfigTs = (
   input: ReadonlyInput<{
     appName: string;
@@ -267,7 +265,6 @@ export const buildConfigTs = (
   }>
 ): string => {
   const partial = toConfigInput(input);
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding appConfig excludes ai from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
   const toolOverrides: Record<string, object> = ai.tools;
@@ -276,14 +273,11 @@ export const buildConfigTs = (
       ([name, value]: readonly [
         string,
         ReadonlyInput<(typeof defaults.tools)[keyof typeof defaults.tools]>,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing toolOverrides[name] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ]) => [name, { ...value, ...toolOverrides[name] }]
     )
   );
   const fullConfig = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing applyDefaults(appConfig) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...applyDefaults(appConfig),
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing ai own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ai: { ...defaults, ...ai, tools },
   };
 
@@ -299,8 +293,6 @@ const config = defineConfig({
 ${generateConfig(fullConfig, INDENTATION_STEP, "")}
 });
 
-// oxlint-disable-next-line import/no-default-export -- The app configuration loader imports this single configuration object as the module default.
 export default config;
 `;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

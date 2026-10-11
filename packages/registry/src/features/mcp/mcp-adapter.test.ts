@@ -3,7 +3,6 @@ import { describeMcpTool } from "./lib/eve/mcp-adapter";
 import { tool } from "ai";
 import { z } from "zod";
 
-/* oxlint-disable oxc/no-async-await -- Await the native adapter result and preserve rejected-Promise assertions in this SDK contract test. */
 test("describes an inline native tool with inferred numeric output", async (): Promise<void> => {
   const inputSchema = z.object({ text: z.string() });
   const adapted = await describeMcpTool(
@@ -23,9 +22,7 @@ test("describes an inline native tool with inferred numeric output", async (): P
   });
   expect(JSON.stringify(adapted.inputSchema)).not.toContain("~standard");
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Await the adapter rejection before checking its native error and policy/schema observations. */
 test("rejects native output policy before reading schema or invoking policy", async (): Promise<void> => {
   const observations: {
     policyCalls: number;
@@ -73,4 +70,3 @@ test("rejects native output policy before reading schema or invoking policy", as
     schemaReads: 0,
   });
 });
-/* oxlint-enable oxc/no-async-await */

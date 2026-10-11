@@ -1,40 +1,30 @@
 "use client";
 
 import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef } from "react";
-/* oxlint-enable sort-imports */
 import { useIsClient } from "usehooks-ts";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentToolResult } from "@/components/part/document-common";
-/* oxlint-enable sort-imports */
 import { useArtifact } from "@/hooks/use-artifact";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentOperations,
   eveDocumentResult,
 } from "@/lib/eve/document-contracts";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
 
 import {
   useDocumentConversation,
   useDocumentReplaying,
 } from "./eve-document-context";
 import { EveDocumentPreview } from "./eve-document-preview";
-/* oxlint-enable sort-imports */
 
 const partialDocument = z.object({
   content: z.string().optional(),
   documentId: z.string().optional(),
   title: z.string().optional(),
 });
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveDocumentTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- EveDocumentTool renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions -- EveDocumentTool: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including completed?.success). */
+/* oxlint-disable typescript/strict-boolean-expressions -- EveDocumentTool: ; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including completed?.success). */
 
 export const EveDocumentTool = ({
   part,
@@ -54,13 +44,13 @@ export const EveDocumentTool = ({
   const replaying = useDocumentReplaying();
   const conversationId = useDocumentConversation();
   const { setArtifact } = useArtifact();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React requires an initial ref value; undefined represents the uninitialized state.
   const pendingCall = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (replaying) {
       pendingCall.current = undefined;
       return;
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const operation = Object.entries(eveDocumentOperations).find(
       ([name]: readonly [string, unknown]) => name === part.toolName
     )?.[1];
@@ -82,14 +72,12 @@ export const EveDocumentTool = ({
           return current;
         }
         return {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...current,
           content: data.content ?? "",
           conversationId,
           documentId: data.documentId ?? "init",
           followLive: true,
           isVisible:
-            // oxlint-disable-next-line no-ternary -- Keep isVisible as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             current.previewCallId === part.toolCallId
               ? current.isVisible
               : true,
@@ -115,16 +103,13 @@ export const EveDocumentTool = ({
       return;
     }
     const completed =
-      // oxlint-disable-next-line no-ternary -- Keep completed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       part.state === "output-available"
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
     setArtifact((current) => {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from completed; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!completed?.success) {
         if (current.previewCallId === part.toolCallId) {
           return {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...current,
             isVisible: current.documentId !== "init",
             previewCallId: undefined,
@@ -148,7 +133,6 @@ export const EveDocumentTool = ({
         documentId: completed.data.documentId,
         followLive: true,
         isVisible:
-          // oxlint-disable-next-line no-ternary -- Keep isVisible as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           current.previewCallId === part.toolCallId ? current.isVisible : true,
         kind: completed.data.kind,
         messageId,
@@ -166,12 +150,9 @@ export const EveDocumentTool = ({
   if (part.state !== "output-available") {
     return (
       <output>
-        {
-          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          part.toolName === "readDocument"
-            ? "Reading document…"
-            : "Writing document…"
-        }
+        {part.toolName === "readDocument"
+          ? "Reading document…"
+          : "Writing document…"}
       </output>
     );
   }
@@ -179,13 +160,11 @@ export const EveDocumentTool = ({
   if (!result.success) {
     return <p role="alert">This document result could not be displayed.</p>;
   }
-  // oxlint-disable-next-line no-ternary -- Keep writeAction as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const writeAction = part.toolName.startsWith("create") ? "create" : "update";
   if (preview && conversationId) {
     return (
       <EveDocumentPreview
         isReadonly={isReadonly}
-        // oxlint-disable-next-line no-ternary -- Keep action JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         action={part.toolName === "readDocument" ? "read" : writeAction}
         conversationId={conversationId}
         result={result.data}
@@ -198,16 +177,9 @@ export const EveDocumentTool = ({
       disabled={!isClient}
       isReadonly={isReadonly}
       messageId={messageId}
-      result={
-        /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing result.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
-        { ...result.data, id: result.data.documentId }
-        /* oxlint-enable oxc/no-rest-spread-properties */
-      }
-      // oxlint-disable-next-line no-ternary -- Keep type JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      result={{ ...result.data, id: result.data.documentId }}
       type={part.toolName === "readDocument" ? "read" : writeAction}
     />
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */

@@ -7,7 +7,6 @@ import React from "react";
 
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ResponseChoiceSlot); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface ResponseChoiceSlot {
   id: string;
   modelName: string;
@@ -17,9 +16,6 @@ export interface ResponseChoiceSlot {
   disabled?: boolean;
   handleSelect: () => void;
 }
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ResponseChoiceCards); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable no-magic-numbers, react/jsx-max-depth, unicorn/no-null -- ResponseChoiceCards: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /**
  * Layout only: controllers own ordering, lifecycle, and selection.
@@ -40,7 +36,6 @@ export const ResponseChoiceCards = ({
       {slots.map((slot): React.JSX.Element => (
         <Button
           aria-pressed={slot.selected}
-          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn(
             "h-auto min-w-[160px] flex-col items-start gap-1 rounded-xl px-3 py-2 text-left",
             slot.selected && "border-primary bg-primary/5 text-primary"
@@ -53,16 +48,9 @@ export const ResponseChoiceCards = ({
         >
           <span className="text-sm font-medium">{slot.modelName}</span>
           <span className="text-muted-foreground flex items-center gap-1 text-xs">
-            {
-              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-              slot.loading ? (
-                <LoaderCircle
-                  aria-hidden
-                  // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-3 animate-spin"
-                />
-              ) : null
-            }
+            {slot.loading ? (
+              <LoaderCircle aria-hidden className="size-3 animate-spin" />
+            ) : null}
             {slot.statusLabel}
           </span>
         </Button>
@@ -70,5 +58,3 @@ export const ResponseChoiceCards = ({
     </div>
   );
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable no-magic-numbers, react/jsx-max-depth, unicorn/no-null */

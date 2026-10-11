@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/sort-keys -- Schema order defines persisted admission hashes; retain the original wire representation. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveMessageInput } from "./message-input";
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -83,14 +82,10 @@ const conversationBinding = z.object({
   id: z.uuid(),
   sessionId: z.string().min(MIN_IDENTIFIER_LENGTH),
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (conversationBinding, createConversationInput, eveForkInput, eveForkKind); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   conversationBinding,
   createConversationInput,
   eveForkInput,
   eveForkKind,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveForkInput, EveForkKind); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveForkInput, EveForkKind };
-/* oxlint-enable import/no-named-export */

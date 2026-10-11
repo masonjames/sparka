@@ -74,9 +74,6 @@ const getMessageByErrorCode = (errorCode: ErrorCode): string => {
   return "Something went wrong. Please try again later.";
 };
 
-/* oxlint-disable no-magic-numbers --
- * Numeric results are HTTP status codes for each public error type; the fallback is an internal server error (500).
- */
 const getStatusCodeByType = (type: ErrorType): number => {
   switch (type) {
     case "bad_request":
@@ -103,7 +100,6 @@ const getStatusCodeByType = (type: ErrorType): number => {
     }
   }
 };
-/* oxlint-enable no-magic-numbers */
 
 class ChatSDKError extends Error {
   public name = "ChatSDKError";
@@ -131,7 +127,6 @@ class ChatSDKError extends Error {
     const { message, cause, statusCode } = this;
 
     if (visibility === "log") {
-      // oxlint-disable-next-line no-console -- Database errors are redacted from the HTTP body; retain their operational details in the existing server error log.
       console.error({
         cause,
         code,
@@ -148,9 +143,5 @@ class ChatSDKError extends Error {
   }
 }
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatSDKError); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { ChatSDKError };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ErrorCode, ErrorType, Surface); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ErrorCode, ErrorType, Surface };
-/* oxlint-enable import/no-named-export */

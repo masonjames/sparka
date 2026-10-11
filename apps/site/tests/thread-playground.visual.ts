@@ -1,27 +1,18 @@
 import type { Locator, Page } from "playwright";
-/* oxlint-disable import/no-nodejs-modules -- The fixture uses Node assertions for its browser scenario. */
 import assert from "node:assert/strict";
-/* oxlint-enable import/no-nodejs-modules */
 import { chromium } from "playwright";
-/* oxlint-disable import/no-nodejs-modules -- Keep native file-URL decoding for the screenshot output directory. */
 import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- Keep the native asynchronous screenshot-directory creation boundary. */
 import { mkdir } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
-// oxlint-disable-next-line node/no-top-level-await -- This Bun visual-test executable launches Chromium before creating its ordered browser scenario.
 const browser = await chromium.launch();
 const output = fileURLToPath(
   new URL("../uiverify-screenshots/", import.meta.url)
 );
-// oxlint-disable-next-line node/no-top-level-await -- This Bun visual-test executable prepares its screenshot directory before capturing the scenario.
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
 const capture = async (
   page: Readonly<Pick<Page, "getByTestId">>,
   name: string
@@ -33,13 +24,8 @@ const capture = async (
       "header:has(> nav), nextjs-portal { visibility: hidden !important; }",
   });
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable node/no-process-env -- thread-playground.visual.ts: The scenario explicitly controls process environment inputs and restores them during cleanup. */
-/* oxlint-disable eslint/no-magic-numbers -- thread-playground.visual.ts: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable eslint/no-console -- thread-playground.visual.ts: Console output is the observable diagnostic exercised by this fixture. */
 /* oxlint-disable typescript/promise-function-async -- thread-playground.visual.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable node/no-top-level-await -- This Bun visual-test executable runs one ordered Playwright scenario and awaits browser disposal in finally; it is not a require(esm) library entrypoint. */
 try {
   const page = await browser.newPage({
     reducedMotion: "reduce",
@@ -182,7 +168,6 @@ try {
           panel: Pick<HTMLElement, "querySelector" | "querySelectorAll">
         ): boolean => {
           const viewport =
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from panel.querySelector(...).parentElement; read parentElement from panel.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
             panel.querySelector("[data-node-id]")?.parentElement?.parentElement;
           if (!viewport) {
             return false;
@@ -266,14 +251,14 @@ try {
         .length === 3
   );
   await page.clock.runFor(1800);
-  await page.evaluate((): void =>
-    document.documentElement.classList.add("dark")
-  );
+  await page.evaluate((): void => {
+    document.documentElement.classList.add("dark");
+  });
   await capture(page, "threads-dark-live");
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.evaluate((): void =>
-    document.documentElement.classList.remove("dark")
-  );
+  await page.evaluate((): void => {
+    document.documentElement.classList.remove("dark");
+  });
   assert.equal(
     await page.evaluate(
       (): boolean => document.documentElement.scrollWidth <= window.innerWidth
@@ -306,8 +291,4 @@ try {
 } finally {
   await browser.close();
 }
-/* oxlint-enable node/no-top-level-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-console */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */

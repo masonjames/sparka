@@ -7,11 +7,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import Link from "next/link";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping next/link and @/components/ui/button; keep this adjacent import pair ordered. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/card; keep this adjacent import pair ordered. */
 import {
   Card,
   CardContent,
@@ -19,7 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-/* oxlint-enable sort-imports */
 
 import type { JSX as ReactJSX } from "react";
 
@@ -30,8 +26,6 @@ import { isElectronTransferQuery } from "@/lib/electron-auth";
 type DeviceLoginState = "checking-session" | "transferring" | "waiting-for-app";
 
 const DEVICE_LOGIN_COMPLETED_PARAM = "done";
-/* oxlint-disable react/jsx-no-literals -- DeviceAuthScreen renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- DeviceAuthScreen: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DeviceAuthScreen = ({
   state,
@@ -45,7 +39,6 @@ const DeviceAuthScreen = ({
 
   if (isLoading) {
     title =
-      // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       state === "checking-session"
         ? "Checking your session..."
         : "Opening the desktop app...";
@@ -55,34 +48,17 @@ const DeviceAuthScreen = ({
     <div className="bg-background flex min-h-dvh w-screen items-center justify-center">
       <div className="w-full max-w-sm px-6">
         <Card>
-          <CardHeader
-            // oxlint-disable-next-line react/forbid-component-props -- CardHeader accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="text-center"
-          >
+          <CardHeader className="text-center">
             <div className="mb-2 flex justify-center">
-              {
-                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                isLoading ? (
-                  <LoaderCircle
-                    // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="text-muted-foreground size-8 animate-spin"
-                  />
-                ) : (
-                  <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
-                    <CheckCircle2
-                      // oxlint-disable-next-line react/forbid-component-props -- CheckCircle2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                      className="size-7"
-                    />
-                  </div>
-                )
-              }
+              {isLoading ? (
+                <LoaderCircle className="text-muted-foreground size-8 animate-spin" />
+              ) : (
+                <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
+                  <CheckCircle2 className="size-7" />
+                </div>
+              )}
             </div>
-            <CardTitle
-              // oxlint-disable-next-line react/forbid-component-props -- CardTitle accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-xl"
-            >
-              {title}
-            </CardTitle>
+            <CardTitle className="text-xl">{title}</CardTitle>
             {!isLoading && (
               <CardDescription>
                 You can close this tab and return to {config.appName}.
@@ -90,24 +66,15 @@ const DeviceAuthScreen = ({
             )}
           </CardHeader>
           {!isLoading && (
-            <CardContent
-              // oxlint-disable-next-line react/forbid-component-props -- CardContent accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-center"
-            >
+            <CardContent className="text-center">
               <div className="mb-4">
-                <Button
-                  asChild
-                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="w-full"
-                  variant="outline"
-                >
+                <Button asChild className="w-full" variant="outline">
                   <Link href="/">Continue on web</Link>
                 </Button>
               </div>
               <p className="text-muted-foreground/60 text-xs">
                 Didn&apos;t open?{" "}
                 <Button
-                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="text-muted-foreground/60 hover:text-muted-foreground h-auto p-0 text-xs underline underline-offset-2 hover:no-underline"
                   onClick={onRetry}
                   type="button"
@@ -123,10 +90,6 @@ const DeviceAuthScreen = ({
     </div>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DeviceLoginPage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- DeviceLoginPage: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const DeviceLoginPage = (): ReactJSX.Element => {
   const pathname = usePathname();
@@ -142,7 +105,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
     searchParams.get(DEVICE_LOGIN_COMPLETED_PARAM) === "1";
   const shouldWaitForApp = isCompletedView || !isElectronTransferQuery(query);
   const displayState =
-    // oxlint-disable-next-line no-ternary -- Keep displayState as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     shouldWaitForApp && state === "checking-session"
       ? "waiting-for-app"
       : state;
@@ -154,7 +116,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
 
     let cancelled = false;
 
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkSession's awaited sequencing and rejected-Promise behavior. */
     const checkSession = async (): Promise<void> => {
       const { data: session } = await authClient.getSession();
 
@@ -162,7 +123,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         return;
       }
 
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!session?.user) {
         setState("waiting-for-app");
         return;
@@ -189,9 +149,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         },
       });
     };
-    /* oxlint-enable oxc/no-async-await */
     const sessionCheck = checkSession();
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     void (async (): Promise<void> => {
       try {
         await sessionCheck;
@@ -204,7 +162,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         setState("waiting-for-app");
       }
     })();
-    /* oxlint-enable oxc/no-async-await */
     // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {
       cancelled = true;
@@ -233,7 +190,6 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
             query,
           },
         });
-        /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
         void (async (): Promise<void> => {
           try {
             await transfer;
@@ -242,11 +198,8 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
             setState("waiting-for-app");
           }
         })();
-        /* oxlint-enable oxc/no-async-await */
       }}
       state={displayState}
     />
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */

@@ -210,7 +210,6 @@ const installedGatewaySchema = createAiSchema(gatewayType);
 
 const aiConfigSchema = installedGatewaySchema.default({
   gateway: gatewayType,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayModelDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...gatewayModelDefaults,
 });
 
@@ -572,21 +571,18 @@ const mergeToolsConfig = (
   if (!user) {
     return defaults;
   }
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of defaults rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   const result: Record<string, unknown> = { ...defaults };
   const entries: [string, unknown][] = Object.entries(user);
   for (const [key, value] of entries) {
     const defaultValue = result[key];
     result[key] =
-      // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       value !== null &&
       typeof value === "object" &&
       !Array.isArray(value) &&
       defaultValue !== null &&
       typeof defaultValue === "object" &&
       !Array.isArray(defaultValue)
-        ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultValue own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          { ...defaultValue, ...value }
+        ? { ...defaultValue, ...value }
         : value;
   }
   return result;
@@ -594,33 +590,25 @@ const mergeToolsConfig = (
 
 // Apply defaults to partial config
 const applyDefaults = (input: ReadonlyConfigData<ConfigInput>): Config => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading gateway from input.ai; preserve one receiver evaluation, skipped accesses and the existing gatewayType fallback. The app guidance prefers optional chaining.
-  const gateway = input.ai?.gateway ?? gatewayType;
+  const gateway = (input.ai ?? {}).gateway ?? gatewayType;
   const gatewayDefaults = gatewayModelDefaults;
-  const aiInput = input.ai;
+  const aiInput: ReadonlyConfigData<Partial<AiInputFor<GatewayType>>> =
+    input.ai ?? {};
 
   const mergedAi = {
     gateway,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...gatewayDefaults,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing aiInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...aiInput,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tools from aiInput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    tools: mergeToolsConfig(gatewayDefaults.tools, aiInput?.tools),
+    tools: mergeToolsConfig(gatewayDefaults.tools, aiInput.tools),
     workflows: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...gatewayDefaults.workflows,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining -- Keep the existing aiInput?.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Optional chain: Keep the existing nullish guard when reading workflows from aiInput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      ...aiInput?.workflows,
+      ...aiInput.workflows,
     },
   };
 
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return configSchema.parse({ ...input, ai: mergedAi });
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (aiConfigSchema, ANONYMOUS_DEFAULTS, anonymousConfigObjectSchema, anonymousConfigSchema, applyDefaults, ATTACHMENTS_DEFAULTS, attachmentsConfigObjectSchema, attachmentsConfigSchema, AUTHENTICATION_DEFAULTS, authenticationConfigObjectSchema, authenticationConfigSchema, configDescriptionSchema, configSchema, defineConfig, DESKTOP_APP_DEFAULTS, desktopAppConfigObjectSchema, desktopAppConfigSchema, FEATURES_DEFAULTS, featuresConfigObjectSchema, featuresConfigSchema, pricingConfigSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines -- #509: This config-schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {
   aiConfigSchema,
   ANONYMOUS_DEFAULTS,
@@ -644,8 +632,6 @@ export {
   featuresConfigSchema,
   pricingConfigSchema,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (AiConfig, AnonymousConfig, AttachmentsConfig, AuthenticationConfig, Config, ConfigInput, DesktopAppConfig, FeaturesConfig, PricingConfig); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   AiConfig,
   AnonymousConfig,
@@ -657,7 +643,4 @@ export type {
   FeaturesConfig,
   PricingConfig,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { GatewayType } from "@/lib/ai/gateways/registry";
-/* oxlint-enable import/no-named-export */

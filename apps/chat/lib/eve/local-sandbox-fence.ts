@@ -1,13 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { mkdir, readdir, writeFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import nodePath from "node:path";
-
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fenceLocalEveSandboxMutations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceLocalEveSandboxMutations's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-nodejs-modules */
 
 /**
  * Permanently stop new local sandbox operations for an authorized native family.
@@ -57,7 +50,6 @@ export const fenceLocalEveSandboxMutations = async (
         throw error;
       }
     );
-    // oxlint-disable-next-line no-magic-numbers -- Zero journal entries means every recorded sandbox operation has settled.
     if (operations.length > 0) {
       throw new Error(
         "Sandbox operations are still pending. Resolve them before cleanup."
@@ -65,5 +57,3 @@ export const fenceLocalEveSandboxMutations = async (
     }
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

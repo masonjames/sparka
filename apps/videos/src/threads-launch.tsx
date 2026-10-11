@@ -6,9 +6,7 @@ import {
 } from "remotion";
 
 import { Logo } from "./shared/brand";
-/* oxlint-disable sort-imports -- Keep brand font loading before presentation CSS insertion; reversing these component dependencies changes their observable initialization order. */
 import { Caption, ClickPulse, Pointer } from "./shared/presentation";
-/* oxlint-enable sort-imports */
 import {
   DURATION,
   beats,
@@ -20,10 +18,7 @@ import {
 import type { LaunchScript, ReplyState, StoryState } from "./story";
 import React from "react";
 
-/* oxlint-disable sort-imports -- Keep scene CSS insertion after presentation CSS and brand font loading; moving this side-effect import changes stylesheet insertion order. */
 import "./styles.css";
-/* oxlint-disable react/jsx-no-literals -- Author renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
 
 const Author = (): React.JSX.Element => (
   <>
@@ -33,12 +28,7 @@ const Author = (): React.JSX.Element => (
     Assistant
   </>
 );
-/* oxlint-enable react/jsx-no-literals */
 
-/* oxlint-disable react/no-multi-comp -- Status: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/id-length -- Status: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- Status: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const Status = ({
   state,
   t,
@@ -52,10 +42,7 @@ const Status = ({
     return (
       <>
         <span className="ring" style={{ transform: `rotate(${t * 300}deg)` }} />{" "}
-        {
-          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          background ? "Still streaming" : "Streaming"
-        }
+        {background ? "Still streaming" : "Streaming"}
       </>
     );
   }
@@ -64,11 +51,7 @@ const Status = ({
   }
   return "✓ Complete";
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- ActionIcon: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const ActionIcon = ({
   name,
 }: {
@@ -98,12 +81,7 @@ const ActionIcon = ({
     </svg>
   );
 };
-/* oxlint-disable react/jsx-no-literals -- VersionActions renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- VersionActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/no-magic-numbers -- VersionActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 
-/* oxlint-disable unicorn/no-null -- VersionActions: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const VersionActions = ({
   count,
   index,
@@ -117,8 +95,7 @@ const VersionActions = ({
     return (
       <>
         <span
-          className={`messageAction ${/* oxlint-disable no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ actionTime /* oxlint-enable no-ternary */ >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
-          // oxlint-disable-next-line no-ternary -- Keep opacity as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
           style={{ opacity: index === 1 ? 0.3 : 1 }}
         >
           <ActionIcon name="previous" />
@@ -127,8 +104,7 @@ const VersionActions = ({
           {index} / {count}
         </span>
         <span
-          className={`messageAction ${/* oxlint-disable no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ actionTime /* oxlint-enable no-ternary */ >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
-          // oxlint-disable-next-line no-ternary -- Keep opacity as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
           style={{ opacity: index === count ? 0.3 : 1 }}
         >
           <ActionIcon name="next" />
@@ -138,15 +114,6 @@ const VersionActions = ({
   }
   return null;
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- MessageActions renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- MessageActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/no-magic-numbers -- MessageActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 
 const MessageActions = ({
   user = false,
@@ -168,7 +135,7 @@ const MessageActions = ({
   <div className={`messageActions ${className}`}>
     {user && (
       <span
-        className={`messageAction ${/* oxlint-disable no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ actionTime /* oxlint-enable no-ternary */ >= 41.8 && actionTime < 42.2 ? "highlightAction" : ""}`}
+        className={`messageAction ${actionTime >= 41.8 && actionTime < 42.2 ? "highlightAction" : ""}`}
         title="Edit message"
       >
         <ActionIcon name="edit" />
@@ -177,7 +144,6 @@ const MessageActions = ({
     <VersionActions count={count} index={index} actionTime={actionTime} />
     {!user && !streaming && (
       <span
-        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         className={`messageAction regenerateAction ${regenerateHint ? "highlightAction" : ""}`}
       >
         <ActionIcon name="regenerate" />
@@ -193,11 +159,7 @@ const MessageActions = ({
     )}
   </div>
 );
-/* oxlint-enable react/jsx-no-literals */
 
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable eslint/id-length -- getPromptText: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 const getPromptText = (s: StoryState, content: LaunchScript): string => {
   if (s.editing) {
     return s.editText;
@@ -207,9 +169,7 @@ const getPromptText = (s: StoryState, content: LaunchScript): string => {
   }
   return content.prompt;
 };
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- getReplyDescription: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   if (s.states[id] === "streaming") {
     return `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`;
@@ -219,13 +179,6 @@ const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   }
   return "Alternative answer";
 };
-/* oxlint-disable react/jsx-no-literals -- PromptMessage renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable eslint/id-length */
-
-/* oxlint-disable react/no-multi-comp -- PromptMessage: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/id-length -- PromptMessage: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- PromptMessage: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 
 const PromptMessage = ({
   s,
@@ -238,22 +191,14 @@ const PromptMessage = ({
 }): React.JSX.Element => (
   <div className="user">
     <div className="role">You</div>
-    <div
-      className={`bubble ${/* oxlint-disable no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ s /* oxlint-enable no-ternary */.editing ? "editingBubble" : ""}`}
-    >
+    <div className={`bubble ${s.editing ? "editingBubble" : ""}`}>
       {getPromptText(s, content)}
       {s.editing && <span className="editCaret">|</span>}
     </div>
     {s.editing && (
       <div className="editControls">
         <span>Cancel</span>
-        <button
-          type="button"
-          className={
-            // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            t >= 44.3 ? "highlightAction" : ""
-          }
-        >
+        <button type="button" className={t >= 44.3 ? "highlightAction" : ""}>
           Save
         </button>
       </div>
@@ -261,30 +206,14 @@ const PromptMessage = ({
     {!s.editing && (
       <MessageActions
         user
-        // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
         className="promptActions"
         actionTime={t}
         index={2}
-        // oxlint-disable-next-line no-ternary -- Keep count JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         count={s.edited ? 2 : 1}
       />
     )}
   </div>
 );
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- Chat renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- Chat: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- Chat: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/id-length -- Chat: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- Chat: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-max-depth -- Chat: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 const Chat = ({
   s,
@@ -296,20 +225,13 @@ const Chat = ({
   readonly content: LaunchScript;
 }): React.JSX.Element => (
   <div
-    // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     className={`chat ${s.following ? "following" : ""}`}
     style={{ left: 320 - 236 * s.reveal, width: 1120 - 160 * s.reveal }}
   >
     <div className="chatheader">
-      {
-        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        s.edited ? content.porto.title : content.title
-      }
+      {s.edited ? content.porto.title : content.title}
       <span className="pathlabel">
-        {
-          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          s.edited ? content.porto.label : content[s.selected].label
-        }
+        {s.edited ? content.porto.label : content[s.selected].label}
       </span>
     </div>
     <div className="messages">
@@ -317,10 +239,7 @@ const Chat = ({
       <div
         className="assistant"
         style={{
-          opacity:
-            /* oxlint-disable no-ternary -- Keep opacity as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ s /* oxlint-enable no-ternary */.editing
-              ? 0.25
-              : 1,
+          opacity: s.editing ? 0.25 : 1,
         }}
       >
         <div className="author">
@@ -330,12 +249,10 @@ const Chat = ({
               className="assistantStatus"
               style={{
                 color:
-                  // oxlint-disable-next-line no-ternary -- Keep color as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   s.states[s.selected] === "stopped" ? "#f3ba6a" : "#89bda9",
               }}
             >
               <Status
-                // oxlint-disable-next-line no-ternary -- Keep state JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 state={s.edited ? s.portoState : s.states[s.selected]}
                 t={t}
               />
@@ -343,22 +260,15 @@ const Chat = ({
           )}
         </div>
         <div className="answer" style={{ fontSize: 24 }}>
-          {
-            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            s.edited ? s.portoAnswer : s.answer
-          }
+          {s.edited ? s.portoAnswer : s.answer}
         </div>
         <MessageActions
-          // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
           className="replyActions"
           regenerateHint={t >= 11.65 && t < 12.2}
           actionTime={t}
-          // oxlint-disable-next-line no-ternary -- Keep index JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           index={s.selected === "city" ? 1 : 2}
-          // oxlint-disable-next-line no-ternary -- Keep count JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           count={!s.edited && s.foodVisible ? 2 : 1}
           streaming={
-            // oxlint-disable-next-line no-ternary -- Keep streaming JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             s.edited
               ? s.portoState === "streaming"
               : !s.following && s.states[s.selected] === "streaming"
@@ -371,11 +281,7 @@ const Chat = ({
         <div className="followupUser">
           <div className="role">You</div>
           <div className="bubble">{s.followup.prompt}</div>
-          <MessageActions
-            user
-            // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="followupPromptActions"
-          />
+          <MessageActions user className="followupPromptActions" />
         </div>
         <div className="author">
           <Author />
@@ -385,7 +291,6 @@ const Chat = ({
         </div>
         <div className="followupAnswer">{s.followup.text}</div>
         <MessageActions
-          // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
           className="followupReplyActions"
           streaming={s.followup.state === "streaming"}
         />
@@ -396,21 +301,7 @@ const Chat = ({
     </div>
   </div>
 );
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- ConversationTree renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- ConversationTree: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- ConversationTree: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/id-length -- ConversationTree: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable eslint/no-magic-numbers -- ConversationTree: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-max-depth -- ConversationTree: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 const ConversationTree = ({
   s,
   t,
@@ -440,19 +331,13 @@ const ConversationTree = ({
         style={{ position: "absolute", top: 0 }}
       >
         {(["city", "food"] as const).map((id) => {
-          const x =
-            /* oxlint-disable no-ternary -- Keep x as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ id /* oxlint-enable no-ternary */ ===
-            "city"
-              ? 176
-              : 560;
+          const x = id === "city" ? 176 : 560;
           return (
             (id === "city" || s.foodVisible) && (
               <path
                 key={id}
-                // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 d={`M367 171 V235 Q367 249 ${id === "city" ? 353 : 381} 249 H${x} V322`}
                 fill="none"
-                // oxlint-disable-next-line no-ternary -- Keep stroke JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 stroke={!s.edited && s.selected === id ? "#83b2ff" : "#404040"}
                 strokeWidth={3}
               />
@@ -463,7 +348,6 @@ const ConversationTree = ({
           <path
             d="M176 464 V514"
             fill="none"
-            // oxlint-disable-next-line no-ternary -- Keep stroke JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             stroke={!s.edited && s.family ? "#83b2ff" : "#404040"}
             strokeWidth={3}
           />
@@ -472,7 +356,6 @@ const ConversationTree = ({
           <path
             d="M560 464 V514"
             fill="none"
-            // oxlint-disable-next-line no-ternary -- Keep stroke JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             stroke={!s.edited && s.selected === "food" ? "#83b2ff" : "#404040"}
             strokeWidth={3}
           />
@@ -486,9 +369,7 @@ const ConversationTree = ({
           (id === "city" || s.foodVisible) && (
             <div
               key={id}
-              // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               className={`node ${!s.edited && s.selected === id ? "selected" : ""} ${s.states[id] === "streaming" ? "live" : ""}`}
-              // oxlint-disable-next-line no-ternary -- Keep left as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               style={{ left: id === "city" ? 35 : 419, top: 322, width: 282 }}
             >
               {!s.edited && s.selected === id && !s.following && (
@@ -517,7 +398,6 @@ const ConversationTree = ({
       )}
       {t >= 24 && (
         <div
-          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           className={`followupNode ${!s.edited && s.family ? "selected" : ""}`}
           style={{ left: 35, width: 282 }}
         >
@@ -527,7 +407,6 @@ const ConversationTree = ({
       )}
       {s.budget && (
         <div
-          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           className={`followupNode ${!s.edited && s.selected === "food" ? "selected" : ""}`}
           style={{ left: 419, width: 282 }}
         >
@@ -555,7 +434,6 @@ const ConversationTree = ({
           <span>{content.porto.prompt}</span>
         </div>
         <div
-          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           className={`node selected portoReply ${s.portoState === "streaming" ? "live" : ""}`}
         >
           <div className="nodetitle">{content.porto.title}</div>
@@ -572,23 +450,7 @@ const ConversationTree = ({
     )}
   </div>
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThreadsLaunch); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- ThreadsLaunch renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-disable react/no-multi-comp -- ThreadsLaunch: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- ThreadsLaunch: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/id-length -- ThreadsLaunch: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
-/* oxlint-disable react/jsx-props-no-spreading -- ThreadsLaunch: The wrapper forwards its typed native/library prop contract; enumerating props would narrow that interface. */
-
-/* oxlint-disable eslint/no-magic-numbers -- ThreadsLaunch: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-max-depth -- ThreadsLaunch: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable typescript/strict-boolean-expressions -- ThreadsLaunch: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 export const ThreadsLaunch = ({
   content,
@@ -603,11 +465,7 @@ export const ThreadsLaunch = ({
   const s = stateAt(t, content);
   const cursor = cursorAt(t);
   return (
-    /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading title from beats.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading subtitle from beats.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
-    <AbsoluteFill
-      // oxlint-disable-next-line react/forbid-component-props -- AbsoluteFill accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="stage"
-    >
+    <AbsoluteFill className="stage">
       <div className="brand">
         <Logo />
         ChatJS Threads
@@ -666,19 +524,6 @@ export const ThreadsLaunch = ({
         </div>
       </Sequence>
     </AbsoluteFill>
-    /* oxlint-enable oxc/no-optional-chaining */
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable react/jsx-props-no-spreading */
-
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable max-lines -- ThreadsLaunch: The timeline and scene specification are maintained together to keep frame transitions and rendering synchronized. */

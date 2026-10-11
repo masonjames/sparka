@@ -5,29 +5,14 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "./client";
 import { snapshotCopyCheckpoints } from "./eve-documents";
-/* oxlint-disable sort-imports -- Keep schema pgTable construction after the client and eve-documents imports; eve-documents has top-level Zod schema construction and imports the client. */
 import {
   eveConversation,
   eveDocumentHead,
   eveDocumentRevision,
 } from "./schema";
-/* oxlint-enable sort-imports */
 
 const FIRST_ROW_INDEX = 0;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (snapshotPublicEveCopyDocuments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve snapshotPublicEveCopyDocuments's awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, unicorn/max-nested-calls --
- * max-lines-per-function (#510): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): snapshotPublicEveCopyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-
- *
-
- * unicorn/max-nested-calls (#568): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Captures published document heads, their revision ancestry, and checkpoint metadata.
  * Conversation and document locks keep the snapshot consistent with writers and deletion.
@@ -103,7 +88,6 @@ export const snapshotPublicEveCopyDocuments = async (
         ...new Set(resources.documentIds.map((id) => id.toLowerCase())),
       ].toSorted();
       const heads =
-        // oxlint-disable-next-line no-ternary -- Keep heads as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         documentIds.length > 0
           ? await tx
               .select({
@@ -124,7 +108,6 @@ export const snapshotPublicEveCopyDocuments = async (
         throw new Error("A published document is no longer accessible.");
       }
       const revisions =
-        // oxlint-disable-next-line no-ternary -- Keep revisions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         heads.length > 0
           ? await tx
               .select({
@@ -207,6 +190,3 @@ export const snapshotPublicEveCopyDocuments = async (
     }
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, unicorn/max-nested-calls */

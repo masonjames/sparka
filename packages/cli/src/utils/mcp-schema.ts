@@ -1,12 +1,9 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import path from "node:path";
 import { readFile } from "node:fs/promises";
 
 import ts from "typescript";
 
-// oxlint-disable-next-line sort-imports -- Preserve typescript before ./preflight while their runtime initialization order is still under site review.
 import { preflight } from "./preflight";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertMcpApprovalSchema's awaited sequencing and rejected-Promise behavior. */
 
 // Read native compiler nodes without writing their recursive parent graph.
 interface CompilerNodeReader extends Readonly<Omit<ts.Node, "parent">> {
@@ -66,7 +63,4 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
     'MCP requires mcpConnector.requireApproval in lib/db/schema.ts. Add requireApproval: boolean("requireApproval").notNull().default(false) to the connector columns, then run your db:generate script, review the generated migration, and run your db:migrate script against the intended database using your package manager before retrying chat-js add mcp. No source was installed. See https://chatjs.dev/docs/features/mcp for the existing-app upgrade steps.'
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (assertMcpApprovalSchema); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
 export { assertMcpApprovalSchema };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

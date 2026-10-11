@@ -1,35 +1,21 @@
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Toaster, toast } from "sonner";
-/* oxlint-enable sort-imports */
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ShareDialog, ShareDialogView } from "@/components/share-button";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- share-dialog.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({ data: null }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- share-dialog.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@/components/upgrade-cta/login-prompt", () => ({
   LoginPrompt: () => null,
 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve flushReact's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 const flushReact = async (update: () => void): Promise<void> => {
   await act(async () => {
@@ -37,9 +23,7 @@ const flushReact = async (update: () => void): Promise<void> => {
     await Promise.resolve();
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return -- share-dialog.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return -- share-dialog.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 test("share link confirms a completed copy and reports clipboard rejection", async () => {
   const copy = Promise.withResolvers<undefined>();
@@ -55,7 +39,7 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
   const root = createRoot(container);
 
   try {
-    await flushReact(() =>
+    await flushReact(() => {
       root.render(
         <>
           <ShareDialog
@@ -73,8 +57,8 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
           />
           <Toaster position="top-center" theme="dark" />
         </>
-      )
-    );
+      );
+    });
     await page.getByRole("button", { name: "Get Link" }).click();
     await page.getByRole("button", { exact: true, name: "Copy" }).click();
 
@@ -84,7 +68,10 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     expect(success).not.toHaveBeenCalled();
     expect(failure).not.toHaveBeenCalled();
 
-    await flushReact(() => copy.resolve(undefined));
+    await flushReact(() => {
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+      copy.resolve(undefined);
+    });
     await expect
       .element(page.getByText("Share link copied to clipboard"))
       .toBeVisible();
@@ -111,11 +98,12 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     link.value = "https://chat.example.test/share/clipboard-fixture";
     await takeSnapshot("share-dialog-clipboard-failure");
   } finally {
-    await flushReact(() => root.unmount());
+    await flushReact(() => {
+      root.unmount();
+    });
     toast.dismiss();
     container.remove();
     vi.restoreAllMocks();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */

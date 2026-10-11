@@ -1,27 +1,20 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
 import { createHash, randomUUID } from "node:crypto";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { z } from "zod";
 
-// oxlint-disable-next-line sort-imports -- Preserve zod before #cli/registry/shadcn while their runtime initialization order is still under site review.
 import { installItems } from "#cli/registry/shadcn";
 
 import { updateEnvironmentExample } from "./environment-example";
 
-// oxlint-disable-next-line sort-imports -- Preserve ./environment-example before ./installation-dependencies while their runtime initialization order is still under site review.
 import { prepareDependencyUpdate } from "./installation-dependencies";
-// oxlint-disable-next-line sort-imports -- Preserve ./installation-dependencies before ./installation-files while their runtime initialization order is still under site review.
 import { directoryFiles, optionalFile } from "./installation-files";
 
 import { assertMcpApprovalSchema } from "./mcp-schema";
 
 import type { planInstallation } from "./installation-plan";
 
-// oxlint-disable-next-line import/max-dependencies -- Installation composes provider validation, dependency ownership and rollback within one transaction.
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";
 
@@ -43,7 +36,6 @@ const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readReceipt's awaited sequencing and rejected-Promise behavior. */
 const readReceipt = async (
   cwd: string
 ): Promise<z.infer<typeof receiptSchema>> => {
@@ -54,7 +46,6 @@ const readReceipt = async (
   }
   return {};
 };
-/* oxlint-enable oxc/no-async-await */
 const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ...new Set(
     plan.items.flatMap((item: ReadonlyNative<Plan["items"][number]>) =>
@@ -64,7 +55,6 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
             NonNullable<Plan["items"][number]["files"]>[number]
           >
         ) => {
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from file.target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
           if (file.target?.startsWith("~/") === true) {
             return [file.target.slice(REGISTRY_ROOT_PREFIX.length)];
           }
@@ -75,7 +65,6 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ),
 ];
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordInstalledSource's awaited sequencing and rejected-Promise behavior. */
 /**
  * Capture only source we actually installed. Never bless a skipped user file.
  * @param {string} cwd Project containing the receipt and installed source files.
@@ -97,11 +86,9 @@ const recordInstalledSource = async (
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   await writeFile(
     path.join(cwd, receiptFile),
-    // oxlint-disable-next-line unicorn/no-null -- The null replacer preserves every receipt field while applying indentation.
     `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
   );
 };
-/* oxlint-enable oxc/no-async-await */
 const plannedSourceTargets = sourceTargets;
 
 const hasProviderKind = (
@@ -113,10 +100,6 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installPlan's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Protection checks, snapshots, staged retired providers, registration, finalization, and rollback share the same transaction state. */
-/* oxlint-disable eslint/max-lines-per-function -- The complete installation transaction keeps protected source snapshots and staged provider rollback in one failure boundary. */
-/* oxlint-disable eslint/max-params -- The existing installation API separates project, resolved plan, overwrite/rollback options, and the deferred registration callback. */
 /**
  * Validate protection before mutation; stage retired exclusive sources until registration succeeds.
  * @param {string} cwd Project whose installed source and receipts are protected.
@@ -174,9 +157,7 @@ const installPlan = async (
   // A replacement writes shared source. Unknown/native source requires explicit authorization.
   const replacingShared = plan.items.some(
     (item: ReadonlyNative<Plan["items"][number]>): boolean =>
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       hasProviderKind(item.meta?.chatjs, "gateway") ||
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       hasProviderKind(item.meta?.chatjs, "storage")
   );
   const overwrite =
@@ -192,7 +173,6 @@ const installPlan = async (
               file: ReadonlyNative<
                 NonNullable<Plan["items"][number]["files"]>[number]
               >
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from file.target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
             ): boolean => file.target?.startsWith("~/") !== true
           )
           .map(
@@ -210,7 +190,6 @@ const installPlan = async (
     }
   }
   const protectedFiles =
-    // oxlint-disable-next-line no-ternary -- Keep protectedFiles as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     plan.replacements.length > NO_REPLACEMENTS || replacingShared
       ? [...targets, ...retired.flat()]
       : [];
@@ -248,7 +227,6 @@ const installPlan = async (
       plan.environmentVariables
     );
     await updateDependencies();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling options.finalize; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await options.finalize?.();
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.
@@ -257,14 +235,14 @@ const installPlan = async (
         async ({
           from,
           to,
-        }: Readonly<(typeof staged)[number]>): Promise<void> =>
-          await rename(to, from)
+        }: Readonly<(typeof staged)[number]>): Promise<void> => {
+          await rename(to, from);
+        }
       ),
       ...[...existing].map(
         async ([target, content]: ReadonlyNative<
           readonly [string, Buffer | null]
         >): Promise<void> => {
-          // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           await (content
             ? writeFile(path.join(cwd, target), content)
             : rm(path.join(cwd, target), { force: true }));
@@ -280,15 +258,15 @@ const installPlan = async (
       }
     );
     throw new Error(
-      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
     );
   }
   await Promise.all(
     staged.map(
-      async ({ to }: Readonly<(typeof staged)[number]>): Promise<void> =>
-        await rm(to, { force: true, recursive: true })
+      async ({ to }: Readonly<(typeof staged)[number]>): Promise<void> => {
+        await rm(to, { force: true, recursive: true });
+      }
     )
   );
   await recordInstalledSource(
@@ -312,10 +290,4 @@ const installPlan = async (
     })
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (installPlan, plannedSourceTargets, recordInstalledSource); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 export { installPlan, plannedSourceTargets, recordInstalledSource };
-/* oxlint-enable import/no-named-export */

@@ -1,6 +1,5 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { createSessionHistorySeed } from "eve/transcript";
-/* oxlint-disable sort-imports -- EVE's bundled Zod must initialize its shared global registry before this module loads external Zod; reversing these runtime imports changes the registry constructor/prototype identity. */
 import {
   EveCopyNotReadyError,
   eveCopyInlineAttachments,
@@ -9,7 +8,6 @@ import {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 } from "./copy-transcript";
-/* oxlint-enable sort-imports */
 import { expect, it } from "vitest";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
@@ -242,9 +240,6 @@ it.each<EveMessage["parts"][number]>([
   }
 );
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("requires a durable idle boundary, including when a new turn has no assistant text uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("requires a durable idle boundary, including when a new turn has no assistant text yet", () => {
   const events = history([
     {
@@ -265,7 +260,6 @@ it("requires a durable idle boundary, including when a new turn has no assistant
     EveCopyNotReadyError
   );
 });
-/* oxlint-enable no-magic-numbers */
 
 it("canonicalizes file links so a copied private key is never sent to the source hostname", () => {
   const content = `![image](https://old.example${sourceUrl})`;
@@ -274,7 +268,6 @@ it("canonicalizes file links so a copied private key is never sent to the source
   );
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("keeps MCP document identifiers separate from native ChatJS artifacts", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -304,11 +297,8 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
     },
     "https://chatjs.example"
   );
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("materializes only allocated destination attachments and remaps case-insensitive n preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -360,7 +350,6 @@ it("materializes only allocated destination attachments and remaps case-insensit
   expect(JSON.stringify(result)).not.toContain(sourceFile);
   expect(JSON.stringify(prepared.seed)).toContain(sourceFile);
 });
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 it("does not mutate frozen inputs while collecting copy resources", () => {
@@ -368,9 +357,7 @@ it("does not mutate frozen inputs while collecting copy resources", () => {
   expect(eveCopyResources(value).fileKeys).toEqual([sourceFile]);
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): it("keeps attachment bytes out of the seed and reads destination metadata once per fi uses 1, 1024, 0, 6, 2048 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("keeps attachment bytes out of the seed and reads destination metadata once per fi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("keeps attachment bytes out of the seed and reads destination metadata once per file", async () => {
@@ -402,12 +389,9 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
   expect(result.messages[0].parts).toHaveLength(6);
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): it("externalizes six distinct inline images through durable destination allocations") uses 1024, 8, 6, 24, 2048, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("externalizes six distinct inline images through durable destination allocations") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("externalizes six distinct inline images through durable destination allocations", async () => {
@@ -437,7 +421,6 @@ it("externalizes six distinct inline images through durable destination allocati
   );
   const result = await materializeEveCopyTranscript(
     prepared.seed,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...allocations, inlineFiles },
     () =>
       Promise.resolve({
@@ -452,9 +435,7 @@ it("externalizes six distinct inline images through durable destination allocati
     expect(file.bytes[0]).toBe(index);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("refuses missing inline allocations and metadata changes before dispatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -488,7 +469,6 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     materializeEveCopyTranscript(
       prepared.seed,
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...allocations,
         inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
       },
@@ -497,7 +477,6 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     )
   ).rejects.toThrow("metadata changed");
 });
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 it.each([
@@ -522,7 +501,6 @@ it.each([
 it("rejects resource allocations that reuse source identities or collide", () => {
   expect(() =>
     rewriteEveCopyResources(sourceUrl, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       files: new Map([[sourceFile, sourceFile]]),
     })
@@ -531,7 +509,6 @@ it("rejects resource allocations that reuse source identities or collide", () =>
     rewriteEveCopyResources(
       { documentId },
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...allocations,
         documents: new Map([[documentId, documentId.toUpperCase()]]),
       },
@@ -540,7 +517,6 @@ it("rejects resource allocations that reuse source identities or collide", () =>
   ).toThrow("fresh document identities");
   expect(() =>
     rewriteEveCopyResources(sourceUrl, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       files: new Map([
         [sourceFile, copiedFile],
@@ -564,7 +540,6 @@ it("does not inject destination keys into a foreign URL's query string", () => {
   expect(rewriteEveCopyResources(url, allocations)).toBe(url);
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["not-a-valid-document-id", documentId])'s awaited sequencing and rejected-Promise behavior. */
 it.each(["not-a-valid-document-id", documentId])(
   "preserves failed document arguments that do not denote copied artifacts: %s",
   async (id) => {
@@ -599,14 +574,9 @@ it.each(["not-a-valid-document-id", documentId])(
       },
       "https://chatjs.example"
     );
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("retains model provenance in copies of copies without carrying private metadata") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("retains model provenance in copies of copies without carrying private metadata", () => {
   const events = history([
     {
@@ -632,11 +602,7 @@ it("retains model provenance in copies of copies without carrying private metada
   });
   expect(JSON.stringify(copy.seed)).not.toContain("private-result");
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("preserves selected tools in copies without publishing unrelated custom metadata") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("preserves selected tools in copies without publishing unrelated custom metadata", () => {
   const result = prepareEveCopyTranscript(
     history([
@@ -662,12 +628,7 @@ it("preserves selected tools in copies without publishing unrelated custom metad
     role: "user",
   });
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers --
- * max-lines-per-function (#510): it("preserves imported text tool results through the ChatJS shared-copy projection") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("preserves imported text tool results through the ChatJS shared-copy projection") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("preserves imported text tool results through the ChatJS shared-copy projection", () => {
   const imported = createSessionHistorySeed([
     { content: "Read the file", role: "user" },
@@ -694,9 +655,7 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
       role: "tool",
     },
   ]);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from imported.seed.messages[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const tool = imported.seed.messages[1]?.parts[0];
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from tool; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (tool?.type !== "dynamic-tool" || tool.state !== "output-available") {
     throw new Error("Expected settled imported tool");
   }
@@ -708,13 +667,11 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
     },
     {
       id: "seed_message_1",
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing tool own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       parts: [{ ...tool, toolCallId: "seed_tool_0" }],
       role: "assistant",
     },
   ];
   const copied = prepareEveCopyTranscript(history(messages));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from copied.seed.messages[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copied.seed.messages[1]?.parts[0]).toMatchObject({
     output: "plain text",
     outputType: "text",
@@ -723,7 +680,6 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
   });
   expect(JSON.stringify(copied.seed)).not.toContain("original");
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers */
 
 it.each([sourceUrl, `${sourceUrl}?dpl=dpl_test`])(
   "copies file references from %s into canonical paths",
@@ -749,5 +705,3 @@ it("copies explicit file identities alongside their stable URLs", () => {
     imageUrl: copiedUrl,
   });
 });
-
-/* oxlint-disable max-lines -- #509: This copy-transcript.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

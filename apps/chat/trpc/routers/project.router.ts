@@ -2,7 +2,6 @@ import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between zod and @/lib/db/queries still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   createProject,
   deleteProject,
@@ -12,13 +11,9 @@ import {
 } from "@/lib/db/queries";
 
 import { generateUUID } from "@/lib/utils";
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/utils and @/trpc/init still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (projectRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve projectRouter's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable unicorn/max-nested-calls -- * unicorn/max-nested-calls (#568): projectRouter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 export const projectRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -30,7 +25,6 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(
-      // oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
       async ({
         ctx,
         input,
@@ -213,7 +207,6 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(
-      // oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
       async ({
         ctx,
         input,
@@ -284,6 +277,3 @@ export const projectRouter = createTRPCRouter({
       }
     ),
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/max-nested-calls */

@@ -19,14 +19,11 @@ import React, {
 
 import { InternalLink } from "@/components/internal-link";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/internal-link and @/components/ui/badge; keep this adjacent import pair ordered. */
 import { Badge } from "@/components/ui/badge";
-/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/checkbox and @/components/ui/command; keep this adjacent import pair ordered. */
 import {
   Command,
   CommandEmpty,
@@ -35,7 +32,6 @@ import {
   CommandList,
   CommandItem as UICommandItem,
 } from "@/components/ui/command";
-/* oxlint-enable sort-imports */
 
 import {
   DropdownMenu,
@@ -45,15 +41,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 
-/* oxlint-disable import/max-dependencies -- @/components/ui/popover import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/label and @/components/ui/popover; keep this adjacent import pair ordered. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-/* oxlint-enable import/max-dependencies */
-/* oxlint-enable sort-imports */
 
 import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
 
@@ -61,39 +53,35 @@ import type { JSX as ReactJSX } from "react";
 
 import { Switch } from "@/components/ui/switch";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/switch and @/components/upgrade-cta/login-cta-banner; keep this adjacent import pair ordered. */
 import { LoginCtaBanner } from "@/components/upgrade-cta/login-cta-banner";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/upgrade-cta/login-cta-banner and @/lib/ai/types; keep this adjacent import pair ordered. */
 import {
   getPrimarySelectedModelId,
   isSelectedModelCounts,
 } from "@/lib/ai/types";
-/* oxlint-enable sort-imports */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { config } from "@/lib/config";
 
 import { getEnabledFeatures } from "@/lib/features-config";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/lib/features-config and @/lib/types/anonymous; keep this adjacent import pair ordered. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/providers/chat-models-provider and ./model-selector-logo; keep this adjacent import pair ordered. */
 import { ModelSelectorLogo } from "./model-selector-logo";
-/* oxlint-enable sort-imports */
 
 import { useSession } from "@/providers/session-provider";
 
 const stopEventPropagation = (event: {
   readonly stopPropagation: () => void;
-}): void => event.stopPropagation();
+}): void => {
+  event.stopPropagation();
+};
 
 const preventEventDefault = (event: {
   readonly preventDefault: () => void;
-}): void => event.preventDefault();
+}): void => {
+  event.preventDefault();
+};
 
 const handleInteractOutside = (event: {
   readonly target: unknown;
@@ -132,7 +120,6 @@ const getFeatureIcons = (
       key: "functionCalling",
     },
     {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       condition: model.input?.image,
       config: enabled.find(
         (feature: { readonly key: string }) => feature.key === "imageInput"
@@ -140,7 +127,6 @@ const getFeatureIcons = (
       key: "imageInput",
     },
     {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pdf from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       condition: model.input?.pdf,
       config: enabled.find(
         (feature: { readonly key: string }) => feature.key === "pdfInput"
@@ -158,10 +144,7 @@ const getFeatureIcons = (
           key={featureConfig.key}
           title={featureConfig.description}
         >
-          <IconComponent
-            // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="text-muted-foreground h-3 w-3"
-          />
+          <IconComponent className="text-muted-foreground h-3 w-3" />
         </div>
       );
     }
@@ -180,8 +163,6 @@ const buildMultiModelSelection = (
   return selection;
 };
 
-/* oxlint-disable no-magic-numbers -- A single selected model contributes one; absent sparse model counts contribute zero to the total. */
-
 const getSelectionCount = (selection: SelectedModelValue): number => {
   if (typeof selection === "string") {
     return 1;
@@ -195,10 +176,6 @@ const getSelectionCount = (selection: SelectedModelValue): number => {
 
   return count;
 };
-/* oxlint-disable react/jsx-no-literals -- PureCommandItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- PureCommandItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries. */
 
 const PureCommandItem = ({
   model,
@@ -220,7 +197,6 @@ const PureCommandItem = ({
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
     () =>
-      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `${model.name} ${model.reasoning ? "reasoning" : ""} ${model.owned_by} `.toLowerCase(),
     [model]
   );
@@ -240,7 +216,6 @@ const PureCommandItem = ({
 
   return (
     <UICommandItem
-      // oxlint-disable-next-line react/forbid-component-props -- UICommandItem accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "flex h-9 w-full cursor-pointer items-center justify-between px-3 py-1.5 transition-all",
         isSelected && "border-l-primary bg-primary/10 border-l-2",
@@ -251,11 +226,7 @@ const PureCommandItem = ({
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         {showSelectionControl && (
-          <Checkbox
-            checked={isSelected}
-            // oxlint-disable-next-line react/forbid-component-props -- Checkbox accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="pointer-events-none"
-          />
+          <Checkbox checked={isSelected} className="pointer-events-none" />
         )}
         <div className="shrink-0">
           <ModelSelectorLogo modelId={model.id} />
@@ -286,10 +257,7 @@ const PureCommandItem = ({
                 type="button"
               >
                 {count}×
-                <ChevronDownIcon
-                  // oxlint-disable-next-line react/forbid-component-props -- ChevronDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="h-2.5 w-2.5"
-                />
+                <ChevronDownIcon className="h-2.5 w-2.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onKeyDown={stopEventPropagation}>
@@ -305,10 +273,7 @@ const PureCommandItem = ({
                 >
                   {modelCount}x
                   {modelCount === count && (
-                    <CheckIcon
-                      // oxlint-disable-next-line react/forbid-component-props -- CheckIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                      className="ml-auto h-3 w-3"
-                    />
+                    <CheckIcon className="ml-auto h-3 w-3" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -319,12 +284,8 @@ const PureCommandItem = ({
     </UICommandItem>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */
 
 const CommandItem = memo(PureCommandItem);
-/* oxlint-disable react/jsx-no-literals -- PureModelSelector renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, unicorn/no-null -- PureModelSelector: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureModelSelector = ({
   allowMultiple = true,
@@ -342,7 +303,6 @@ const PureModelSelector = ({
   readonly className?: string;
 }): ReactJSX.Element => {
   const { data: session } = useSession();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
 
@@ -354,10 +314,9 @@ const PureModelSelector = ({
   );
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
-  const handleResetFilters = useCallback(
-    (): void => setFeatureFilters(initialFilters),
-    [setFeatureFilters]
-  );
+  const handleResetFilters = useCallback((): void => {
+    setFeatureFilters(initialFilters);
+  }, [setFeatureFilters]);
   const [useMultipleModels, setUseMultipleModels] = useState(
     isSelectedModelCounts(selectedModelSelection)
   );
@@ -448,23 +407,18 @@ const PureModelSelector = ({
                 return model.toolCall === true;
               }
               case "imageInput": {
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 return model.input?.image;
               }
               case "pdfInput": {
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pdf from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 return model.input?.pdf;
               }
               case "audioInput": {
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading audio from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 return model.input?.audio;
               }
               case "imageOutput": {
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 return model.output?.image;
               }
               case "audioOutput": {
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading audio from model.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 return model.output?.audio;
               }
               default: {
@@ -522,7 +476,6 @@ const PureModelSelector = ({
   );
   const triggerLabel = useMemo(() => {
     if (useMultipleModels && selectedModelCount > 1) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const modelName = selectedItem?.model.name;
       if (modelName !== undefined && modelName !== "") {
         return `${modelName} +${selectedModelCount - 1}`;
@@ -530,20 +483,17 @@ const PureModelSelector = ({
       return `Selected model +${selectedModelCount - 1}`;
     }
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const modelName = selectedItem?.model.name;
     if (modelName !== undefined && modelName !== "") {
       return modelName;
     }
     return "Select model";
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
 
   const dispatchSelection = useCallback(
     (selection: SelectedModelValue): void => {
       try {
         // Run the producer before the transition so Send sees its local selection immediately.
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the optional Action's skipped call and original completion value.
         const completion = onModelSelectionChangeAction?.(selection);
         // oxlint-disable-next-line typescript/promise-function-async -- React receives the original Action promise without changing its identity or synchronous producer contract.
         startTransition(() => {
@@ -571,7 +521,6 @@ const PureModelSelector = ({
     (id: AppModelId) => {
       const current = optimisticSelection;
       const currentCounts: SelectedModelCounts =
-        // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof current === "string" ? { [current]: 1 } : current;
 
       const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
@@ -592,7 +541,6 @@ const PureModelSelector = ({
         }
         nextSelection = Object.fromEntries(remaining);
       } else {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         nextSelection = { ...currentCounts, [id]: 1 };
       }
 
@@ -605,7 +553,6 @@ const PureModelSelector = ({
     (id: AppModelId, delta: number) => {
       const current = optimisticSelection;
       const currentCounts: SelectedModelCounts =
-        // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof current === "string" ? { [current]: 1 } : current;
 
       const newCount = (currentCounts[id] ?? 0) + delta;
@@ -626,7 +573,6 @@ const PureModelSelector = ({
         }
         nextSelection = Object.fromEntries(remaining);
       } else {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         nextSelection = { ...currentCounts, [id]: newCount };
       }
 
@@ -654,7 +600,6 @@ const PureModelSelector = ({
       <PopoverTrigger asChild>
         <Button
           aria-expanded={open}
-          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("flex w-fit justify-between gap-2 md:px-2", className)}
           data-testid="model-selector"
           variant="ghost"
@@ -668,9 +613,9 @@ const PureModelSelector = ({
             <p className="inline-flex items-center gap-1.5 truncate">
               {triggerLabel}
               {
-                /* oxlint-disable typescript/strict-boolean-expressions, oxc/no-optional-chaining -- This React child reads the nullable reasoning flag once at its render position and preserves its false or undefined result. An eager capture moves the getter read; a boolean conversion changes the child value. Optional chaining preserves the nullish guard and skipped property reads. */
+                /* oxlint-disable typescript/strict-boolean-expressions -- This React child reads the nullable reasoning flag once at its render position and preserves its false or undefined result. An eager capture moves the getter read; a boolean conversion changes the child value. Optional chaining preserves the nullish guard and skipped property reads. */
                 selectedItem?.model.reasoning &&
-                  /* oxlint-enable typescript/strict-boolean-expressions, oxc/no-optional-chaining */ reasoningConfig && (
+                  /* oxlint-enable typescript/strict-boolean-expressions */ reasoningConfig && (
                     <span
                       className="inline-flex shrink-0 items-center gap-1"
                       title={reasoningConfig.description}
@@ -682,7 +627,6 @@ const PureModelSelector = ({
             </p>
           </div>
           <ChevronUpIcon
-            // oxlint-disable-next-line react/forbid-component-props -- ChevronUpIcon accepts className in its styling contract; preserve this caller's layout and appearance.
             className={cn(
               "h-4 w-4 shrink-0 opacity-50 transition-transform",
               open && "rotate-180"
@@ -692,7 +636,6 @@ const PureModelSelector = ({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
         className="w-[350px] p-0"
         onFocusOutside={preventEventDefault}
 
@@ -702,7 +645,6 @@ const PureModelSelector = ({
           <Command>
             <div className="flex items-center border-b">
               <CommandInput
-                // oxlint-disable-next-line react/forbid-component-props -- CommandInput accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="px-3"
                 containerClassName="w-full border-0 h-11"
                 onClick={stopEventPropagation}
@@ -711,7 +653,6 @@ const PureModelSelector = ({
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
                 <PopoverTrigger asChild>
                   <Button
-                    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                     className={cn(
                       "relative mr-3 h-8 w-8 p-0",
                       activeFilterCount > 0 && "text-primary"
@@ -719,13 +660,9 @@ const PureModelSelector = ({
                     size="sm"
                     variant="ghost"
                   >
-                    <FilterIcon
-                      // oxlint-disable-next-line react/forbid-component-props -- FilterIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                      className="h-4 w-4"
-                    />
+                    <FilterIcon className="h-4 w-4" />
                     {activeFilterCount > 0 && (
                       <Badge
-                        // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
                         className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center p-0 text-xs"
                         variant="secondary"
                       >
@@ -734,17 +671,12 @@ const PureModelSelector = ({
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                  align="end"
-                  // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="p-0"
-                >
+                <PopoverContent align="end" className="p-0">
                   <div className="p-4">
                     <div className="mb-3 flex h-7 items-center justify-between">
                       <div className="text-sm font-medium">Filter by Tools</div>
                       {activeFilterCount > 0 && (
                         <Button
-                          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                           className="h-6 text-xs"
                           onClick={handleResetFilters}
                           size="sm"
@@ -782,25 +714,20 @@ const PureModelSelector = ({
                               <Checkbox
                                 checked={featureFilters[feature.key]}
                                 id={feature.key}
-                                onCheckedChange={(checked) =>
+                                onCheckedChange={(checked) => {
                                   setFeatureFilters(
                                     (prev: Readonly<FeatureFilter>) => ({
-                                      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prev own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                                       ...prev,
                                       [feature.key]: Boolean(checked),
                                     })
-                                  )
-                                }
+                                  );
+                                }}
                               />
                               <Label
-                                // oxlint-disable-next-line react/forbid-component-props -- Label accepts className in its styling contract; preserve this caller's layout and appearance.
                                 className="flex items-center gap-1.5 text-sm"
                                 htmlFor={feature.key}
                               >
-                                <IconComponent
-                                  // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts className in its styling contract; preserve this caller's layout and appearance.
-                                  className="h-3.5 w-3.5"
-                                />
+                                <IconComponent className="h-3.5 w-3.5" />
                                 {feature.name}
                               </Label>
                             </div>
@@ -817,7 +744,6 @@ const PureModelSelector = ({
               config.features.parallelResponses && (
                 <div className="flex items-center justify-between border-b px-3 py-2">
                   <Label
-                    // oxlint-disable-next-line react/forbid-component-props -- Label accepts className in its styling contract; preserve this caller's layout and appearance.
                     className="cursor-pointer text-sm"
                     htmlFor="use-multiple-models"
                   >
@@ -840,7 +766,6 @@ const PureModelSelector = ({
               </div>
             )}
             <CommandList
-              // oxlint-disable-next-line react/forbid-component-props -- CommandList accepts className in its styling contract; preserve this caller's layout and appearance.
               className="max-h-[min(40dvh,400px)]"
               onMouseDown={stopEventPropagation}
             >
@@ -848,29 +773,25 @@ const PureModelSelector = ({
               <CommandGroup>
                 {filteredModels.map(
                   ({ model, disabled }: Readonly<ModelItem>) => {
-                    const isSelected =
-                      /* oxlint-disable no-ternary -- Keep isSelected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ useMultipleModels /* oxlint-enable no-ternary */
-                        ? selectedModelIds.has(model.id)
-                        : model.id === optimisticModelId;
+                    const isSelected = useMultipleModels
+                      ? selectedModelIds.has(model.id)
+                      : model.id === optimisticModelId;
                     const count =
-                      /* oxlint-disable no-ternary -- Keep count as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ useMultipleModels /* oxlint-enable no-ternary */ &&
+                      useMultipleModels &&
                       typeof optimisticSelection !== "string"
                         ? (optimisticSelection[model.id] ?? 0)
                         : undefined;
                     return (
                       <CommandItem
-                        // oxlint-disable-next-line no-ternary -- Keep count JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                         count={isSelected ? count : undefined}
                         disabled={disabled}
                         isSelected={isSelected}
                         key={model.id}
                         model={model}
                         onCountChange={
-                          // oxlint-disable-next-line no-ternary -- Keep the mode's optional count handler as a lazy value selection; pinned unicorn/prefer-ternary rejects the if/else assignment alternative.
                           useMultipleModels ? handleCountChange : undefined
                         }
                         onSelect={
-                          // oxlint-disable-next-line no-ternary -- Select the mode's memoized model handler without creating a new callback for each row.
                           useMultipleModels
                             ? toggleMultiModel
                             : selectSingleModel
@@ -886,17 +807,13 @@ const PureModelSelector = ({
               <div className="border-t p-2">
                 <Button
                   asChild
-                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="w-full justify-between"
                   size="sm"
                   variant="ghost"
                 >
                   <InternalLink aria-label="Add Models" href="/settings/models">
                     Add Models
-                    <ChevronRightIcon
-                      // oxlint-disable-next-line react/forbid-component-props -- ChevronRightIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                      className="h-4 w-4"
-                    />
+                    <ChevronRightIcon className="h-4 w-4" />
                   </InternalLink>
                 </Button>
               </div>
@@ -907,9 +824,6 @@ const PureModelSelector = ({
     </Popover>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelSelector); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, unicorn/no-null */
 
 export const ModelSelector = memo(
   PureModelSelector,
@@ -920,6 +834,3 @@ export const ModelSelector = memo(
     prev.className === next.className &&
     prev.onModelSelectionChangeAction === next.onModelSelectionChangeAction
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-
-/* oxlint-disable max-lines -- model-selector keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

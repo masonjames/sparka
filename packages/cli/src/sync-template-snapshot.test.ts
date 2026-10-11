@@ -1,10 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
   SNAPSHOT_CONCURRENCY,
   collectSnapshot,
 } from "../../../scripts/sync-template-snapshot";
-/* oxlint-enable import/no-relative-parent-imports */
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   mkdtemp,
@@ -13,10 +10,8 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test uses native assertions to await rejection and verify integration contracts.
 import assert from "node:assert/strict";
 import { it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 
 const hash = (value: string): string =>
@@ -29,7 +24,6 @@ const FIRST_FILE_INDEX = 0;
 const NO_ACTIVE_OPERATIONS = 0;
 const MINIMUM_CONCURRENT_OPERATIONS = 1;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectFileOrder's awaited sequencing and rejected-Promise behavior. */
 const collectFileOrder = async (
   dir: string,
   prefix = ""
@@ -45,7 +39,6 @@ const collectFileOrder = async (
         }>
       ): Promise<string[]> => {
         const absolute = path.join(dir, entry.name);
-        // oxlint-disable-next-line no-ternary -- Keep rel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
         if (entry.isDirectory()) {
           return await collectFileOrder(absolute, rel);
@@ -59,11 +52,6 @@ const collectFileOrder = async (
   );
   return paths.flat();
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 it("collects ordered hashes with bounded nested filesystem concurrency", async () => {
   const root = await mkdtemp(
@@ -130,8 +118,4 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

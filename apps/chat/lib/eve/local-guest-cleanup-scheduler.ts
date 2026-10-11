@@ -33,14 +33,6 @@ const enabled = (): boolean => {
   }
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (startLocalEveGuestCleanup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined --
- * init-declarations (#507): startLocalEveGuestCleanup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): startLocalEveGuestCleanup emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-undefined (#519): startLocalEveGuestCleanup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 /**
  * Start or refresh the development-only guest cleanup scheduler.
  * Never load database clients for a remote or disabled runtime.
@@ -48,12 +40,10 @@ const enabled = (): boolean => {
  */
 export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   if (!enabled()) {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stop from schedulerGlobal.chatjsEveGuestCleanup; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     schedulerGlobal.chatjsEveGuestCleanup?.stop();
     return;
   }
   const appRoot = process.cwd();
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   const run = async (): Promise<void> => {
     if (!enabled()) {
       return;
@@ -65,7 +55,6 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
       console.info("Local EVE guest cleanup", result);
     }
   };
-  /* oxlint-enable oxc/no-async-await */
   if (schedulerGlobal.chatjsEveGuestCleanup) {
     // Instrumentation can be reloaded during development. Refresh the callback
     // without adding another timer or overlapping an in-flight sweep.
@@ -97,7 +86,6 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
       clearTimeout(timer);
       timer = undefined;
     },
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tick's awaited sequencing and rejected-Promise behavior. */
     async tick(): Promise<void> {
       timer = undefined;
       running = true;
@@ -112,12 +100,9 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
         scheduler.schedule();
       }
     },
-    /* oxlint-enable oxc/no-async-await */
   };
   schedulerGlobal.chatjsEveGuestCleanup = scheduler;
   scheduler.start();
   // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return scheduler.stop;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined */

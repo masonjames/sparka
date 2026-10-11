@@ -1,24 +1,16 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-run-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 
 import postgres from "postgres";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the native SQL callback type separate from the runtime postgres import; it has no evaluation order.
 import type { TransactionSql } from "postgres";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
 
 import {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
 } from "@/lib/eve/lifecycle/postgres/eve-run-inventory";
-/* oxlint-enable eslint/sort-imports */
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { env } from "../lib/env";
-/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Run inventory acceptance requires local Postgres.");
@@ -26,10 +18,6 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const ids: string[] = [];
 const streamIds: string[] = [];
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
@@ -39,9 +27,6 @@ afterAll(async () => {
   }
   await query.end();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 async function run(
   attributes: Readonly<Record<string, string>> = {},
@@ -56,8 +41,6 @@ async function run(
   `;
   return id;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stream's awaited sequencing and rejected-Promise behavior. */
 
 async function stream(
   runId: string | null,
@@ -71,12 +54,6 @@ async function stream(
   `;
   return id;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("inventories native descendants and collectors without returning payloads or unr keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("inventories native descendants and collectors without returning payloads or unr uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("inventories native descendants and collectors without returning payloads or unrelated runs", async () => {
   const collector = await run();
   const root = await run({ "$eve.activity_collector": collector });
@@ -122,14 +99,7 @@ test("inventories native descendants and collectors without returning payloads o
     await query`select id from workflow.workflow_runs where id = ${root}`
   ).toHaveLength(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): test("reports active work, missing relationships, and streams without exclusive owner keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("reports active work, missing relationships, and streams without exclusive owner preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("reports active work, missing relationships, and streams without exclusive ownership", async () => {
   const missingCollector = crypto.randomUUID();
   const root = await run({ "$eve.activity_collector": missingCollector });
@@ -155,9 +125,6 @@ test("reports active work, missing relationships, and streams without exclusive 
     readEvePostgresRunInventory(query, missingParent)
   ).rejects.toThrow("session run is missing");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, unicorn/no-null */
 
 test("cyclic parent metadata terminates without duplicating records", async () => {
   const root = await run();
@@ -168,15 +135,12 @@ test("cyclic parent metadata terminates without duplicating records", async () =
     [root, child].toSorted()
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("retains missing queue-discovered seeds as incomplete ownership", async () => {
   const root = await run();
   const missing = crypto.randomUUID();
   const inventory = await query.begin(
     "isolation level repeatable read read only",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ReadonlyNativeSurface preserves the native TransactionSql callable contract; this receiver belongs to an actual read-only transaction used only by the inventory SELECT helper.
     async (transaction: ReadonlyNativeSurface<TransactionSql>) =>
       await readEvePostgresRunInventoryInTransaction(transaction, root, [
         missing,
@@ -185,4 +149,3 @@ test("retains missing queue-discovered seeds as incomplete ownership", async () 
   expect(inventory.missingRunIds).toEqual([missing]);
   expect(inventory.runs.map((row) => row.id)).toEqual([root]);
 });
-/* oxlint-enable oxc/no-async-await */

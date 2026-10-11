@@ -18,7 +18,6 @@ describe("isolated preview databases", () => {
   it("uses the standard runtime URL and direct migration connection", () => {
     expect(
       resolveMaintainerPreviewDatabase({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of preview rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...preview,
       })
     ).toEqual({
@@ -28,11 +27,8 @@ describe("isolated preview databases", () => {
   });
 
   it.each([
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, VERCEL: "" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, VERCEL_ENV: "production" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, VERCEL_ENV: "development" },
   ])("leaves non-preview deployments unchanged", (source) => {
     expect(resolveMaintainerPreviewDatabase(source)).toBeUndefined();
@@ -40,30 +36,21 @@ describe("isolated preview databases", () => {
 
   it.each([
     { VERCEL: "1", VERCEL_ENV: "preview" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, NEON_PROJECT_ID: "another-project" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, DATABASE_URL: "" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, DATABASE_URL_UNPOOLED: "" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, CHATJS_PREVIEW_PARENT_HOST: "" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, CHATJS_PREVIEW_PARENT_HOST: "ep-child.eu.neon.tech" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...preview, DATABASE_URL_UNPOOLED: "not-a-url" },
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       DATABASE_URL_UNPOOLED: preview.DATABASE_URL,
     },
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       DATABASE_URL: "postgres://preview:secret@ep-other.eu.neon.tech/neondb",
     },
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       DATABASE_URL:
         "postgres://preview:secret@ep-child.eu.neon.tech/another-db",
@@ -85,7 +72,6 @@ it.each([
 ])("rejects the parent regardless of hostname spelling: %s", (parent) => {
   expect(() =>
     resolveMaintainerPreviewDatabase({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       CHATJS_PREVIEW_PARENT_HOST: parent,
     })
@@ -102,7 +88,6 @@ it.each([
 ])("rejects malformed parent configuration: %s", (parent) => {
   expect(() =>
     resolveMaintainerPreviewDatabase({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       CHATJS_PREVIEW_PARENT_HOST: parent,
     })
@@ -112,7 +97,6 @@ it.each([
 it("normalizes connection hostnames too when rejecting the parent", () => {
   expect(() =>
     resolveMaintainerPreviewDatabase({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       CHATJS_PREVIEW_PARENT_HOST: "ep-child.eu.neon.tech",
       DATABASE_URL: preview.DATABASE_URL.replace(
@@ -135,7 +119,6 @@ it.each([
 ])("rejects mismatched or invalid connection authorities", (direct) => {
   expect(() =>
     resolveMaintainerPreviewDatabase({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       DATABASE_URL_UNPOOLED: direct,
     })
@@ -148,11 +131,9 @@ it("accepts equivalent default ports and percent-encoded credentials", () => {
     "%70review:%73ecret"
   ).replace("/neondb", ":5432/neondb");
   expect(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading DATABASE_MIGRATION_URL from resolveMaintainerPreviewDatabase(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     resolveMaintainerPreviewDatabase({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,
       DATABASE_URL_UNPOOLED: direct,
-    })?.DATABASE_MIGRATION_URL
-  ).toBe(direct);
+    })
+  ).toHaveProperty("DATABASE_MIGRATION_URL", direct);
 });

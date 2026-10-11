@@ -5,8 +5,6 @@ import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { z as Zod } from "zod";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SavedCodeRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- SavedCodeRenderer renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 type SavedCodeInput = Zod.output<typeof documentExecutionInput>;
 type SavedCodeOutput = Zod.output<typeof eveCodeExecutionResult> &
@@ -45,5 +43,3 @@ export const SavedCodeRenderer = defineToolRenderer({
     return <output>Running saved code…</output>;
   },
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */

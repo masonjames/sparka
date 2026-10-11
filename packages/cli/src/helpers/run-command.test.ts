@@ -1,13 +1,12 @@
-import { expect, it } from "bun:test";
+import { it } from "bun:test";
+import assert from "node:assert/strict";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { run } from "../../test/run-command";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const descendantsHoldPipesTimeoutMs = 250;
 
-it("reports command timeouts even when descendants keep the pipes open", () =>
-  expect(
+it("reports command timeouts even when descendants keep the pipes open", async () => {
+  await assert.rejects(
     run(
       process.cwd(),
       [
@@ -20,5 +19,7 @@ setTimeout(() => {}, 30000);
 `,
       ],
       descendantsHoldPipesTimeoutMs
-    )
-  ).rejects.toThrow(`timed out after ${descendantsHoldPipesTimeoutMs}ms`));
+    ),
+    new RegExp(`timed out after ${descendantsHoldPipesTimeoutMs}ms`, "u")
+  );
+});

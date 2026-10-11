@@ -14,9 +14,6 @@ const isTypingSurface = (element: unknown): boolean =>
     !element.readOnly &&
     !element.disabled) ||
   (element instanceof HTMLElement && element.isContentEditable);
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useAutoFocus); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-
-/* oxlint-disable unicorn/no-null -- unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useAutoFocus = ({
   autoFocus,
@@ -39,7 +36,6 @@ export const useAutoFocus = ({
       if (!isUserTypingElsewhere) {
         editor.focus();
         // Minimal fallback for hydration/layout races where focus is stolen.
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Use the browser timer overload because the focus cleanup stores a numeric timeout ID.
         fallbackTimeout = window.setTimeout(() => {
           const currentActive = document.activeElement;
           const canSafelyStealFocus = !isTypingSurface(currentActive);
@@ -60,5 +56,3 @@ export const useAutoFocus = ({
     };
   }, [autoFocus, editor]);
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable unicorn/no-null */

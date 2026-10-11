@@ -23,7 +23,6 @@ vi.mock("@/lib/logger", () => ({
     warn: mocks.warn,
   }),
 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("creates a new OAuth attempt even if expired-attempt cleanup fails", async () => {
   const error = new Error("cleanup failed");
@@ -42,4 +41,3 @@ it("creates a new OAuth attempt even if expired-attempt cleanup fails", async ()
     "Could not clean up expired OAuth sessions"
   );
 });
-/* oxlint-enable oxc/no-async-await */

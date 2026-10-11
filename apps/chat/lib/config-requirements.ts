@@ -31,18 +31,16 @@ const formatRequirementDescription = (
   const keys = requirement.options
     .map((option) => option.join(" + "))
     .join(" or ");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from requirement.description; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  const describedOptions = requirement.description
-    ?.split(ALTERNATIVE_SEPARATOR)
+  const describedOptions = (requirement.description ?? "")
+    .split(ALTERNATIVE_SEPARATOR)
     .map((option) =>
       option.split(CREDENTIAL_SEPARATOR).map((name) => name.trim())
     );
   const groupsAlreadyListed =
-    Array.isArray(describedOptions) &&
     normalizedCredentialGroups(describedOptions) ===
-      normalizedCredentialGroups(
-        requirement.options.map((option) => option.map(String))
-      );
+    normalizedCredentialGroups(
+      requirement.options.map((option) => option.map(String))
+    );
   if (
     typeof requirement.description === "string" &&
     requirement.description !== "" &&
@@ -99,21 +97,14 @@ const getMissingRequirement = (
   env: Readonly<NodeJS.ProcessEnv>
 ): string | null => {
   if (isRequirementSatisfied(requirement, env)) {
-    return (
-      // oxlint-disable-next-line unicorn/no-null -- Missing requirements use null as the existing exported success sentinel.
-      null
-    );
+    return null;
   }
   return formatRequirementDescription(requirement);
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (authEnvRequirements, formatRequirementDescription, getMissingRequirement, isRequirementSatisfied); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   authEnvRequirements,
   formatRequirementDescription,
   getMissingRequirement,
   isRequirementSatisfied,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EnvRequirement); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EnvRequirement };
-/* oxlint-enable import/no-named-export */

@@ -1,8 +1,6 @@
 import type { PostgresLifecycleQuery } from "./compatibility";
 import { z } from "zod";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readEvePostgresQueueInventory); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresQueueInventory's awaited sequencing and rejected-Promise behavior. */
 const nonemptyStringLength = 1;
 const queueInventoryLimit = 10_000;
 const queueRows = z.array(
@@ -89,5 +87,3 @@ export const readEvePostgresQueueInventory = async (
       .map((row) => row.id),
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

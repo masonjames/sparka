@@ -12,18 +12,12 @@ type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedResult
 >["tool"];
 
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
 const LoadingState = (): React.JSX.Element => (
   <div className="border-border bg-card my-4 rounded-xl border p-4">
     <div className="flex items-center gap-4">
       <div className="relative h-10 w-10">
         <div className="bg-primary/10 absolute inset-0 animate-pulse rounded-full" />
-        <Globe
-          // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
-          className="text-primary/70 absolute inset-0 m-auto h-5 w-5"
-        />
+        <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
       </div>
       <div className="flex-1 space-y-2">
         <div className="bg-muted-foreground/20 h-4 w-36 animate-pulse rounded-md" />
@@ -35,15 +29,6 @@ const LoadingState = (): React.JSX.Element => (
     </div>
   </div>
 );
-/* oxlint-disable react/jsx-no-literals -- ErrorState renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/only-export-components */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 const ErrorState = ({
   errorMessage,
@@ -51,10 +36,7 @@ const ErrorState = ({
   <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
     <div className="flex items-center gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-        <Globe
-          // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
-          className="h-4 w-4 text-red-600 dark:text-red-300"
-        />
+        <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
       </div>
       <div>
         <div className="text-sm font-medium text-red-700 dark:text-red-300">
@@ -67,12 +49,6 @@ const ErrorState = ({
     </div>
   </div>
 );
-/* oxlint-enable react/jsx-no-literals */
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getItemProperty = (
@@ -82,18 +58,11 @@ const getItemProperty = (
 ): string => {
   if (item && typeof item === "object" && property in item) {
     const value: unknown = Reflect.get(item, property);
-    // oxlint-disable-next-line no-ternary -- Keep the property fallback lazy; prefer-ternary rejects the if/else replacement.
     return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
-/* oxlint-disable react/jsx-no-literals -- RetrievedContentHeader renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 const RetrievedContentHeader = ({
   firstItem,
@@ -112,10 +81,7 @@ const RetrievedContentHeader = ({
       <div className="flex items-start gap-4">
         <div className="relative h-10 w-10 shrink-0">
           <div className="from-primary/10 absolute inset-0 rounded-lg bg-linear-to-br to-transparent" />
-          <Globe
-            // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="text-primary/70 absolute inset-0 m-auto h-5 w-5"
-          />
+          <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 space-y-2">
           <h2 className="text-foreground truncate text-lg font-semibold tracking-tight">
@@ -134,10 +100,7 @@ const RetrievedContentHeader = ({
               rel="noopener noreferrer"
               target="_blank"
             >
-              <ExternalLink
-                // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="h-3 w-3"
-              />
+              <ExternalLink className="h-3 w-3" />
               View source
             </a>
           </div>
@@ -146,18 +109,6 @@ const RetrievedContentHeader = ({
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- RetrievedContentDetails renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 const RetrievedContentDetails = ({
   firstItem,
@@ -169,16 +120,10 @@ const RetrievedContentDetails = ({
       <details className="group">
         <summary className="text-muted-foreground hover:bg-muted flex w-full cursor-pointer items-center justify-between px-4 py-2 text-sm transition-colors">
           <div className="flex items-center gap-2">
-            <TextIcon
-              // oxlint-disable-next-line react/forbid-component-props -- TextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-muted-foreground h-4 w-4"
-            />
+            <TextIcon className="text-muted-foreground h-4 w-4" />
             <span>View content</span>
           </div>
-          <ChevronDown
-            // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="h-4 w-4 transition-transform duration-200 group-open:rotate-180"
-          />
+          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
         </summary>
         <div className="bg-muted/50 max-h-[50vh] overflow-y-auto p-4">
           <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
@@ -189,14 +134,7 @@ const RetrievedContentDetails = ({
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
 
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const getFirstItem = (result: unknown): unknown => {
@@ -210,17 +148,13 @@ const getFirstItem = (result: unknown): unknown => {
   }
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getErrorMessage = (
   result: unknown,
   firstItem: unknown
 ): string | null => {
   const topLevelError =
-    // oxlint-disable-next-line no-ternary -- Keep error extraction lazy; the pinned unicorn/prefer-ternary rule rejects if/else replacement.
     result &&
     typeof result === "object" &&
     "error" in result &&
@@ -228,7 +162,6 @@ const getErrorMessage = (
       ? result.error
       : undefined;
   const firstItemError =
-    // oxlint-disable-next-line no-ternary -- Keep error extraction lazy; the pinned unicorn/prefer-ternary rule rejects if/else replacement.
     firstItem &&
     typeof firstItem === "object" &&
     "error" in firstItem &&
@@ -239,13 +172,7 @@ const getErrorMessage = (
   return topLevelError ?? firstItemError ?? null;
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const RetrieveUrlView = ({
   tool,
@@ -281,16 +208,10 @@ const RetrieveUrlView = ({
     </div>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetrieveUrlRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-enable eslint/max-statements */
 
 export const RetrieveUrlRenderer = defineToolRenderer({
   inputSchema: retrievedInput,
   outputSchema: retrievedResult,
   render: RetrieveUrlView,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

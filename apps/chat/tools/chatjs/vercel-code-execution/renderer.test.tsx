@@ -21,16 +21,12 @@ vi.mock("@/components/sandbox", () => ({
   ),
 }));
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 vi.mock(
   "@/tools/chatjs/_shared/code-execution/interactive-charts",
   (): { default: () => null } => ({
     default: (): null => null,
   })
 );
-/* oxlint-enable unicorn/no-null */
 
 test("passes validated partial code to the sandbox while input is streaming", () => {
   const html = renderToStaticMarkup(

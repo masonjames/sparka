@@ -6,13 +6,9 @@ import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 import { resolveEveEnvironment } from "./eve/environment";
 import { z } from "zod";
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): isPlaywrightTestEnvironmentEnabled reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
 );
-/* oxlint-enable node/no-process-env */
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
@@ -21,9 +17,6 @@ const clientEnvSchema = {
   NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
 };
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 const playwrightDefault = (value: unknown, fallback: string): unknown => {
   if (
     isPlaywrightTestEnvironmentEnabled &&
@@ -33,14 +26,10 @@ const playwrightDefault = (value: unknown, fallback: string): unknown => {
   }
   return value;
 };
-/* oxlint-enable no-undefined */
 
 const MIN_NONEMPTY_ENV_VALUE_LENGTH = 1;
 const MCP_ENCRYPTION_KEY_LENGTH = 44;
 
-/* oxlint-disable no-undefined, node/no-process-env --
-no-undefined (#519): serverEnvSchema uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-node/no-process-env (#537): serverEnvSchema reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
 /**
  * Server environment variable schemas with descriptions.
  *
@@ -92,7 +81,6 @@ const serverEnvSchema = {
     .string()
     .optional()
     .describe("Secret for cleanup cron job endpoint"),
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing databaseEnvOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
@@ -224,8 +212,5 @@ const serverEnvSchema = {
     eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-undefined, node/no-process-env */
 export { clientEnvSchema, serverEnvSchema };
 export { getEveRuntimeEnvOptions } from "./env-runtime-options";
-/* oxlint-enable import/no-named-export */

@@ -3,25 +3,17 @@ import {
   parseStorageOptions,
 } from "./storage-provider";
 import { describe, expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { builtInStorage } from "../../../registry/src/storage/catalog";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import { itemAddress } from "#cli/registry/shadcn";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 import { resolveStorage } from "#cli/registry/storage";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { storageDefinitionSchema } from "../../../registry/metadata";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 const firstRequirementIndex = 0;
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 describe("storage registry integration", () => {
   it("resolves every built-in provider ID to its published item name", () => {
     for (const item of builtInStorage) {
@@ -55,7 +47,6 @@ describe("storage registry integration", () => {
       expect(() => parseStorageOptions(input)).toThrow("JSON object");
     }
   });
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-storage-"));
     try {
@@ -104,14 +95,11 @@ describe("storage registry integration", () => {
       await writeFile(
         source,
         JSON.stringify({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...item,
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           meta: { chatjs: { ...definition, contractVersion: 999 } },
         })
       );
       expect(resolveStorage(source, cwd)).rejects.toThrow();
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       await writeFile(source, JSON.stringify({ ...item, files: [] }));
       expect(resolveStorage(source, cwd)).rejects.toThrow(
         "storage-provider.ts"
@@ -120,7 +108,4 @@ describe("storage registry integration", () => {
       await rm(cwd, { force: true, recursive: true });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

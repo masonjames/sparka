@@ -52,7 +52,6 @@ const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
   type: "language",
 });
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 class LiteLLMGateway
   extends GatewayRuntime
   implements GatewayProvider<"litellm", string, string, never>
@@ -96,8 +95,6 @@ class LiteLLMGateway
     return this.env.LITELLM_BASE_URL;
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line eslint/max-statements -- Preserve the native fetch, response validation, ordered log calls, and catch fallback in one operation; the exact unmasked statement count is recorded in the lane evidence.
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
@@ -148,8 +145,5 @@ class LiteLLMGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable unicorn/no-null */
-// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (Gateway, LiteLLMGateway); the enabled import/no-default-export convention rejects the default-export alternative.
 export { LiteLLMGateway as Gateway, LiteLLMGateway };

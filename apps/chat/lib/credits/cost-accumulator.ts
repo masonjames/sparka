@@ -64,10 +64,9 @@ const addImageCosts = (
 ): number => {
   let total = initialCost;
   for (const entry of entries) {
-    const price = Number(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from models.find(...).pricing; read pricing from models.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      models.find((model) => model.id === entry.modelId)?.pricing?.image
-    );
+    const model = models.find((candidate) => candidate.id === entry.modelId);
+    const pricing = model && model.pricing;
+    const price = Number(pricing && pricing.image);
     if (Number.isFinite(price) && price > NO_IMAGE_PRICE) {
       total += price * entry.count * CENTS_PER_DOLLAR;
     }
@@ -101,7 +100,6 @@ class CostAccumulator {
    * @param {UsageInfo} usage Original usage metadata retained in the breakdown.
    * @param {string} source Calling operation recorded in the cost breakdown.
    */
-  // oxlint-disable-next-line max-params -- The public tool cost interface supplies model, count, usage and source as four positional arguments.
   public addImageCost(
     modelId: string,
     count: number,
@@ -121,12 +119,10 @@ class CostAccumulator {
       this.entries.push({ apiName, cost, type: "api" });
     }
   }
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getTotalCost's awaited sequencing and rejected-Promise behavior. */
   /**
    * Resolve known catalog prices and total the recorded charges.
    * @returns {Promise<number>} Total cents rounded up after summation; unavailable LLM/image prices contribute no charge.
    */
-  // oxlint-disable-next-line max-statements -- Snapshot entries before awaiting catalogs, then price images and deduplicated LLMs in order; splitting this sequence must preserve concurrent recording and final-rounding behavior.
   public async getTotalCost(): Promise<number> {
     let total = NO_COST_CENTS;
     const llmEntries = this.entries.filter(
@@ -142,14 +138,12 @@ class CostAccumulator {
     const imageEntries = this.entries.filter(
       (entry: CostEntryTag): entry is ImageCostEntry => entry.type === "image"
     );
-    // oxlint-disable-next-line no-magic-numbers -- The explicit length check uses zero to distinguish an empty image batch.
     if (imageEntries.length > 0) {
       const { fetchModels } = await import("@/lib/ai/models");
       // Match LLM pricing: skip unavailable catalog prices and finalize known costs.
       const models = await fetchModels().catch(() => []);
       total = addImageCosts(total, imageEntries, models);
     }
-    // oxlint-disable-next-line no-magic-numbers -- An empty LLM batch needs no model lookups.
     if (llmEntries.length === 0) {
       return Math.ceil(total);
     }
@@ -162,7 +156,7 @@ class CostAccumulator {
       ),
     ];
     const modelDefinitions = await Promise.all(
-      // oxlint-disable-next-line typescript/promise-function-async, unicorn/no-null -- Preserve each catalog promise's timing; failed lookups use the existing null sentinel so only known models contribute charges.
+      // oxlint-disable-next-line typescript/promise-function-async -- Preserve each catalog promise's timing; failed lookups use the existing null sentinel so only known models contribute charges.
       uniqueModelIds.map((id) => getAppModelDefinition(id).catch(() => null))
     );
     const modelById = new Map<AppModelId, AppModelDefinition | null>(
@@ -171,7 +165,7 @@ class CostAccumulator {
     // Sum LLM costs (unrounded) then ceil at the end
     for (const entry of llmEntries) {
       const model = modelById.get(entry.modelId);
-      // oxlint-disable-next-line typescript/strict-boolean-expressions, oxc/no-optional-chaining -- Nonempty pricing strings narrow optional catalog rates while preserving one guard read per rate and the existing getter order. Optional chain: Keep the existing nullish guard when reading input from model.pricing; read pricing from model; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading output from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/strict-boolean-expressions -- Nonempty pricing strings narrow optional catalog rates while preserving one guard read per rate and the existing getter order. Optional chain: Keep the existing nullish guard when reading input from model.pricing; read pricing from model; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading output from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (model?.pricing?.input && model.pricing?.output) {
         total += calculateLLMCost(entry.usage, {
           input: model.pricing.input,
@@ -181,7 +175,6 @@ class CostAccumulator {
     }
     return Math.ceil(total);
   }
-  /* oxlint-enable oxc/no-async-await */
   /**
    * Inspect the recorded cost breakdown.
    * @returns {CostEntry[]} A new array containing the original recorded entry objects.
@@ -194,13 +187,8 @@ class CostAccumulator {
    * @returns {boolean} Whether at least one LLM, image or positive API charge was recorded.
    */
   public hasEntries(): boolean {
-    // oxlint-disable-next-line no-magic-numbers -- Zero entries is the public empty-accumulator state.
     return this.entries.length > 0;
   }
 }
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CostAccumulator); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { CostAccumulator };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (UsageInfo); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { UsageInfo };
-/* oxlint-enable import/no-named-export */

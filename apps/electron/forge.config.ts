@@ -1,4 +1,3 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { existsSync, readFileSync } from "node:fs";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerDMG } from "@electron-forge/maker-dmg";
@@ -6,9 +5,7 @@ import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
-// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { spawnSync } from "node:child_process";
 
 interface Branding {
@@ -25,13 +22,11 @@ const appRoot = import.meta.dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
-/* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
 const runBunScript = (
   script: string,
   env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
 ): void => {
   const result = spawnSync("bun", ["run", script], {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, node/no-process-env -- Preserve process.env own keys before positional script overrides; eslint/prefer-object-spread rejects Object.assign and Forge must inherit the host environment.
     env: { ...process.env, ...env },
     stdio: "inherit",
   });
@@ -42,7 +37,6 @@ const runBunScript = (
     );
   }
 };
-/* oxlint-enable node/no-sync */
 
 const ensurePrebuild = (): void => {
   if (prebuildComplete) {
@@ -53,8 +47,6 @@ const ensurePrebuild = (): void => {
   prebuildComplete = true;
 };
 
-/* oxlint-disable node/no-sync -- loadBranding: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
-/* oxlint-disable eslint/no-undefined -- loadBranding: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 const loadBranding = (): Branding => {
   ensurePrebuild();
 
@@ -90,37 +82,31 @@ const loadBranding = (): Branding => {
     appPrefix: branding.appPrefix,
     appUrl: branding.appUrl,
     orgEmail:
-      // oxlint-disable-next-line no-ternary -- Keep orgEmail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "orgEmail" in branding && typeof branding.orgEmail === "string"
         ? branding.orgEmail
         : undefined,
     orgName:
-      // oxlint-disable-next-line no-ternary -- Keep orgName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "orgName" in branding && typeof branding.orgName === "string"
         ? branding.orgName
         : undefined,
   };
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-sync */
 
-/* oxlint-disable eslint/max-lines-per-function -- createForgeConfig: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's required Promise and rejection contract. generateAssets adapts synchronous ensurePrebuild failures into the Forge hook promise. prePackage adapts synchronous production build failures into the Forge hook promise. preStart adapts synchronous development build failures into the Forge hook promise. */
   return {
     hooks: {
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
+      // oxlint-disable-next-line eslint/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       generateAssets: async () => {
         ensurePrebuild();
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
+      // oxlint-disable-next-line eslint/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       prePackage: async () => {
         runBunScript("build", { NODE_ENV: "production" });
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
+      // oxlint-disable-next-line eslint/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       preStart: async () => {
         runBunScript("build", { NODE_ENV: "development" });
       },
@@ -150,7 +136,6 @@ const createForgeConfig = (): ForgeConfig => {
             homepage: branding.appUrl,
             icon: "./build/icon.png",
             maintainer:
-              // oxlint-disable-next-line no-ternary -- Keep maintainer as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               typeof orgName === "string" &&
               orgName !== "" &&
               typeof orgEmail === "string" &&
@@ -197,12 +182,8 @@ const createForgeConfig = (): ForgeConfig => {
       ],
     },
   };
-  /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable eslint/max-lines-per-function */
 
 const config = createForgeConfig();
 
-/* oxlint-disable import/no-default-export -- forge.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default config;
-/* oxlint-enable import/no-default-export */

@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/dialog; keep this adjacent import pair ordered. */
 import {
   Dialog,
   DialogContent,
@@ -13,16 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-/* oxlint-enable sort-imports */
 
 import { Input } from "@/components/ui/input";
 
 import type { JSX as ReactJSX } from "react";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ChatRenameDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- ChatRenameDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ChatRenameDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries;  */
 
-// oxlint-disable-next-line max-statements -- Keep the dialog's draft, immediate submission lock and async error lifecycle together.
 export const ChatRenameDialog = ({
   open,
   onOpenChange,
@@ -65,8 +59,6 @@ export const ChatRenameDialog = ({
     wasOpen.current = open;
   }, [open, currentTitle]);
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleSubmit's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line max-statements -- Keep completion, failure and lock release under the same dialog-session ownership check.
   const handleSubmit = async (): Promise<void> => {
     const session = submissionSession.current;
     setIsSubmitting(true);
@@ -89,7 +81,6 @@ export const ChatRenameDialog = ({
       setIsSubmitting(false);
     }
   };
-  /* oxlint-enable oxc/no-async-await */
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
       submissionSession.current = Symbol("rename dialog session");
@@ -113,7 +104,6 @@ export const ChatRenameDialog = ({
     submissionLock.current = true;
     // Publish pending state immediately, then give React the same completion.
     const completion = handleSubmit();
-    // oxlint-disable-next-line oxc/no-async-await -- React adopts the producer's existing completion after its urgent state updates.
     startEventAction(async () => {
       await completion;
     });
@@ -128,12 +118,13 @@ export const ChatRenameDialog = ({
         </DialogHeader>
         <div className="py-4">
           <Input
-            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening Rename Chat intentionally focuses the title field for keyboard editing.
             autoFocus
             maxLength={255}
             onChange={(event: {
               readonly target: { readonly value: string };
-            }) => setChatTitle(event.target.value)}
+            }) => {
+              setChatTitle(event.target.value);
+            }}
             onKeyDown={(keyboardEvent: { readonly key: string }) => {
               if (keyboardEvent.key === "Enter") {
                 submitRename();
@@ -147,7 +138,12 @@ export const ChatRenameDialog = ({
         </div>
         {submitError && <p role="alert">{submitError}</p>}
         <DialogFooter>
-          <Button onClick={() => handleOpenChange(false)} variant="outline">
+          <Button
+            onClick={() => {
+              handleOpenChange(false);
+            }}
+            variant="outline"
+          >
             Cancel
           </Button>
           <Button disabled={isDisabled} onClick={submitRename}>
@@ -158,6 +154,3 @@ export const ChatRenameDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

@@ -1,16 +1,11 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "../db/eve-copy-dispatch" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
 import { dispatchEveCopy } from "@/lib/db/eve-copy-dispatch";
 import { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveCopySourceChangedError,
   getEveCopyOperation,
   rejectEveCopyPreflight,
   reserveEveCopyOperation,
 } from "@/lib/db/eve-copy-journal";
-/* oxlint-enable sort-imports */
 import {
   acceptEveCopy,
   writeEveCopyDocuments,
@@ -23,20 +18,15 @@ import type { EveCopyInput } from "./copy-input";
 import { assertEveConfigured } from "./server";
 import { createNativeEveCopy } from "./create-native-copy";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveModelUnavailableError,
   loadEveModelDefinition,
 } from "./model-selection";
-/* oxlint-enable sort-imports */
 import { prepareEveCopyPlan } from "./prepare-copy-plan";
 import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
 import { readPublicEveCopySource } from "./public-copy-source";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareCopyReservation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): prepareCopyReservation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): prepareCopyReservation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 const prepareCopyReservation = async (
@@ -67,7 +57,6 @@ const prepareCopyReservation = async (
   );
   try {
     return await reserveEveCopyOperation(ownerId, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       plan,
       projectionHash: source.projection.projectionHash,
@@ -84,14 +73,9 @@ const prepareCopyReservation = async (
     return saved;
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (saveEveCopyOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/promise-function-async -- * max-lines-per-function (#510): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Saves an idle native copy under one durable operation; billing begins on its first model turn.
  * @param {string} ownerId Owner whose reservation, attachments, and copied conversation are used.
@@ -151,6 +135,4 @@ export const saveEveCopyOperation = async (
     createNativeEveCopy(ownerId, operationId, input.modelId)
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

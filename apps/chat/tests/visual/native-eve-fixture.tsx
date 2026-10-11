@@ -1,46 +1,26 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient } from "@trpc/client";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import type { OperationResultObserver, TRPCLink } from "@trpc/client";
-/* oxlint-enable sort-imports */
 import { observable } from "@trpc/server/observable";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
-/* oxlint-enable sort-imports */
 import { PathnameContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
 import { expect, vi } from "vitest";
 
 import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
 import { EveRuntimeProvider } from "@/components/eve/eve-runtime-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
-/* oxlint-disable import/max-dependencies -- This fixture composes the actual Next, query, tRPC, session, catalog, sidebar, deletion and Eve providers directly rather than hiding their dependencies in a barrel. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-/* oxlint-enable import/max-dependencies */
-/* oxlint-enable sort-imports */
 import type { Session } from "@/lib/auth";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
-/* oxlint-enable sort-imports */
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider } from "@/providers/session-provider";
 import { mount } from "@/tests/visual/primitive-mount";
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import { TRPCProvider } from "@/trpc/react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import type { AppRouter } from "@/trpc/routers/_app";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Pinned Oxfmt groups imports by module, while sort-imports requires a different binding-name or binding-syntax order. */
 import "@/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
 
 vi.mock("@/lib/auth-client", () => ({
   default: {
@@ -67,7 +47,6 @@ vi.mock("@/lib/auth-client", () => ({
           updatedAt: new Date("2026-09-25T10:00:00Z"),
         },
       },
-      // oxlint-disable-next-line unicorn/no-null -- Better Auth reports an absent error as null; keep the native settled-session result.
       error: null,
       isPending: false,
     }),
@@ -176,10 +155,16 @@ const createIdentityResponse = (): {
 } => {
   let rejectIdentity = missingIdentity;
   const handle = (observer: Observer): void => {
-    rejectIdentity = (): void =>
+    rejectIdentity = (): void => {
       observer.error(TRPCClientError.from(new Error("Fixture unavailable")));
+    };
   };
-  return { handle, reject: (): void => rejectIdentity() };
+  return {
+    handle,
+    reject: (): void => {
+      rejectIdentity();
+    },
+  };
 };
 const createRequestResponders = (
   historyResponse: (input: unknown, observer: Observer) => void,
@@ -188,23 +173,27 @@ const createRequestResponders = (
   new Map([
     [
       "settings.getModelPreferences",
-      (_op: FixtureOperation, observer: Observer): void =>
-        respondPreferences(observer),
+      (_op: FixtureOperation, observer: Observer): void => {
+        respondPreferences(observer);
+      },
     ],
     [
       "project.list",
-      (_op: FixtureOperation, observer: Observer): void =>
-        respondProjects(observer),
+      (_op: FixtureOperation, observer: Observer): void => {
+        respondProjects(observer);
+      },
     ],
     [
       "eve.list",
-      (op: FixtureOperation, observer: Observer): void =>
-        historyResponse(op.input, observer),
+      (op: FixtureOperation, observer: Observer): void => {
+        historyResponse(op.input, observer);
+      },
     ],
     [
       "eve.get",
-      (_op: FixtureOperation, observer: Observer): void =>
-        identityResponse(observer),
+      (_op: FixtureOperation, observer: Observer): void => {
+        identityResponse(observer);
+      },
     ],
   ]);
 const createNativeClient = (
@@ -249,12 +238,10 @@ const createNativeClient = (
     requests,
   };
 };
-/* oxlint-disable oxc/no-async-await -- Await native query, React and browser lifecycle completion before state assertions, captures and cleanup. */
 const settleNativeQueries = async (
   queryClient: Readonly<Pick<QueryClient, "isFetching">>
 ): Promise<void> => {
   await act(async () => {
-    /* oxlint-disable eslint/no-magic-numbers -- Wait until no fixed-response queries are fetching; the intentionally deferred Eve identity request remains pending. */
     await expect
       .poll(() =>
         queryClient.isFetching({
@@ -263,11 +250,8 @@ const settleNativeQueries = async (
         })
       )
       .toBe(0);
-    /* oxlint-enable eslint/no-magic-numbers */
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await native query, React and browser lifecycle completion before state assertions, captures and cleanup. */
 const mountNative = async (
   children: ReadonlyReactNode,
   historyMode: HistoryMode = "refetch"
@@ -283,35 +267,30 @@ const mountNative = async (
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  const /* oxlint-disable react/jsx-max-depth -- The actual Next router, query, tRPC, session, catalog, sidebar, deletion and Eve providers must wrap these fixtures in their native order. */
-    fixture = await mount(
-      <AppRouterContext.Provider value={router}>
-        <QueryClientProvider client={queryClient}>
-          <TRPCProvider trpcClient={client} queryClient={queryClient}>
-            <SessionProvider>
-              <ChatModelsProvider models={models}>
-                <DefaultModelProvider defaultModel="openai/gpt-4.1">
-                  <PathnameContext.Provider value="/">
-                    <SidebarProvider>
-                      <EveDeletionProvider>
-                        <EveRuntimeProvider ownerId="fixture-user">
-                          {children}
-                        </EveRuntimeProvider>
-                      </EveDeletionProvider>
-                    </SidebarProvider>
-                  </PathnameContext.Provider>
-                </DefaultModelProvider>
-              </ChatModelsProvider>
-            </SessionProvider>
-          </TRPCProvider>
-        </QueryClientProvider>
-      </AppRouterContext.Provider>
-    );
-  /* oxlint-enable react/jsx-max-depth */
+  const fixture = await mount(
+    <AppRouterContext.Provider value={router}>
+      <QueryClientProvider client={queryClient}>
+        <TRPCProvider trpcClient={client} queryClient={queryClient}>
+          <SessionProvider>
+            <ChatModelsProvider models={models}>
+              <DefaultModelProvider defaultModel="openai/gpt-4.1">
+                <PathnameContext.Provider value="/">
+                  <SidebarProvider>
+                    <EveDeletionProvider>
+                      <EveRuntimeProvider ownerId="fixture-user">
+                        {children}
+                      </EveRuntimeProvider>
+                    </EveDeletionProvider>
+                  </SidebarProvider>
+                </PathnameContext.Provider>
+              </DefaultModelProvider>
+            </ChatModelsProvider>
+          </SessionProvider>
+        </TRPCProvider>
+      </QueryClientProvider>
+    </AppRouterContext.Provider>
+  );
   await settleNativeQueries(queryClient);
   return { fixture, historyInputs, queryClient, rejectIdentity, requests };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable import/no-named-export -- Keep the named fixture bindings (historyCursor, mountNative); enabled import/no-default-export and app guidance require named module APIs. */
 export { historyCursor, mountNative };
-/* oxlint-enable import/no-named-export */

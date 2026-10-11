@@ -1,23 +1,12 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Client } from "eve/client";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import separate from runtime bindings; it has no runtime module-order effect.
 import type { MessageStreamEvent } from "eve/client";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
-/* oxlint-enable eslint/sort-imports */
+
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentHead,
@@ -25,17 +14,13 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveUsage,
 } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationBinding,
   createConversationInput,
 } from "../lib/eve/contracts";
-/* oxlint-enable eslint/sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 type HistorySeedEventReader =
@@ -63,14 +48,9 @@ type ActionResultEventReader =
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("copied document history survives source deletion and supports native editing") uses 240_000, 20_000, 60_000, 503, 1000, 2000, 4000, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("copied document history survives source deletion and supports native editing") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.setDefaultTimeout(), page.setDefaultNavigationTimeout(), page.addInitScript() on the original Page/locator receiver to change the live browser or route state.
 test("copied document history survives source deletion and supports native editing", async ({
   page,
 }, testInfo: Readonly<{
@@ -88,11 +68,7 @@ test("copied document history survives source deletion and supports native editi
       document.head.append(style);
     });
   });
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", { data: { model: modelId } });
   const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
@@ -202,7 +178,6 @@ test("copied document history survives source deletion and supports native editi
   const latest = revisions.find(
     (revision: Readonly<{ id: string }>) => revision.id === head.revisionId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from latest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(latest?.content).toBe("# Orchard\n\nCobalt pears.");
   expect(
     await db
@@ -222,14 +197,12 @@ test("copied document history survives source deletion and supports native editi
       revisionId: head.revisionId,
     },
   ]);
-  /* oxlint-disable oxc/no-optional-chaining -- Preserve the existing nullish comparison and content read, including the undefined short-circuit when the parent revision is absent. */
   expect(
     revisions.find(
       (revision: Readonly<{ id: string }>) =>
         revision.id === latest?.parentRevisionId
     )?.content
   ).toBe(original.content);
-  /* oxlint-enable oxc/no-optional-chaining */
   expect(
     revisions.every(
       (revision: Readonly<{ documentId: string; id: string }>) =>
@@ -320,7 +293,6 @@ test("copied document history survives source deletion and supports native editi
   }>();
   await page.route(
     "**/api/agent-conversations",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     async (route) => {
       const response = await route.fetch();
       expect(response.ok(), await response.text()).toBe(true);
@@ -357,7 +329,6 @@ test("copied document history survives source deletion and supports native editi
     ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
       event.type === "history.seeded"
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from seed; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(seed?.data.messages).toHaveLength(2);
   expect(
     forkSnapshot.events.some(
@@ -374,16 +345,11 @@ test("copied document history survives source deletion and supports native editi
   expect(await replay.json()).toEqual(forked);
   const changed = await page.request.post("/api/agent-conversations", {
     data: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing forkInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...forkInput,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing forkInput.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
     },
     headers: { origin },
   });
   expect(changed.status()).toBe(409);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This eve-copy-documents-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+/* oxlint-enable typescript/promise-function-async */

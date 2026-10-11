@@ -128,7 +128,6 @@ const runtimeScenarios: readonly Readonly<{
 ];
 
 describe("getSandboxRuntime", () => {
-  /* oxlint-disable oxc/no-async-await -- Await module loading after each row's environment overrides before asserting synchronous runtime selection. */
   it.each(runtimeScenarios)(
     "$name",
     async ({ language, overrides, runtime }) => {
@@ -137,12 +136,8 @@ describe("getSandboxRuntime", () => {
       expect(getSandboxRuntime(language)).toBe(runtime);
     }
   );
-  /* oxlint-enable oxc/no-async-await */
 });
 
-/* oxlint-disable oxc/no-async-await -- Preserve the cleanup gate's explicit observation and rejection sequencing. */
-
-/* oxlint-disable max-statements -- Stop-gate failure assertions cover pending state, exact SDK options, rejection, warning, and deletion; keep these oracles in the test. */
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<never>();
@@ -150,7 +145,6 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   stop.mockReturnValue(gate.promise);
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
   let settled = false;
-  // oxlint-disable-next-line promise/prefer-await-to-then -- Observe cleanup settlement while keeping the stop confirmation pending for assertions.
   const observed = pending.finally(() => {
     settled = true;
   });
@@ -175,9 +169,6 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   });
   expect(deleteOptions.signal).toBeInstanceOf(AbortSignal);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
 it("creates disposable sandboxes rather than enabling the SDK persistence default", async () => {
   const { createSandbox } = await import("./execution-sandbox");
@@ -193,8 +184,6 @@ it("creates disposable sandboxes rather than enabling the SDK persistence defaul
     create.mockRestore();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not report successful cleanup until deletion has completed", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<undefined>();
@@ -202,25 +191,22 @@ it("does not report successful cleanup until deletion has completed", async () =
   remove.mockReturnValue(gate.promise);
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
   const rejected = expect(pending).rejects.toThrow("delete unavailable");
-  await vi.waitFor(() => expect(remove).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(remove).toHaveBeenCalledOnce();
+  });
   expect(log.info).not.toHaveBeenCalled();
   gate.reject(new Error("delete unavailable"));
   await rejected;
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements -- Keep provider identity, absence confirmation and stop/delete call assertions in this end-to-end cleanup case. */
 it("codeSandboxCleanupCapability deletes an exact disposable sandbox and confirms provider absence", async () => {
   const { sandbox, stop, remove, get } = createSandboxFixture({
     name: "owned",
     persistent: false,
   });
-  /* oxlint-disable unicorn/no-null -- An empty provider 404 response confirms sandbox absence. */
   get
     .mockResolvedValueOnce(sandbox)
     .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
-  /* oxlint-enable unicorn/no-null */
   try {
     const { codeSandboxCleanupCapability } =
       await import("./execution-sandbox");
@@ -240,9 +226,6 @@ it("codeSandboxCleanupCapability deletes an exact disposable sandbox and confirm
     get.mockRestore();
   }
 });
-/* oxlint-enable max-statements */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([     { name: "foreign", persistent: false },     { name: "owned", persistent: true },   ])'s awaited sequencing and rejected-Promise behavior. */
 it.each([
   { name: "foreign", persistent: false },
   { name: "owned", persistent: true },
@@ -265,4 +248,3 @@ it.each([
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */

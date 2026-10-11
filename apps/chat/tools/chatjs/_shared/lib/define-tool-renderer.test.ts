@@ -8,17 +8,12 @@ import type { ui as chatjsUi } from "@/tools/chatjs/ui";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): vi.mock("@/components/eve/eve-document-tool") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 vi.mock(
   "@/components/eve/eve-document-tool",
   (): { EveDocumentTool: () => null } => ({
     EveDocumentTool: (): null => null,
   })
 );
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const { z: zod } = await import("zod");
@@ -27,7 +22,6 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const original = await importOriginal<{ ui: typeof chatjsUi }>();
   return {
     ui: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original.ui own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...original.ui,
       "tool-customEcho": defineToolRenderer({
         inputSchema: zod.object({ text: zod.string() }),
@@ -45,7 +39,6 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
           reactCreateElement(
             "p",
             { "data-message": messageId, "data-readonly": isReadonly },
-            // oxlint-disable-next-line no-ternary -- Keep reactCreateElement argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             tool.state === "output-available" ? tool.output.echoed : "Loading"
           ),
         renderProgress: ({
@@ -63,7 +56,6 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
     },
   };
 });
-/* oxlint-enable oxc/no-async-await */
 const renderResult = ({
   toolName,
   input,

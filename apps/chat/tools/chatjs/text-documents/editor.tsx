@@ -9,7 +9,6 @@ import React, { memo, useEffect, useRef } from "react";
 import { createEditorConfig, handleEditorChange } from "./editor-config";
 import { $getRoot } from "lexical";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import type { EditorState } from "lexical";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -20,7 +19,6 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-/* oxlint-enable import/max-dependencies */
 
 interface EditorProps {
   content: string;
@@ -31,8 +29,6 @@ interface EditorProps {
   status: "streaming" | "idle";
 }
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 // Content update plugin
 const ContentUpdatePlugin = ({
   content,
@@ -89,15 +85,6 @@ const ContentUpdatePlugin = ({
 
   return <OnChangePlugin onChange={handleChange} />;
 };
-/* oxlint-disable react/jsx-no-literals -- PureEditor renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable eslint/max-lines-per-function */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 const PureEditor = ({
   content,
@@ -108,7 +95,6 @@ const PureEditor = ({
   const initialConfig = createEditorConfig();
 
   const editorConfig = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing initialConfig own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...initialConfig,
     editable: !(isReadonly === true),
   };
@@ -118,10 +104,7 @@ const PureEditor = ({
       <LexicalComposer initialConfig={editorConfig}>
         <RichTextPlugin
           contentEditable={
-            <ContentEditable
-              // oxlint-disable-next-line react/forbid-component-props -- ContentEditable accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="lexical-editor text-left outline-hidden"
-            />
+            <ContentEditable className="lexical-editor text-left outline-hidden" />
           }
           ErrorBoundary={LexicalErrorBoundary}
           placeholder={
@@ -141,13 +124,6 @@ const PureEditor = ({
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-
-/* oxlint-enable react/no-multi-comp */
 
 const areEqual = (
   prevProps: ReadonlyNativeSurface<EditorProps>,
@@ -159,7 +135,5 @@ const areEqual = (
   prevProps.content === nextProps.content &&
   prevProps.onSaveContent === nextProps.onSaveContent &&
   prevProps.isReadonly === nextProps.isReadonly;
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Editor); the enabled import/no-default-export convention rejects the default-export alternative. */
 
 export const Editor = memo(PureEditor, areEqual);
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

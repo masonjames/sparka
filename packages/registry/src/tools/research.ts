@@ -1,8 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { toolDefinitionSchema } from "../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const researchAgentFiles = [
   "agent/tools/deepResearch.ts",
@@ -88,6 +86,4 @@ const researchItem: RegistryItem = {
   registryDependencies: ["@chatjs/text-documents"],
   type: "registry:item",
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (researchAgentDirectories, researchAgentFiles, researchItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { researchAgentDirectories, researchAgentFiles, researchItem };
-/* oxlint-enable import/no-named-export */

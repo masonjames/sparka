@@ -1,6 +1,5 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-// oxlint-disable-next-line import/no-named-export, import/prefer-default-export -- The app requires named imports and rejects default exports for this internal relay formatter.
 export const relayResponse = (
   result: ReadonlyNativeSurface<Response>
 ): Response => {

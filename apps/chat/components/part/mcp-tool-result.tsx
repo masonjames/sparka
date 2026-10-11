@@ -16,9 +16,6 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable no-undefined -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value */
-
 export const McpToolResult = ({
   part,
   icon,
@@ -40,24 +37,16 @@ export const McpToolResult = ({
       <McpToolHeader
         icon={icon}
         state={part.state}
-        title={
-          part.title /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading toolName from parsed; preserve one receiver evaluation, skipped accesses and the existing parsed?.toolName fallback. The app guidance prefers optional chaining. */ ??
-          parsed?.toolName ??
-          /* oxlint-enable oxc/no-optional-chaining */ part.toolName
-        }
+        title={part.title ?? parsed?.toolName ?? part.toolName}
         type={`tool-${part.toolName}`}
       />
       <ToolContent>
         <ToolInput input={part.input} />
         <ToolOutput
-          // oxlint-disable-next-line no-ternary -- Keep errorText JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           errorText={part.state === "output-error" ? part.errorText : undefined}
-          // oxlint-disable-next-line no-ternary -- Keep output JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           output={part.state === "output-available" ? part.output : undefined}
         />
       </ToolContent>
     </Tool>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable no-undefined */

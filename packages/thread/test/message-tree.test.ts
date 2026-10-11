@@ -10,9 +10,6 @@ const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   role,
 });
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 describe("MessageTree", () => {
   test("derives the selected path without deleting sibling branches", () => {
     const tree = new MessageTree({
@@ -89,21 +86,21 @@ describe("MessageTree", () => {
     });
     tree.upsertMessage(message("u2"), "a1");
 
-    expect(() => tree.setPath([message("u1"), message("u2")])).toThrow(
-      "Cannot move message u2"
-    );
+    expect(() => {
+      tree.setPath([message("u1"), message("u2")]);
+    }).toThrow("Cannot move message u2");
     expect(tree.getParentId("u2")).toBe("a1");
   });
 
   test("rejects missing parents and cycles", () => {
     const tree = new MessageTree({ messages: [message("u1")] });
 
-    expect(() => tree.upsertMessage(message("u2"), "missing")).toThrow(
-      "Unknown parent message missing"
-    );
-    expect(() => tree.upsertMessage(message("u1"), "u1")).toThrow(
-      "Cannot create a cycle involving u1"
-    );
+    expect(() => {
+      tree.upsertMessage(message("u2"), "missing");
+    }).toThrow("Unknown parent message missing");
+    expect(() => {
+      tree.upsertMessage(message("u1"), "u1");
+    }).toThrow("Cannot create a cycle involving u1");
   });
 
   test("allows message IDs that resemble internal root keys", () => {
@@ -126,9 +123,9 @@ describe("MessageTree", () => {
       messages: [message("u1"), message("a1", "assistant")],
     });
 
-    expect(() => tree.removeLeaf("u1")).toThrow(
-      "Cannot remove non-leaf message u1"
-    );
+    expect(() => {
+      tree.removeLeaf("u1");
+    }).toThrow("Cannot remove non-leaf message u1");
     tree.removeLeaf("a1");
 
     expect(tree.cursorId).toBe("u1");
@@ -210,6 +207,3 @@ describe("MessageTree", () => {
     ).toThrow("Unknown parent message b");
   });
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

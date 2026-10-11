@@ -1,7 +1,3 @@
-/* oxlint-disable react/jsx-no-literals -- Fixed fixture labels and expected recovery copy form the accessible browser scenario; no translation API exists in the fixture. */
-/* oxlint-disable max-statements, max-lines-per-function -- This integration scenario keeps the rejected request, visible recovery and storage-only retry assertions in one lifecycle. */
-/* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
-/* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import type { ComponentProps } from "react";
@@ -14,7 +10,6 @@ import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "@/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
 
 const runtime = vi.hoisted(() => ({
   open: vi.fn(),
@@ -64,7 +59,9 @@ vi.mock("@/components/eve/eve-composer", () => ({
         value={draft}
         onInput={(event: {
           readonly currentTarget: { readonly value: string };
-        }) => onDraftChange(event.currentTarget.value)}
+        }) => {
+          onDraftChange(event.currentTarget.value);
+        }}
       />
       <button
         disabled={disabled}
@@ -167,7 +164,3 @@ test("creation cleanup warning survives the recovery handoff without resending a
     await unmount(fixture);
   }
 });
-
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, max-lines-per-function */
-/* oxlint-enable react/jsx-no-literals */

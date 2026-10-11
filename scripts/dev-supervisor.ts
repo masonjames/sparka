@@ -1,7 +1,5 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { execFileSync, spawn } from "node:child_process";
 import { checkHealth } from "./dev-health";
-// oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { setTimeout as delay } from "node:timers/promises";
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
@@ -16,9 +14,7 @@ const FAILED_STARTUP_INCREMENT = 1;
 const EMPTY_VALUE_LENGTH = 0;
 const NO_CHILD_PID = 0;
 
-/* oxlint-disable node/no-process-env -- origin: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const origin = process.env.APP_URL;
-/* oxlint-enable node/no-process-env */
 if (
   typeof origin !== "string" ||
   origin.length === EMPTY_VALUE_LENGTH ||
@@ -28,9 +24,7 @@ if (
 }
 
 let stopping = false;
-/* oxlint-disable eslint/init-declarations -- child: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
 let child: ReturnType<typeof spawn> | undefined;
-/* oxlint-enable eslint/init-declarations */
 /* oxlint-disable typescript/promise-function-async -- sleep: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const sleep = (ms: number): Promise<void> => delay(ms);
 /* oxlint-enable typescript/promise-function-async */
@@ -102,10 +96,11 @@ const rememberLiveDescendants = (
   }
 };
 
-/* oxlint-disable node/no-sync -- trackChildren: Capture one process-table snapshot before pruning stale PID start times and terminating descendants. */
 const trackChildren = (): void => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pid from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const childPid = child?.pid;
+  if (!child) {
+    return;
+  }
+  const childPid = child.pid;
   if (!hasChildProcessId(childPid)) {
     return;
   }
@@ -121,7 +116,6 @@ const trackChildren = (): void => {
   const found = findDescendants(childPid, rows);
   rememberLiveDescendants(found, alive);
 };
-/* oxlint-enable node/no-sync */
 const terminate = (signal: NodeJS.Signals): void => {
   trackChildren();
   for (const pid of descendants.keys()) {
@@ -142,14 +136,11 @@ for (const signal of signals) {
 }
 let backoff = INITIAL_RESTART_BACKOFF_MS;
 let failedStartups = NO_READINESS_FAILURES;
-/* oxlint-disable eslint/no-console -- dev-supervisor.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable node/no-process-env -- dev-supervisor.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Signal handlers set stopping while readiness probes or delays are awaited; the pinned rule ignores writes inside callbacks.
 while (!stopping) {
   console.info("Starting ChatJS and managed Eve runtime");
   child = spawn(process.execPath, ["run", "dev"], {
     detached: true,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=4096" },
     stdio: "inherit",
   });
@@ -168,7 +159,7 @@ while (!stopping) {
   while (!stopping && !exited) {
     trackChildren();
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor awaits each readiness probe before deciding whether startup succeeded. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor awaits each readiness probe before deciding whether startup succeeded. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
       await checkHealth(origin);
       if (!wasReady) {
         console.info("ChatJS, Eve and database are ready");
@@ -195,26 +186,23 @@ while (!stopping) {
         break;
       }
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor spaces readiness probes within the current startup attempt. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor spaces readiness probes within the current startup attempt. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(READINESS_POLL_INTERVAL_MS);
   }
   if (!wasReady) {
     failedStartups += FAILED_STARTUP_INCREMENT;
   }
   terminate("SIGTERM");
-  // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor allows graceful shutdown before escalating to SIGKILL. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+  // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor allows graceful shutdown before escalating to SIGKILL. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
   await sleep(GRACEFUL_SHUTDOWN_DELAY_MS);
   terminate("SIGKILL");
   // Clearing the process handle releases the exited ChildProcess between restarts.
-  // oxlint-disable-next-line eslint/no-undefined -- Node's optional ChildProcess handle uses undefined to mean no active child.
   child = undefined;
   descendants = new Map();
   if (!stopping) {
     console.info(`Restarting in ${backoff / MILLISECONDS_PER_SECOND}s`);
-    // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor waits for its bounded restart backoff before launching another child. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- This Bun supervisor waits for its bounded restart backoff before launching another child. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(backoff);
     backoff = Math.min(backoff * BACKOFF_MULTIPLIER, MAX_RESTART_BACKOFF_MS);
   }
 }
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-console */

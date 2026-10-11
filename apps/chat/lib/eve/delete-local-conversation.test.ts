@@ -33,9 +33,6 @@ const family = {
   ],
   rootId: "root",
 };
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.provider.mockReturnValue({
@@ -44,17 +41,11 @@ beforeEach(() => {
     supported: true,
   });
   mocks.resources.mockResolvedValue(family);
-  mocks.native.mockResolvedValue(undefined);
+  mocks.native.mockResolvedValue();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.complete.mockResolvedValue(undefined);
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
- * max-statements (#512): test("all resources and native family payloads finish before the application tombston keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("all resources and native family payloads finish before the application tombston uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("all resources and native family payloads finish before the application tombston uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("all resources and native family payloads finish before the application tombstone", async () => {
   const gate = Promise.withResolvers<undefined>();
   mocks.native.mockImplementationOnce(
@@ -68,7 +59,9 @@ test("all resources and native family payloads finish before the application tom
     "branch",
     "/trusted/app"
   );
-  await vi.waitFor(() => expect(mocks.native).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() => {
+    expect(mocks.native).toHaveBeenCalledTimes(2);
+  });
   expect(mocks.resources).toHaveBeenCalledWith(
     "owner",
     "branch",
@@ -83,13 +76,11 @@ test("all resources and native family payloads finish before the application tom
     )
   ).toEqual(["session-root", "session-branch"]);
   expect(mocks.complete).not.toHaveBeenCalled();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
   gate.resolve(undefined);
   expect(await deletion).toEqual({ rootId: "root" });
   expect(mocks.complete).toHaveBeenCalledWith("owner", "root");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 test("resource uncertainty prevents any native payload erasure", async () => {
   mocks.resources.mockRejectedValue(new Error("uncertain allocation"));
@@ -99,15 +90,9 @@ test("resource uncertainty prevents any native payload erasure", async () => {
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, no-undefined --
- * no-magic-numbers (#517): test("partial native purge retains pending state and retry runs the full ordering aga uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("partial native purge retains pending state and retry runs the full ordering aga uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("partial native purge retains pending state and retry runs the full ordering again", async () => {
   mocks.native
-    .mockResolvedValueOnce(undefined)
+    .mockResolvedValueOnce()
     .mockRejectedValueOnce(new Error("branch unavailable"));
   await expect(
     deleteLocalEveConversationFamily("owner", "root", "/app")
@@ -130,14 +115,9 @@ test("partial native purge retains pending state and retry runs the full orderin
     "session-branch",
   ]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): test("foreign or missing families cannot erase native or application data") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("foreign or missing families cannot erase native or application data", async () => {
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.resources.mockResolvedValue(undefined);
   expect(
     await deleteLocalEveConversationFamily("foreign", "root", "/app")
@@ -145,9 +125,6 @@ test("foreign or missing families cannot erase native or application data", asyn
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
 test("an already deleted family is idempotent without resetting native sessions", async () => {
   mocks.resources.mockResolvedValue({ conversations: [], rootId: "root" });
@@ -157,8 +134,6 @@ test("an already deleted family is idempotent without resetting native sessions"
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.retire).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("unsupported native lifecycle cannot enter the local resource coordinator", async () => {
   mocks.provider.mockReturnValue({
     reason: "unverified erasure",
@@ -171,4 +146,3 @@ test("unsupported native lifecycle cannot enter the local resource coordinator",
   expect(mocks.resources).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

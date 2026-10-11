@@ -4,7 +4,6 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { documentExecutionInput } from "./schemas";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (latestDocumentRun); the enabled import/no-default-export convention rejects the default-export alternative. */
 /** Project the latest execution of this revision from the native transcript.
  * @param {readonly ReadonlyNativeSurface<Pick<EveMessage, "id" | "parts">>[]} messages Transcript identifiers and parts read newest-first without changing the matched part reference.
  * @param {string} documentId Document identity accepted by the execution tool.
@@ -32,4 +31,3 @@ export const latestDocumentRun = (
     }
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

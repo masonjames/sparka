@@ -1,5 +1,4 @@
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveEveSetup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 const parseEveDatabaseTarget = (databaseUrl: string): URL => {
   const validated = getEveRuntimeEnvOptions({}).WORKFLOW_POSTGRES_URL.safeParse(
@@ -50,4 +49,3 @@ export const resolveEveSetup = (
     managed: false,
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

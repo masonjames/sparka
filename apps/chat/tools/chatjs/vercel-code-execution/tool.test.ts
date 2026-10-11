@@ -85,10 +85,6 @@ beforeEach(() => {
     token: "token",
   });
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["python", "javascript"] as const)'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined --
- * no-undefined (#519): the create call expects an omitted sandbox-name argument as undefined before the auth object; null would be a different argument and type.
- */
 it.each(executorCases)(
   "dispatches $language to the sandbox and cleans up",
   async ({
@@ -100,7 +96,6 @@ it.each(executorCases)(
     readonly used: unknown;
     readonly unused: unknown;
   }) => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     const result = await codeExecution.execute?.(
       { code: "source", language, title: "Calculate" },
       testToolContext()
@@ -126,12 +121,8 @@ it.each(executorCases)(
     );
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
     testToolContext()
@@ -149,11 +140,6 @@ it("normalizes execution errors and cleans up the sandbox", async () => {
     expect.any(String)
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("reserves a named sandbox and releases ownership after provider cleanup") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("reserves a named sandbox and releases ownership after provider cleanup", async () => {
   const sandboxOwnership = {
     created: vi.fn<() => Promise<void>>().mockResolvedValue(),
@@ -162,7 +148,6 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
   };
   mocks.ownership.mockReturnValue(sandboxOwnership);
   const abortSignal = new AbortController().signal;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
     testToolContext({ abortSignal })
@@ -182,13 +167,7 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
     sandboxOwnership.release.mock.invocationCallOrder[0]
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): it("cancelling execution starts sandbox cleanup and observes its completion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("cancelling execution starts sandbox cleanup and observes its completion", async () => {
   const execution = Promise.withResolvers<never>();
   const cleanup = Promise.withResolvers<undefined>();
@@ -200,7 +179,6 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
   });
   /* oxlint-enable typescript/promise-function-async */
   const controller = new AbortController();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = codeExecution.execute?.(
     {
       code: "await new Promise(() => {})",
@@ -209,17 +187,18 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
     },
     testToolContext({ abortSignal: controller.signal })
   );
-  await vi.waitFor(() => expect(mocks.javascript).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(mocks.javascript).toHaveBeenCalledOnce();
+  });
   controller.abort();
-  await vi.waitFor(() => expect(mocks.cleanup).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(mocks.cleanup).toHaveBeenCalledOnce();
+  });
 
-  // oxlint-disable-next-line no-undefined -- Resolve the cleanup gate with its declared no-value result.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
   cleanup.resolve(undefined);
   await expect(result).rejects.toBe(controller.signal.reason);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
 it("retains ownership when creation outcome is unknown", async () => {
   const sandboxOwnership = {
@@ -233,7 +212,6 @@ it("retains ownership when creation outcome is unknown", async () => {
   mocks.create.mockRejectedValueOnce(new Error("lost create response"));
 
   await expect(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     codeExecution.execute?.(
       { code: "source", language: "python", title: "Calculate" },
       testToolContext({ callId: "lost" })
@@ -245,12 +223,9 @@ it("retains ownership when creation outcome is unknown", async () => {
   expect(sandboxOwnership.created).not.toHaveBeenCalled();
   expect(sandboxOwnership.release).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("retains the completed execution charge when its result is invalid", async () => {
   mocks.python.mockResolvedValue({ chart: 42, message: "4" });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
     testToolContext()
@@ -264,4 +239,3 @@ it("retains the completed execution charge when its result is invalid", async ()
   });
   expect(mocks.cleanup).toHaveBeenCalledOnce();
 });
-/* oxlint-enable oxc/no-async-await */

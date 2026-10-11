@@ -1,7 +1,5 @@
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { inputResponseSchema } from "eve/client";
-// oxlint-disable-next-line sort-imports -- eve/client installs the global Zod postprocessor. Keep it before message-input and ai/types construct app schemas.
 import { eveMessageInput } from "./message-input";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import { z } from "zod";
@@ -26,7 +24,6 @@ const message = z
       .optional(),
   })
   .strict();
-/* oxlint-disable unicorn/max-nested-calls -- The response schema nests the validated request record inside its bounded array. */
 const respond = z
   .object({
     inputResponses: z
@@ -44,7 +41,6 @@ const respond = z
       .max(MAX_INPUT_RESPONSES),
   })
   .strict();
-/* oxlint-enable unicorn/max-nested-calls */
 // Attached/resumed EVE clients cancel the active turn without a turn ID.
 const cancel = z
   .object({
@@ -55,7 +51,6 @@ const cancel = z
       .optional(),
   })
   .strict();
-/* oxlint-disable unicorn/no-null -- Unsupported path/method combinations return the existing null policy sentinel. */
 const parseSessionRequest = (
   path: string,
   method: string
@@ -63,8 +58,7 @@ const parseSessionRequest = (
   sessionId: string;
   schema: typeof cancel | z.ZodUnion<[typeof message, typeof respond]>;
 } | null => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- RegExp.exec returns null for nonmatching session paths; first chain preserves the null-policy route rejection. The app guidance prefers optional chaining.
-  const groups = sessionPath.exec(path)?.groups;
+  const { groups } = sessionPath.exec(path) ?? {};
   if (!groups) {
     return null;
   }
@@ -83,12 +77,9 @@ const parseSessionRequest = (
   }
   return {
     sessionId,
-    // oxlint-disable-next-line no-ternary -- Keep schema as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const safeStreamQuery = (
   params: ReadonlyNativeSurface<URLSearchParams>
 ): URLSearchParams | null => {
@@ -113,7 +104,6 @@ const safeStreamQuery = (
   }
   return result;
 };
-/* oxlint-enable unicorn/no-null */
 const sameOrigin = (
   request: ReadonlyNativeSurface<Request>,
   origin: string
@@ -128,6 +118,4 @@ const sameOrigin = (
   );
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (parseSessionRequest, safeStreamQuery, sameOrigin); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { parseSessionRequest, safeStreamQuery, sameOrigin };
-/* oxlint-enable import/no-named-export */

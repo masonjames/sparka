@@ -4,8 +4,6 @@ import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { z } from "zod";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeUnlockedJobs's awaited sequencing and rejected-Promise behavior. */
-
 const EMPTY_COUNT = 0;
 const MIN_IDENTIFIER_LENGTH = 1;
 const MIN_QUEUE_RUNS = 1;
@@ -63,9 +61,6 @@ const removeUnlockedJobs = async (
   assertCompleteQueueRemoval(removed, locked);
   return removed.map((job) => job.id).toSorted();
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEvePostgresQueue); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresQueue's awaited sequencing and rejected-Promise behavior. */
 
 const readQueuePurgeScope = async (
   query: QueueQuery,
@@ -249,5 +244,3 @@ export const purgeEvePostgresQueue = async (
     }
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

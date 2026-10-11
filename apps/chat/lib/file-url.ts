@@ -9,7 +9,6 @@ const isFileStorageKey = (value: string): boolean => STORAGE_KEY.test(value);
 const createFileUrl = (key: string): string =>
   `${FILES_PATH}/${encodeURIComponent(key)}`;
 
-/* oxlint-disable unicorn/no-null -- keyFromFileUrl publicly returns null for malformed URLs and nonstorage paths; getFileImageProps uses that sentinel to preserve external image handling. */
 const keyFromFileUrl = (value: string): string | null => {
   try {
     const url = new URL(value, URL_PARSE_BASE);
@@ -26,7 +25,6 @@ const keyFromFileUrl = (value: string): string | null => {
     return null;
   }
 };
-/* oxlint-enable unicorn/no-null */
 
 const getFileImageProps = (
   value: string
@@ -42,7 +40,6 @@ const getFileImageProps = (
   return { src: createFileUrl(key), unoptimized: true };
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createFileUrl, FILES_PATH, getFileImageProps, isFileStorageKey, keyFromFileUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   createFileUrl,
   FILES_PATH,
@@ -50,4 +47,3 @@ export {
   isFileStorageKey,
   keyFromFileUrl,
 };
-/* oxlint-enable import/no-named-export */

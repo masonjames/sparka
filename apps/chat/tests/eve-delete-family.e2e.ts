@@ -1,38 +1,24 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test, vi } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
-/* oxlint-enable eslint/sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChat,
   eveCodeSandbox,
   eveConversation,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 // This suite exercises app-family state with synthetic native runs. Real native
@@ -44,24 +30,19 @@ vi.mock("../lib/eve/verify-local-coverage", () => ({
 vi.mock("../lib/eve/local-sandbox-fence", () => ({
   fenceLocalEveSandboxMutations: vi.fn(),
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../lib/eve/local-sandbox-inventory")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("../lib/eve/local-sandbox-inventory") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("../lib/eve/local-sandbox-inventory", () => ({
   readLocalEveSandboxInventory: () =>
     Promise.resolve({ owned: [], unattributedDirectories: [] }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../lib/file-storage")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-enable typescript/promise-function-async */
 vi.mock("../lib/file-storage", () => ({
   deleteFilesByUrls: () => {
     throw new Error("Unexpected fixture blob");
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 assertEveTestDatabase(env.DATABASE_URL);
 /* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): if (!env.WORKFLOW_POSTGRES_URL) { throw new Error("Miss intentionally keeps the existing falsy-value behavior of env.WORKFLOW_POSTGRES_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -75,16 +56,11 @@ const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
-// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the deletion-fixture owner before registering family-deletion scenarios.
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Deletion fixture",
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements --
- * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
@@ -99,12 +75,7 @@ afterAll(async () => {
   }
   await native.end();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): fixture preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): fixture intentionally keeps the existing falsy-value behavior of parentId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -120,24 +91,14 @@ async function fixture(parentId?: string) {
     crypto.randomUUID(),
     "Private fixture",
     () => Promise.resolve(sessionId),
-    // oxlint-disable-next-line no-ternary -- Keep createEveConversation argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     parentId
       ? { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
       : undefined
   );
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing conversation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...conversation, sessionId };
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
- * max-lines-per-function (#510): test("full deletion keeps uncertain resources pending, then erases only its family an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("full deletion keeps uncertain resources pending, then erases only its family an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("full deletion keeps uncertain resources pending, then erases only its family an uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("full deletion keeps uncertain resources pending, then erases only its family an preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("full deletion keeps uncertain resources pending, then erases only its family and retries after payload removal", async () => {
   const target = await fixture();
   const child = await fixture(target.id);
@@ -204,9 +165,6 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
     .where(eq(eveConversation.id, unrelated.id));
   expect(survivor.state).toBe("bound");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 test("compatibility failure blocks the complete coordinator before revoking access", async () => {
   const target = await fixture();
@@ -227,4 +185,3 @@ test("compatibility failure blocks the complete coordinator before revoking acce
     await native`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
-/* oxlint-enable oxc/no-async-await */

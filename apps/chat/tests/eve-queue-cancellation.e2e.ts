@@ -1,33 +1,18 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires node:http's createServer API; its Node runtime boundary deliberately permits this built-in.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 import { createServer } from "node:http";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve Node's native HTTP callback types as a separate type-only import.
 import type { ServerResponse } from "node:http";
 
 import { createWorld } from "@workflow/world-postgres";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Pool } from "pg";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { env } from "../lib/env";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue cancellation acceptance requires local Postgres.");
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, typescript/strict-void-return --
- * max-lines-per-function (#510): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup uses 1, 200, 0, 2, 3, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return --
  * typescript/strict-boolean-expressions (#610): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup intentionally keeps the existing falsy-value behavior of address; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
@@ -42,7 +27,6 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
           Record<string, string | readonly string[] | undefined>
         >;
       }>,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native ServerResponse writes HTTP status/headers and destroys the original response stream to drive this request-cancellation scenario.
       response: ServerResponse
     ) => {
       void (async (): Promise<void> => {
@@ -93,6 +77,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     await queue.queue("__wkf_workflow_fixture", { runId });
     await expect.poll(() => calls.length).toBe(2);
     expect(calls).toHaveLength(2);
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     release.resolve(undefined);
     await expect.poll(pendingJobs).toBe(0);
     const idempotencyKey = crypto.randomUUID();
@@ -106,9 +91,9 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     await expect.poll(pendingJobs).toBe(0);
     expect(calls).toHaveLength(3);
   } finally {
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     release.resolve(undefined);
     server.closeAllConnections();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling queue.close; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     await queue.close?.();
     await pool.query(
       "delete from graphile_worker._private_jobs where task_id in (select id from graphile_worker._private_tasks where identifier=$1)",
@@ -120,10 +105,11 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     );
     await pool.end();
     await new Promise<void>((resolve) => {
-      server.close(() => resolve());
+      server.close(() => {
+        resolve();
+      });
     });
     vi.unstubAllEnvs();
   }
 }, 15_000);
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */

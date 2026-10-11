@@ -20,8 +20,6 @@ type PreparedCopyDocument = ReadonlyNativeSurface<
   >[];
 };
 
-/* oxlint-disable max-statements, unicorn/no-null -- max-statements (#512): prepareEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Converts an authorized, completely allocated ancestry into idle imported revisions.
  * @param {CopyDocumentSnapshot} snapshot Accessible document heads and their complete root-to-head revisions.
@@ -59,19 +57,15 @@ const prepareEveCopyDocuments = (
     }
   }
   const copied = rewriteEveCopyResources(snapshot, allocations, true);
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate copied document revisions without mutating resource-rewrite results.
   return copied.map((document) => ({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...document,
     revisions: document.revisions.map((revision) => ({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...revision,
       operationId: `copy:${revision.id}`,
       turnIndex: null,
     })),
   }));
 };
-/* oxlint-enable max-statements, unicorn/no-null */
 
 /**
  * Inventories every accessible revision, including files removed from the current head.
@@ -100,6 +94,4 @@ const eveCopyDocumentResources = (
   };
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyDocumentResources, prepareEveCopyDocuments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { eveCopyDocumentResources, prepareEveCopyDocuments };
-/* oxlint-enable import/no-named-export */

@@ -23,10 +23,8 @@ type ExtractImageModelIdFromProvider<ProviderFactory> =
       : never
     : never;
 
-/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (StrictLiterals, ExtractModelIdFromProvider, ExtractImageModelIdFromProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type {
   StrictLiterals,
   ExtractModelIdFromProvider,
   ExtractImageModelIdFromProvider,
 };
-/* oxlint-enable import/no-named-export */

@@ -13,7 +13,6 @@ const HTTP_PARTIAL_CONTENT = 206;
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- Byte offsets are zero-based and inclusive; null is the existing invalid-range sentinel. */
 const parseSuffixRange = (
   suffix: string,
   size: number
@@ -24,9 +23,7 @@ const parseSuffixRange = (
   }
   return null;
 };
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- Byte offsets are zero-based and inclusive; null is the existing invalid-range sentinel. */
 const parseExplicitRange = (
   rangeStart: string | undefined,
   rangeEnd: string | undefined,
@@ -34,7 +31,6 @@ const parseExplicitRange = (
 ): { end: number; start: number } | null => {
   const start = Number(rangeStart);
   const requestedEnd =
-    // oxlint-disable-next-line no-ternary -- Keep requestedEnd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof rangeEnd === "string" && rangeEnd !== ""
       ? Number(rangeEnd)
       : size - 1;
@@ -65,8 +61,6 @@ const parseRange = (
   }
   return parseExplicitRange(rangeStart, rangeEnd, size);
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveRequestRange's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 const resolveRequestRange = async (
   request: ReadonlyNativeSurface<Request>,
@@ -86,7 +80,6 @@ const resolveRequestRange = async (
   const metadata = await getFileMetadata(key);
   const range = parseRange(rangeHeader, metadata.size);
   if (range === null) {
-    // oxlint-disable-next-line unicorn/no-null -- An unsatisfiable byte range has no response body.
     return new Response(null, {
       headers: { "Content-Range": `bytes */${metadata.size}` },
       status: 416,
@@ -94,8 +87,6 @@ const resolveRequestRange = async (
   }
   return { fullSize: metadata.size, range };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createDownloadResponse's awaited sequencing and rejected-Promise behavior. */
 const createDownloadResponse = async (
   key: string,
   supportsRange: boolean,
@@ -109,7 +100,6 @@ const createDownloadResponse = async (
 ): Promise<Response> => {
   const file = await downloadFile(key, range);
   const headers = new Headers({
-    // oxlint-disable-next-line no-ternary -- Keep "Accept-Ranges" as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     "Accept-Ranges": supportsRange ? "bytes" : "none",
     "Cache-Control": "private, no-store",
     "Content-Length": String(file.size),
@@ -124,14 +114,9 @@ const createDownloadResponse = async (
   }
   return new Response(file.stream(), {
     headers,
-    // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     status: range ? HTTP_PARTIAL_CONTENT : HTTP_OK,
   });
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createFileContentResponse); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFileContentResponse's awaited sequencing and rejected-Promise behavior. */
-// oxlint-disable-next-line max-statements -- Keep redirect selection, range rejection, streaming, and storage-error translation in one ordered request boundary; the range parser and response builder are separate helpers.
 export const createFileContentResponse = async (
   request: ReadonlyNativeSurface<Request>,
   key: string,
@@ -141,7 +126,6 @@ export const createFileContentResponse = async (
     if (allowRedirect) {
       const providerUrl = await getFileProviderUrl(key);
       if (typeof providerUrl === "string" && providerUrl !== "") {
-        // oxlint-disable-next-line unicorn/no-null -- A temporary redirect carries its target in Location and has no response body.
         return new Response(null, {
           headers: {
             "Cache-Control": "private, no-store",
@@ -165,5 +149,3 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

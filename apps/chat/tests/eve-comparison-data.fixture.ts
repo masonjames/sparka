@@ -1,12 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/gateway-model-defaults"; "../lib/eve/response-group-contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { gatewayModelDefaults } from "../lib/ai/gateway-model-defaults";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveResponseGroupResult } from "../lib/eve/response-group-contracts";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 const ownerId = "comparison-fixture-owner";
 
@@ -40,9 +33,7 @@ const partialGroup: EveResponseGroupResult = {
   id: groupId,
 };
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): completeGroup uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases. */
 const completeGroup: EveResponseGroupResult = {
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing partialGroup own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...partialGroup,
   candidates: [
     partialGroup.candidates[0],
@@ -55,8 +46,6 @@ const completeGroup: EveResponseGroupResult = {
     },
   ],
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeGroup, firstConversation, firstModel, groupId, ownerId, partialGroup, secondConversation, secondModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers */
 export {
   completeGroup,
   firstConversation,
@@ -67,4 +56,3 @@ export {
   secondConversation,
   secondModel,
 };
-/* oxlint-enable import/no-named-export */

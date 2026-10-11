@@ -1,18 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import "../../../apps/chat/tests/visual/sandbox.css";
-/* oxlint-enable import/no-relative-parent-imports */
 import React, { act } from "react";
 import { expect, test } from "vitest";
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
 import { createRoot } from "react-dom/client";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 test("sandbox code updates while streaming without switching tabs", async (): Promise<void> => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("main");
@@ -25,7 +18,7 @@ test("sandbox code updates while streaming without switching tabs", async (): Pr
     language = "python"
   ): Promise<void> => {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-    await act((): void =>
+    await act((): void => {
       root.render(
         <CodeExecution
           isReadonly={false}
@@ -41,33 +34,26 @@ test("sandbox code updates while streaming without switching tabs", async (): Pr
             toolCallId: "sandbox-stream",
           }}
         />
-      )
-    );
+      );
+    });
   };
   await render("", "input-streaming");
   await render("print(53 *", "input-streaming");
   await expect
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 *");
   await render("print(53 * 41244)", "input-streaming", "pyth");
   await expect
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 * 41244)");
   await takeSnapshot("streaming-code");
   await render("print(53 * 41244)", "output-available");
   await expect
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 * 41244)");
   await takeSnapshot("completed-code");
   await page.getByRole("tab", { name: "Output" }).click();
   await expect
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("2185932");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/max-statements */

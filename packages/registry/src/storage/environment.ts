@@ -18,9 +18,7 @@ type StorageEnvironmentRequirement = {
 /* oxlint-enable typescript/consistent-type-definitions */
 
 const EMPTY_VARIABLE_COUNT = 0;
-/* oxlint-disable eslint/no-undefined -- Files SDK adapter options count as supplied even when null; only a missing or explicitly undefined option leaves the environment requirement active. */
 const ABSENT_ADAPTER_OPTION = undefined;
-/* oxlint-enable eslint/no-undefined */
 
 const STORAGE_OPTION_HINT = /(?:or )?pass `(?<option>[^`]+)`/u;
 
@@ -159,9 +157,5 @@ const getStorageEnvironmentRequirements = (
 
   return requirements;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getStorageEnvironmentRequirements); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { getStorageEnvironmentRequirements };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (StorageEnvironmentRequirement, StorageEnvironmentVariable); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { StorageEnvironmentRequirement, StorageEnvironmentVariable };
-/* oxlint-enable import/no-named-export */

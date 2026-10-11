@@ -15,7 +15,6 @@ const generateUUID = (): string => uuidv7();
 
 const extensionToLanguage: Readonly<Record<string, string>> = {
   bash: "shell",
-  // oxlint-disable-next-line id-length -- The standardized .c filename extension is the lookup key.
   c: "c",
   cc: "cpp",
   cjs: "javascript",
@@ -25,7 +24,6 @@ const extensionToLanguage: Readonly<Record<string, string>> = {
   cxx: "cpp",
   fish: "shell",
   go: "go",
-  // oxlint-disable-next-line id-length -- The standardized .h filename extension is the lookup key.
   h: "c",
   hpp: "cpp",
   htm: "html",
@@ -43,7 +41,6 @@ const extensionToLanguage: Readonly<Record<string, string>> = {
   py: "python",
   pyi: "python",
   pyw: "python",
-  // oxlint-disable-next-line id-length -- The standardized .r filename extension is the lookup key.
   r: "r",
   rb: "ruby",
   rs: "rust",
@@ -62,11 +59,8 @@ const extensionToLanguage: Readonly<Record<string, string>> = {
 };
 
 const getLanguageFromFileName = (fileName: string): string => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from fileName.split(...).pop(...); preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
-  const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
+  const extension = (fileName.split(".").pop() ?? "").toLowerCase();
   return extensionToLanguage[extension] ?? "python";
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (cn, generateUUID, getLanguageFromFileName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { cn, generateUUID, getLanguageFromFileName };
-/* oxlint-enable import/no-named-export */

@@ -1,37 +1,17 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-guest-cleanup"; "../lib/db/eve-guests"; "../lib/db/schema"; "../lib/eve/guest-credential" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { claimExpiredEveGuestFamilies } from "../lib/db/eve-guest-cleanup";
-/* oxlint-enable eslint/sort-imports */
 import { createEveGuest } from "../lib/db/eve-guests";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveGuest, user } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { createEveGuestCredential } from "../lib/eve/guest-credential";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 const owners: string[] = [];
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (owners.length > 0) {
     await db
@@ -40,15 +20,7 @@ afterAll(async () => {
     await db.delete(user).where(inArray(user.id, owners));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("expired root claims are bounded, disjoint, fair and preserve owner identities") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("expired root claims are bounded, disjoint, fair and preserve owner identities") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("expired root claims are bounded, disjoint, fair and preserve owner identities") uses 60_000, 0, 1, 2, 30, 11 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("expired root claims are bounded, disjoint, fair and preserve owner identities", async () => {
   const guest = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
@@ -77,14 +49,12 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
   ];
   await insertEveConversationFixtures([
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       id: excluded[0],
       operationId: crypto.randomUUID(),
       state: "deleted",
     },
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       forkTurnId: "turn_0",
       id: excluded[1],
@@ -93,7 +63,6 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
       rootConversationId: roots[0].id,
     },
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       id: excluded[2],
       operationId: crypto.randomUUID(),
@@ -149,5 +118,3 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     expiredGuestClaimIds.map((row: { readonly id: string }) => row.id)
   ).toContain(first.id);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

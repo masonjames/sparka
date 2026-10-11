@@ -1,7 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as sleep } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
- */
-
 /**
  * YOU PROBABLY DON'T NEED TO EDIT THIS FILE, UNLESS:
  * 1. You want to modify request context (see Part 1).
@@ -13,18 +9,13 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import type { TRPCDefaultErrorShape } from "@trpc/server";
 import { headers } from "next/headers";
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between next/headers and react still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { cache } from "react";
 import { setTimeout as sleep } from "node:timers/promises";
 import superjson from "superjson";
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between superjson and zod still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { ZodError, flattenError } from "zod";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { auth } from "@/lib/auth";
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createTRPCContext's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-nodejs-modules */
 
 /**
  * 1. CONTEXT
@@ -41,14 +32,11 @@ import { auth } from "@/lib/auth";
 const createTRPCContext = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   return {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     user: session?.user,
   };
 });
-/* oxlint-enable oxc/no-async-await */
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
-/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): trpc preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * 2. INITIALIZATION
  *
@@ -65,20 +53,16 @@ const trpc = initTRPC.context<typeof createTRPCContext>().create({
     readonly error: { readonly cause?: unknown };
   }) {
     return {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing shape own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...shape,
       data: {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing shape.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...shape.data,
         zodError:
-          // oxlint-disable-next-line no-ternary -- Keep zodError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           error.cause instanceof ZodError ? flattenError(error.cause) : null,
       },
     };
   },
   transformer: superjson,
 });
-/* oxlint-enable unicorn/no-null */
 
 /**
  * Create a server-side caller.
@@ -104,10 +88,6 @@ const createTRPCRouter = trpc.router;
 const MIN_DEVELOPMENT_DELAY_MS = 100;
 const DEVELOPMENT_DELAY_RANGE_MS = 400;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve timingMiddleware's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-console --
- * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- */
 /**
  * Middleware for timing procedure execution and adding an artificial delay in development.
  *
@@ -120,14 +100,12 @@ const timingMiddleware = trpc.middleware(
     path,
   }: ReadonlyNativeSurface<
     Pick<
-      // oxlint-disable-next-line no-magic-numbers -- Zero selects the existing first SDK middleware parameter in this type-only contract.
       Parameters<ReturnType<typeof trpc.middleware>["_middlewares"][0]>[0],
       "next" | "path"
     >
   >) => {
     const start = Date.now();
 
-    // oxlint-disable-next-line eslint/no-underscore-dangle -- @trpc/server 11.16.0 marks TRPCRootObject._config @internal; its isDev value is the SDK's authoritative runtime configuration.
     if (trpc._config.isDev) {
       // Add an artificial delay in development.
       const waitMs =
@@ -144,8 +122,6 @@ const timingMiddleware = trpc.middleware(
     return result;
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console */
 
 /**
  * Public (unauthenticated) procedure
@@ -156,8 +132,7 @@ const timingMiddleware = trpc.middleware(
  */
 const publicProcedure = trpc.procedure.use(timingMiddleware);
 
-/* oxlint-disable no-console, typescript/promise-function-async -- no-console (#514): protectedProcedure emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
-typescript/promise-function-async (#606): protectedProcedure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): protectedProcedure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Protected (authenticated) procedure
  *
@@ -171,13 +146,11 @@ const protectedProcedure = trpc.procedure.use(
     ctx,
     next,
   }: ReadonlyNativeSurface<
-    // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
     Parameters<ReturnType<typeof trpc.middleware>["_middlewares"][0]>[0]
   >) => {
     if (!ctx.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding rest excludes id from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     const { id, ...rest } = ctx.user;
     if (!id) {
       console.error("User ID missing in session callback");
@@ -186,14 +159,12 @@ const protectedProcedure = trpc.procedure.use(
     return next({
       ctx: {
         // This narrows `session` to a non-nullable type.
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rest own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         user: { id, ...rest },
       },
     });
   }
 );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createCallerFactory, createTRPCContext, createTRPCRouter, protectedProcedure, publicProcedure); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-console, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 export {
   createCallerFactory,
   createTRPCContext,
@@ -201,7 +172,4 @@ export {
   protectedProcedure,
   publicProcedure,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (Context); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { Context };
-/* oxlint-enable import/no-named-export */

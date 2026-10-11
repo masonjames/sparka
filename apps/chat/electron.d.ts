@@ -41,5 +41,5 @@ declare global {
   }
 }
 
-// oxlint-disable-next-line import/no-named-export, unicorn/require-module-specifiers -- An external declaration module is required for declare global; this empty export preserves ambient types without exposing runtime values.
+// oxlint-disable-next-line unicorn/require-module-specifiers -- An external declaration module is required for declare global; this empty export preserves ambient types without exposing runtime values.
 export {};

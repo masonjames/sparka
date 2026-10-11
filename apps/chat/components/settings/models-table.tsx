@@ -7,24 +7,16 @@ import type { JSX as ReactJSX } from "react";
 
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/table; keep this adjacent import pair ordered. */
 import { Table, TableBody } from "@/components/ui/table";
-/* oxlint-enable sort-imports */
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import { useChatModels } from "@/providers/chat-models-provider";
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/providers/chat-models-provider and ./model-row; keep this adjacent import pair ordered. */
 import { ModelRow } from "./model-row";
-/* oxlint-enable sort-imports */
 
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelsTable); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- ModelsTable renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 export const ModelsTable = ({
   search,
@@ -48,11 +40,8 @@ export const ModelsTable = ({
       onError: (
         _err: unknown,
         _newData: unknown,
-        /* oxlint-disable typescript/prefer-readonly-parameter-types -- Rollback passes the original cached array to the typed React Query updater; readonly nested arrays are rejected by that native cache receiving contract. */
         context: { readonly prev: typeof preferences } | undefined
-        /* oxlint-enable typescript/prefer-readonly-parameter-types */
       ) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update model preference");
       },
@@ -69,7 +58,6 @@ export const ModelsTable = ({
                 preference.modelId === newData.modelId
             );
             if (idx !== -1) {
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old[idx] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               return old.with(idx, { ...old[idx], enabled: newData.enabled });
             }
             return [
@@ -145,7 +133,6 @@ export const ModelsTable = ({
         readonly id: { readonly toLowerCase: () => string };
       }) =>
         model.name.toLowerCase().includes(query) ||
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from model.owned_by; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         model.owned_by?.toLowerCase().includes(query) ||
         model.id.toLowerCase().includes(query)
     );
@@ -176,10 +163,7 @@ export const ModelsTable = ({
       <p className="text-muted-foreground mb-2 text-xs">
         {filteredModels.length} model{filteredModels.length !== 1 && "s"}
       </p>
-      <Table
-        // oxlint-disable-next-line react/forbid-component-props -- Table accepts className in its styling contract; preserve this caller's layout and appearance.
-        className={className}
-      >
+      <Table className={className}>
         <TableBody>
           {filteredModels.map(
             (
@@ -204,6 +188,3 @@ export const ModelsTable = ({
     </>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth */

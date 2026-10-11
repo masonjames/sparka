@@ -44,7 +44,5 @@ const readRunSnapshots = (
   return { activeRuns, runs, status };
 };
 
-/* oxlint-disable import/no-named-export -- This internal snapshot projection and its finite reader use named bindings; the enforced no-default-export convention rejects a default export. */
 export { readRunSnapshots, toRunSnapshot };
 export type { RunSnapshotReader };
-/* oxlint-enable import/no-named-export */

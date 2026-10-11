@@ -1,5 +1,3 @@
-/* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
-/* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -9,9 +7,7 @@ import { page } from "vitest/browser";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-statements, max-lines-per-function -- This scenario verifies one rename rejection, retained input, and a subsequent successful keyboard retry with the same mounted dialog. */
 test("rename rejection keeps the dialog and input until a successful retry", async () => {
   const pending = Promise.withResolvers<undefined>();
   const submit = vi
@@ -105,7 +101,9 @@ test("rename rejection keeps the dialog and input until a successful retry", asy
       .dispatchEvent(
         new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
       );
-    await vi.waitFor(() => expect(close).toHaveBeenCalledWith(false));
+    await vi.waitFor(() => {
+      expect(close).toHaveBeenCalledWith(false);
+    });
     expect(submit).toHaveBeenLastCalledWith("Renamed chat");
     await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
     await renderDialog("Server title", false, false);
@@ -150,9 +148,7 @@ test("rename rejection keeps the dialog and input until a successful retry", asy
     container.remove();
   }
 });
-/* oxlint-enable max-statements, max-lines-per-function */
 
-/* oxlint-disable max-statements, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals -- This browser lifecycle covers cancellation, a reopened dialog and stale completion for both conditional and persistent mounting. */
 test.each([
   { externalClose: false, mounting: "conditional", outcome: "success" },
   { externalClose: false, mounting: "conditional", outcome: "failure" },
@@ -180,17 +176,23 @@ test.each([
       .mockReturnValueOnce(oldRequest.promise)
       .mockReturnValueOnce(newRequest.promise)
       .mockResolvedValue();
-    // oxlint-disable-next-line react/only-export-components -- This local controlled owner exists only inside the browser lifecycle test, not a Fast Refresh application module.
     const DialogOwner = (): React.JSX.Element => {
       const [open, setOpen] = React.useState(false);
       return (
         <>
-          <button onClick={() => setOpen(true)} type="button">
+          <button
+            onClick={() => {
+              setOpen(true);
+            }}
+            type="button"
+          >
             Open rename
           </button>
           <button
             data-external-close
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+            }}
             type="button"
           >
             Close externally
@@ -244,7 +246,7 @@ test.each([
       await act(async () => {
         await Promise.resolve();
         if (outcome === "success") {
-          // oxlint-disable-next-line no-undefined -- Resolve the deferred callback's explicit undefined completion, matching its typed resolver contract.
+          // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
           oldRequest.resolve(undefined);
         } else {
           oldRequest.reject(new Error("Old request failed"));
@@ -293,6 +295,3 @@ test.each([
     }
   }
 );
-/* oxlint-enable max-statements, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals */
-
-/* oxlint-enable oxc/no-async-await */

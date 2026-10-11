@@ -6,7 +6,6 @@ import {
 import type { ToolContext } from "eve/tools";
 import { providers } from "@/tools/chatjs/providers";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (researchAvailable); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const researchAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">
 ): boolean => {
@@ -23,4 +22,3 @@ export const researchAvailable = (
     Object.hasOwn(providers, "webSearch")
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

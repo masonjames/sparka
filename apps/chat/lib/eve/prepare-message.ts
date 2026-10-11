@@ -5,12 +5,6 @@ import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 import { loadEveModelDefinition } from "./model-selection";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveMessage's awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-statements --
- * max-statements (#512): prepareEveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Resolve application storage directly, never fetch a client-supplied host.
  * @param {ReadonlyEveMessageInput} message Validated user text or attachment references owned by application storage.
@@ -31,7 +25,6 @@ export const prepareEveMessage = async (
       content.push(part);
     } else {
       const supported =
-        // oxlint-disable-next-line no-ternary -- Keep supported as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         part.mediaType === "application/pdf"
           ? model.input.pdf
           : model.input.image;
@@ -65,6 +58,3 @@ export const prepareEveMessage = async (
   }
   return content;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */

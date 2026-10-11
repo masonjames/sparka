@@ -1,6 +1,4 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The server session namespace uses Node's SHA-256 implementation to hash the application/database scope.
 import { createHash } from "node:crypto";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authSessionOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 const COOKIE_NAMESPACE_DIGEST_LENGTH = 16;
 const SESSION_CACHE_MAX_AGE_SECONDS = 300;
@@ -34,7 +32,6 @@ export const authSessionOptions = ({
       .update("\0")
       .update(database.toString())
       .digest("hex")
-      // oxlint-disable-next-line no-magic-numbers -- Digest slicing starts at its first hexadecimal character, at index zero.
       .slice(0, COOKIE_NAMESPACE_DIGEST_LENGTH);
     cookiePrefix = `chatjs-dev-${scope}`;
   }
@@ -48,4 +45,3 @@ export const authSessionOptions = ({
     },
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -29,14 +29,12 @@ const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
 
         return [
           {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...model,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
             id: reasoningId,
           },
           {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...model,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
@@ -49,7 +47,6 @@ const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
       // Models without reasoning stay as-is
       return [
         {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...model,
           apiModelId: modelId,
           disabled: DISABLED_MODELS.has(modelId),
@@ -81,10 +78,8 @@ const buildChatModels = (
         const rightProviderIndex = PROVIDER_ORDER.indexOf(rightModel.owned_by);
 
         const leftIndex =
-          // oxlint-disable-next-line no-magic-numbers, no-ternary -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.; no-ternary: Keep leftIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           leftProviderIndex === -1 ? PROVIDER_ORDER.length : leftProviderIndex;
         const rightIndex =
-          // oxlint-disable-next-line no-magic-numbers, no-ternary -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.; no-ternary: Keep rightIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           rightProviderIndex === -1
             ? PROVIDER_ORDER.length
             : rightProviderIndex;
@@ -93,7 +88,6 @@ const buildChatModels = (
       }
     );
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchAllAppModels's awaited sequencing and rejected-Promise behavior. */
 const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
     const models = await fetchModels();
@@ -102,8 +96,6 @@ const fetchAllAppModels = cache(
   ["all-app-models"],
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchChatModels's awaited sequencing and rejected-Promise behavior. */
 const fetchChatModels = cache(
   async (): Promise<AppModelDefinition[]> => {
     const appModels = await fetchAllAppModels();
@@ -112,8 +104,6 @@ const fetchChatModels = cache(
   ["chat-models"],
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAppModelDefinition's awaited sequencing and rejected-Promise behavior. */
 const getAppModelDefinition = async (
   modelId: AppModelId
 ): Promise<AppModelDefinition> => {
@@ -127,7 +117,6 @@ const getAppModelDefinition = async (
   }
   return model;
 };
-/* oxlint-enable oxc/no-async-await */
 /**
  * Whether the generated catalog belongs to the selected gateway.
  * @param {string} gateway - Gateway identity from application configuration.
@@ -137,7 +126,6 @@ const snapshotMatchesGateway = (gateway: string): boolean =>
   generatedForGateway === gateway;
 
 const KNOWN_MODEL_IDS = new Set<string>(
-  // oxlint-disable-next-line no-ternary -- Keep Set argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   snapshotMatchesGateway(config.ai.gateway)
     ? generatedModels.map((model: { readonly id: string }) => model.id)
     : []
@@ -173,12 +161,6 @@ const getDefaultEnabledModels = (
 
   return enabled;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (fetchChatModels, getAppModelDefinition, getDefaultEnabledModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { fetchChatModels, getAppModelDefinition, getDefaultEnabledModels };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (AppModelDefinition); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { AppModelDefinition };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (AppModelId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { AppModelId } from "./app-model-id";
-/* oxlint-enable import/no-named-export */

@@ -1,7 +1,6 @@
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
-// oxlint-disable-next-line sort-imports -- Construct eve-documents and local-inventory external-Zod schemas before prepare-deletion imports Eve's compiled Zod, which installs the shared postProcessor used by later schema constructions.
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
 import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
@@ -11,7 +10,6 @@ import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
 const NO_UNATTRIBUTED_DIRECTORIES = 0;
 const NO_CONVERSATIONS = 0;
 
-/* oxlint-disable oxc/no-async-await -- Preserve ordered fencing, coverage checks and resource deletion across the local and external cleanup phases. */
 const purgeOwnedLocalSandboxResources = async (
   ownerId: string,
   appRoot: string,
@@ -46,10 +44,7 @@ const purgeExternalEveFamilyResources = async (
   await purgeEveFamilyDocuments(ownerId, family.rootId);
   await purgeEveFamilyFiles(ownerId, family.rootId);
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeLocalEveFamilyResources); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeLocalEveFamilyResources's awaited sequencing and rejected-Promise behavior. */
 /**
  * Internal local-provider coordinator. Native history and deleting bindings remain
  * until external tool resources are accounted for and final erasure can proceed.
@@ -72,5 +67,3 @@ export const purgeLocalEveFamilyResources = async (
   await purgeExternalEveFamilyResources(ownerId, family);
   return family;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

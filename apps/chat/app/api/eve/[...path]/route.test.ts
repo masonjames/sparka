@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/sort-keys -- This assertion fixes the durable metadata wire order. */
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
@@ -59,7 +58,6 @@ const request = (headers: Readonly<Record<string, string>> = {}): Request =>
     headers: {
       "content-type": "application/json",
       origin: "http://localhost:3790",
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...headers,
     },
     method: "POST",
@@ -81,8 +79,6 @@ beforeEach(() => {
   );
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-
 test("requires a message operation ID before dispatch", async () => {
   const response = await POST(request(), {
     params: Promise.resolve({ path: ["v1", "session", "native"] }),
@@ -94,8 +90,6 @@ test("requires a message operation ID before dispatch", async () => {
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("stamps the validated operation into server-owned durable metadata", async () => {
   const response = await POST(
@@ -123,8 +117,6 @@ test("stamps the validated operation into server-owned durable metadata", async 
     "createTextDocument"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("keeps a busy admission retryable without dispatching or rejecting its message", async () => {
   mocks.reconcile.mockRejectedValue(new EveUsageReconciliationBusyError());
@@ -142,4 +134,3 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

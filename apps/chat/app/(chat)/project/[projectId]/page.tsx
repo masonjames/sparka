@@ -1,24 +1,14 @@
 import { headers } from "next/headers";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { notFound, redirect } from "next/navigation";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve next/navigation evaluation before React; native alphabetical local-binding order requires moving these runtime imports. */
 import React, { Suspense } from "react";
-/* oxlint-enable sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveCreationRecovery } from "@/components/eve/eve-creation-recovery";
-/* oxlint-enable sort-imports */
 import { EveProjectHome } from "@/components/eve/eve-project-home";
 import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getProjectById } from "@/lib/db/queries";
-/* oxlint-disable react/jsx-no-literals -- ProjectContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ProjectContent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
-/* oxlint-disable max-statements, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions -- ProjectContent: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/strict-boolean-expressions: preserve the missing-project guard; native explicit undefined and typeof guards conflict with no-undefined and unicorn/no-typeof-undefined respectively; */
+/* oxlint-disable typescript/strict-boolean-expressions -- ProjectContent: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/strict-boolean-expressions: preserve the missing-project guard; native explicit undefined and typeof guards conflict with no-undefined and unicorn/no-typeof-undefined respectively; */
 
 const ProjectContent = async ({
   params,
@@ -34,7 +24,6 @@ const ProjectContent = async ({
     notFound();
   }
   const session = await auth.api.getSession({ headers: await headers() });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!session?.user) {
     redirect("/login");
   }
@@ -63,12 +52,7 @@ const ProjectContent = async ({
     />
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- ProjectPageRoute renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions */
-
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-props-no-spreading, react/no-multi-comp -- ProjectPageRoute: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 const ProjectPageRoute = (
   props: Parameters<typeof ProjectContent>[0]
@@ -81,7 +65,4 @@ const ProjectPageRoute = (
     <ProjectContent {...props} />
   </Suspense>
 );
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react/jsx-props-no-spreading, react/no-multi-comp */
-// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component ProjectPageRoute.
 export default ProjectPageRoute;

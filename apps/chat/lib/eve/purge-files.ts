@@ -5,8 +5,6 @@ import {
 } from "@/lib/db/eve-file-purge";
 import { createFileUrl } from "@/lib/file-url";
 import { deleteFilesByUrls } from "@/lib/file-storage";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEveFamilyFiles); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyFiles's awaited sequencing and rejected-Promise behavior. */
 
 const NO_FILE_KEYS = 0;
 /** Internal deletion stage; requires native retirement/accounting settlement or never-dispatched copy proof.
@@ -25,5 +23,3 @@ export const purgeEveFamilyFiles = async (
   }
   await releaseEveFamilyFileReferences(ownerId, rootId);
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

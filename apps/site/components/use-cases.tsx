@@ -26,14 +26,7 @@ const USE_CASES: readonly Readonly<{
     title: "Move from side project to production",
   },
 ];
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UseCases); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- UseCases renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
-/* oxlint-disable eslint/max-lines-per-function -- UseCases: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-
-/* oxlint-disable react/jsx-max-depth -- UseCases: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-
-/* oxlint-disable eslint/no-magic-numbers -- UseCases: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 export const UseCases = (): React.JSX.Element => (
   <section
     aria-labelledby="use-cases-heading"
@@ -111,10 +104,3 @@ export const UseCases = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/max-lines-per-function */

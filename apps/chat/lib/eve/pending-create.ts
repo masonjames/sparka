@@ -31,7 +31,6 @@ const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
 
-/* oxlint-disable no-undefined -- Absent pending storage returns undefined to preserve the optional request contract. */
 const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
@@ -44,9 +43,7 @@ const readCreationRequest = (
   }
   return undefined;
 };
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable max-params -- max-params (#511): prepareResponseGroupCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareResponseGroupCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -70,21 +67,17 @@ const prepareResponseGroupCreation = (
     return saved;
   }
   const request = eveResponseGroupInput.parse({
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading fork from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     fork: context?.fork,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkKind from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     forkKind: context?.forkKind,
     message,
     modelIds,
     operationId: crypto.randomUUID(),
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     projectId: context?.projectId,
     selectedTool,
   });
   storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
   return request;
 };
-/* oxlint-enable max-params */
 
 const readCreation = (
   storage: StorageAccess,
@@ -100,7 +93,6 @@ const readCreation = (
   return request;
 };
 
-/* oxlint-disable max-params -- max-params (#511): prepareCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -120,14 +112,11 @@ const prepareCreation = (
     return stored;
   }
   const pending = createConversationInput.safeParse({
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading fork from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     fork: context?.fork,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkKind from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     forkKind: context?.forkKind,
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     projectId: context?.projectId,
     selectedTool,
   });
@@ -137,9 +126,7 @@ const prepareCreation = (
   storage.setItem(key, JSON.stringify(pending.data));
   return pending.data;
 };
-/* oxlint-enable max-params */
 
-/* oxlint-disable max-params -- max-params (#511): prepareSelectedCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareSelectedCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -172,7 +159,6 @@ const prepareSelectedCreation = (
     selectedTool
   );
 };
-/* oxlint-enable max-params */
 
 const finishCreation = (
   storage: StorageAccess,
@@ -182,8 +168,6 @@ const finishCreation = (
   storage.removeItem(keyFor(ownerId, scope));
 };
 
-/* oxlint-disable max-params, no-undefined --max-params (#511): moveRejectedProjectCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): moveRejectedProjectCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.*/
 /**
  * Moves a definitively rejected project request into New Chat under a fresh operation.
  * @param {StorageAccess} storage Browser storage holding the original project draft and any New Chat draft.
@@ -200,7 +184,6 @@ const moveRejectedProjectCreation = (
 ): z.output<typeof creationRequest> => {
   const scope = { projectId };
   const pending = readCreationRequest(storage, ownerId, scope);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (pending?.operationId !== operationId || pending.projectId !== projectId) {
     throw new Error("The saved request changed. Reload before continuing.");
   }
@@ -210,7 +193,6 @@ const moveRejectedProjectCreation = (
     );
   }
   const next =
-    // oxlint-disable-next-line no-ternary -- Keep next as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     "modelIds" in pending
       ? prepareResponseGroupCreation(
           storage,
@@ -231,8 +213,6 @@ const moveRejectedProjectCreation = (
   finishCreation(storage, ownerId, scope);
   return next;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (finishCreation, moveRejectedProjectCreation, prepareCreation, prepareResponseGroupCreation, prepareSelectedCreation, readCreation, readCreationRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-params, no-undefined */
 export {
   finishCreation,
   moveRejectedProjectCreation,
@@ -242,7 +222,4 @@ export {
   readCreation,
   readCreationRequest,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (CreationScope); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { CreationScope };
-/* oxlint-enable import/no-named-export */

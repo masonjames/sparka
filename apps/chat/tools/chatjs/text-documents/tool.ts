@@ -27,7 +27,6 @@ type ReadonlyDocumentToolContext = Readonly<
   }
 >;
 
-/* oxlint-disable oxc/no-async-await -- Await the async executor before schema parsing; enabled promise/prefer-await-to-then and typescript/promise-function-async reject the equivalent .then(parse) callback. */
 const createTextDocument = defineTool({
   description: `Create a new text document in this conversation. Supply the complete content and a descriptive title. ${textGuidelines}`,
   execute: async (
@@ -40,8 +39,6 @@ const createTextDocument = defineTool({
   inputSchema: eveDocumentCreateInput,
   outputSchema: eveDocumentWriteResult,
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await the async executor before schema parsing; enabled promise/prefer-await-to-then and typescript/promise-function-async reject the equivalent .then(parse) callback. */
 const editTextDocument = defineTool({
   description: `Edit an existing text document in this conversation. Read the document first and supply its revision ID. Supply the complete replacement content. ${textGuidelines}`,
   execute: async (
@@ -54,7 +51,4 @@ const editTextDocument = defineTool({
   inputSchema: eveDocumentEditInput,
   outputSchema: eveDocumentWriteResult,
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createTextDocument, editTextDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createTextDocument, editTextDocument };
-/* oxlint-enable import/no-named-export */

@@ -1,23 +1,17 @@
 import { generateText } from "ai";
 
 import { getLanguageModel } from "@/lib/ai/providers";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { chatTelemetry } from "@/lib/ai/telemetry";
-/* oxlint-enable sort-imports */
 import { config } from "@/lib/config";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   isEveRootTitlePending,
   replaceEveRootFallbackTitle,
   settleEveRootFallbackTitle,
 } from "@/lib/db/eve-queries";
-/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 import { eveMessageTitle } from "./message-input";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
-/* oxlint-enable sort-imports */
 
 const EVE_TITLE_MAX_LENGTH = 40;
 const TITLE_START_INDEX = 0;
@@ -44,8 +38,8 @@ const compactTitle = (value: string): string => {
     EVE_TITLE_MAX_LENGTH + WORD_BOUNDARY_LOOKAHEAD
   );
   const wordBoundary = shortened.lastIndexOf(" ");
-  return /* oxlint-disable no-ternary -- Keep slice receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (
-    wordBoundary /* oxlint-enable no-ternary */ > TITLE_START_INDEX
+  return (
+    wordBoundary > TITLE_START_INDEX
       ? shortened.slice(TITLE_START_INDEX, wordBoundary)
       : shortened
   )
@@ -66,7 +60,6 @@ const eveConversationTitleFallback = (
 const normalizeGeneratedTitle = (title: string): string =>
   compactTitle(title.replace(surroundingQuotes, ""));
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateEveConversationTitleResult's awaited sequencing and rejected-Promise behavior. */
 /**
  * Auxiliary title generation must never prevent a conversation from starting.
  * @param {ReadonlyEveMessageInput} message First user message supplied to the auxiliary title model.
@@ -103,17 +96,6 @@ Rules (strictly follow all):
     return { source: "fallback", title: fallback };
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve persistGeneratedEveConversationTitle's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements -- max-statements (#512): persistGeneratedEveConversationTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-/**
- * The conditional update preserves manual titles and every branch's shared root title.
- * @param options Root conversation and its owner's original message used to check title eligibility.
- * @param options.conversationId Conversation whose shared root title is still pending.
- * @param options.message First user message that defines the fallback title and generation prompt.
- * @param options.ownerId Owner used to scope the eligibility check and conditional update.
- * @returns The generation result when eligible; no result when the title is already settled or eligibility cannot be checked.
- */
 const persistGeneratedEveConversationTitle = async ({
   conversationId,
   message,
@@ -134,7 +116,6 @@ const persistGeneratedEveConversationTitle = async ({
     log.warn(
       {
         conversationId,
-        // oxlint-disable-next-line no-ternary -- Keep errorName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorName: error instanceof Error ? error.name : typeof error,
       },
       "Eve title eligibility check failed"
@@ -143,7 +124,6 @@ const persistGeneratedEveConversationTitle = async ({
   }
   const generated = await generateEveConversationTitleResult(message);
   try {
-    // oxlint-disable-next-line no-ternary -- Keep the selected persistence call lazy inside this try/catch; direct if/else triggers pinned unicorn/prefer-ternary.
     await (generated.source === "generated"
       ? replaceEveRootFallbackTitle(
           ownerId,
@@ -156,7 +136,6 @@ const persistGeneratedEveConversationTitle = async ({
     log.warn(
       {
         conversationId,
-        // oxlint-disable-next-line no-ternary -- Keep errorName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorName: error instanceof Error ? error.name : typeof error,
       },
       "Eve title persistence failed"
@@ -165,13 +144,9 @@ const persistGeneratedEveConversationTitle = async ({
   // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_TITLE_MAX_LENGTH, eveConversationTitleFallback, generateEveConversationTitleResult, persistGeneratedEveConversationTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */
 export {
   EVE_TITLE_MAX_LENGTH,
   eveConversationTitleFallback,
   generateEveConversationTitleResult,
   persistGeneratedEveConversationTitle,
 };
-/* oxlint-enable import/no-named-export */

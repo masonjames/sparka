@@ -47,9 +47,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { InboxIcon } from "lucide-react";
 import React from "react";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (LayoutPrimitivesVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- LayoutPrimitivesVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- LayoutPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
   <main
@@ -126,6 +123,3 @@ export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
     </section>
   </main>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

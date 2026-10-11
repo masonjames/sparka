@@ -1,8 +1,6 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { getEveConversation } from "@/lib/db/eve-queries";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import {
   readEveCheckpoint,
   waitForEveCheckpoint,
@@ -40,7 +38,6 @@ const checkpointFailureResponse = (
         conversationId: id,
         error: error.message,
         reason: error.reason,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input.data,
       },
       { headers: { "cache-control": "no-store" }, status: 409 }
@@ -55,13 +52,8 @@ const checkpointFailureResponse = (
   );
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null -- max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions: Preserve one sessionId getter read and native property narrowing; captured-value comparisons leave later property reads nullable in the pinned compiler, while using that captured value changes subsequent getter reads.
-unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions: Preserve one sessionId getter read and native property narrowing; captured-value comparisons leave later property reads nullable in the pinned compiler, while using that captured value changes subsequent getter reads.
+ */
 
 /**
  * Requests checkpoint capture for a bound source conversation.
@@ -96,7 +88,6 @@ export const POST = async (
     );
   }
   const source = await getEveConversation(principal.ownerId, id);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!source?.sessionId || source.state !== "bound") {
     return Response.json(
       { error: "Source conversation not found." },
@@ -132,7 +123,6 @@ export const POST = async (
       );
     }
     return Response.json(
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { conversationId: id, ready: true, ...input.data },
       { headers: { "cache-control": "no-store" } }
     );
@@ -140,6 +130,4 @@ export const POST = async (
     return checkpointFailureResponse(error, id, input);
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions */

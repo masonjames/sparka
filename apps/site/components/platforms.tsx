@@ -20,7 +20,6 @@ const AppleLogo = ({
   </svg>
 );
 
-/* oxlint-disable react/no-multi-comp -- WindowsLogo: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const WindowsLogo = ({
   className,
 }: {
@@ -35,9 +34,7 @@ const WindowsLogo = ({
     <path d="M3 12V6.75l6-1.32v6.48L3 12zm6.73-.07l8.27-.9V3.12l-8.27 1.24v7.57zM18 12.08l-8.27.9v7.57l8.27 1.24V12.08zM9 12.1l-6 .09v5.16l6 1.32V12.1z" />
   </svg>
 );
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp -- LinuxLogo: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const LinuxLogo = ({
   className,
 }: {
@@ -52,9 +49,7 @@ const LinuxLogo = ({
     <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333a.506.506 0 00-.391-.135.544.544 0 00-.368.135c-.112.087-.132.204-.182.335a.87.87 0 00-.066.334v.02c.006.08.018.199.045.268-.145-.063-.324-.145-.497-.202a1.309 1.309 0 01-.076-.468v-.067c.006-.354.086-.7.223-.926.145-.325.355-.523.59-.658.21-.135.447-.202.717-.202z" />
   </svg>
 );
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp -- BrowserFrame: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const BrowserFrame = ({
   className,
 }: {
@@ -99,14 +94,6 @@ const BrowserFrame = ({
     />
   </svg>
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Platforms); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Platforms renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- Platforms: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- Platforms: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-
-/* oxlint-disable react/jsx-max-depth -- Platforms: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 /* ── Main Component ───────────────────────────────────────────────── */
 
@@ -179,15 +166,9 @@ export const Platforms = (): React.JSX.Element => (
           <div className="relative z-10 mt-8 flex items-end justify-between">
             <span className="text-foreground/70 group-hover:text-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors duration-300">
               Launch web app
-              <ArrowUpRight
-                // oxlint-disable-next-line react/forbid-component-props -- ArrowUpRight accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
-            <BrowserFrame
-              // oxlint-disable-next-line react/forbid-component-props -- BrowserFrame accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-foreground/60 hidden h-20 w-auto transition-transform duration-500 group-hover:scale-105 sm:block"
-            />
+            <BrowserFrame className="text-foreground/60 hidden h-20 w-auto transition-transform duration-500 group-hover:scale-105 sm:block" />
           </div>
         </a>
 
@@ -219,10 +200,7 @@ export const Platforms = (): React.JSX.Element => (
               className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
               href={siteLinks.docsDesktopMac}
             >
-              <AppleLogo
-                // oxlint-disable-next-line react/forbid-component-props -- AppleLogo accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors"
-              />
+              <AppleLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
               <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                 macOS
               </span>
@@ -231,10 +209,7 @@ export const Platforms = (): React.JSX.Element => (
               className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
               href={siteLinks.docsDesktopWindows}
             >
-              <WindowsLogo
-                // oxlint-disable-next-line react/forbid-component-props -- WindowsLogo accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors"
-              />
+              <WindowsLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
               <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                 Windows
               </span>
@@ -243,10 +218,7 @@ export const Platforms = (): React.JSX.Element => (
               className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
               href={siteLinks.docsDesktopLinux}
             >
-              <LinuxLogo
-                // oxlint-disable-next-line react/forbid-component-props -- LinuxLogo accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors"
-              />
+              <LinuxLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
               <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                 Linux
               </span>
@@ -257,10 +229,3 @@ export const Platforms = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */

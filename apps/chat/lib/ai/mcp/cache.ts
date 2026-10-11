@@ -60,7 +60,6 @@ const createCachedConnectionStatus = (
   connectorId: string,
   fetcher: () => Promise<ConnectionStatusResult>
 ): (() => Promise<ConnectionStatusResult>) => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cached's awaited sequencing and rejected-Promise behavior. */
   const cached = unstable_cache(
     async () => {
       const result = await fetcher();
@@ -78,8 +77,6 @@ const createCachedConnectionStatus = (
       tags: [mcpCacheTags.connectionStatus(connectorId)],
     }
   );
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return async () => {
     try {
       return await cached();
@@ -90,10 +87,8 @@ const createCachedConnectionStatus = (
       throw error;
     }
   };
-  /* oxlint-enable oxc/no-async-await */
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createCachedDiscovery's awaited sequencing and rejected-Promise behavior. */
 /**
  * Create a cached discovery fetcher for a specific connector.
  * Cache duration: 5 minutes (tools/resources/prompts rarely change)
@@ -116,7 +111,6 @@ const createCachedDiscovery = (
       tags: [mcpCacheTags.discovery(connectorId)],
     }
   );
-/* oxlint-enable oxc/no-async-await */
 /**
  * Invalidate connection status cache for a connector.
  * Call this on: auth errors, disconnect, OAuth completion
@@ -145,13 +139,9 @@ const invalidateAllMcpCaches = (connectorId: string): void => {
   invalidateConnectionStatus(connectorId);
   invalidateDiscovery(connectorId);
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createCachedConnectionStatus, createCachedDiscovery, invalidateAllMcpCaches); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   createCachedConnectionStatus,
   createCachedDiscovery,
   invalidateAllMcpCaches,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ConnectionStatusResult, DiscoveryResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ConnectionStatusResult, DiscoveryResult };
-/* oxlint-enable import/no-named-export */

@@ -1,13 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-/* oxlint-disable sort-imports -- Button initializes the UUID crypto binding through utils before ButtonGroup reaches ReactDOM through Separator and calls external DevTools hooks; preserve that observable initialization order. */
 import {
   ButtonGroup,
   ButtonGroupSeparator,
   ButtonGroupText,
 } from "@/components/ui/button-group";
-/* oxlint-enable sort-imports */
 import {
   Popover,
   PopoverContent,
@@ -25,11 +23,6 @@ import { Progress } from "@/components/ui/progress";
 import React from "react";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
-
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UiPrimitivesVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- UiPrimitivesVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const UiPrimitivesVisualFixture = ({
   includeProgress = false,
@@ -94,7 +87,6 @@ export const UiPrimitivesVisualFixture = ({
           </div>
           <div className="space-y-2">
             <p>Null value</p>
-            {/* oxlint-disable-next-line unicorn/no-null -- Radix progress explicitly accepts null as the indeterminate value; cover that native input contract. */}
             <Progress aria-label="Null value" value={null} />
           </div>
           <div className="space-y-2">
@@ -127,16 +119,9 @@ export const UiPrimitivesVisualFixture = ({
 
     <section className="grid max-w-3xl grid-cols-[auto_6rem_auto_auto_auto_auto] items-center gap-3">
       <span>Horizontal</span>
-      <Separator
-        // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="!w-24 shrink-0"
-      />
+      <Separator className="!w-24 shrink-0" />
       <span>Vertical</span>
-      <Separator
-        // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="!h-8 shrink-0"
-        orientation="vertical"
-      />
+      <Separator className="!h-8 shrink-0" orientation="vertical" />
       <Popover>
         <PopoverTrigger asChild>
           <Button>Open popover</Button>
@@ -152,6 +137,3 @@ export const UiPrimitivesVisualFixture = ({
     </section>
   </main>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

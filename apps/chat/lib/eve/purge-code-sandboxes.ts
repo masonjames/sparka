@@ -2,17 +2,11 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 import { tools } from "@/tools/chatjs/tools";
 
-/* oxlint-disable import/no-relative-parent-imports -- Preserve user-owned custom tool initialization before environment validation and database-client creation; alias sorting moves this database dependency before the installed registry and changes that supported extension startup order. */
-/* oxlint-disable sort-imports -- The custom tool registry must initialize before the database module graph; sorting the multi-binding database import ahead of it changes that startup boundary. */
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 import { eveCodeSandboxName } from "./code-sandbox-name";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEveFamilyCodeSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyCodeSandboxes's awaited sequencing and rejected-Promise behavior. */
 
 const NO_RESOURCES = 0;
 const ENTRY_VALUE_INDEX = 1;
@@ -37,7 +31,6 @@ const assertNoUncertainCodeSandboxes = (
 
 const createCodeSandboxCleanupSession = (): CodeSandboxCleanupSession => {
   const capability = getCodeSandboxCleanup(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading the codeExecution registry entry; preserve one registry evaluation and the undefined short-circuit result.
     Object.entries(tools).find(
       ([name]: readonly [string, ...unknown[]]) => name === "codeExecution"
     )?.[ENTRY_VALUE_INDEX]
@@ -62,7 +55,6 @@ const purgeConfirmedCodeSandbox = async (
       callId: resource.callId,
       ownerId,
       provider: cleanup.provider,
-      // oxlint-disable-next-line no-undefined -- Keep the optional sandbox session ID as undefined when the allocation has no bound session.
       sessionId: resource.sessionId ?? undefined,
     }) !== resource.name
   ) {
@@ -108,5 +100,3 @@ export const purgeEveFamilyCodeSandboxes = async (
     );
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

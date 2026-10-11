@@ -23,9 +23,7 @@ const pages = [
   { name: "features", path: "/docs/features/overview" },
 ] as const;
 
-/* oxlint-disable eslint/max-statements -- Keep each visual case's iframe setup, DOM copy, asset readiness, and capture in one ordered test. */
 for (const page of pages) {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`docs ${page.name}`, async () => {
     document.head.replaceChildren();
     document.body.replaceChildren();
@@ -34,7 +32,13 @@ for (const page of pages) {
     const frame = document.createElement("iframe");
     frame.title = `ChatJS docs: ${page.name}`;
     const loaded = Promise.withResolvers<boolean>();
-    frame.addEventListener("load", () => loaded.resolve(true), { once: true });
+    frame.addEventListener(
+      "load",
+      () => {
+        loaded.resolve(true);
+      },
+      { once: true }
+    );
     frame.src = page.path;
     frame.style.cssText = "border:0;display:block;height:100vh;width:100vw";
     document.body.append(frame);
@@ -65,6 +69,4 @@ for (const page of pages) {
     await document.fonts.ready;
     await takeSnapshot(page.name);
   });
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable eslint/max-statements */

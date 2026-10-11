@@ -41,7 +41,6 @@ class ThreadRunHostAdapter<
   public readonly writeRunMessage: ThreadRunHost<TMessage>["writeRunMessage"];
 
   public constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This live source retains native SDK schema instances and receives callback/transport setter writes; recursive readonly schemas cannot satisfy their original SDK contract.
     source: RunHostSource<TMessage>,
     operations: RunHostOperations<TMessage>
   ) {
@@ -119,6 +118,4 @@ class ThreadRunHostAdapter<
   }
 }
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThreadRunHostAdapter); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ThreadRunHostAdapter };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -12,7 +12,6 @@ const positionRows = z.array(
   })
 );
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresStreamPositions's awaited sequencing and rejected-Promise behavior. */
 /**
  * Metadata-only adapter for Eve 0.61.0 and world-postgres 5.0.0-beta.40.
  * Uses the same default stream name and non-EOF chunk count as getReadable /
@@ -55,8 +54,6 @@ const readEvePostgresStreamPositions = async (
   }
   return positions;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEvePostgresStreamPositions's awaited sequencing and rejected-Promise behavior. */
 
 /** Open a short-lived connection for owner-authorized native stream metadata.
  * @param {string} databaseUrl PostgreSQL connection URL for the workflow world.
@@ -81,7 +78,4 @@ const getEvePostgresStreamPositions = async (
     await connection.end();
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEvePostgresStreamPositions, readEvePostgresStreamPositions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 export { getEvePostgresStreamPositions, readEvePostgresStreamPositions };
-/* oxlint-enable import/no-named-export */

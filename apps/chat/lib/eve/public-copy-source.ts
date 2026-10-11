@@ -5,9 +5,6 @@ import { getEveConnectionOptions } from "./connection-options";
 import { getPublicEveConversation } from "@/lib/db/eve-queries";
 import { prepareEveCopyTranscript } from "./copy-transcript";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readPublicEveCopySource); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopySource's awaited sequencing and rejected-Promise behavior. */
-
 const PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS = 15_000;
 const PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH = 100;
 const TITLE_PREVIEW_START = 0;
@@ -54,5 +51,3 @@ export const readPublicEveCopySource = async (
       ),
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

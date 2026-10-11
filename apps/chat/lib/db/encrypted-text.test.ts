@@ -1,9 +1,7 @@
-/* oxlint-disable sort-imports -- Keep the Vitest mock setup and encrypted-text module imports in authored order; this fixture relies on Vitest hoisting the environment mock before module evaluation. */
 import { pgTable } from "drizzle-orm/pg-core";
 import { expect, test, vi } from "vitest";
 
 import { encryptedJson, encryptedText } from "./encrypted-text";
-/* oxlint-enable sort-imports */
 
 const { encryptionKey } = vi.hoisted(() => {
   const AES_256_KEY_BYTES = 32;

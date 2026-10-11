@@ -1,14 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-
 import type { ToolDefinition } from "../../../registry/metadata";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import path from "node:path";
 import { stat } from "node:fs/promises";
 
 import ts from "typescript";
-
-/* oxlint-enable import/no-relative-parent-imports */
 
 const EMPTY_COLLECTION_SIZE = 0;
 const HELPER_ARGUMENT_INDEX = 0;
@@ -21,7 +16,6 @@ type ReadonlyNative<Value> = Value extends (
     ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
     : Value;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve customToolsFileExists's awaited sequencing and rejected-Promise behavior. */
 const customToolsFileExists = async (filename: string): Promise<boolean> => {
   try {
     await stat(filename);
@@ -31,11 +25,6 @@ const customToolsFileExists = async (filename: string): Promise<boolean> => {
     return false;
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (validateCustomToolKeys); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateCustomToolKeys's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 export const validateCustomToolKeys = async (
   cwd: string,
   definitions: readonly ReadonlyNative<ToolDefinition>[]
@@ -46,12 +35,10 @@ export const validateCustomToolKeys = async (
   }
   const configPath = ts.findConfigFile(cwd, (file) => ts.sys.fileExists(file));
   const config: unknown =
-    // oxlint-disable-next-line no-ternary -- Keep config as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof configPath === "string" && configPath !== ""
       ? ts.readConfigFile(configPath, (file) => ts.sys.readFile(file)).config
       : {};
   const { options } = ts.parseJsonConfigFileContent(config, ts.sys, cwd);
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const program = ts.createProgram([filename], { ...options, noEmit: true });
   const source = program.getSourceFile(filename);
   if (!source) {
@@ -74,7 +61,6 @@ export const validateCustomToolKeys = async (
       ts.isImportDeclaration(statement) &&
       ts.isStringLiteral(statement.moduleSpecifier) &&
       statement.moduleSpecifier.text === "@/lib/eve/tool-types" &&
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading namedBindings from statement.importClause; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       statement.importClause?.namedBindings &&
       ts.isNamedImports(statement.importClause.namedBindings) &&
       statement.importClause.namedBindings.elements.some(
@@ -83,7 +69,6 @@ export const validateCustomToolKeys = async (
       )
   );
   const argument =
-    // oxlint-disable-next-line no-ternary -- Keep argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     usesCoreHelper &&
     initializer &&
     ts.isCallExpression(initializer) &&
@@ -136,7 +121,3 @@ export const validateCustomToolKeys = async (
     );
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

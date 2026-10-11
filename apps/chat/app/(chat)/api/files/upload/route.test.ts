@@ -34,7 +34,6 @@ vi.mock("@/lib/config", () => ({
 vi.mock("@/lib/env", () => ({
   env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost/fixture" },
 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("@/lib/db/eve-files", () => ({
   reserveEveUpload: mocks.register,
   writeEveUpload: async (
@@ -43,7 +42,6 @@ vi.mock("@/lib/db/eve-files", () => ({
     write: () => Promise<unknown>
   ): Promise<unknown> => await write(),
 }));
-/* oxlint-enable oxc/no-async-await */
 
 vi.mock("@/lib/file-storage", () => ({
   createFileId: (): string => "abcdefghijklmnopqrstuvwx.png",
@@ -73,8 +71,6 @@ const request = (): Request => {
   });
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-
 test("records the authenticated owner of a server-created storage key before returning it", async () => {
   const response = await POST(request());
   expect(response.status).toBe(HTTP_STATUS.ok);
@@ -83,8 +79,6 @@ test("records the authenticated owner of a server-created storage key before ret
     url: `/api/files/${key}`,
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("does not return a usable upload when ownership registration fails", async () => {
   mocks.register.mockRejectedValue(new Error("database unavailable"));
@@ -93,19 +87,18 @@ test("does not return a usable upload when ownership registration fails", async 
   expect(await response.json()).toEqual({ error: "Upload failed" });
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined, typescript/promise-function-async*/
+/* oxlint-disable typescript/promise-function-async*/
 
 test("waits for durable ownership before starting storage I/O", async () => {
   const gate = Promise.withResolvers<undefined>();
   mocks.register.mockImplementation(() => gate.promise);
   const response = POST(request());
-  await vi.waitFor(() =>
-    expect(mocks.register).toHaveBeenCalledWith("owner", key)
-  );
+  await vi.waitFor(() => {
+    expect(mocks.register).toHaveBeenCalledWith("owner", key);
+  });
   expect(mocks.upload).not.toHaveBeenCalled();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
   gate.resolve(undefined);
   const resolvedResult1 = await response;
   expect(resolvedResult1.status).toBe(HTTP_STATUS.ok);
@@ -116,9 +109,7 @@ test("waits for durable ownership before starting storage I/O", async () => {
     "image/png"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/promise-function-async*/
+/* oxlint-enable typescript/promise-function-async*/
 
 test("retains the reserved identity after an uncertain storage failure", async () => {
   mocks.upload.mockRejectedValue(new Error("storage response lost"));
@@ -132,8 +123,6 @@ test("retains the reserved identity after an uncertain storage failure", async (
     "image/png"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("enforces retained upload type and byte limits before reserving storage", async () => {
   for (const file of [
@@ -154,10 +143,6 @@ test("enforces retained upload type and byte limits before reserving storage", a
   expect(mocks.register).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "not multipart"])'s awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable no-undefined*/
 
 test.each([undefined, "not multipart"])(
   "rejects malformed upload body %s before storage admission",
@@ -169,9 +154,6 @@ test.each([undefined, "not multipart"])(
     expect(mocks.register).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined*/
 
 test("rejects a declared oversized request without reading its body", async () => {
   const uploadRequest = request();
@@ -184,10 +166,8 @@ test("rejects a declared oversized request without reading its body", async () =
   expect(uploadRequest.bodyUsed).toBe(false);
   expect(mocks.register).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "1"])'s awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements, no-undefined, typescript/strict-boolean-expressions*/
+/* oxlint-disable typescript/strict-boolean-expressions*/
 
 test.each([undefined, "1"])(
   "bounds multipart consumption with content-length %s and cancels the source",
@@ -202,7 +182,6 @@ test.each([undefined, "1"])(
         ): void {
           chunksRead += FIRST_MULTIPART_CHUNK_NUMBER;
           controller.enqueue(
-            // oxlint-disable-next-line no-ternary -- Keep controller.enqueue argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             chunksRead === FIRST_MULTIPART_CHUNK_NUMBER
               ? new TextEncoder().encode(
                   '--upload\r\nContent-Disposition: form-data; name="file"; filename="large.png"\r\nContent-Type: image/png\r\n\r\n'
@@ -233,14 +212,14 @@ test.each([undefined, "1"])(
     );
     expect(response.status).toBe(HTTP_STATUS.contentTooLarge);
     expect(chunksRead).toBe(EXPECTED_MULTIPART_CHUNK_COUNT);
-    await vi.waitFor(() => expect(cancel).toHaveBeenCalledOnce());
+    await vi.waitFor(() => {
+      expect(cancel).toHaveBeenCalledOnce();
+    });
     expect(mocks.register).not.toHaveBeenCalled();
     expect(mocks.upload).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined, typescript/strict-boolean-expressions*/
+/* oxlint-enable typescript/strict-boolean-expressions*/
 
 test("accepts a file at the configured byte limit with multipart overhead", async () => {
   const form = new FormData();
@@ -256,4 +235,3 @@ test("accepts a file at the configured byte limit with multipart overhead", asyn
   );
   expect(response.status).toBe(HTTP_STATUS.ok);
 });
-/* oxlint-enable oxc/no-async-await */

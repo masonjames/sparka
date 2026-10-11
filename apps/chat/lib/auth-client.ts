@@ -23,13 +23,8 @@ const electronAuthPlugin = electronProxyClient({
 const authClient = createAuthClient({
   plugins: [
     lastLoginMethodClient(),
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
   ],
 });
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- */
 export default authClient;
-/* oxlint-enable import/no-default-export */

@@ -1,41 +1,28 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-files"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/eve/cleanup-orphaned-files"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { referenceEveFiles, reserveEveUpload } from "../lib/db/eve-files";
-/* oxlint-enable eslint/sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { keyFromFileUrl } from "../lib/file-url";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
 // Keep this as the final static import to preserve prior dependency evaluation order.
 // oxfmt-ignore
 import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const storage = vi.hoisted(() => ({
   fail: false,
   objects: new Map<string, Date>(),
 }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../lib/file-storage")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("../lib/file-storage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("../lib/file-storage", () => ({
@@ -54,21 +41,10 @@ vi.mock("../lib/file-storage", () => ({
     }
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
- * max-lines-per-function (#510): test("the complete sweep preserves legacy/referenced files and recovers failed deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("the complete sweep preserves legacy/referenced files and recovers failed deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("the complete sweep preserves legacy/referenced files and recovers failed deleti uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("the complete sweep preserves legacy/referenced files and recovers failed deleti's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 test("the complete sweep preserves legacy/referenced files and recovers failed deletion and late writes", async () => {
   const owner = crypto.randomUUID();
   const [orphan, referenced, legacy, young] = Array.from({ length: 4 }, () =>
@@ -143,5 +119,3 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     await db.delete(user).where(eq(user.id, owner));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */

@@ -90,7 +90,6 @@ const removeIncompleteLinkOrImage = (text: string): string => {
   return text;
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (parseIncompleteMarkdown); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
  * of links, images, bold, and italic formatting during streaming.
@@ -137,4 +136,3 @@ export const parseIncompleteMarkdown = (text: string): string => {
     value: result,
   });
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

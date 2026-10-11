@@ -1,8 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DELETE, GET } from "./route";
-/* oxlint-enable sort-imports */
 
 const HTTP_STATUS = {
   accepted: 202,
@@ -59,7 +57,6 @@ beforeEach(() => {
   mocks.state.mockResolvedValue({ rootId: id, state: "bound" });
   mocks.remove.mockResolvedValue({ rootId: id });
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("cleans an unaccepted copy with never-dispatched proof instead of native retirement", async () => {
   const rootId = "00000000-0000-4000-8000-000000000099";
@@ -72,8 +69,6 @@ it("cleans an unaccepted copy with never-dispatched proof instead of native reti
   expect(mocks.removeCopy).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("runs owner-authorized family deletion with a server-controlled worker root", async () => {
   const response = await DELETE(request(), context);
@@ -82,22 +77,16 @@ it("runs owner-authorized family deletion with a server-controlled worker root",
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(mocks.remove).toHaveBeenCalledWith("owner", id, process.cwd());
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- Keep an absent binding distinct from a returned tombstone state. */
 it("hides unavailable and foreign bindings without cleanup", async () => {
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.state.mockResolvedValue(undefined);
   const resolvedResult2 = await DELETE(request(), context);
   expect(resolvedResult2.status).toBe(HTTP_STATUS.notFound);
   expect(mocks.state).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable unicorn/no-null -- The principal mock returns null to represent an unauthenticated request. */
 it("requires login and valid coordinates", async () => {
   mocks.principal.mockResolvedValue(null);
   const resolvedResult3 = await DELETE(request(), context);
@@ -109,9 +98,6 @@ it("requires login and valid coordinates", async () => {
   expect(resolvedResult4.status).toBe(HTTP_STATUS.badRequest);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("rejects cross-origin mutation before any cleanup", async () => {
   const resolvedResult6 = await DELETE(
@@ -121,8 +107,6 @@ it("rejects cross-origin mutation before any cleanup", async () => {
   expect(resolvedResult6.status).toBe(HTTP_STATUS.forbidden);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("refuses unsupported provider configuration before revoking access", async () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://remote.example/db";
@@ -134,8 +118,6 @@ it("refuses unsupported provider configuration before revoking access", async ()
   expect(resolvedResult8.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("reports pending erasure without leaking internal failure details", async () => {
   mocks.remove.mockRejectedValue(new Error("private provider details"));
@@ -149,16 +131,12 @@ it("reports pending erasure without leaking internal failure details", async () 
     status: "pending",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("does not call an unstarted operation pending", async () => {
   mocks.remove.mockRejectedValue(new Error("creation unsettled"));
   const resolvedResult9 = await DELETE(request(), context);
   expect(resolvedResult9.status).toBe(HTTP_STATUS.conflict);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("returns completed tombstones idempotently and GET never resumes cleanup", async () => {
   mocks.state.mockResolvedValue({ rootId: id, state: "deleted" });
@@ -180,4 +158,3 @@ it("returns completed tombstones idempotently and GET never resumes cleanup", as
   });
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

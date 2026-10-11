@@ -1,13 +1,10 @@
 import type { EveMessage } from "eve/client";
 import React from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
-/* oxlint-enable sort-imports */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
@@ -18,7 +15,6 @@ const mocks = vi.hoisted(() => ({
   resolveCreationRequest: vi.fn(),
   restoreAttachments: vi.fn(),
 }));
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutateAsync: mocks.restoreAttachments }),
@@ -35,19 +31,14 @@ vi.mock("@tanstack/react-query", () => ({
   }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
-
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("./eve-logical-context", () => ({
   useEveRuntime: () => mocks.openRuntime,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 vi.mock("@/lib/eve/resolve-creation-request", () => ({
   resolveCreationRequest: mocks.resolveCreationRequest,
 }));
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/features/installed-uploads", () => ({
   attachmentUploads: {
@@ -57,16 +48,10 @@ vi.mock("@/features/installed-uploads", () => ({
     }),
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: () => "openai/gpt-4.1",
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/trpc/react", () => ({
   useTRPC: () => ({
@@ -82,7 +67,6 @@ vi.mock("@/trpc/react", () => ({
     },
   }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -92,7 +76,6 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const conversationId = "11111111-1111-4111-8111-111111111111";
 const ownerId = "test-owner";
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- storage: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const storage = () => {
   const values = new Map<string, string>();
@@ -106,7 +89,6 @@ const storage = () => {
     },
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 const userMessage = (
   parts: readonly ReadonlyEveMessagePart[] = []
@@ -123,7 +105,6 @@ const responseMessage = (): EveMessage => ({
   parts: [{ text: "The answer", type: "text" }],
   role: "assistant",
 });
-/* oxlint-disable unicorn/no-null -- ForkProbe: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value: ReturnType<typeof useEveFork>); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ForkProbe = ({
   onValue,
@@ -135,9 +116,6 @@ const ForkProbe = ({
   onValue(useEveFork(ownerId, conversationId));
   return null;
 };
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-disable id-length, no-undefined, typescript/explicit-function-return-type -- required: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const required = <T,>(value: T | undefined) => {
   if (value === undefined) {
@@ -145,16 +123,11 @@ const required = <T,>(value: T | undefined) => {
   }
   return value;
 };
-/* oxlint-enable id-length, no-undefined, typescript/explicit-function-return-type */
-
-/* oxlint-disable id-length, typescript/explicit-function-return-type -- deferred: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const deferred = <T,>() => {
   const { promise, reject, resolve } = Promise.withResolvers<T>();
   return { promise, reject, resolve };
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve flushEffects's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 const flushEffects = async (): Promise<void> => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
@@ -162,17 +135,14 @@ const flushEffects = async (): Promise<void> => {
     await Promise.resolve();
   });
 };
-/* oxlint-enable oxc/no-async-await */
 afterEach(() => {
   mocks.resolveCreationRequest.mockReset();
   mocks.restoreAttachments.mockReset();
   mocks.openRuntime.mockReset();
   vi.unstubAllGlobals();
 });
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop -- use-eve-fork.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value). */
 
 describe("useEveFork", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("opens an inline edit with the original response model and tool", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
@@ -211,7 +181,7 @@ describe("useEveFork", () => {
       );
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -219,8 +189,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("restores a saved edit's multi-model selection", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
@@ -261,7 +229,7 @@ describe("useEveFork", () => {
       });
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -269,8 +237,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("keeps a restored edit associated with its message after rejection", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
@@ -318,7 +284,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -326,8 +292,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("keeps a rejected edit open after releasing its saved operation", async () => {
     vi.stubGlobal("sessionStorage", storage());
     mocks.resolveCreationRequest.mockRejectedValue(
@@ -366,7 +330,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).locked).toBe(false);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -440,8 +404,6 @@ describe("useEveFork", () => {
     }
   });
 
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not replace an open inline edit with another message action", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
@@ -469,11 +431,12 @@ describe("useEveFork", () => {
         await required(fork).begin(userMessage());
       });
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-      act(() => required(fork).setDraft("Keep this edit draft."));
+      act(() => {
+        required(fork).setDraft("Keep this edit draft.");
+      });
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing userMessage() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...userMessage(),
           id: "seed_message_2",
           parts: [{ text: "A different message", type: "text" }],
@@ -483,7 +446,7 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).draft).toBe("Keep this edit draft.");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -491,8 +454,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("clears fulfilled edit state in the client navigation transition", async () => {
     const pendingStorage = storage();
     let fork: ReadonlyNativeSurface<ReturnType<typeof useEveFork>> | undefined;
@@ -555,7 +516,7 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -563,8 +524,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not replace an unconfirmed edit with another saved operation", async () => {
     vi.stubGlobal("sessionStorage", storage());
     mocks.resolveCreationRequest.mockRejectedValue(
@@ -606,7 +565,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeDefined();
       expect(mocks.resolveCreationRequest).toHaveBeenCalledTimes(1);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -614,8 +573,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("keeps a delayed comparison's exact operation available for recovery", async () => {
     const pendingStorage = storage();
     const delayed = deferred<string>();
@@ -683,7 +640,7 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -691,8 +648,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("retries an unconfirmed comparison with its original operation identity", async () => {
     const pendingStorage = storage();
     vi.stubGlobal("sessionStorage", pendingStorage);
@@ -739,10 +694,9 @@ describe("useEveFork", () => {
         await required(fork).retry();
       });
 
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 2 from mocks.resolveCreationRequest.mock.calls[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(mocks.resolveCreationRequest.mock.calls[1]?.[2]).toEqual(original);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -750,8 +704,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("restores historical attachments by message identity without uploads installed", async () => {
     vi.stubGlobal("sessionStorage", storage());
     const attachment = {
@@ -800,7 +752,7 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).locked).toBe(false);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -808,8 +760,6 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("locks an inline edit when an original attachment cannot be restored", async () => {
     vi.stubGlobal("sessionStorage", storage());
     vi.stubGlobal("window", { location: { origin: "https://chatjs.example" } });
@@ -858,7 +808,7 @@ describe("useEveFork", () => {
         messageId: "seed_message_0",
       });
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => {
         if (renderer) {
           renderer.unmount();
@@ -866,8 +816,4 @@ describe("useEveFork", () => {
       });
     }
   });
-  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop */
-
-/* oxlint-disable max-lines -- use-eve-fork.test keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

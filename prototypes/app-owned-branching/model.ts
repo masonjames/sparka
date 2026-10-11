@@ -94,7 +94,6 @@ type ReadonlySqlTag = <
 interface SqlQueries {
   <RowType extends readonly (object | undefined)[] = postgres.Row[]>(
     template: readonly string[] & { readonly raw: readonly string[] },
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Postgres parameters include branded helpers/fragments with mutable metadata; keep their native input contract while the SQL receiver exposes only readonly capabilities.
     ...parameters: readonly postgres.ParameterOrFragment<never>[]
   ): postgres.PendingQuery<RowType>;
   (ids: readonly string[]): postgres.Helper<readonly string[], []>;
@@ -106,7 +105,6 @@ type SqlConnection = SqlQueries & Readonly<Pick<Sql, "begin">>;
 const hasBarrier = (barrier: string | null): boolean =>
   barrier !== null && barrier !== "";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ownedBranch's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/strict-boolean-expressions -- ownedBranch: The database result may be empty; this existing guard preserves its missing-row error. */
 const ownedBranch = async (
   sql: ReadonlySqlTag,
@@ -121,8 +119,6 @@ const ownedBranch = async (
   }
   return row;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve history's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 const history = async (
@@ -145,9 +141,6 @@ const history = async (
     message.parse(row.payload)
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable eslint/max-statements -- validatePrefix: Tool-call pairing shares pending and used ID sets across ordered message parts; keep its bounded validation together. */
-/* oxlint-disable eslint/no-magic-numbers -- validatePrefix: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 // A bounded neutral prototype format, NOT a claimed public EVE seed schema.
 const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
   if (
@@ -179,11 +172,7 @@ const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
     throw new Error("unresolved tool boundary");
   }
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requireResources's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- requireResources: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 const requireResources = async (
   sql: SqlQueries,
   owner: string,
@@ -202,9 +191,6 @@ const requireResources = async (
     throw new Error("resource not owned");
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve append's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 const append = async (
   sql: SqlConnection,
@@ -242,10 +228,7 @@ const append = async (
     await tx`update branch set head=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve editDocument's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable eslint/max-params -- editDocument: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 const editDocument = async (
   sql: SqlConnection,
   owner: string,
@@ -264,11 +247,7 @@ const editDocument = async (
     await tx`update branch set documents=${tx.json(revisions)} where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beginWriter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-params -- beginWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 const beginWriter = async (
   sql: SqlConnection,
   owner: string,
@@ -284,11 +263,7 @@ const beginWriter = async (
     await tx`insert into writer (id,branch,kind) values (${id},${branch},${kind})`;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve endWriter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-params -- endWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 const endWriter = async (
   sql: SqlConnection,
   owner: string,
@@ -300,12 +275,7 @@ const endWriter = async (
     await tx`delete from writer where id=${id} and branch=${branch}`;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserve's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-params */
 
-/* oxlint-disable eslint/max-statements -- reserve: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/no-magic-numbers -- reserve: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 // Durable steps may retry this operation. The operation identity fixes the first
 // admitted boundary; retry never resamples documents or the live sandbox.
 const reserve = async (
@@ -342,9 +312,6 @@ const reserve = async (
     await tx`update branch set barrier=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
 interface SnapshotProvider {
   // Stronger than Vercel snapshot(): replay/lookup by caller key is REQUIRED.
@@ -352,9 +319,6 @@ interface SnapshotProvider {
   restore: (key: string, sandbox: string) => Promise<void>;
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve complete's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- complete: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/max-params -- complete: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 const complete = async (
   sql: SqlConnection,
   provider: Readonly<SnapshotProvider>,
@@ -365,7 +329,6 @@ const complete = async (
   const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${id} and owner=${owner}`;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading owner from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (checkpoint?.owner !== owner) {
     throw new Error("not owned");
   }
@@ -380,14 +343,12 @@ const complete = async (
     await provider.capture(id, checkpoint.sandbox);
     // Snapshot stops the original VM. Reopen parent before releasing admission.
     await provider.restore(id, `parent:${id}`);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling afterRestore; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     afterRestore?.();
     await sql.begin(async (tx: SqlQueries) => {
       const ownedBranchRecord = await ownedBranch(tx, owner, source);
       const [current] = await tx<
         Checkpoint[]
       >`select * from checkpoint where id=${id} for update`;
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       if (current?.status === "ready") {
         return;
       }
@@ -403,12 +364,7 @@ const complete = async (
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fork's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- fork: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 const fork = async (
   sql: SqlConnection,
   provider: Readonly<SnapshotProvider>,
@@ -417,7 +373,6 @@ const fork = async (
   const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${input.checkpoint} and owner=${input.owner} and status='ready'`;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (checkpoint?.status !== "ready") {
     throw new Error("checkpoint not ready or not owned");
   }
@@ -433,7 +388,6 @@ const fork = async (
       { owner: string; checkpoint: string; deleted: boolean }[]
     >`select owner,checkpoint,deleted from child_request where id=${input.child} for update`;
     if (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading owner from request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       request?.owner !== input.owner ||
       request.checkpoint !== checkpoint.id ||
       request.deleted
@@ -448,7 +402,6 @@ const fork = async (
     const [request] = await tx<
       { deleted: boolean }[]
     >`select deleted from child_request where id=${input.child} for update`;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading deleted from request; preserve one receiver evaluation, skipped accesses and the existing true fallback.
     if (request?.deleted ?? true) {
       throw new Error("child deleted");
     }
@@ -460,11 +413,7 @@ const fork = async (
     }
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeBranch's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- removeBranch: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /** Retention proof only: keep immutable nodes/resources/checkpoints for children.
  * Production needs reachability GC + per-owner retention/deletion policy.
  * @param {SqlConnection} sql - Connection owning the deletion transaction.
@@ -488,11 +437,7 @@ const removeBranch = async (
     await tx`delete from branch where id=${ownedBranchRecord.id}`;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- writeFile: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /**
  * Write through an admitted writer token that outlives the OS process/job.
  * @param {SqlConnection} sql - Connection owning the writer validation and update transaction.
@@ -522,9 +467,6 @@ const writeFile = async (
     }
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve modelHistory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /**
  * Produce a model transcript without application annotations.
@@ -544,10 +486,7 @@ const modelHistory = async (
     role,
   }));
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (append, beginWriter, complete, editDocument, endWriter, fork, history, modelHistory, removeBranch, reserve, validatePrefix, writeFile); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable max-lines -- modelHistory: This module is one coordinated protocol/lifecycle implementation; splitting requires an ownership and public API decision. */
 export {
   append,
   beginWriter,
@@ -562,7 +501,4 @@ export {
   validatePrefix,
   writeFile,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (Message, SnapshotProvider, SqlConnection, SqlQueries); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { Message, SnapshotProvider, SqlConnection, SqlQueries };
-/* oxlint-enable import/no-named-export */

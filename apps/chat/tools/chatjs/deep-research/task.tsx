@@ -6,13 +6,6 @@ import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 import { UpdateTitle } from "./update-title";
 import { WebSourceBadge } from "@/components/source-badge";
 import { motion } from "motion/react";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResearchTask); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- ResearchTask renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const ResearchTask = ({
@@ -54,15 +47,11 @@ export const ResearchTask = ({
           <div className="flex flex-wrap gap-2">
             {update.queries.map((query) => (
               <Badge
-                // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="bg-muted flex items-center gap-1"
                 key={query}
                 variant="outline"
               >
-                <SearchIcon
-                  // oxlint-disable-next-line react/forbid-component-props -- SearchIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-3.5"
-                />
+                <SearchIcon className="size-3.5" />
                 {/* // TODO: Make this size width responsive or accomodate long text in another manner */}
                 <span className="max-w-[300px] truncate">{query}</span>
               </Badge>
@@ -84,10 +73,7 @@ export const ResearchTask = ({
         {update.type === "web" && update.status === "running" && (
           <div className="py-2">
             <div className="flex items-center gap-3">
-              <Loader2
-                // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="text-muted-foreground size-4 animate-spin"
-              />
+              <Loader2 className="text-muted-foreground size-4 animate-spin" />
               <p className="text-xsize-neutral-500">Searching the web...</p>
             </div>
           </div>
@@ -111,11 +97,4 @@ export const ResearchTask = ({
     </motion.div>
   </div>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-
-/* oxlint-enable eslint/max-lines-per-function */

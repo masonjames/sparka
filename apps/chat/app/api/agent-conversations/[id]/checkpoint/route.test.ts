@@ -73,9 +73,7 @@ beforeEach(() => {
     Response.json({ status: "accepted" }, { status: HTTP_STATUS.accepted })
   );
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements, no-undefined, unicorn/no-null -- Keep the ordered auth, origin and ownership checks in one scenario; null and undefined model distinct absent SDK results. */
 it("requires authentication, same origin and bound ownership before native access", async () => {
   mocks.principal.mockResolvedValueOnce(null);
   const resolvedResult1 = await POST(request(), context);
@@ -86,20 +84,16 @@ it("requires authentication, same origin and bound ownership before native acces
   );
   expect(resolvedResult2.status).toBe(HTTP_STATUS.forbidden);
   expect(mocks.source).not.toHaveBeenCalled();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.source.mockResolvedValueOnce(undefined);
   const resolvedResult3 = await POST(request(), context);
   expect(resolvedResult3.status).toBe(HTTP_STATUS.notFound);
   expect(mocks.source).toHaveBeenCalledWith("owner", id);
   expect(mocks.capture).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-statements, no-undefined, unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- The missing origin/body argument exercises the request helper's optional-argument contract. */
 it("rejects malformed coordinates before looking up the source", async () => {
   const resolvedResult4 = await POST(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     request(undefined, { ...input, beforeTurnId: "turn_-1" }),
     context
   );
@@ -107,9 +101,6 @@ it("rejects malformed coordinates before looking up the source", async () => {
   expect(mocks.source).not.toHaveBeenCalled();
   expect(mocks.capture).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("returns readiness only after the matching immutable checkpoint is available", async () => {
   const response = await POST(request(), context);
@@ -118,7 +109,6 @@ it("returns readiness only after the matching immutable checkpoint is available"
   expect(await response.json()).toEqual({
     conversationId: id,
     ready: true,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
   });
   const [[ownerId, checkpointPath, capturedRequest]] = mocks.capture.mock.calls;
@@ -134,8 +124,6 @@ it("returns readiness only after the matching immutable checkpoint is available"
     input.checkpointId
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("keeps uncertain capture retryable using the exact same coordinates", async () => {
   mocks.ready.mockRejectedValueOnce(new Error("pending"));
@@ -155,8 +143,6 @@ it("keeps uncertain capture retryable using the exact same coordinates", async (
     })
   ).toEqual([input, input]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 it("recovers an existing receipt without sending another native command", async () => {
   mocks.read.mockResolvedValue(true);
@@ -165,8 +151,6 @@ it("recovers an existing receipt without sending another native command", async 
   expect(mocks.capture).not.toHaveBeenCalled();
   expect(mocks.ready).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   { stage: "read", target: () => mocks.read },   { stage: "ready", target: () => mocks.rea's awaited sequencing and rejected-Promise behavior. */
 
 it.each([
   { stage: "read", target: (): typeof mocks.read => mocks.read },
@@ -191,7 +175,6 @@ it.each([
       checkpointRejected: true,
       conversationId: id,
       reason: "source_advanced",
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
     });
     if (stage === "read") {
@@ -199,4 +182,3 @@ it.each([
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */

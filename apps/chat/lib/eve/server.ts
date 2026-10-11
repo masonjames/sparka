@@ -21,13 +21,10 @@ const assertEveConfigured = (): void => {
   }
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRequest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params -- The exported request API accepts owner, path, request options and optional model/tool headers; existing callers depend on these positional arguments. */
 const eveRequest = async (
   owner: string,
   path: string,
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native RequestInit unchanged except enforced headers/cache/redirect; Next.js requires mutable next.tags, which is rejected when projected deeply readonly.
   init: RequestInit = {},
   modelId?: string,
   selectedTool?: UiToolName
@@ -35,7 +32,6 @@ const eveRequest = async (
   assertEveConfigured();
   const connection = getEveConnectionOptions(owner);
   const headers = new Headers({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...connection.headers,
     authorization: `Bearer ${connection.auth.bearer}`,
   });
@@ -51,15 +47,10 @@ const eveRequest = async (
     headers.set("content-type", "application/json");
   }
   return await fetch(new URL(path, connection.host), {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing init own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...init,
     cache: "no-store",
     headers,
     redirect: "error",
   });
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveConfigured, eveRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params */
 export { assertEveConfigured, eveRequest };
-/* oxlint-enable import/no-named-export */

@@ -1,17 +1,13 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { z } from "zod";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { env } from "@/lib/env";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import {
   conversationBinding,
   createConversationInput,
 } from "@/lib/eve/contracts";
 import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import {
   admitGuestCreation,
   settleGuestCreation,
@@ -19,13 +15,8 @@ import {
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/promise-function-async, unicorn/no-null -- max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): POST uses undefined for absent or optional values; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): POST preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
-unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): POST preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 
 export const POST = async (
   request: ReadonlyNativeSurface<Request>
@@ -47,7 +38,6 @@ export const POST = async (
     );
   }
   const admission =
-    // oxlint-disable-next-line no-ternary -- Keep admission as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     principal.kind === "guest"
       ? await admitGuestCreation(request, principal, input.data)
       : undefined;
@@ -57,7 +47,6 @@ export const POST = async (
   const response = await createEveConversationOperation(
     principal.ownerId,
     input.data,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reservationId from admission; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     admission?.reservationId
   );
   if (admission) {
@@ -107,6 +96,4 @@ export const POST = async (
   }
   return response;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async */

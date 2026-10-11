@@ -17,15 +17,11 @@ const importedMessage = z
   .string()
   .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u);
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveCopyBoundary); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface EveCopyBoundary {
   readonly messageIndex: number;
   readonly sourceKind: "turn" | "imported";
   readonly sourceIndex: number;
 }
-/* oxlint-enable import/no-named-export */
-
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyBoundaries); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 /**
  * Private provenance used only to snapshot application resources, never copied into native history.
@@ -33,7 +29,6 @@ export interface EveCopyBoundary {
  * @returns {EveCopyBoundary[]} One source turn or imported-message boundary for each user message; malformed provenance throws.
  */
 export const eveCopyBoundaries = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Pass original EVE events to the native reducer; readonly input-request option arrays are incompatible with its MessageStreamEvent contract.
   events: readonly MessageStreamEvent[]
 ): EveCopyBoundary[] => {
   const reducer = defaultMessageReducer();
@@ -54,7 +49,6 @@ export const eveCopyBoundaries = (
       if (message.role !== "user") {
         return [];
       }
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const turn = nativeTurn.safeParse(message.metadata?.turnId);
       if (turn.success) {
         return [
@@ -83,4 +77,3 @@ export const eveCopyBoundaries = (
     }
   );
 };
-/* oxlint-enable import/no-named-export */

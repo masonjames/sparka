@@ -1,4 +1,3 @@
-/* oxlint-disable sort-imports -- Preserve the established Oxfmt grouping for browser-test imports and styles. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { expect, test } from "vitest";
@@ -8,13 +7,10 @@ import { PromptInputTabLabel } from "@/components/ai-elements/prompt-input";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable react/jsx-no-literals -- Fixed accessible fixture labels and descriptions make the heading capture deterministic. */
-/* oxlint-disable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async -- max-statements: Keep the heading's render, accessibility assertions, interaction and capture together as one UI contract; oxc/no-async-await: This browser scenario awaits the React commit, accessible state, capture and cleanup in order; typescript/promise-function-async: The test returns its existing browser interaction promise. */
+/* oxlint-disable typescript/promise-function-async -- max-statements: Keep the heading's render, accessibility assertions, interaction and capture together as one UI contract; oxc/no-async-await: This browser scenario awaits the React commit, accessible state, capture and cleanup in order; typescript/promise-function-async: The test returns its existing browser interaction promise. */
 test("prompt input heading renders accessible children and forwards native props", async () => {
   let wasClicked = false;
-  // oxlint-disable-next-line react-perf/jsx-no-new-function-as-prop -- This fixture's callback records one forwarded click and does not drive a production render loop.
   const onHeadingClick = (): void => {
     wasClicked = true;
   };
@@ -60,5 +56,4 @@ test("prompt input heading renders accessible children and forwards native props
     await unmount(fixture);
   }
 });
-/* oxlint-enable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async */
-/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable typescript/promise-function-async */

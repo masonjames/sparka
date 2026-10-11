@@ -1,4 +1,3 @@
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
@@ -9,7 +8,6 @@ import type { ModelData } from "@/lib/ai/model-data";
 import type { ReadonlyAiGatewayModel } from "@/lib/ai/to-model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
 import { config } from "@/lib/config";
-/* oxlint-enable sort-imports */
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;
@@ -44,7 +42,6 @@ const getEveModelDefinition = (
     throw new EveModelUnavailableError("This model is not available for chat.");
   }
   return {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...model,
     // The active gateway catalog above validates this ID at the runtime boundary.
     apiModelId: model.id,
@@ -52,19 +49,9 @@ const getEveModelDefinition = (
   };
 };
 
-/* oxlint-disable init-declarations --
- * init-declarations (#507): catalog assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let catalog: { expires: number; models: ModelData[] } | undefined;
-/* oxlint-enable init-declarations */
-/* oxlint-disable init-declarations --
- * init-declarations (#507): loading assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let loading: Promise<ModelData[]> | undefined;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadEveModelDefinition's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations */
 
-/* oxlint-disable no-undefined -- no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const loadEveModelDefinition = async (
   requestedId?: string
 ): Promise<EveModelDefinition> => {
@@ -88,12 +75,7 @@ const loadEveModelDefinition = async (
   }
   return getEveModelDefinition(requestedId, catalog.models);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveModel's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable unicorn/max-nested-calls --
-unicorn/max-nested-calls (#568): resolveEveModel keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const resolveEveModel = async (
   requestedId?: string
 ): Promise<{
@@ -114,13 +96,9 @@ const resolveEveModel = async (
     },
   };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveModelUnavailableError, getEveModelDefinition, loadEveModelDefinition, resolveEveModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/max-nested-calls */
 export {
   EveModelUnavailableError,
   getEveModelDefinition,
   loadEveModelDefinition,
   resolveEveModel,
 };
-/* oxlint-enable import/no-named-export */

@@ -19,11 +19,7 @@ vi.mock("./local-deletion-available", () => ({
 vi.mock("./cleanup-expired-guests", () => ({
   cleanupExpiredEveGuests: mocks.cleanup,
 }));
-/* oxlint-disable init-declarations --
- * init-declarations (#507): stop assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let stop: (() => void) | undefined;
-/* oxlint-enable init-declarations */
 beforeEach(() => {
   vi.useFakeTimers();
   vi.resetAllMocks();
@@ -38,22 +34,12 @@ beforeEach(() => {
     skipped: false,
   });
 });
-/* oxlint-disable no-undefined --
- * no-undefined (#519): afterEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 afterEach(() => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   stop = undefined;
   vi.useRealTimers();
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("startup is singleton and sweeps never overlap") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("startup is singleton and sweeps never overlap") uses 60_000, 1, 180_000, 2, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("startup is singleton and sweeps never overlap", async () => {
   const gate = Promise.withResolvers<undefined>();
   mocks.cleanup.mockImplementationOnce(async () => {
@@ -67,7 +53,6 @@ test("startup is singleton and sweeps never overlap", async () => {
   expect(mocks.cleanup).toHaveBeenCalledWith(process.cwd());
   await vi.advanceTimersByTimeAsync(180_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   const workingDirectory = vi
     .spyOn(process, "cwd")
@@ -76,23 +61,16 @@ test("startup is singleton and sweeps never overlap", async () => {
   workingDirectory.mockRestore();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
-  // oxlint-disable-next-line no-undefined -- PromiseWithResolvers<undefined>.resolve requires a value argument; withResolvers<void> is rejected by typescript/no-invalid-void-type.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   expect(mocks.cleanup).toHaveBeenLastCalledWith("/refreshed-worktree");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   { NODE_ENV: "production" },    { EVE_GATEWAY_SECRET: "" },   { DATABASE_URL: "postgres's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " uses 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test.each([
   { NODE_ENV: "production" },
 
@@ -127,13 +105,7 @@ test.each([
     expect(stop).toBeUndefined();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("remote worker or World and a config disabled after startup cannot sweep") uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("remote worker or World and a config disabled after startup cannot sweep", async () => {
   mocks.available.mockReturnValue(false);
   expect(startLocalEveGuestCleanup()).toBeUndefined();
@@ -143,14 +115,7 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("a failed sweep retries later and stopping in flight prevents rescheduling") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a failed sweep retries later and stopping in flight prevents rescheduling") uses 120_000, 2, 60_000, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("a failed sweep retries later and stopping in flight prevents rescheduling", async () => {
   const error = vi.spyOn(console, "error").mockImplementation(() => {
     // Intentionally silence the expected cleanup failure in this test.
@@ -166,13 +131,10 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
     return { deletedCount: 0, pendingCount: 0 };
   });
   await vi.advanceTimersByTimeAsync(60_000);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
-  // oxlint-disable-next-line no-undefined -- PromiseWithResolvers<undefined>.resolve requires a value argument; withResolvers<void> is rejected by typescript/no-invalid-void-type.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers */

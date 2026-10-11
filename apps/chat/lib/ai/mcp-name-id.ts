@@ -64,10 +64,6 @@ const createToolId = (
   return `${namespace}${TOOL_ID_SEPARATOR}${toolName}`;
 };
 
-/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
-max-statements (#512): parseToolId keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): parseToolId uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/no-null (#570): parseToolId preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Parses a tool ID back into its components.
  * Splits on `__` separator to get namespace and tool name.
@@ -112,10 +108,5 @@ const parseToolId = (
     toolName: rest,
   };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolId, generateMcpNameId, MCP_NAME_MAX_LENGTH, parseToolId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 export { createToolId, generateMcpNameId, MCP_NAME_MAX_LENGTH, parseToolId };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (GenerateMcpNameIdResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { GenerateMcpNameIdResult };
-/* oxlint-enable import/no-named-export */

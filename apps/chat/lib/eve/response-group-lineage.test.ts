@@ -2,14 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable-next-line sort-imports -- Keep Oxfmt type-import groups; their declaration order conflicts with sort-imports. */
 import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
 import { resolveEveResponseGroupLineage } from "./response-group-lineage";
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null --
- * no-magic-numbers (#517): row uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): row preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const row = (
   id: string,
   operationId: string,
@@ -25,14 +20,9 @@ const row = (
   operationId,
   parentConversationId: null,
   sessionId: `session-${id}`,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...overrides,
 });
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function --
- * max-lines-per-function (#510): describe("response group lineage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 describe("response group lineage", () => {
   const group = {
     candidateOperationIds: ["operation-a", "operation-b"],
@@ -59,13 +49,11 @@ describe("response group lineage", () => {
     const fromOtherSlot = resolveEveResponseGroupLineage("b", conversations, [
       group,
     ]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replacements from fromOtherSlot; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(fromOtherSlot?.replacements.get("operation-a")).toEqual({
       conversationId: "a-newest",
       sessionId: "session-a-newest",
     });
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replacements from resolveEveResponseGroupLineage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       resolveEveResponseGroupLineage("a-new", conversations, [
         group,
       ])?.replacements.get("operation-a")
@@ -112,7 +100,6 @@ describe("response group lineage", () => {
       parentConversationId: "imported",
     });
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replacements from resolveEveResponseGroupLineage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       resolveEveResponseGroupLineage(
         regenerated.id,
         [copy, candidate, regenerated],
@@ -144,4 +131,3 @@ describe("response group lineage", () => {
     ).toBeUndefined();
   });
 });
-/* oxlint-enable max-lines-per-function */

@@ -20,7 +20,6 @@ afterEach(() => {
   vi.resetModules();
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve routes's awaited sequencing and rejected-Promise behavior. */
 const routes = async (): Promise<WorkerRewrites | undefined> => {
   const { default: configure } = await import("./next.config");
   const config = await configure("phase-production-build", {
@@ -31,8 +30,6 @@ const routes = async (): Promise<WorkerRewrites | undefined> => {
   }
   return await config.rewrites();
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("keeps EVE named-agent routing without an external deployment alias", async () => {
   vi.stubEnv("VERCEL_URL", "deployment.vercel.app");
@@ -46,4 +43,3 @@ test("keeps EVE named-agent routing without an external deployment alias", async
     ],
   });
 });
-/* oxlint-enable oxc/no-async-await */

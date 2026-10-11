@@ -1,15 +1,9 @@
-/* oxlint-disable eslint/max-lines -- Readonly DTO and native boundary declarations add type-only lines to this existing router module; preserve its procedure surface and runtime sequencing. */
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "@trpc/server" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { z } from "zod";
 
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between zod and @/lib/db/eve-documents still needs a supported server equivalence check; preserve the existing order meanwhile.
 import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/db/eve-documents and @/lib/db/eve-queries still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   getEveChatIdentity,
   listEveConversationBranches,
@@ -17,7 +11,6 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { searchEveConversations } from "@/lib/db/eve-search";
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/db/eve-search and @/lib/db/queries still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   assignEveConversationProject,
   getEveMessageVotes,
@@ -31,14 +24,12 @@ import { saveManualEveDocument } from "@/lib/eve/save-document";
 
 import { voteEveMessage } from "@/lib/eve/vote-message";
 
-// oxlint-disable-next-line sort-imports -- Import-order migration debt: the native permutation between @/lib/eve/vote-message and @/trpc/init still needs a supported server equivalence check; preserve the existing order meanwhile.
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable import/max-dependencies */
 
 const MAX_CONVERSATION_TITLE_LENGTH = 255;
 const MAX_MESSAGE_ID_LENGTH = 512;
@@ -46,23 +37,19 @@ const MAX_OWNER_SCOPE_LENGTH = 128;
 
 const eveProcedure = protectedProcedure;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveOwnedProcedure's awaited sequencing and rejected-Promise behavior. */
 const eveOwnedProcedure = publicProcedure.use(
   async ({
     ctx,
     next,
   }: Readonly<
     Pick<
-      // oxlint-disable-next-line no-magic-numbers -- Zero selects the existing first SDK middleware parameter in this type-only contract.
       Parameters<(typeof publicProcedure)["_def"]["middlewares"][0]>[0],
       "next"
     >
   > & { readonly ctx: { readonly user?: { readonly id: string } | null } }) => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     let ownerId = ctx.user?.id;
     if (typeof ownerId !== "string" || ownerId === "") {
       const principal = await resolveEvePrincipal(await headers());
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       ownerId = principal?.ownerId;
     }
     if (typeof ownerId !== "string" || ownerId === "") {
@@ -71,12 +58,9 @@ const eveOwnedProcedure = publicProcedure.use(
     return await next({ ctx: { eveOwnerId: ownerId } });
   }
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRouter's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable typescript/promise-function-async, unicorn/max-nested-calls -- * typescript/promise-function-async (#606): eveRouter preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): eveRouter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): eveRouter preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 export const eveRouter = createTRPCRouter({
   assignProject: eveProcedure
     .input(
@@ -147,11 +131,9 @@ export const eveRouter = createTRPCRouter({
           revisionId?: string | undefined;
         }>;
       }) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         let ownerId = ctx.user?.id;
         if (typeof ownerId !== "string" || ownerId === "") {
           const principal = await resolveEvePrincipal(await headers());
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           ownerId = principal?.ownerId;
         }
         const document = await getAccessibleEveDocument(
@@ -302,7 +284,6 @@ export const eveRouter = createTRPCRouter({
           cause: error,
           code: "CONFLICT",
           message:
-            // oxlint-disable-next-line no-ternary -- Keep message as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             error instanceof Error
               ? error.message
               : "Document could not be saved.",
@@ -412,6 +393,4 @@ export const eveRouter = createTRPCRouter({
       }) => await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
     ),
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable typescript/promise-function-async */

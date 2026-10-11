@@ -96,10 +96,8 @@ const getInputMessageId = (input: {
   return input.messageId;
 };
 
-// oxlint-disable-next-line unicorn/no-null -- MessageTree serializes the root parent/cursor as null; root traversal, attachment, and run capacity checks must retain that exact ID sentinel.
 const ROOT_MESSAGE_ID = null;
 
-// oxlint-disable-next-line unicorn/no-null -- RunRegistry.select uses null to clear an explicit run selection before cursor/path replacement; undefined is not its selection contract.
 const NO_SELECTED_RUN = null;
 
 // Files-only SDK input omits text; skip creating a text part for that exact absent value while retaining empty strings.
@@ -123,25 +121,20 @@ const NO_RUN_SNAPSHOT = globalThis.undefined;
 // RunRecord requires an error property even for a newly ready run; its exact no-error value is undefined, not a nullable error or omitted field.
 const NO_RUN_ERROR = globalThis.undefined;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createMessageFromInput's awaited sequencing and rejected-Promise behavior. */
 const createMessageFromInput = async <
   Metadata,
   Data extends UIDataTypes,
   Tools extends UITools,
->(
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK input supplies canonical parts and metadata to the constructed message without cloning their identity; recursively readonly values cannot satisfy its native SDK result.
-  {
-    fallbackId,
-    input,
-  }: Readonly<{
-    fallbackId: string;
-    input: NonNullable<SendMessageInput<UIMessage<Metadata, Data, Tools>>>;
-  }>
-): Promise<UIMessage<Metadata, Data, Tools>> => {
+>({
+  fallbackId,
+  input,
+}: Readonly<{
+  fallbackId: string;
+  input: NonNullable<SendMessageInput<UIMessage<Metadata, Data, Tools>>>;
+}>): Promise<UIMessage<Metadata, Data, Tools>> => {
   const messageId = getInputMessageId(input) ?? fallbackId;
   const { metadata } = input;
   if ("text" in input || "files" in input) {
-    // oxlint-disable-next-line no-ternary -- Keep fileParts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const fileParts = Array.isArray(input.files)
       ? input.files
       : await convertFileListToFileUIParts(input.files);
@@ -150,7 +143,6 @@ const createMessageFromInput = async <
       metadata,
       parts: [
         ...fileParts,
-        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...("text" in input &&
         input.text !== ABSENT_INPUT_TEXT &&
         input.text !== null
@@ -161,14 +153,12 @@ const createMessageFromInput = async <
     };
   }
   return {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     id: messageId,
     metadata,
     role: input.role ?? "user",
   };
 };
-/* oxlint-enable oxc/no-async-await */
 
 abstract class ThreadCore<
   Metadata,
@@ -205,7 +195,6 @@ abstract class ThreadCore<
   readonly #state: ThreadState<UIMessage<Metadata, Data, Tools>>;
 
   protected constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed SDK accepts native schema and transport types; recursively readonly schema metadata cannot satisfy ChatInit or the live state host.
     options: Readonly<ThreadCoreOptions<UIMessage<Metadata, Data, Tools>>>
   ) {
     this.id = options.id ?? generateId();
@@ -262,14 +251,12 @@ abstract class ThreadCore<
     this.#state.subscribe(listener);
 
   public addMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree stores the canonical SDK message; readonly nested metadata and parts cannot satisfy its native message contract.
     message: Readonly<UIMessage<Metadata, Data, Tools>>,
     parentId: string | null
   ): void {
     this.upsertMessage(message, parentId);
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve addToolApprovalResponse's awaited sequencing and rejected-Promise behavior. */
   public addToolApprovalResponse: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["addToolApprovalResponse"] = async (
@@ -287,16 +274,12 @@ abstract class ThreadCore<
     const run = this.getOrCreateRunForApproval(response.id);
     await run.chat.addToolApprovalResponse(response);
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve addToolOutput's awaited sequencing and rejected-Promise behavior. */
   public addToolOutput: AbstractChat<
     UIMessage<Metadata, Data, Tools>
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK addToolOutput callback is generic in the tool name and native output type; a deeply readonly extracted input fails both its callback assignment and SDK receiver.
   >["addToolOutput"] = async (output): Promise<void> => {
     const run = this.getOrCreateRunForToolCall(output.toolCallId);
     await run.chat.addToolOutput(output);
   };
-  /* oxlint-enable oxc/no-async-await */
   public addToolResult: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["addToolResult"] = this.addToolOutput;
@@ -351,12 +334,16 @@ abstract class ThreadCore<
 
   public setCursor(messageId: string | null): void {
     this.#runs.select(NO_SELECTED_RUN);
-    this.updateTree((tree): void => tree.setCursor(messageId));
+    this.updateTree((tree): void => {
+      tree.setCursor(messageId);
+    });
   }
 
   public setCursorToParentOf(messageId: string): void {
     this.#runs.select(NO_SELECTED_RUN);
-    this.updateTree((tree): void => tree.setCursorToParentOf(messageId));
+    this.updateTree((tree): void => {
+      tree.setCursorToParentOf(messageId);
+    });
   }
 
   private getMessagePath(
@@ -367,7 +354,6 @@ abstract class ThreadCore<
 
   private writeRunMessage(
     runId: string,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The live SDK response message reaches MessageTree.upsertMessage with its native metadata and parts types.
     message: Readonly<UIMessage<Metadata, Data, Tools>>
   ): void {
     const run = this.#runs.require(runId);
@@ -399,7 +385,6 @@ abstract class ThreadCore<
     });
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Binding writes the existing live run spec messageId; a readonly spec forbids this required mutation before tree insertion.
   private static bindRunResponse({
     tree,
     runId,
@@ -430,19 +415,16 @@ abstract class ThreadCore<
     }
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve regenerate's awaited sequencing and rejected-Promise behavior. */
   public regenerate: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["regenerate"] = async ({
     messageId,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding options excludes messageId from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...options
   }: Readonly<{ messageId?: string }> & RequestReader = {}): Promise<void> => {
     const { parentMessageId, target } = this.getRegenerationTarget(messageId);
 
     if (target.role === "assistant") {
       this.#runs.assertHasCapacity(
-        // oxlint-disable-next-line no-ternary -- Keep this.#runs.assertHasCapacity argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof parentMessageId === "string" && parentMessageId !== ""
           ? parentMessageId
           : ROOT_MESSAGE_ID
@@ -461,15 +443,14 @@ abstract class ThreadCore<
       ),
     };
     this.#runs.select(spec.id);
-    this.updateTree((tree): void => tree.setCursor(target.id));
-    const run = this.startRunRequest(
-      spec,
-      async (chat): Promise<void> =>
-        await chat.regenerateMessage(target.id, options)
-    );
+    this.updateTree((tree): void => {
+      tree.setCursor(target.id);
+    });
+    const run = this.startRunRequest(spec, async (chat): Promise<void> => {
+      await chat.regenerateMessage(target.id, options);
+    });
     await run.finished;
   };
-  /* oxlint-enable oxc/no-async-await */
   private getRegenerationTarget(messageId?: string): Readonly<{
     parentMessageId: string | null;
     target: UIMessage<Metadata, Data, Tools>;
@@ -505,25 +486,28 @@ abstract class ThreadCore<
   }
 
   public upsertMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.upsertMessage requires canonical SDK metadata and mutable parts types; the outer message is already readonly.
     message: Readonly<UIMessage<Metadata, Data, Tools>>,
     parentId: string | null
   ): void {
-    this.updateTree((tree): void => tree.upsertMessage(message, parentId));
+    this.updateTree((tree): void => {
+      tree.upsertMessage(message, parentId);
+    });
   }
 
   public removeMessage(messageId: string): void {
-    this.updateTree((tree): void => tree.removeLeaf(messageId));
+    this.updateTree((tree): void => {
+      tree.removeLeaf(messageId);
+    });
   }
 
   private updateRunPath(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.updatePath requires canonical SDK metadata and parts on each message; the containing array is already readonly.
     messages: readonly Readonly<UIMessage<Metadata, Data, Tools>>[]
   ): void {
-    this.updateTree((tree): void => tree.updatePath(messages));
+    this.updateTree((tree): void => {
+      tree.updatePath(messages);
+    });
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resumeStream's awaited sequencing and rejected-Promise behavior. */
   public resumeStream: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["resumeStream"] = async (options: RequestReader = {}): Promise<void> => {
@@ -534,30 +518,26 @@ abstract class ThreadCore<
     }
     await this.resumeRunRequest(run, options);
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resumeRun's awaited sequencing and rejected-Promise behavior. */
   public resumeRun = async (
     runId: string,
     options: RequestReader = {}
   ): Promise<void> => {
     await this.resumeRunRequest(this.#runs.require(runId), options);
   };
-  /* oxlint-enable oxc/no-async-await */
   public restore(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.restore requires nodes containing canonical SDK messages; the snapshot and node containers are already readonly.
     snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
   ): void {
     this.assertCanResetTree();
     this.#runs.clear();
-    this.updateTree((tree): void => tree.restore(snapshot));
+    this.updateTree((tree): void => {
+      tree.restore(snapshot);
+    });
   }
 
   public setMessages(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The setter accepts native canonical messages or the SDK updater; deeply readonly messages cannot satisfy MessageTree.setPath.
     messages:
       | readonly Readonly<UIMessage<Metadata, Data, Tools>>[]
       | ((
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK setter updater receives native canonical messages, including mutable metadata and parts; a readonly callback input breaks existing typed updater callers.
           messages: UIMessage<Metadata, Data, Tools>[]
         ) => UIMessage<Metadata, Data, Tools>[])
   ): void {
@@ -566,31 +546,27 @@ abstract class ThreadCore<
       nextMessages = nextMessages(this.getSnapshot().messages);
     }
     this.#runs.select(NO_SELECTED_RUN);
-    this.updateTree((tree): void => tree.setPath(nextMessages));
+    this.updateTree((tree): void => {
+      tree.setPath(nextMessages);
+    });
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendMessage's awaited sequencing and rejected-Promise behavior. */
   public sendMessage = async (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed SDK send input includes canonical parts or FileList; deeply readonly input cannot satisfy message construction and SDK forwarding.
     input?: SendMessageInput<UIMessage<Metadata, Data, Tools>>,
     options?: TreeRequestReader
   ): Promise<void> => {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding request excludes tree from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     const { tree, ...request } = options ?? {};
     if (!input) {
       const cursorId =
-        // oxlint-disable-next-line no-ternary -- Keep cursorId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tree && "from" in tree
           ? (tree.from ?? ROOT_MESSAGE_ID)
           : this.getSnapshot().cursorId;
       const cursorMessage =
-        // oxlint-disable-next-line no-ternary -- Keep cursorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof cursorId === "string" && cursorId !== ""
           ? this.getMessage(cursorId)
           : ABSENT_MESSAGE_TARGET;
       if (cursorMessage && cursorMessage.role === "assistant") {
         const run = this.continueAssistant({
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading follow from tree; preserve one receiver evaluation, skipped accesses and the existing cursorId === this.getSnapshot().cursorId fallback.
           follow: tree?.follow ?? cursorId === this.getSnapshot().cursorId,
           messageId: cursorMessage.id,
           options: request,
@@ -600,10 +576,8 @@ abstract class ThreadCore<
       }
     }
     const run = await this.startRun({
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading follow from tree; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       follow: tree?.follow,
       from:
-        // oxlint-disable-next-line no-ternary -- Keep from as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tree && "from" in tree
           ? (tree.from ?? ROOT_MESSAGE_ID)
           : OMITTED_RUN_ORIGIN,
@@ -612,9 +586,6 @@ abstract class ThreadCore<
     });
     await run.finished;
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startRun's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The start input forwards canonical SDK parts and metadata into message construction; a deeply readonly message changes its inferred metadata and fails the SDK input receiver.
   public startRun = async ({
     follow: requestedFollow,
     from,
@@ -652,7 +623,6 @@ abstract class ThreadCore<
       parentMessageId: message.id,
     });
   };
-  /* oxlint-enable oxc/no-async-await */
   private resolveFollow(
     requestedFollow: boolean | undefined,
     cursorId: string | null
@@ -701,7 +671,6 @@ abstract class ThreadCore<
   }
 
   private attachInputMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.upsertMessage receives the original SDK message and mutable parts array; recursively readonly parts cannot satisfy its canonical stored-message contract.
     message: Readonly<UIMessage<Metadata, Data, Tools>>,
     cursorId: string | null,
     follow: boolean
@@ -726,12 +695,9 @@ abstract class ThreadCore<
     }
   };
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stop's awaited sequencing and rejected-Promise behavior. */
-  public stop = async (): Promise<void> =>
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chat from this.getSelectedRunRecord(...); preserve one receiver evaluation, skipped accesses and the existing Promise.resolve() fallback.
+  public stop = async (): Promise<void> => {
     await (this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve());
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopAll's awaited sequencing and rejected-Promise behavior. */
+  };
   public async stopAll(): Promise<void> {
     await Promise.all(
       this.#runs.getActive().map(
@@ -741,12 +707,12 @@ abstract class ThreadCore<
               Pick<ThreadRunChat<UIMessage<Metadata, Data, Tools>>, "stop">
             >;
           }>
-        ): Promise<void> => await run.chat.stop()
+        ): Promise<void> => {
+          await run.chat.stop();
+        }
       )
     );
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopRun's awaited sequencing and rejected-Promise behavior. */
   public async stopRun(runId: string): Promise<void> {
     const run = this.#runs.get(runId);
     if (run) {
@@ -755,7 +721,6 @@ abstract class ThreadCore<
     }
     await Promise.resolve();
   }
-  /* oxlint-enable oxc/no-async-await */
   // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
   public stopRunForMessage(messageId: string): Promise<void> {
     const run = this.getRunForMessage(messageId);
@@ -815,9 +780,7 @@ abstract class ThreadCore<
     const runSnapshot = this.#runs.getSnapshot();
     const selectedRun = this.getSelectedRunRecord(tree);
     return {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing treeSnapshot own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...treeSnapshot,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing indexes own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...indexes,
       activeRuns: runSnapshot.activeRuns,
       error: selectedRun && selectedRun.error,
@@ -829,7 +792,6 @@ abstract class ThreadCore<
   }
 
   private createTree(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree construction requires snapshots of canonical SDK messages; the outer snapshot and nodes are readonly.
     snapshot?: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
   ): MessageTree<UIMessage<Metadata, Data, Tools>> {
     const resolvedSnapshot = snapshot ?? this.#state.getSnapshot();
@@ -843,23 +805,30 @@ abstract class ThreadCore<
       generateMessageId: (): string => this.generateMessageId(),
       getMessagePath: (messageId): UIMessage<Metadata, Data, Tools>[] =>
         this.getMessagePath(messageId),
-      registerToolCall: (runId, toolCallId): void =>
-        this.registerToolCall(runId, toolCallId),
-      removeMessage: (messageId): void => this.removeMessage(messageId),
-      setRunError: (runId, error): void => this.setRunError(runId, error),
-      setRunStatus: (runId, status): void => this.setRunStatus(runId, status),
+      registerToolCall: (runId, toolCallId): void => {
+        this.registerToolCall(runId, toolCallId);
+      },
+      removeMessage: (messageId): void => {
+        this.removeMessage(messageId);
+      },
+      setRunError: (runId, error): void => {
+        this.setRunError(runId, error);
+      },
+      setRunStatus: (runId, status): void => {
+        this.setRunStatus(runId, status);
+      },
       updateRunPath: (
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The host callback forwards canonical SDK messages to MessageTree.updatePath; a deeply readonly parameter also fails the native host callback assignment.
         messages: readonly Readonly<UIMessage<Metadata, Data, Tools>>[]
-      ): void => this.updateRunPath(messages),
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The host callback forwards the canonical SDK response into MessageTree.upsertMessage without changing its parts or metadata types.
-      writeRunMessage: (runId, message): void =>
-        this.writeRunMessage(runId, message),
+      ): void => {
+        this.updateRunPath(messages);
+      },
+      writeRunMessage: (runId, message): void => {
+        this.writeRunMessage(runId, message);
+      },
     });
   }
 
   private publish(): void {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The state updater supplies snapshots with canonical SDK messages to MessageTree construction; readonly nodes alone do not make native parts readonly.
     this.updateState((snapshot) =>
       this.buildSnapshot(this.createTree(snapshot))
     );
@@ -877,7 +846,6 @@ abstract class ThreadCore<
     ) => TResult
   ): TResult {
     const completed: { value: TResult }[] = [];
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The state updater supplies snapshots with canonical SDK messages to MessageTree construction; recursively readonly parts fail that receiver.
     this.updateState((snapshot) => {
       const tree = this.createTree(snapshot);
       const value = updater(tree);
@@ -893,13 +861,11 @@ abstract class ThreadCore<
 
   private updateState(
     updater: (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The state updater callback receives native canonical snapshots; a deeply readonly snapshot callback fails ThreadState.update assignment.
       snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
     ) => ThreadStateSnapshot<UIMessage<Metadata, Data, Tools>>
   ): void {
     let calls = 0;
     this.#state.update(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ThreadState.update supplies native canonical snapshots that are passed to MessageTree construction; outer containers are already readonly.
       (snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>) => {
         calls += UPDATE_CALL_INCREMENT;
         return updater(snapshot);
@@ -1128,14 +1094,13 @@ abstract class ThreadCore<
     };
     if (follow) {
       this.#runs.select(id);
-      this.updateTree((tree): void => tree.setCursor(parentMessageId));
+      this.updateTree((tree): void => {
+        tree.setCursor(parentMessageId);
+      });
     }
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
-    return this.startRunRequest(
-      spec,
-      async (chat): Promise<void> => await chat.start(options)
-    );
-    /* oxlint-enable oxc/no-async-await */
+    return this.startRunRequest(spec, async (chat): Promise<void> => {
+      await chat.start(options);
+    });
   }
 
   private startRunRequest(
@@ -1167,7 +1132,6 @@ abstract class ThreadCore<
     this.#runs.add(record);
     this.publish();
     const finished = this.publishWhenFinished(start(chat));
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     // Callers can still await detached startRun calls through the finished promise.
     void (async (): Promise<void> => {
       try {
@@ -1176,7 +1140,6 @@ abstract class ThreadCore<
         // The original finished promise retains the rejection for callers.
       }
     })();
-    /* oxlint-enable oxc/no-async-await */
     record.finished = finished;
     return this.createRunHandle(record);
   }
@@ -1198,7 +1161,9 @@ abstract class ThreadCore<
     }
     if (follow) {
       this.#runs.select(run.spec.id);
-      this.updateTree((tree): void => tree.setCursor(messageId));
+      this.updateTree((tree): void => {
+        tree.setCursor(messageId);
+      });
     }
     run.finished = this.publishWhenFinished(run.chat.start(options));
     this.publish();
@@ -1229,7 +1194,6 @@ abstract class ThreadCore<
     }
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The assistant message is passed to the installed SDK startWithMessage receiver; deeply readonly metadata or parts cannot satisfy its send input.
   private startAssistantMessage({
     follow,
     message,
@@ -1255,13 +1219,9 @@ abstract class ThreadCore<
     if (follow) {
       this.#runs.select(spec.id);
     }
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
-    return this.startRunRequest(
-      spec,
-      async (chat): Promise<void> =>
-        await chat.startWithMessage(message, options)
-    );
-    /* oxlint-enable oxc/no-async-await */
+    return this.startRunRequest(spec, async (chat): Promise<void> => {
+      await chat.startWithMessage(message, options);
+    });
   }
 
   private createRunHandle(
@@ -1273,19 +1233,18 @@ abstract class ThreadCore<
       spec: Readonly<Pick<ThreadRunSpec, "id">>;
     }>
   ): ThreadRunHandle {
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return {
       get finished(): Promise<void> {
         return run.finished;
       },
       getSnapshot: (): ThreadRun | undefined => this.getRun(run.spec.id),
       id: run.spec.id,
-      stop: async (): Promise<void> => await run.chat.stop(),
+      stop: async (): Promise<void> => {
+        await run.chat.stop();
+      },
     };
-    /* oxlint-enable oxc/no-async-await */
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve publishWhenFinished's awaited sequencing and rejected-Promise behavior. */
   private async publishWhenFinished<TValue>(
     promise: Readonly<Promise<TValue>>
   ): Promise<TValue> {
@@ -1295,10 +1254,7 @@ abstract class ThreadCore<
       this.publish();
     }
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resumeRunRequest's awaited sequencing and rejected-Promise behavior. */
   private async resumeRunRequest(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Resuming writes the new completion promise to the existing run record; readonly finished forbids this required live update.
     run: ResumableRun<UIMessage<Metadata, Data, Tools>>,
     options: RequestReader
   ): Promise<void> {
@@ -1309,14 +1265,7 @@ abstract class ThreadCore<
     this.publish();
     await finished;
   }
-  /* oxlint-enable oxc/no-async-await */
 }
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ThreadCore); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-
 export { ThreadCore };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ThreadCoreOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ThreadCoreOptions };
-/* oxlint-enable import/no-named-export */

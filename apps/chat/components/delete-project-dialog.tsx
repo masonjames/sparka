@@ -8,7 +8,6 @@ import type { JSX as ReactJSX } from "react";
 
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/alert-dialog; keep this adjacent import pair ordered. */
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-/* oxlint-enable sort-imports */
 
 import { useTRPC } from "@/trpc/react";
 
@@ -28,9 +26,6 @@ interface DeleteProjectDialogProps {
   readonly setShowDeleteDialog: (show: boolean) => void;
   readonly showDeleteDialog: boolean;
 }
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DeleteProjectDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- DeleteProjectDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- DeleteProjectDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; adding async changes synchronous throw behavior and promise identity */
 
 export const DeleteProjectDialog = ({
   deleteId,
@@ -43,7 +38,6 @@ export const DeleteProjectDialog = ({
   const pathname = usePathname();
   const queryClient = useQueryClient();
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteMutation's awaited sequencing and rejected-Promise behavior. */
   const deleteMutation = useMutation(
     trpc.project.remove.mutationOptions({
       onError: () => {
@@ -60,8 +54,6 @@ export const DeleteProjectDialog = ({
       },
     })
   );
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleDelete's awaited sequencing and rejected-Promise behavior. */
   const handleDelete = useCallback(async () => {
     if (!(typeof deleteId === "string" && deleteId !== "")) {
       return;
@@ -84,7 +76,6 @@ export const DeleteProjectDialog = ({
       router.push("/");
     }
   }, [deleteId, deleteMutation, pathname, router, setShowDeleteDialog]);
-  /* oxlint-enable oxc/no-async-await */
   return (
     <AlertDialog
       onOpenChange={(open) => {
@@ -117,16 +108,10 @@ export const DeleteProjectDialog = ({
               startEventAction(handleDelete);
             }}
           >
-            {
-              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-              deleteMutation.isPending ? "Deleting..." : "Delete"
-            }
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

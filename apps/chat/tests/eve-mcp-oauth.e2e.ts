@@ -1,50 +1,23 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/mcp/mcp-client"; "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts"; "../lib/eve/mcp-tools" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { expect, test } from "@playwright/test";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MCPClient } from "../lib/ai/mcp/mcp-client";
-/* oxlint-enable eslint/sort-imports */
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mcpConnector, mcpOAuthSession, userCredit } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { conversationBinding } from "../lib/eve/contracts";
 import { discoverEveMcpTools } from "../lib/eve/mcp-tools";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
- * init-declarations (#507): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut uses 180_000, 0, 8, 1, 15_000, 2, 3, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep test("MCP OAuth callback persists credentials for fresh Eve clients and native execut's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut intentionally keeps the existing falsy-value behavior of conversationId; origin; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("MCP OAuth callback persists credentials for fresh Eve clients and native execution", async ({
   page,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(180_000);
   const fixture = await startEveOAuthMcpServer();
@@ -53,10 +26,8 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   let conversationId: string | undefined;
   let origin: string | undefined;
   try {
-    await page.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
@@ -227,5 +198,4 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     }
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

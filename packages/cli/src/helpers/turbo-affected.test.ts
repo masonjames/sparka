@@ -1,35 +1,22 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 const repoRoot = pathModule.resolve(import.meta.dir, "../../../..");
 const turbo = pathModule.join(repoRoot, "node_modules/.bin/turbo");
 const successExitCode = 0;
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 let fixture: string;
-/* oxlint-enable eslint/init-declarations */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Bun.spawnSync receives this command unchanged and requires a mutable string[]; readonly string[] fails its actual declaration (TS2345).
 const run = (command: string[]) =>
   Bun.spawnSync(command, {
     cwd: fixture,
     env: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...process.env,
       TURBO_SCM_BASE: "",
       TURBO_SCM_HEAD: "",
     },
   });
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const git = (...args: readonly string[]): string => {
   const result = run(["git", ...args]);
@@ -38,7 +25,6 @@ const git = (...args: readonly string[]): string => {
   }
   return result.stdout.toString().trim();
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 
 beforeAll(async (): Promise<void> => {
   fixture = await mkdtemp(pathModule.join(tmpdir(), "chatjs-turbo-affected-"));
@@ -76,19 +62,11 @@ beforeAll(async (): Promise<void> => {
   git("add", ".");
   git("commit", "-m", "Fixture baseline");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async (): Promise<void> => {
   if (fixture) {
     await rm(fixture, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve each path case's awaited Git, Turbo query, and task-planning checks. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 test.each([
   ["apps/docs/index.mdx", false],
   ["apps/site/app/page.tsx", false],
@@ -156,7 +134,6 @@ test.each([
       [turbo, "run", "test:scaffold", "test:unit", "--affected", "--dry=json"],
       {
         cwd: fixture,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         env: { ...process.env, TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
       }
     );
@@ -185,8 +162,3 @@ test.each([
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

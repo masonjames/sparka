@@ -1,48 +1,22 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveChat, eveConversation } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("generated chat identity stays selected across edited branch paths") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("generated chat identity stays selected across edited branch paths") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("generated chat identity stays selected across edited branch paths") uses 150_000, 1000, 2000, 1, 60_000, 200, 202 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("generated chat identity stays selected across edited branch paths")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): test("generated chat identity stays selected across edited branch paths") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("generated chat identity stays selected across edited branch paths") intentionally keeps the existing falsy-value behavior of chat; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("generated chat identity stays selected across edited branch paths", async ({
   page,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(150_000);
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-conversations", {
@@ -77,7 +51,6 @@ test("generated chat identity stays selected across edited branch paths", async 
       .poll(
         async () => {
           const chat = await readChat();
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from chat; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           return chat?.status;
         },
         {
@@ -162,5 +135,4 @@ test("generated chat identity stays selected across edited branch paths", async 
       .toBe(200);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

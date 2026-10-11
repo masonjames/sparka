@@ -15,7 +15,6 @@ type Context = Readonly<
   }
 >;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scopeFor's awaited sequencing and rejected-Promise behavior. */
 const scopeFor = async (
   context: Context
 ): ReturnType<typeof resolveEveConversationScope> => {
@@ -23,14 +22,11 @@ const scopeFor = async (
     throw new Error("Document deletion is unavailable.");
   }
   return await resolveEveConversationScope(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    context.session.auth.initiator?.principalId,
+    (context.session.auth.initiator ?? {}).principalId,
     context.session.id,
     context.abortSignal
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestDocumentDeletion's awaited sequencing and rejected-Promise behavior. */
 const requestDocumentDeletion = async (
   value: unknown,
   context: Context
@@ -56,15 +52,13 @@ const requestDocumentDeletion = async (
   context.abortSignal.throwIfAborted();
   return "user-approval" as const;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeDocumentDeletion's awaited sequencing and rejected-Promise behavior. */
 const executeDocumentDeletion = async (
   input: Readonly<z.infer<typeof deleteDocumentInput>>,
   context: Context
 ): ReturnType<typeof removeEveDocumentFromConversation> => {
   const scope = await scopeFor(context);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responder from context.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  if (context.approval?.responder.principalId !== scope.ownerId) {
+  const { approval } = context;
+  if (!approval || approval.responder.principalId !== scope.ownerId) {
     throw new Error("Document deletion requires the owner's approval.");
   }
   const revision = await getEveDocumentRevision(
@@ -81,7 +75,4 @@ const executeDocumentDeletion = async (
     context.abortSignal
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (executeDocumentDeletion, requestDocumentDeletion); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
 export { executeDocumentDeletion, requestDocumentDeletion };
-/* oxlint-enable import/no-named-export */

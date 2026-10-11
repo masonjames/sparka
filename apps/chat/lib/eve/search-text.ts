@@ -19,7 +19,6 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
     | {
         readonly type: "history.seeded";
         readonly data: {
-          // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
           readonly messages: Parameters<typeof eveSeedSearchText>[0];
         } & IgnoredSdkFields<
           Extract<MessageStreamEvent, { type: "history.seeded" }>["data"]
@@ -37,7 +36,6 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
         readonly type: "message.received";
         readonly data: Parameters<
           typeof incomingMessageSearchText
-          // oxlint-disable-next-line eslint/no-magic-numbers -- Zero selects the existing first tuple/SDK middleware parameter in this type-only contract; it is not a runtime domain constant.
         >[0]["data"] & {
           readonly kind?: Extract<
             MessageStreamEvent,
@@ -119,7 +117,6 @@ const incomingMessageSearchText = (event: {
     MessageStreamEvent["meta"]
   >;
 }): EveSearchText[] => {
-  // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const text = event.data.parts
     ? event.data.parts
         .filter((part) => part.type === "text")
@@ -156,10 +153,6 @@ const eveEventSearchText = (event: SearchTextEvent): EveSearchText[] => {
   }
   return [];
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveSearchText };
-/* oxlint-enable import/no-named-export */

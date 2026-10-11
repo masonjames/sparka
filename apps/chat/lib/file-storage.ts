@@ -4,7 +4,6 @@ import { FILE_STORAGE_PREFIX } from "./constants";
 import { Files } from "files-sdk";
 import { nanoid } from "nanoid";
 
-// oxlint-disable-next-line sort-imports -- Keep constants config validation and PLAYWRIGHT snapshot before db/client environment validation and postgres/drizzle construction; alphabetizing this runtime declaration changes initialization and failure order.
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
@@ -20,11 +19,7 @@ const FILE_ID_LENGTH = 24;
 const INVENTORY_PAGE_SIZE = 100;
 const SIGNED_URL_LIFETIME_SECONDS = 300;
 
-/* oxlint-disable init-declarations --
- * init-declarations (#507): files assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let files: Files | undefined;
-/* oxlint-enable init-declarations */
 
 const getFiles = (): Files => {
   files ??= new Files({
@@ -43,10 +38,6 @@ const sanitizeFilename = (filename: string): string => {
 
 const createFileId = (): string => nanoid(FILE_ID_LENGTH);
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve uploadFileAtKey's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params --
- * max-params (#511): uploadFileAtKey keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Upload using a preallocated key recorded by the caller before external storage I/O.
  * @param {string} key - Registered file identity validated before provider access.
@@ -81,17 +72,13 @@ const uploadFileAtKey = async (
     url: createFileUrl(key),
   };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params */
 
 type FileUploader = (
   filename: string,
   body: ReadonlyNativeSurface<Body>,
   contentType?: string
 ) => ReturnType<typeof uploadFileAtKey>;
-/* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve iterateStoredFiles's asynchronous iteration and rejection behavior. */
 
-/* oxlint-disable init-declarations -- The first inventory page has no cursor; subsequent pages use the cursor supplied by the preceding response. */
 /**
  * Resolve one provider page at a time, bounding inventory memory and DB queries.
  * @yields {{ pathname: string; uploadedAt: Date; url: string }} Registered file metadata.
@@ -122,18 +109,12 @@ const iterateStoredFiles = async function* iterateStoredFiles(): AsyncGenerator<
     ({ cursor } = page);
   } while (typeof cursor === "string" && cursor !== "");
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listFiles's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations */
 
 const listFiles = async (): Promise<{
   files: { pathname: string; uploadedAt: Date; url: string }[];
 }> => ({
   files: await Array.fromAsync(iterateStoredFiles()),
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteFilesByUrls's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers -- Zero in explicit empty-array checks is required by unicorn/explicit-length-check. */
 const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   const keys = [
     ...new Set(
@@ -149,7 +130,6 @@ const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   const result = await getFiles().delete(
     await Promise.all(keys.map(async (key) => await storageKeyForFile(key)))
   );
-  // oxlint-disable-next-line no-ternary -- Keep errors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const errors = "errors" in result ? (result.errors ?? []) : [];
   if (errors.length > 0) {
     throw new AggregateError(
@@ -158,33 +138,20 @@ const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
     );
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve downloadFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-undefined -- The SDK receives no options when no byte range was requested, preserving its default download behavior. */
 const downloadFile = async (
   key: string,
   range?: { readonly start: number; readonly end?: number }
 ): Promise<StoredFile> =>
   await getFiles().download(
     await storageKeyForFile(key),
-    // oxlint-disable-next-line no-ternary -- Keep getFiles().download argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     range ? { range } : undefined
   );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getFileMetadata's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
 const getFileMetadata = async (key: string): Promise<StoredFile> =>
   await getFiles().head(await storageKeyForFile(key));
-/* oxlint-enable oxc/no-async-await */
 const storageSupportsRange = (): boolean => getFiles().capabilities.rangeRead;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getFileProviderUrl's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): getFileProviderUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const getFileProviderUrl = async (key: string): Promise<string | null> => {
   const fileService = getFiles();
   if (!fileService.capabilities.signedUrl.supported) {
@@ -200,9 +167,6 @@ const getFileProviderUrl = async (key: string): Promise<string | null> => {
   }
   return null;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createFileId, uploadFileAtKey, iterateStoredFiles, listFiles, deleteFilesByUrls, downloadFile, getFileMetadata, storageSupportsRange, getFileProviderUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */
 
 export {
   createFileId,
@@ -215,7 +179,4 @@ export {
   storageSupportsRange,
   getFileProviderUrl,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (FileUploader); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { FileUploader };
-/* oxlint-enable import/no-named-export */

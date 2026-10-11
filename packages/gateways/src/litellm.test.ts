@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports the unexported Registry adapter source directly; the test file is excluded from published gateway artifacts. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
 
 afterEach((): void => {
   vi.unstubAllEnvs();
@@ -26,7 +24,6 @@ const mockModelsFetch = (): ReturnType<typeof vi.fn<typeof fetch>> => {
   return fetchMock;
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchesModelsFromModelsEndpoint's awaited sequencing and rejected-Promise behavior. */
 const fetchesModelsFromModelsEndpoint = async (): Promise<void> => {
   vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000");
   vi.stubEnv("LITELLM_API_KEY", "sk-test");
@@ -58,8 +55,6 @@ const fetchesModelsFromModelsEndpoint = async (): Promise<void> => {
     },
   ]);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve omitsAuthorizationForUnauthenticatedProxies's awaited sequencing and rejected-Promise behavior. */
 const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
   vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000/");
   vi.stubEnv("LITELLM_API_KEY", "");
@@ -74,11 +69,11 @@ const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
       "Content-Type": "application/json",
     },
   });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading headers from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  expect(new Headers(init?.headers).has("Authorization")).toBe(false);
+  if (!init) {
+    throw new Error("Expected model request options");
+  }
+  expect(new Headers(init.headers).has("Authorization")).toBe(false);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve preservesConfiguredVersionPrefix's awaited sequencing and rejected-Promise behavior. */
 const preservesConfiguredVersionPrefix = async (): Promise<void> => {
   vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000/v1");
   vi.stubEnv("LITELLM_API_KEY", "sk-test");
@@ -89,7 +84,6 @@ const preservesConfiguredVersionPrefix = async (): Promise<void> => {
   const [[url]] = fetchMock.mock.calls;
   expect(url).toBe("http://localhost:4000/v1/models");
 };
-/* oxlint-enable oxc/no-async-await */
 describe("LiteLLMGateway", (): void => {
   it(
     "fetches models from the LiteLLM /v1/models endpoint",

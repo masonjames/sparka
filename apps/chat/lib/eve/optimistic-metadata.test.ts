@@ -2,13 +2,7 @@ import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import { optimisticEveMetadata } from "./optimistic-metadata";
 
-/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --
- * max-lines-per-function (#510): describe("optimistic logical chat metadata") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): describe("optimistic logical chat metadata") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): describe("optimistic logical chat metadata") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 describe("optimistic logical chat metadata", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("updates every paginated list and branch alias, then rolls back only the failed field", async () => {
     const cache = new QueryClient();
     const row = { id: "chat", isPinned: false, title: "Original" };
@@ -66,8 +60,6 @@ describe("optimistic logical chat metadata", () => {
       ],
     });
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not clobber a newer same-field edit on rollback", async () => {
     const cache = new QueryClient();
     cache.setQueryData(["get", "chat"], {
@@ -90,6 +82,4 @@ describe("optimistic logical chat metadata", () => {
       title: "Second",
     });
   });
-  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */

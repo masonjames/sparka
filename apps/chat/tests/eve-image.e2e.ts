@@ -1,38 +1,21 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/tool-result" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line sort-imports -- Keep the type-only browser declarations beside their module and preserve runtime import order.
 import type { Browser, Page, Route } from "@playwright/test";
 import { eq } from "drizzle-orm";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Client } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
-/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveFileReference,
   eveStoredFile,
 } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { toolResultSchema } from "../lib/eve/tool-result";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "../lib/file-url";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 type ImageActionResultEvent = Extract<
@@ -51,14 +34,9 @@ type ImageEventReader =
       readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
       readonly data?: unknown;
     };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("native image generation, editing and sharing preserve stored results") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native image generation, editing and sharing preserve stored results") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native image generation, editing and sharing preserve stored results") uses 300_000, 0, 15_000, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("native image generation, editing and sharing preserve stored results") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright fixture supplies the original Page and Browser; this scenario calls page.route()/goto()/reload() and browser.newContext() to mutate live browser and context state.
 test("native image generation, editing and sharing preserve stored results", async ({
   page,
   browser,
@@ -67,10 +45,8 @@ test("native image generation, editing and sharing preserve stored results", asy
   browser: Browser;
 }) => {
   test.setTimeout(300_000);
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() on the original live intercepted request.
-    (route: Route) => route.abort()
+  await page.route("https://unpkg.com/react-scan/**", (route: Route) =>
+    route.abort()
   );
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
@@ -225,10 +201,8 @@ test("native image generation, editing and sharing preserve stored results", asy
   const anonymous = await browser.newContext();
   try {
     const shared = await anonymous.newPage();
-    await shared.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() on the original live intercepted request.
-      (route: Route) => route.abort()
+    await shared.route("https://unpkg.com/react-scan/**", (route: Route) =>
+      route.abort()
     );
     await shared.goto(new URL(`/share/${binding.id}`, page.url()).href);
     const sharedImages = shared.locator('img[src*="/api/files/"]');
@@ -261,5 +235,4 @@ test("native image generation, editing and sharing preserve stored results", asy
     await anonymous.close();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

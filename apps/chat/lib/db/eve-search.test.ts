@@ -1,21 +1,13 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- */
 /* oxlint-disable eslint/no-await-in-loop -- Ordered migrations and fixtures exercise the real schema. */
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PGlite } from "@electric-sql/pglite";
-/* oxlint-enable sort-imports */
 import type { SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
@@ -30,7 +22,6 @@ vi.mock(
     };
   } => {
     const database = drizzle(postgres);
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return {
       db: {
         execute: async (query: ReadonlyNativeSurface<SQL>) => {
@@ -40,21 +31,13 @@ vi.mock(
         transaction: database.transaction.bind(database),
       },
     };
-    /* oxlint-enable oxc/no-async-await */
   }
 );
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
- */
-// oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads search-text helpers after installing the test environment mocks.
 const { eveEventSearchText } = await import("../eve/search-text");
-/* oxlint-enable import/no-relative-parent-imports */
 const { indexEveSearchText, searchEveConversations } =
-  // oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads search queries after installing the PGlite adapter mock.
   await import("./eve-search");
-// oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads deletion helpers against the same mocked database used by search.
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const chat = "00000000-0000-4000-8000-000000000001";
 const branch = "00000000-0000-4000-8000-000000000002";
@@ -63,7 +46,6 @@ const titleBranch = "00000000-0000-4000-8000-000000000004";
 const otherChat = "00000000-0000-4000-8000-000000000005";
 const otherBranch = "00000000-0000-4000-8000-000000000006";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 beforeAll(async () => {
   for (const filename of [
     "0000_eve_baseline.sql",
@@ -103,17 +85,12 @@ beforeAll(async () => {
     );
   }
 }, DATABASE_SETUP_TIMEOUT_MS);
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 afterAll(() => postgres.close());
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats") checks the second ranked result, the first database row, and exactly two deduplicated indexed chunks from repeated events.
- */
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
   await indexEveSearchText("alice", branch, [
     { key: "user", text: "Try saffron in the rice." },
@@ -135,9 +112,6 @@ it("finds message-only matches, boosts titles, highlights excerpts and deduplica
   );
   expect(count.rows[0].count).toBe(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it("rejects cross-owner indexing and handles punctuation-only searches", async () => {
   await indexEveSearchText("bob", branch, [
@@ -148,11 +122,6 @@ it("rejects cross-owner indexing and handles punctuation-only searches", async (
   const punctuation = await searchEveConversations("alice", { search: "!!!" });
   expect(punctuation.items).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["saff", [titleChat, chat]],   ["SAFF", [titleChat, chat]],   ["saffron coo", [titleChat's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): this prefix-search matrix inspects the first ranked result only for the "saffron ri" excerpt case; zero is its array index.
- */
 it.each([
   ["saff", [titleChat, chat]],
   ["SAFF", [titleChat, chat]],
@@ -178,13 +147,7 @@ it.each([
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") inspects the first ranked result and asserts its title boost exceeds rank 2.
- */
 it("keeps the title boost while selecting the branch and excerpt with matching text", async () => {
   const matchingBranch = "00000000-0000-4000-8000-000000000007";
   await postgres.query(
@@ -203,9 +166,6 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
   expect(result.items[0].rank).toBeGreaterThan(2);
   expect(result.items[0].excerpt).toContain("⟦Saff⟧ron");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["SAFF", "⟦Saff⟧ron"],   ["saffron OR saff", "⟦Saffron⟧"],   ['"saffron cooking"', "⟦Saf's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it.each([
   ["SAFF", "⟦Saff⟧ron"],
@@ -221,12 +181,7 @@ it.each([
     );
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") expects exactly one match and inspects its first result's excerpt.
- */
 it("shows an assistant-only Hello match even when the title also matches", async () => {
   await postgres.query(
     `update "EveChat" set title = 'Friendly Hello Chat' where id = $1`,
@@ -259,9 +214,6 @@ it("shows an assistant-only Hello match even when the title also matches", async
     [titleChat]
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],   ["istan", "İsta's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it.each([
   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],
@@ -273,18 +225,12 @@ it.each([
       { key: `highlight:${search}`, text },
     ]);
     const result = await searchEveConversations("alice", { search });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading excerpt from result.items.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(result.items.find((item) => item.id === chat)?.excerpt).toContain(
       excerpt
     );
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result disappears") checks a 20-item first page, deletes its first item, then expects 5 remaining items and 25 unique fixture chats overall.
- */
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
   await postgres.exec(`
     insert into "user" (id, name, email) values ('pager', 'Pager', 'pager@example.test');
@@ -296,7 +242,6 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
   `);
   const first = await searchEveConversations("pager", { search: "pagin" });
   expect(first.items).toHaveLength(20);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from first.nextCursor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(first.nextCursor?.updatedAt).toBe("2026-09-25T10:00:00.123456Z");
   await postgres.query(
     `update "EveConversation" set state = 'deleting' where "chatId" = $1`,
@@ -312,13 +257,7 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
     new Set([...first.items, ...second.items].map((item) => item.id)).size
   ).toBe(25);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): this boundary fixture builds 48 repeated words into a 255-character quoted phrase, pads with 1,999 chunks, then reads characters 0–8,200 to split the phrase across initial chunks.
- */
 it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
   const phrase = `start ${"word ".repeat(48)}endingz`;
   expect(phrase.length + 2).toBe(255);
@@ -337,13 +276,7 @@ it("finds a maximum-length quoted phrase crossing a chunk boundary", async () =>
   });
   expect(result.items.map((item) => item.id)).toEqual([chat]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill") asserts permanently erased search text leaves exactly zero indexed rows.
- */
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(
     `update "EveConversation" set state = 'deleting' where id = $1`,
@@ -359,16 +292,7 @@ it("hides deleting chats and permanently erases text without allowing a late bac
   );
   expect(count.rows[0].count).toBe(0);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve repairPreviewSearchHistory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
- * max-lines-per-function (#510): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): the preview-repair fixture uses the exact three known migration timestamps, rejects the history while it contains three rows, then expects the repaired two-row history.
- * unicorn/no-null (#570): it("repairs only the known unpublished preview history and preserves conversation dat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const repairPreviewSearchHistory = async (
   preview: Readonly<Pick<PGlite, "exec" | "query">>
 ): Promise<void> => {
@@ -430,29 +354,19 @@ const repairPreviewSearchHistory = async (
   );
   expect(removedTable.rows[0]).toMatchObject({ table_name: null });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 describe("preview search history", (): void => {
   const preview = new PGlite();
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
   // WASM database startup belongs to fixture setup; keep the repair assertions
   // under Vitest's normal test timeout, just like the other database cases.
   beforeAll(async (): Promise<void> => {
     await preview.waitReady;
   }, DATABASE_SETUP_TIMEOUT_MS);
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
   afterAll(async (): Promise<void> => {
     await preview.close();
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("repairs only the known unpublished preview history and preserves conversation data", async (): Promise<void> => {
     await repairPreviewSearchHistory(preview);
   });
-  /* oxlint-enable oxc/no-async-await */
 });
-
-/* oxlint-disable max-lines -- #509: This eve-search.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

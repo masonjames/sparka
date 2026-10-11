@@ -1,8 +1,6 @@
 import type { EveMessageInput } from "./message-input";
 import { keyFromFileUrl } from "@/lib/file-url";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveMessageFileKeys); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-
 export const eveMessageFileKeys = (
   message:
     | string
@@ -22,4 +20,3 @@ export const eveMessageFileKeys = (
     return [key];
   });
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -21,10 +21,8 @@ const SpreadsheetEditor = dynamic(
     ),
   { ssr: false }
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentUi); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
 export const documentUi: DocumentUi = {
   Body: ({ editorProps }: ReadonlyNativeSurface<DocumentBodyProps>) => (
     <div className="min-h-0 flex-1 overflow-hidden">
@@ -43,5 +41,3 @@ export const documentUi: DocumentUi = {
     );
   },
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-props-no-spreading */

@@ -17,14 +17,12 @@ type ReadonlyNativeSurface<Value> = Value extends (
 const servers: ReturnType<typeof Bun.serve>[] = [];
 const OS_ASSIGNED_PORT = 0;
 const FIRST_SERVER_INDEX = 0;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 afterEach(async (): Promise<void> => {
   for (const server of servers.splice(FIRST_SERVER_INDEX)) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Finish stopping each test server before the next test starts.
     await server.stop(true);
   }
 });
-/* oxlint-enable oxc/no-async-await */
 const fixture = (
   auth: () => ReadonlyNativeSurface<Response>,
   health: () => ReadonlyNativeSurface<Response> = () =>
@@ -44,17 +42,12 @@ const fixture = (
   return server.url.origin;
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null -- requires the app health endpoint and a working unauthenticated auth route: The fixture explicitly exercises the null state required by the API. */
 test("requires the app health endpoint and a working unauthenticated auth route", async (): Promise<void> => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
     checkHealth(fixture(() => Response.json(null)))
   ).resolves.toBeUndefined();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
 test("rejects healthy infrastructure when dynamic auth routing returns a 404", async (): Promise<void> => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
@@ -62,8 +55,6 @@ test("rejects healthy infrastructure when dynamic auth routing returns a 404", a
     checkHealth(fixture(() => new Response("Not found", { status: 404 })))
   ).rejects.toThrow("Authentication route returned HTTP 404");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("rejects HTML, redirects and unexpected sessions instead of reporting ready", async (): Promise<void> => {
   for (const auth of [
     () => new Response("<html>Not found</html>"),
@@ -74,9 +65,6 @@ test("rejects HTML, redirects and unexpected sessions instead of reporting ready
     await expect(checkHealth(fixture(auth))).rejects.toThrow();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null -- still rejects unavailable infrastructure even when authentication routing works: The fixture explicitly exercises the null state required by the API. */
 test("still rejects unavailable infrastructure even when authentication routing works", async (): Promise<void> => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
@@ -88,5 +76,3 @@ test("still rejects unavailable infrastructure even when authentication routing 
     )
   ).rejects.toThrow("Readiness returned HTTP 503");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */

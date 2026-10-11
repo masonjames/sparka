@@ -34,19 +34,13 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   setOAuthClientInfoOnceByState: mocks.setClientInfo,
   setOAuthCodeVerifierOnceByState: mocks.setCodeVerifier,
 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("@/lib/db/mcp-oauth-lock", () => ({
   withMcpOAuthRefreshLock: async (
     _id: string,
     run: () => Promise<unknown>
   ): Promise<unknown> => await run(),
 }));
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable init-declarations --
- * init-declarations (#507): stored assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- */
 let stored: McpOAuthSession;
-/* oxlint-enable init-declarations */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): provider preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -66,10 +60,8 @@ const refreshRequest = (refreshToken: string): Request =>
     }),
     method: "POST",
   });
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
- * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 beforeEach(() => {
   vi.resetAllMocks();
@@ -96,38 +88,30 @@ beforeEach(() => {
     }: {
       readonly clientInfo: Readonly<Record<string, unknown>>;
     }) => {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, clientInfo };
       return stored;
     }
   );
   mocks.setCodeVerifier.mockImplementation(
     ({ codeVerifier }: { readonly codeVerifier: string }) => {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, codeVerifier };
       return stored;
     }
   );
   mocks.save.mockImplementation(
     ({ tokens }: { readonly tokens: Readonly<Record<string, unknown>> }) => {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       stored = { ...stored, tokens };
       return stored;
     }
   );
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("absent stored credentials return undefined", async () => {
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, clientInfo: null, tokens: null };
   const client = provider();
   await expect(client.clientInformation()).resolves.toBeUndefined();
   await expect(client.tokens()).resolves.toBeUndefined();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("credentials saved by the pinned SDK can be read by a fresh provider", async () => {
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, tokens: null };
   mocks.fetch
     .mockResolvedValueOnce(Response.json(sdkResource))
@@ -170,11 +154,9 @@ test("credentials saved by the pinned SDK can be read by a fresh provider", asyn
     token_endpoint: sdkMetadata.token_endpoint,
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async */
 afterEach(() => vi.unstubAllGlobals());
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("stored client information retains metadata, credentials, pins and extensions", async () => {
   const clientInfo = {
     authorization_server: "https://auth.example.test",
@@ -186,25 +168,19 @@ test("stored client information retains metadata, credentials, pins and extensio
     token_endpoint: "https://auth.example.test/token",
     token_endpoint_auth_method: "client_secret_basic",
   };
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, clientInfo };
   await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("older records without authorization-server pins remain readable", async () => {
   const clientInfo = {
     client_id: "legacy",
     redirect_uris: ["http://localhost:3790/callback"],
   };
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, clientInfo };
   const client = provider();
   await expect(client.clientInformation()).resolves.toEqual(clientInfo);
   await expect(client.tokens()).resolves.toEqual(stored.tokens);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   {},   { client_id: "registered" },   { client_id: "registered", redirect_uris: "https:'s awaited sequencing and rejected-Promise behavior. */
 test.each([
   {},
   { client_id: "registered" },
@@ -214,7 +190,6 @@ test.each([
 ])(
   "malformed stored client information fails without leaking or changing credentials: %j",
   async (clientInfo: Readonly<Record<string, unknown>>) => {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     stored = { ...stored, clientInfo };
     await expect(provider().clientInformation()).rejects.toThrow(
       "Invalid stored MCP OAuth client information; reconnect this connector."
@@ -223,8 +198,6 @@ test.each([
     expect(mocks.setClientInfo).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   {},   { access_token: "secret" },   { access_token: false, token_type: "Bearer" },   {'s awaited sequencing and rejected-Promise behavior. */
 test.each([
   {},
   { access_token: "secret" },
@@ -240,7 +213,6 @@ test.each([
 ])(
   "malformed stored tokens fail without leaking or overwriting credentials: %j",
   async (tokens: Readonly<Record<string, unknown>>) => {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     stored = { ...stored, tokens };
     await expect(provider().tokens()).rejects.toThrow(
       "Invalid stored MCP OAuth tokens; reconnect this connector."
@@ -249,12 +221,9 @@ test.each([
     expect(mocks.save).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("tokens read under the refresh lock are decoded before reuse", async () => {
   const client = provider();
   await client.tokens();
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, tokens: { refresh_token: "other-secret" } };
   await expect(client.fetch(refreshRequest("refresh-old"))).rejects.toThrow(
     "Invalid stored MCP OAuth tokens; reconnect this connector."
@@ -262,15 +231,11 @@ test("tokens read under the refresh lock are decoded before reuse", async () => 
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a repaired stored credential can replace a stale malformed cache", async () => {
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, tokens: { access_token: false } };
   const client = provider();
   await client.adoptState("state");
   stored = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...stored,
     tokens: {
       access_token: "repaired",
@@ -284,32 +249,20 @@ test("a repaired stored credential can replace a stale malformed cache", async (
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("an empty redirect list remains supported for an authenticated SDK-shaped record", async () => {
   const clientInfo = { client_id: "registered", redirect_uris: [] };
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, clientInfo };
   await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("an access-token winner is reused even when its refresh token did not change", async () => {
   const client = provider();
   await client.tokens();
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing stored.tokens own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, tokens: { ...stored.tokens, access_token: "winner" } };
   const response = await client.fetch(refreshRequest("refresh-old"));
   expect(await response.json()).toMatchObject({ access_token: "winner" });
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK saves", async () => {
   const client = provider();
   await client.tokens();
@@ -328,10 +281,8 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
     .mockResolvedValueOnce(Response.json(second));
   await client.fetch(refreshRequest("refresh-old"));
   await client.fetch(refreshRequest("refresh-first"));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pin from stored.tokens; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(stored.tokens?.pin).toBe("retained");
+  expect(stored.tokens).toHaveProperty("pin", "retained");
   stored = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...stored,
     tokens: {
       access_token: "third",
@@ -341,26 +292,17 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
   };
   await client.saveTokens(first);
   await client.saveTokens(second);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading access_token from stored.tokens; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(stored.tokens?.access_token).toBe("third");
+  expect(stored.tokens).toHaveProperty("access_token", "third");
   expect(mocks.save).toHaveBeenCalledTimes(2);
   expect(await client.tokens()).toMatchObject({ access_token: "third" });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("refresh responses cannot replace the saved authorization-server pins") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("refresh responses cannot replace the saved authorization-server pins") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("refresh responses cannot replace the saved authorization-server pins", async () => {
   const pins = {
     authorization_server: "https://trusted.example",
     issuer: "https://trusted.example",
     token_endpoint: "https://trusted.example/token",
   };
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing stored.tokens own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing pins own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, tokens: { ...stored.tokens, ...pins } };
   const client = provider();
   await client.tokens();
@@ -376,7 +318,6 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   );
   const response = await client.fetch(refreshRequest("refresh-old"));
   expect(stored.tokens).toMatchObject({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing pins own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...pins,
     access_token: "new",
     id_token: "identity",
@@ -391,19 +332,13 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   expect(stored.tokens).toMatchObject(pins);
   expect(mocks.save).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
 test("callback states cannot be adopted after a connector changes server URL", async () => {
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   stored = { ...stored, serverUrl: "https://other.example.test/mcp" };
   await expect(provider().adoptState("state")).rejects.toThrow(
     "different MCP server"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("configured OAuth client information preserves credentials") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -426,13 +361,8 @@ test("configured OAuth client information preserves credentials", async () => {
     token_endpoint_auth_method: "client_secret_basic",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("failed client registration persistence can be retried without an optimistic cac uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("failed client registration persistence can be retried without an optimistic cache", async () => {
   const client = provider();
   await client.tokens();
@@ -444,14 +374,10 @@ test("failed client registration persistence can be retried without an optimisti
   await expect(client.saveClientInformation(clientInfo)).rejects.toThrow(
     "database unavailable"
   );
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.setClientInfo.mockResolvedValueOnce({ ...stored, clientInfo });
   await client.saveClientInformation(clientInfo);
   expect(mocks.setClientInfo).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 test("a successful rotated refresh persists its credentials even after caller cancellation", async () => {
   const client = provider();
@@ -474,5 +400,3 @@ test("a successful rotated refresh persists its credentials even after caller ca
     refresh_token: "rotated",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable max-lines -- Keep the persisted OAuth credential contract, SDK round-trip and refresh-race cases together with their shared session fixture. */

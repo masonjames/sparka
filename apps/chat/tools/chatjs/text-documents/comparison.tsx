@@ -16,13 +16,8 @@ const DiffView = dynamic(
     ssr: false,
   }
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveDocumentComparison); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- EveDocumentComparison renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 export const EveDocumentComparison = ({
   conversationId,
   documentId,
@@ -76,8 +71,3 @@ export const EveDocumentComparison = ({
     </section>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable eslint/no-magic-numbers */

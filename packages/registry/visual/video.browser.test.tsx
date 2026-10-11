@@ -1,19 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import "../../../apps/chat/app/globals.css";
-/* oxlint-enable import/no-relative-parent-imports */
 import React, { act } from "react";
 import { expect, test } from "vitest";
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GenerateVideoRenderer } from "../src/tools/generate-video/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
 import { createRoot } from "react-dom/client";
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("video tool streaming, loading, player, and error states", async () => {
   const container = document.createElement("main");
   container.style.cssText =
@@ -26,7 +17,7 @@ test("video tool streaming, loading, player, and error states", async () => {
   document.head.append(style);
   const root = createRoot(container);
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act(() =>
+  await act(() => {
     root.render(
       <>
         <GenerateVideoRenderer
@@ -67,8 +58,8 @@ test("video tool streaming, loading, player, and error states", async () => {
           }}
         />
       </>
-    )
-  );
+    );
+  });
   try {
     const video = container.querySelector("video");
     if (!video) {
@@ -79,11 +70,9 @@ test("video tool streaming, loading, player, and error states", async () => {
     video.currentTime = 0;
     await expect.poll(() => video.seeking).toBe(false);
     expect(video.controls).toBe(true);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.firstElementChild; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(container.firstElementChild?.textContent).toContain(
       "Preparing prompt"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.firstElementChild; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(container.firstElementChild?.textContent).not.toContain("Couldn");
     expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");
@@ -94,8 +83,3 @@ test("video tool streaming, loading, player, and error states", async () => {
     style.remove();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

@@ -1,37 +1,19 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-
 import type { FeatureDefinition } from "../../../registry/metadata";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import ts from "typescript";
 
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-// oxlint-disable-next-line sort-imports -- Preserve typescript before ../../../registry/metadata while their runtime initialization order is still under site review.
 import { featureDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 
-// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/metadata before ../../../registry/src/features/attachment-uploads while their runtime initialization order is still under site review.
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
 
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { mcpFiles } from "../../../registry/src/features/mcp";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";
 
-// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/src/features/observability before ./generated-registration-source while their runtime initialization order is still under site review.
 import { generatedRegistrationSource } from "./generated-registration-source";
 
-/* oxlint-enable import/no-relative-parent-imports */
-
-// oxlint-disable-next-line sort-imports -- Preserve ./generated-registration-source before ./sync-observability while their runtime initialization order is still under site review.
 import {
   initializeObservability,
   planObservability,
@@ -68,7 +50,6 @@ const assertSupportedFeatureInstallation = (
   }
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve exists's awaited sequencing and rejected-Promise behavior. */
 const exists = async (file: string): Promise<boolean> => {
   try {
     await access(file);
@@ -80,7 +61,6 @@ const exists = async (file: string): Promise<boolean> => {
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
 interface ContributionBinding {
   binding: string;
   bindings: ts.NamedImportBindings | undefined;
@@ -102,7 +82,6 @@ const contributionBinding = (
   const importClause = imported && imported.importClause;
   const bindings = importClause && importClause.namedBindings;
   const namedBindings =
-    // oxlint-disable-next-line no-ternary -- Keep namedBindings as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
   const specifier = namedBindings.find(
     (item: ReadonlyNative<ts.ImportSpecifier>): boolean =>
@@ -129,10 +108,6 @@ const LAST_ELEMENT = -1;
 const CLOSING_DELIMITER_WIDTH = 1;
 const SOURCE_START = 0;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve planContribution's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 // Plan both application-owned UI edits before writing any registrations.
 const planContribution = async (
   file: string,
@@ -170,7 +145,6 @@ const planContribution = async (
     );
   }
   const array = declaration.initializer;
-  // oxlint-disable-next-line no-ternary -- Keep contributionIds as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const contributionIds = typeof id === "string" ? [id] : id;
   const { binding, bindings, specifier } = contributionBinding(
     parsed,
@@ -260,14 +234,7 @@ const planContribution = async (
   }
   return { content, file };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAttachmentUploads's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const validateAttachmentUploads = async (
   cwd: string,
@@ -308,14 +275,8 @@ const validateAttachmentUploads = async (
   }
   return uploads;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcp's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const validateMcp = async (
   cwd: string,
@@ -349,15 +310,8 @@ const validateMcp = async (
   }
   return mcp;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncFeatures's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const syncFeatures = async (
@@ -369,7 +323,6 @@ const syncFeatures = async (
   }> = {}
 ): Promise<void> => {
   const uiFeatures =
-    // oxlint-disable-next-line no-ternary -- Keep uiFeatures as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options.addUi === true
       ? ["mcp", "attachment-uploads"]
       : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- False explicitly disables optional UI installation; the empty array must replace false as well as undefined.
@@ -379,7 +332,6 @@ const syncFeatures = async (
   const mcp = await validateMcp(cwd, options.expectedMcp);
   const uploads = await validateAttachmentUploads(cwd, options.expectedUploads);
   const ui: { content: string; file: string }[] =
-    // oxlint-disable-next-line no-ternary -- Keep ui as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     mcp && uiFeatures.includes("mcp")
       ? await Promise.all([
           planContribution(
@@ -422,17 +374,13 @@ const syncFeatures = async (
     }
   }
   const installed = [
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(mcp ? ["mcp"] : []),
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(uploads ? ["attachment-uploads"] : []),
     ...observability.ids,
   ];
-  // oxlint-disable-next-line no-ternary -- Keep installedSet as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const installedSet = installed.length > 0 ? JSON.stringify(installed) : "";
   const installedSource = `export const installedFeatures: ReadonlySet<string> = new Set(${installedSet});`;
   const formattedInstalledSource =
-    // oxlint-disable-next-line no-ternary -- Keep formattedInstalledSource as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     installedSource.length > 80
       ? `export const installedFeatures: ReadonlySet<string> = new Set([\n${installed.map((id): string => `  "${id}",`).join("\n")}\n]);`
       : installedSource;
@@ -441,7 +389,6 @@ const syncFeatures = async (
     writeFile(
       path.join(cwd, "features/installed-routers.ts"),
       generatedRegistrationSource(
-        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         `// Generated by chat-js sync.\nimport type { InstalledRouters } from "@/lib/installation-contracts";\n${mcp ? 'import { mcpRouter } from "@/trpc/routers/mcp.router";\n\n' : "\n"}export const installedRouters = {${mcp ? " mcp: mcpRouter " : ""}} satisfies InstalledRouters;\n`
       )
     ),
@@ -454,7 +401,6 @@ const syncFeatures = async (
     writeFile(
       path.join(cwd, "features/installed-uploads.ts"),
       generatedRegistrationSource(
-        // oxlint-disable-next-line no-ternary -- Keep generatedRegistrationSource argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         uploads
           ? '// Generated by chat-js sync.\nexport { attachmentUploads } from "@/features/attachment-uploads/integration";\n'
           : '// Generated by chat-js sync.\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\n\nexport const attachmentUploads: AttachmentUploadIntegration = {\n  controls: [],\n  useUploads: () => ({ uploadQueue: [] }),\n};\n'
@@ -476,18 +422,9 @@ const syncFeatures = async (
     ),
   ]);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeFeatureUi's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // Only fresh scaffolds use defaults. Cloning and sync never call this function.
 const initializeFeatureUi = async (cwd: string): Promise<void> => {
   await initializeObservability(cwd);
@@ -597,17 +534,9 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
   }
   await syncFeatures(cwd);
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertSupportedFeatureInstallation, initializeFeatureUi, syncFeatures); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-continue */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export {
   assertSupportedFeatureInstallation,
   initializeFeatureUi,
   syncFeatures,
 };
-/* oxlint-enable import/no-named-export */

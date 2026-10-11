@@ -2,15 +2,11 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "./client";
 import { lockEveCopyOwners } from "./eve-copy-journal";
-/* oxlint-disable sort-imports -- Keep direct schema import after client and eve-copy-journal; schema builds pgTable objects and the journal imports client and eve-queries. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readPublicEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+
 type CopySourceTransaction = Readonly<Pick<typeof db, "execute" | "select">>;
 
 const FIRST_ROW_INDEX = 0;
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopyFile's awaited sequencing and rejected-Promise behavior. */
 
 /** Read only active files retained by this exact public source; supplied URLs are not authority.
  * @param {{ readonly id: string; readonly ownerId: string; readonly sessionId: string }} source Exact public source identity whose owner is locked while its file reference is checked.
@@ -65,5 +61,3 @@ export const readPublicEveCopyFile = async (
     const file = await read(reference.key);
     return new Blob([await file.arrayBuffer()], { type: file.type });
   });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

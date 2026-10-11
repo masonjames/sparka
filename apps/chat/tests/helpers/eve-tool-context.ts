@@ -1,19 +1,10 @@
 import type { ToolContext } from "eve/tools";
 
-// oxlint-disable-next-line sort-imports -- Keep the separate readonly type import in Oxfmt module grouping; sort-imports instead orders runtime and type bindings together.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep unexpected's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 const unexpected = () => {
   throw new Error("Unexpected native resource access in test");
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (testToolContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): testToolContext preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 export const testToolContext = (
   overrides: ReadonlyNativeSurface<Partial<ToolContext>> = {}
 ): ToolContext => ({
@@ -29,8 +20,5 @@ export const testToolContext = (
     turn: { id: "turn", sequence: 0 },
   },
   toolName: "test",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...overrides,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable unicorn/no-null */

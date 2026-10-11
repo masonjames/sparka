@@ -19,8 +19,6 @@ const DocumentSkeleton = ({
   </div>
 );
 
-/* oxlint-disable react/no-multi-comp -- InlineDocumentSkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
-
 const InlineDocumentSkeleton = (): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-4 w-48 animate-pulse rounded-lg" />
@@ -32,7 +30,4 @@ const InlineDocumentSkeleton = (): React.JSX.Element => (
     <div className="bg-muted-foreground/20 h-4 w-64 animate-pulse rounded-lg" />
   </div>
 );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DocumentSkeleton, InlineDocumentSkeleton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp */
 export { DocumentSkeleton, InlineDocumentSkeleton };
-/* oxlint-enable import/no-named-export */

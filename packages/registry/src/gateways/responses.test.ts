@@ -1,5 +1,3 @@
-/* oxlint-disable oxc/no-async-await -- These provider wire tests await each real adapter response/fallback and preserve rejected-Promise test behavior. */
-/* oxlint-disable unicorn/no-null -- Provider wire fixtures must exercise explicit JSON nulls as well as missing fields. */
 import { expect, mock, test } from "bun:test";
 
 import type { AiGatewayModel } from "@chat-js/gateways/models";

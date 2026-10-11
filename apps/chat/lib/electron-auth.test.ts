@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function -- This ordered auth integration scenario checks HTTP statuses, PKCE, state, session cookies and one-time token consumption together. */
-
 import {
   ELECTRON_APP_SCHEME,
   ELECTRON_AUTH_CALLBACK_PATH,
@@ -11,7 +9,6 @@ import {
 import { afterEach, expect, it, vi } from "vitest";
 import authClient from "./auth-client";
 import { betterAuth } from "better-auth";
-// oxlint-disable-next-line import/no-nodejs-modules -- Exercise the server PKCE contract using SHA-256.
 import { createHash } from "node:crypto";
 import { electronAuthPlugin } from "./electron-auth-plugin";
 import { z } from "zod";
@@ -54,7 +51,6 @@ it("keeps desktop social callbacks on the session transfer page", () => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("transfers a browser login through PKCE and accepts only the current desktop origin", async () => {
   const auth = createTestAuth();
   const login = await auth.handler(
@@ -131,13 +127,11 @@ it("transfers a browser login through PKCE and accepts only the current desktop 
   const consumedTransfer = await exchange(`${ELECTRON_APP_SCHEME}:/`);
   expect(consumedTransfer.status).toBe(404);
 });
-/* oxlint-enable oxc/no-async-await */
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("the inferred browser client delivers the transfer cookie to the current desktop callback", async () => {
   vi.useFakeTimers();
   const replace = vi.fn();
@@ -153,4 +147,3 @@ it("the inferred browser client delivers the transfer cookie to the current desk
   await vi.advanceTimersByTimeAsync(100);
   expect(replace).toHaveBeenCalledOnce();
 });
-/* oxlint-enable oxc/no-async-await */

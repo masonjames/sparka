@@ -21,7 +21,6 @@ const originalMatchMedia = Object.getOwnPropertyDescriptor(
 const Value = ({ value }: { readonly value: boolean }): React.JSX.Element => (
   <output>{String(value)}</output>
 );
-/* oxlint-disable react/no-multi-comp -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MountedValue = ({
   onValue,
@@ -29,13 +28,9 @@ const MountedValue = ({
   readonly onValue?: (value: boolean) => void;
 }): React.JSX.Element => {
   const value = useMounted();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onValue; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- MobileValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MobileValue = ({
   onValue,
@@ -43,13 +38,9 @@ const MobileValue = ({
   readonly onValue?: (value: boolean) => void;
 }): React.JSX.Element => {
   const value = useIsMobile();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onValue; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- MediaQueryValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const MediaQueryValue = ({
   onValue,
@@ -59,11 +50,9 @@ const MediaQueryValue = ({
   readonly query: string;
 }): React.JSX.Element => {
   const value = useMediaQuery(query);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onValue; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp */
 
 type MediaListenerMock = ReturnType<
   typeof vi.fn<(eventType: string, listener: () => void) => void>
@@ -150,7 +139,6 @@ afterEach(() => {
 
   Reflect.deleteProperty(globalThis, "window");
 });
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop -- responsive-hooks.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract. */
 
 describe("responsive hooks", () => {
   it("uses false for the server snapshot", () => {
@@ -207,7 +195,9 @@ describe("responsive hooks", () => {
     }
 
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    act(() => rendered.unmount());
+    act(() => {
+      rendered.unmount();
+    });
   });
 
   it("updates media and mobile values when the media query changes", () => {
@@ -258,8 +248,9 @@ describe("responsive hooks", () => {
     }
 
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
-    act(() => rendered.unmount());
+    act(() => {
+      rendered.unmount();
+    });
     expect(browser.removeEventListener).toHaveBeenCalledTimes(2);
   });
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop */

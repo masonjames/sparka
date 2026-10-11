@@ -1,16 +1,9 @@
-/* oxlint-disable import/no-nodejs-modules --
-
- * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as delay } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { createConversationInput } from "./contracts";
 import { setTimeout as delay } from "node:timers/promises";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
 import { z } from "zod";
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForConcurrentBinding's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-nodejs-modules */
 
 const MAX_CONCURRENT_BINDING_POLLS = 8;
 const CONCURRENT_BINDING_POLL_DELAY_MS = 250;
@@ -34,7 +27,6 @@ const waitForConcurrentBinding = async (
     await delay(CONCURRENT_BINDING_POLL_DELAY_MS);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Re-read durable state after each bounded wait.
     const current = await getEveCreation(ownerId, operationId);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state === "bound" && current.sessionId !== "") {
       return true;
     }
@@ -48,15 +40,9 @@ const waitForConcurrentBinding = async (
   }
   return false;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (recoverEveCreations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recoverEveCreations's awaited sequencing and rejected-Promise behavior. */
 
 const HTTP_CONFLICT = 409;
 
-/* oxlint-disable max-statements --
- * max-statements (#512): recoverEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Finish admitted commands before accounting for native usage or admitting more work.
  * @param {string} ownerId Owner whose pending commands are recovered in order.
@@ -95,6 +81,3 @@ export const recoverEveCreations = async (ownerId: string): Promise<void> => {
     }
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */

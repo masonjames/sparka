@@ -21,8 +21,7 @@ vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
 
-/* oxlint-disable max-params, typescript/promise-function-async --
- * max-params (#511): The writeEveGeneratedFile mock preserves the native four-argument callback position (owner, conversation, key, write).
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): This mock directly forwards the upload callback promise; making it async introduces the conflicting oxc/no-async-await rule.
  */
 beforeEach(() => {
@@ -36,7 +35,7 @@ beforeEach(() => {
   );
   mocks.upload.mockResolvedValue({ url: "fixture-url" });
 });
-/* oxlint-enable max-params, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 const context = (
   signal: Readonly<AbortSignal> = new AbortController().signal
@@ -47,11 +46,7 @@ const context = (
   abortSignal: signal,
   session: { auth: { initiator: { principalId: "owner" } }, id: "session" },
 });
-/* oxlint-disable oxc/no-async-await -- Await the uploader or its rejection before checking reservation, durable-write and storage ordering. */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("reserves a recoverable key and enters the deletion lock before external upload" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("reserves a recoverable key and enters the deletion lock before external upload", async () => {
   await expect(
     eveGeneratedFileUploader(context())("image.png", "bytes", "image/png")
@@ -68,9 +63,6 @@ test("reserves a recoverable key and enters the deletion lock before external up
     mocks.upload.mock.invocationCallOrder[0]
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await the uploader or its rejection before checking reservation, durable-write and storage ordering. */
-/* oxlint-enable no-magic-numbers */
 
 test("reservation failure and cancellation prevent external upload", async () => {
   mocks.reserve.mockRejectedValueOnce(new Error("deleting"));
@@ -84,4 +76,3 @@ test("reservation failure and cancellation prevent external upload", async () =>
   await expect(abortedUploader("image.png", "bytes")).rejects.toThrow();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

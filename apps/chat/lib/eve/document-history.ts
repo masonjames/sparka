@@ -41,8 +41,6 @@ type DocumentHistoryEvent = IgnoredSdkFields<MessageStreamEvent> &
 
 const nativeTurnId = /^turn_\d+$/u;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentHistoryTurns); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-
 /**
  * Include inherited turns: restored history does not replay turn.started.
  * @param {readonly MessageStreamEvent[]} events Native history events, including restored prefixes and their before-turn boundary.
@@ -76,4 +74,3 @@ export const documentHistoryTurns = (
   }
   return [...turns];
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -1,10 +1,6 @@
 import { expect, test } from "bun:test";
-/* oxlint-disable import/no-relative-parent-imports -- These package-local tests exercise the actual published registry descriptors. */
 import { registry } from "../../../registry";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These package-local tests exercise the actual published registry descriptors. */
 import { toolDefinitionSchema } from "../../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const daytona = registry.items.find(
   (item: { readonly name: string }) => item.name === "daytona-code-execution"
@@ -43,15 +39,12 @@ test("Daytona installation declares its credentials and shared executor without 
 
 test("external executors need no central provider name and reject incompatible capabilities", () => {
   expect(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     toolDefinitionSchema.parse({ ...descriptor, id: "external-executor" }).id
   ).toBe("external-executor");
   expect(() =>
     toolDefinitionSchema.parse({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...descriptor,
       codeExecutionCapabilities: {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor.codeExecutionCapabilities own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...descriptor.codeExecutionCapabilities,
         languages: ["python"],
       },
@@ -59,10 +52,8 @@ test("external executors need no central provider name and reject incompatible c
   ).toThrow("Python and JavaScript");
   expect(() =>
     toolDefinitionSchema.parse({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...descriptor,
       codeExecutionCapabilities: {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor.codeExecutionCapabilities own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...descriptor.codeExecutionCapabilities,
         cleanup: "none",
       },

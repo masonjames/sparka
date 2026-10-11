@@ -48,11 +48,9 @@ interface DocumentRunProps {
   readonly disabled: boolean;
   readonly onAction?: (request: DocumentAssistantRequest) => Promise<void>;
 }
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (DocumentBodyProps, DocumentRunProps, DocumentUi, DocumentUiRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   DocumentBodyProps,
   DocumentRunProps,
   DocumentUi,
   DocumentUiRegistry,
 };
-/* oxlint-enable import/no-named-export */

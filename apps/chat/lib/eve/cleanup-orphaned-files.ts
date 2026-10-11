@@ -1,9 +1,7 @@
 import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
 import { completeEveFilePurge } from "@/lib/db/eve-file-purge";
 import { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
-/* oxlint-disable sort-imports -- Keep DB/env initialization before storage config parsing; sorting this multi-binding import first reverses validation and allocation order. */
 import { deleteFilesByUrls, iterateStoredFiles } from "@/lib/file-storage";
-/* oxlint-enable sort-imports */
 
 const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
 
@@ -11,13 +9,6 @@ type OrphanedFile = Awaited<
   ReturnType<typeof prepareEveOrphanedFilePurge>
 >[number];
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (cleanupEveOrphanedFiles); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupEveOrphanedFiles's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers --
-
- * max-statements (#512): The sweep shares batch storage, confirmed-deletion counts and accumulated failures; provider removal must finish before each owner's durable completion, while one failed batch must not starve later inventory.
- * no-magic-numbers (#517): Zero distinguishes empty inventories, pending batches and accumulated provider failures.
-  */
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched.
  * @param {Readonly<Date>} cutoff Objects uploaded before this time may enter the fenced orphan purge.
  * @returns {Promise<{ deletedCount: number; skipped: boolean }>} The number of deleted stored files and whether the sweep was skipped.
@@ -75,6 +66,3 @@ export const cleanupEveOrphanedFiles = async (
   }
   return { deletedCount, skipped: false };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers */

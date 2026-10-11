@@ -1,18 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-// oxlint-disable-next-line sort-imports -- Oxfmt separates this readonly type import from runtime React modules; sort-imports orders their bindings together.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveToolResult } from "../components/eve/eve-tool-result";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 const states: {
   label: string;

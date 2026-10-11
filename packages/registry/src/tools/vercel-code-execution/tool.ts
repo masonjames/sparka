@@ -7,9 +7,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { Sandbox } from "@vercel/sandbox";
 import { defineTool } from "eve/tools";
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
-// oxlint-disable-next-line sort-imports -- Preserve ownership's database/environment initialization before logger constructs Pino; sorting createModuleLogger first changes the validation and host setup order.
 import { createModuleLogger } from "@/lib/logger";
-// oxlint-disable-next-line sort-imports -- Preserve database validation and Pino initialization before the sandbox adapter reads OIDC host identity and installs Undici's global dispatcher; native Multiple-before-Single sorting moves those effects earlier.
 import {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -20,7 +18,6 @@ import {
 } from "./execution-sandbox";
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
-// oxlint-disable-next-line import/max-dependencies -- This native tool integrates schemas, provider execution, durable ownership and cleanup; the retained dependency-count boundary remains under review.
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
@@ -28,7 +25,6 @@ import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 // Vercel Sandbox execution.
 const COST_CENTS = 5;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve observeCleanup's awaited sequencing and rejected-Promise behavior. */
 const observeCleanup = async (
   pending: Readonly<Promise<void>>
 ): Promise<void> => {
@@ -38,14 +34,7 @@ const observeCleanup = async (
     // The tool's finally block observes and propagates this cleanup failure.
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const executeCode: CodeExecutor = (
@@ -64,8 +53,7 @@ const executeCode: CodeExecutor = (
     const cleanupOwnedSandbox = async (): Promise<void> => {
       await cleanupSandbox(sandbox, log, requestId);
       if (sandbox) {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading release from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        await sandboxOwnership?.release();
+        await (sandboxOwnership && sandboxOwnership.release());
       }
     };
     const stop = (): void => {
@@ -76,28 +64,25 @@ const executeCode: CodeExecutor = (
     };
 
     try {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      abortSignal?.throwIfAborted();
+      if (abortSignal) {
+        abortSignal.throwIfAborted();
+      }
       log.info({ language, requestId, runtime, title }, "creating sandbox");
-      // oxlint-disable-next-line no-ternary -- Keep auth as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
-      // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const name = auth
-        ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reserve from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          await sandboxOwnership?.reserve(auth, abortSignal)
+        ? await (sandboxOwnership &&
+            sandboxOwnership.reserve(auth, abortSignal))
         : undefined;
       sandbox = await createSandbox(runtime, abortSignal, name, auth);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading created from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      await sandboxOwnership?.created(sandbox.name);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      abortSignal?.addEventListener("abort", stop, { once: true });
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      abortSignal?.throwIfAborted();
+      await (sandboxOwnership && sandboxOwnership.created(sandbox.name));
+      if (abortSignal) {
+        abortSignal.addEventListener("abort", stop, { once: true });
+        abortSignal.throwIfAborted();
+      }
       log.debug({ requestId }, "sandbox created");
 
       log.info({ language, requestId, title }, "executing code");
       const result =
-        // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         language === "javascript"
           ? await executeJavaScriptInSandbox({
               code,
@@ -123,20 +108,15 @@ const executeCode: CodeExecutor = (
         message: `Sandbox execution failed: ${getErrorMessage(error)}`,
       };
     } finally {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading removeEventListener from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      abortSignal?.removeEventListener("abort", stop);
+      if (abortSignal) {
+        abortSignal.removeEventListener("abort", stop);
+      }
       stop();
       await cleanup;
     }
   });
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 const codeExecution = withCodeSandboxCleanup(
   defineTool({
@@ -187,6 +167,4 @@ Output rules:
   }),
   codeSandboxCleanupCapability
 );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecution, executeCode); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { codeExecution, executeCode };
-/* oxlint-enable import/no-named-export */

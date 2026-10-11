@@ -1,55 +1,35 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import "../../../apps/chat/app/globals.css";
-/* oxlint-enable import/no-relative-parent-imports */
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type {
   retrievedInput,
   retrievedResult,
 } from "../src/tools/retrieve-url/schemas";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type {
   weatherInput,
   weatherResult,
 } from "../src/tools/get-weather/schemas";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
-/* oxlint-enable import/no-relative-parent-imports */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { createRoot } from "react-dom/client";
 import { getInstanceByDom } from "echarts";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-enable import/max-dependencies */
 import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 vi.mock(
   "@/tools/chatjs/_shared/code-execution/interactive-charts",
   () => import("../src/ui/code-execution/interactive-chart-impl")
 );
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 // Focus this capture on chart output, independently of the code editor.
 vi.mock("@/components/sandbox", () => ({ SandboxComposed: (): null => null }));
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const malformed = [
   { elements: [null], type: "line" },
   { elements: [{ label: "bad", points: "invalid" }], type: "scatter" },
@@ -57,8 +37,6 @@ const malformed = [
   { elements: [{ group: "g", label: "bad", value: "invalid" }], type: "bar" },
   { elements: [], type: "unknown" },
 ];
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
 
 type GetWeatherRendererTool = ToolRendererProps<
   typeof weatherInput,
@@ -69,8 +47,6 @@ type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedResult
 >["tool"];
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const weather: WeatherAtLocation = {
   current: { interval: 900, temperature_2m: 20, time: "2026-09-08T12:00" },
   current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
@@ -96,8 +72,6 @@ const weather: WeatherAtLocation = {
   timezone_abbreviation: "UTC",
   utc_offset_seconds: 0,
 };
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-magic-numbers */
 
 const weatherLoadingTool: GetWeatherRendererTool = {
   state: "input-streaming",
@@ -140,12 +114,6 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
   toolCallId: "url-output",
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 test("chart output validates shapes and fits PNG output", async (): Promise<void> => {
   const container = document.createElement("main");
@@ -197,10 +165,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
           <section
             key={JSON.stringify(chart)}
             data-testid={`output-${index}`}
-            style={
-              // oxlint-disable-next-line no-ternary -- Keep style JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-              index < malformed.length ? { display: "none" } : undefined
-            }
+            style={index < malformed.length ? { display: "none" } : undefined}
           >
             <CodeExecution
               isReadonly
@@ -219,7 +184,6 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   });
   for (let index = 0; index < malformed.length; index += 1) {
     expect(
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       container.querySelector(`[data-testid="output-${index}"]`)?.textContent
     ).toBe("");
     expect(
@@ -231,25 +195,18 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
     .toBe(3);
   await expect
     .poll((): boolean =>
-      [...container.querySelectorAll("h3")].every(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original parentElement chain into native getComputedStyle; recursively readonly DOM collections fail its Element receiver (TS2345).
-        (heading) => {
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          const panel = heading.parentElement?.parentElement?.parentElement;
-          return panel && getComputedStyle(panel).opacity === "1";
-        }
-      )
+      [...container.querySelectorAll("h3")].every((heading) => {
+        const panel = heading.parentElement?.parentElement?.parentElement;
+        return panel && getComputedStyle(panel).opacity === "1";
+      })
     )
     .toBe(true);
   await expect
     .poll((): boolean =>
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
-      ].every(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ECharts getInstanceByDom receives the original HTMLElement; deeply readonly DOM child/style collections fail that actual native receiver (TS2345).
-        (element) =>
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          getInstanceByDom(element)?.getZr().animation.isFinished()
+      ].every((element) =>
+        getInstanceByDom(element)?.getZr().animation.isFinished()
       )
     )
     .toBe(true);
@@ -265,16 +222,8 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await act((): void => root.unmount());
   container.remove();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-lines-per-function, react-perf/jsx-no-new-object-as-prop -- This renderer fixture matrix covers loading, failure, malformed, empty, and successful results in one capture. */
 test("weather and retrieved URL renderer states", async (): Promise<void> => {
   const container = document.createElement("main");
   container.style.cssText = "padding:24px;width:1000px;display:grid;gap:16px";
@@ -347,6 +296,3 @@ test("weather and retrieved URL renderer states", async (): Promise<void> => {
   await act((): void => root.unmount());
   container.remove();
 });
-
-/* oxlint-enable eslint/max-lines-per-function, react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable oxc/no-async-await */

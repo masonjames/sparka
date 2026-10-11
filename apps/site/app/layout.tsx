@@ -6,9 +6,7 @@ import { ThemeProvider } from "next-themes";
 
 import { siteConfig } from "@/lib/site-config";
 
-/* oxlint-disable sort-imports -- Keep the root global stylesheet last so its CSS remains after imported module styles in Next.js CSS chunk order. */
 import "./globals.css";
-/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   alternates: {
@@ -141,12 +139,6 @@ const RootLayout = ({
     </body>
   </html>
 );
-/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;
-/* oxlint-enable import/no-default-export */

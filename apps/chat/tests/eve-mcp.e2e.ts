@@ -1,39 +1,20 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This Node-based E2E harness uses createServer and ServerResponse from node:http.
- * import/no-relative-parent-imports (#530): Keep the explicit local package dependencies instead of introducing an alias or barrel API.
- */
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { Request, Response, TestInfo } from "@playwright/test";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only readonly boundary separate from runtime bindings without changing module evaluation order.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MCPClient } from "../lib/ai/mcp/mcp-client";
-/* oxlint-enable eslint/sort-imports */
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mcpConnector, userCredit } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { discoverEveMcpTools, executeEveMcpTool } from "../lib/eve/mcp-tools";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("MCP acceptance requires local Postgres.");
@@ -45,14 +26,7 @@ const requestSchema = z.object({
   params: z.object({ name: z.string().optional() }).loose().optional(),
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve localMcpServer's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, typescript/strict-void-return --
- * init-declarations (#507): localMcpServer assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): localMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): localMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): localMcpServer uses 405, 202, 200, 400, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): localMcpServer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep localMcpServer's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return --
  * typescript/strict-boolean-expressions (#610): localMcpServer intentionally keeps the existing falsy-value behavior of address; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): localMcpServer's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
@@ -117,7 +91,6 @@ async function localMcpServer(
                 break;
               }
               case "tools/call": {
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from rpc.params; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 if (rpc.params?.name !== "read_token") {
                   throw new Error("Unknown fixture tool");
                 }
@@ -162,20 +135,12 @@ async function localMcpServer(
   }
   return { address, server };
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null --
- * max-lines-per-function (#510): test("composer connector controls persist and fence native tool execution") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("composer connector controls persist and fence native tool execution") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("composer connector controls persist and fence native tool execution") uses 1, 0, 8, 10_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("composer connector controls persist and fence native tool execution")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
  * typescript/promise-function-async (#606): test("composer connector controls persist and fence native tool execution") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("composer connector controls persist and fence native tool execution")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- * unicorn/no-null (#570): test("composer connector controls persist and fence native tool execution") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("composer connector controls persist and fence native tool execution", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
@@ -187,10 +152,8 @@ test("composer connector controls persist and fence native tool execution", asyn
   const id = crypto.randomUUID();
   const nameId = `test_${id.slice(0, 8)}`;
   try {
-    await page.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
@@ -243,7 +206,6 @@ test("composer connector controls persist and fence native tool execution", asyn
           .select({ enabled: mcpConnector.enabled })
           .from(mcpConnector)
           .where(eq(mcpConnector.id, id));
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enabled from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         return connector?.enabled;
       })
       .toBe(false);
@@ -320,18 +282,12 @@ test("composer connector controls persist and fence native tool execution", asyn
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-void-return --
- * max-lines-per-function (#510): test("native MCP executes and its saved result survives connector removal and reload" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native MCP executes and its saved result survives connector removal and reload" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native MCP executes and its saved result survives connector removal and reload" uses 1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
  * typescript/promise-function-async (#606): test("native MCP executes and its saved result survives connector removal and reload" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("native MCP executes and its saved result survives connector removal and reload"'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("native MCP executes and its saved result survives connector removal and reload", async ({
   page,
   browser,
@@ -345,10 +301,8 @@ test("native MCP executes and its saved result survives connector removal and re
   const connectorId = crypto.randomUUID();
   const nameId = `test_${connectorId.slice(0, 8)}`;
   try {
-    await page.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
@@ -422,7 +376,6 @@ test("native MCP executes and its saved result survives connector removal and re
       let connectorRequests = 0;
       publicPage.on("request", (request: Readonly<Pick<Request, "url">>) => {
         const procedures =
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from decodeURIComponent(...).split(...)[1]; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
           decodeURIComponent(new URL(request.url()).pathname)
             .split("/api/trpc/")[1]
             ?.split(",") ?? [];
@@ -430,10 +383,8 @@ test("native MCP executes and its saved result survives connector removal and re
           connectorRequests += 1;
         }
       });
-      await publicPage.route(
-        "https://unpkg.com/react-scan/**",
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-        (route) => route.abort()
+      await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
+        route.abort()
       );
       await publicPage.goto(
         `${new URL(page.url()).origin}/share/${binding.id}`
@@ -470,18 +421,12 @@ test("native MCP executes and its saved result survives connector removal and re
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-void-return --
- * max-lines-per-function (#510): test("stopping a pending MCP call closes its transport and permits another message") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("stopping a pending MCP call closes its transport and permits another message") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("stopping a pending MCP call closes its transport and permits another message") uses 1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
  * typescript/promise-function-async (#606): test("stopping a pending MCP call closes its transport and permits another message") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("stopping a pending MCP call closes its transport and permits another message")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("stopping a pending MCP call closes its transport and permits another message", async ({
   page,
 }) => {
@@ -503,10 +448,8 @@ test("stopping a pending MCP call closes its transport and permits another messa
   const connectorId = crypto.randomUUID();
   const nameId = `test_${connectorId.slice(0, 8)}`;
   try {
-    await page.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await page.goto("/api/dev-login");
     const authSessionResponse = await page.request.get("/api/auth/get-session");
@@ -586,18 +529,11 @@ test("stopping a pending MCP call closes its transport and permits another messa
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null --
- * max-lines-per-function (#510): test("the real MCP client aborts an in-flight HTTP tool request") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("the real MCP client aborts an in-flight HTTP tool request") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("the real MCP client aborts an in-flight HTTP tool request") uses 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("the real MCP client aborts an in-flight HTTP tool request") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
  * typescript/promise-function-async (#606): test("the real MCP client aborts an in-flight HTTP tool request") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("the real MCP client aborts an in-flight HTTP tool request")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- * unicorn/no-null (#570): test("the real MCP client aborts an in-flight HTTP tool request") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("the real MCP client aborts an in-flight HTTP tool request", async () => {
   const started = Promise.withResolvers<undefined>();
@@ -609,6 +545,7 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
         disconnected = !response.writableEnded;
         finished.resolve({ content: [] });
       });
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       started.resolve(undefined);
       return finished.promise;
     }
@@ -665,7 +602,4 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
-
-/* oxlint-disable max-lines -- #509: This eve-mcp.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */

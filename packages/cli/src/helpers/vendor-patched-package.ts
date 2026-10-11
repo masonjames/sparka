@@ -1,12 +1,7 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { execFile } from "node:child_process";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import nodePath from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI adapts native callback APIs for asynchronous process operations.
 import { promisify } from "node:util";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 // oxlint-disable-next-line typescript/strict-void-return -- Node documents promisify(execFile): execFile immediately returns ChildProcess, and its native custom promisifier owns the stdout/stderr promise and rejection details rather than consuming that immediate return.
@@ -42,7 +37,6 @@ const isInstalledManifest = (value: unknown): value is InstalledManifest =>
   typeof value.name === "string" &&
   typeof value.version === "string";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readVendoringMetadata's awaited sequencing and rejected-Promise behavior. */
 const readVendoringMetadata = async (
   input: VendorInput
 ): Promise<{ installed: InstalledManifest; manifest: TemplateManifest }> => {
@@ -66,15 +60,12 @@ const readVendoringMetadata = async (
   // unrelated template fields remain intact when the selected dependency is pinned.
   return { installed, manifest };
 };
-/* oxlint-enable oxc/no-async-await */
 const formattedManifest = (value: unknown): string =>
-  // oxlint-disable-next-line unicorn/no-null -- JSON.stringify's null replacer preserves every metadata field while its third argument requests deterministic two-space formatting.
   `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
 
 const tarballName = (packageName: string, version: string): string =>
   `${packageName.replace(SCOPED_PACKAGE_PREFIX, "").replaceAll("/", "-")}-${version}.tgz`;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve packMaintainedArchive's awaited sequencing and rejected-Promise behavior. */
 const packMaintainedArchive = async (
   staging: string,
   input: VendorInput,
@@ -105,9 +96,6 @@ const packMaintainedArchive = async (
   );
   return archiveName;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (vendorPatchedPackage); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vendorPatchedPackage's awaited sequencing and rejected-Promise behavior. */
 /**
  * Ship a checked maintained runtime consistently through Bun, npm, pnpm and Yarn.
  * @param {VendorInput} input The installed package, maintained patch and template destination.
@@ -136,5 +124,3 @@ export const vendorPatchedPackage = async (
     await rm(temporary, { force: true, recursive: true });
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

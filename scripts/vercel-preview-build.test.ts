@@ -1,5 +1,4 @@
 import { expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build test yields the Node event loop to observe advisory-lock sequencing.
 import { setTimeout as delay } from "node:timers/promises";
 
 import { runMaintainerBuild } from "./vercel-preview-build";
@@ -18,7 +17,6 @@ const preview = {
 const lockQuery =
   "SELECT pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectRejection's awaited sequencing and rejected-Promise behavior. */
 const expectRejection = async (
   operation: Readonly<Promise<unknown>>,
   messageFragment: string
@@ -33,7 +31,6 @@ const expectRejection = async (
   }
   throw new Error("Expected the operation to reject.");
 };
-/* oxlint-enable oxc/no-async-await */
 interface BuildHarness {
   commands: { command: string; env: NodeJS.ProcessEnv }[];
   events: string[];
@@ -105,7 +102,6 @@ const harness = ({
     },
   };
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 it("locks before migration, releases before build, and passes direct credentials to both commands", async (): Promise<void> => {
@@ -126,13 +122,9 @@ it("locks before migration, releases before build, and passes direct credentials
   }
   expect(preview.DATABASE_MIGRATION_URL).toBe("postgres://wrong/db");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["production", "development"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- only runs the normal build in %s: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it.each(["production", "development"])(
   "only runs the normal build in %s",
   async (environment): Promise<void> => {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const source = { ...preview, VERCEL_ENV: environment };
     const test = harness();
     await runMaintainerBuild(source, test.operations);
@@ -140,15 +132,11 @@ it.each(["production", "development"])(
     expect(test.commands[0].env).toEqual(source);
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 it("rejects invalid configuration before opening a connection or invoking a command", async (): Promise<void> => {
   const test = harness();
   await expectRejection(
     runMaintainerBuild(
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...preview, CHATJS_PREVIEW_PARENT_HOST: "EP-CHILD.EU.NEON.TECH" },
       test.operations
     ),
@@ -156,8 +144,6 @@ it("rejects invalid configuration before opening a connection or invoking a comm
   );
   expect(test.events).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["open", "connection", false],   ["SELECT 1", "connection", true],   ["SET lock_timeout 's awaited sequencing and rejected-Promise behavior. */
 it.each([
   ["open", "connection", false],
   ["SELECT 1", "connection", true],
@@ -187,9 +173,6 @@ it.each([
     expect(test.events.includes("build")).toBe(step === "build");
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
   const { promise: pending, resolve: acquired } =
     Promise.withResolvers<undefined>();
@@ -198,7 +181,7 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
   await delay(0);
   expect(test.events).toContain(lockQuery);
   expect(test.commands).toEqual([]);
-  // oxlint-disable-next-line eslint/no-undefined -- Complete the native deferred promise with its declared undefined fulfillment value.
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
   acquired(undefined);
   await build;
   expect(
@@ -210,9 +193,6 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
     )
   ).toEqual(["db:migrate", "build"]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["ECONNREFUSED", " (ECONNREFUSED)"],   ["55P03", " (55P03)"],   ["SUBPROCESS_EXIT_1", " 's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 it.each([
   ["ECONNREFUSED", " (ECONNREFUSED)"],
@@ -229,4 +209,3 @@ it.each([
     );
   }
 );
-/* oxlint-enable oxc/no-async-await */

@@ -52,7 +52,6 @@ const indexEveSandboxAncestry = (
   return { children, remaining };
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (classifyEveSandboxRuns); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /** Classify workflow ancestry without authorizing resource deletion.
  * Birth receipts, writer fences and local evidence are still required.
  * @param {readonly { readonly id: string; readonly workflowName: string; readonly parentId: string | null; readonly eveParentId: string | null }[]} runs Workflow identities and declared ancestry to classify; entries are not mutated.
@@ -96,4 +95,3 @@ export const classifyEveSandboxRuns = (
       .toSorted(),
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

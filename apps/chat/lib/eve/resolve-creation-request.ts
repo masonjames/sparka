@@ -18,12 +18,6 @@ import { z } from "zod";
 const CHECKPOINT_READ_TIMEOUT_MS = 35_000;
 const HTTP_CONFLICT = 409;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveCreationRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveCreationRequest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-undefined -- * max-lines-per-function (#510): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): resolveCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Resolve one saved operation; ambiguous outcomes never release its draft.
  *
@@ -49,7 +43,7 @@ export const resolveCreationRequest = async (
   | (Awaited<ReturnType<typeof requestConversation>> & { group: undefined })
 > => {
   if ("modelIds" in operation) {
-    // oxlint-disable-next-line oxc/no-optional-chaining, typescript/strict-boolean-expressions -- Public operation/fork getters must be read once for the truthiness guard and again by the original destructuring; preserve nullish short-circuiting, access order, changed values and throws.
+    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Public operation/fork getters must be read once for the truthiness guard and again by the original destructuring; preserve nullish short-circuiting, access order, changed values and throws.
     if (operation.fork?.checkpointId) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
@@ -109,15 +103,10 @@ export const resolveCreationRequest = async (
   }
   const binding = await requestConversation(operation);
   if (
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from readCreationRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     readCreationRequest(storage, ownerId, scope)?.operationId ===
     operation.operationId
   ) {
     finishCreation(storage, ownerId, scope);
   }
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing binding own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...binding, group: undefined };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-undefined */

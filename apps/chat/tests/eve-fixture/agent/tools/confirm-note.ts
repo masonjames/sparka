@@ -1,26 +1,16 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../../../lib/eve/turn-tools" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { defineDynamic, defineTool } from "eve/tools";
 import { always } from "eve/tools/approval";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { filterEveTools } from "../../../../lib/eve/turn-tools";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): confirmNote uses 1, 500 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): confirmNote accepts { responder, session }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): confirmNote preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 const confirmNote = defineTool({
   approval: {
     request: always(),
     response: ({ responder, session }) => {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from session.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (responder.principalId === session.initiator?.principalId) {
         return { status: "allowed" };
       }
@@ -32,14 +22,10 @@ const confirmNote = defineTool({
   execute: ({ note }) => Promise.resolve({ confirmed: true, note }),
   inputSchema: z.object({ note: z.string().trim().min(1).max(500) }),
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- */
 export default defineDynamic({
   events: {
     "step.started": () => filterEveTools({ confirm_note: confirmNote }),
   },
 });
-/* oxlint-enable import/no-default-export */

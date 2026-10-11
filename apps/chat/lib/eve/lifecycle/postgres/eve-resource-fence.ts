@@ -108,8 +108,6 @@ do $$ declare table_name text; begin
 end $$;
 `;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installEvePostgresResourceFence's awaited sequencing and rejected-Promise behavior. */
-
 const installEvePostgresResourceFence = async (
   connection: Readonly<Pick<Sql, "begin">>
 ): Promise<void> => {
@@ -122,8 +120,6 @@ const installEvePostgresResourceFence = async (
     }
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResourcesInTransaction's awaited sequencing and rejected-Promise behavior. */
 
 // Read ownership only after every sorted fence has been acquired in this transaction.
 const assertFencedResourceOwnership = async (
@@ -187,8 +183,6 @@ const fenceEvePostgresResourcesInTransaction = async (
   }
   await assertFencedResourceOwnership(query, { runIds, streamIds });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResources's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Internal provider primitive: caller authorizes and inventories these resources. Blocks future payload writes, including run recreation and linked descendants; does not fence queues, erase data or produce a deletion receipt.
@@ -211,12 +205,9 @@ const fenceEvePostgresResources = async (
     }
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (fenceEvePostgresResources, fenceEvePostgresResourcesInTransaction, installEvePostgresResourceFence); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
 export {
   fenceEvePostgresResources,
   fenceEvePostgresResourcesInTransaction,
   installEvePostgresResourceFence,
 };
-/* oxlint-enable import/no-named-export */

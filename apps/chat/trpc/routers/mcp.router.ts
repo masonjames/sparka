@@ -7,24 +7,18 @@ import { MissingCredentialsError } from "@/lib/required-credentials";
 import { TRPCError } from "@trpc/server";
 import { assertUrlIsSafeToFetch } from "guarded-fetch";
 import { z } from "zod";
-/* oxlint-disable sort-imports -- Keep preceding package initialization before environment validation reached through MCP setup; sorting would change which runtime graph completes before validation can throw. */
 import { requireMcpCredentials } from "@/features/mcp/setup";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep MCP setup environment validation before Next cache branch selection and cache logger initialization; their runtime graphs have not been proved to commute. */
 import {
   createCachedConnectionStatus,
   createCachedDiscovery,
   invalidateAllMcpCaches,
 } from "@/lib/ai/mcp/cache";
-/* oxlint-enable sort-imports */
 import {
   getOrCreateMcpClient,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
 import { createModuleLogger } from "@/lib/logger";
 import { installedFeatures } from "@/features/installed";
-/* oxlint-disable sort-imports -- Keep MCP client/provider lock-pool initialization before a direct MCP database-query edge; moving that edge earlier changes the first-evaluation trace of lock, database and logger modules. */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting imports would hide the dependency boundary without reducing dependencies. */
 import {
   createMcpConnector,
   deleteMcpConnector,
@@ -35,8 +29,6 @@ import {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 } from "@/lib/db/mcp-queries";
-/* oxlint-enable import/max-dependencies */
-/* oxlint-enable sort-imports */
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 // Procedure callbacks read only the authenticated user identity from tRPC context.
@@ -91,7 +83,6 @@ const assertMcpReady = (): void => {
   }
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAndGenerateNameId's awaited sequencing and rejected-Promise behavior. */
 /**
  * Validates and generates a nameId from a connector name.
  * Throws TRPCError if the name is invalid or the namespace already exists.
@@ -113,7 +104,6 @@ const validateAndGenerateNameId = async ({
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:
-        // oxlint-disable-next-line no-ternary -- Keep message as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         result.error === "empty"
           ? "Connector name must contain at least one alphanumeric character"
           : 'Connector name cannot be "global" (reserved)',
@@ -135,11 +125,9 @@ const validateAndGenerateNameId = async ({
 
   return result.nameId;
 };
-/* oxlint-enable oxc/no-async-await */
 
 type Permission = "own" | "own-or-global";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getConnectorWithPermission's awaited sequencing and rejected-Promise behavior. */
 /**
  * Fetches connector and validates user permission.
  * - "own": user must own the connector (userId === ctx.user.id)
@@ -164,7 +152,6 @@ const getConnectorWithPermission = async ({
   const isOwner = connector.userId === userId;
   const isGlobal = connector.userId === null;
 
-  // oxlint-disable-next-line no-ternary -- Keep hasPermission as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const hasPermission = permission === "own" ? isOwner : isOwner || isGlobal;
 
   if (!hasPermission) {
@@ -176,7 +163,6 @@ const getConnectorWithPermission = async ({
 
   return connector;
 };
-/* oxlint-enable oxc/no-async-await */
 
 const displayConnectorUrl = (value: string): string => {
   const url = new URL(value);
@@ -216,7 +202,6 @@ type PublicConnector = {
   oauthClientSecret: null;
 };
 
-/* oxlint-disable unicorn/no-null -- Connector responses explicitly redact both OAuth credential fields with null. */
 const publicConnector = (connector: PublicConnectorInput): PublicConnector => ({
   createdAt: connector.createdAt,
   enabled: connector.enabled,
@@ -231,17 +216,7 @@ const publicConnector = (connector: PublicConnectorInput): PublicConnector => ({
   url: displayConnectorUrl(connector.url),
   userId: connector.userId,
 });
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (mcpRouter); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mcpRouter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 export const mcpRouter = createTRPCRouter({
   /**
    * Initiate OAuth authorization for an MCP connector.
@@ -336,7 +311,6 @@ export const mcpRouter = createTRPCRouter({
 
       return {
         hasSession: Boolean(session),
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tokens from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         isAuthenticated: Boolean(session?.tokens),
       };
     }
@@ -505,7 +479,6 @@ export const mcpRouter = createTRPCRouter({
                         Readonly<{ description?: unknown }>,
                       ]) => ({
                         description:
-                          // oxlint-disable-next-line no-ternary -- Keep description as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                           typeof tool.description === "string"
                             ? tool.description
                             : null,
@@ -552,7 +525,6 @@ export const mcpRouter = createTRPCRouter({
                   ) =>
                     promptResult.prompts.map((prompt: McpPromptReader) => ({
                       arguments:
-                        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from prompt.arguments; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
                         prompt.arguments?.map(
                           (arg: McpPromptArgumentReader) => ({
                             description: arg.description ?? null,
@@ -665,7 +637,6 @@ export const mcpRouter = createTRPCRouter({
       return results
         .filter(
           (connectionResult: McpConnectionResultReader): boolean =>
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionResult.status; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
             connectionResult.status?.status === "connected"
         )
         .map((connectionResult: McpConnectionResultReader) =>
@@ -848,7 +819,6 @@ export const mcpRouter = createTRPCRouter({
         });
 
         const updates: typeof input.updates & { nameId?: string } = {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of input.updates rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
           ...input.updates,
         };
         if (typeof updates.url === "string" && updates.url !== "") {
@@ -880,14 +850,3 @@ export const mcpRouter = createTRPCRouter({
       }
     ),
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-undefined */
-
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

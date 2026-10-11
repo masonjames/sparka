@@ -2,12 +2,9 @@ import type { ToolContext } from "eve/tools";
 import { defineTool } from "eve/tools";
 import { experimental_generateVideo as generateVideo } from "ai";
 
-// oxlint-disable-next-line sort-imports -- Keep eve/tools installation of the global definition-source-registry Map before config.applyDefaults and gateway/provider initialization; native ordering would move config ahead of that SDK global.
 import { config } from "@/lib/config";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-/* oxlint-disable sort-imports -- Keep generated-file db/client initialization (databaseConnection(env), postgres client) before tool-cost imports active-gateway and evaluates app/gateway environment. */
 import { createEveToolCost } from "@/lib/eve/tool-cost";
-/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
@@ -40,11 +37,8 @@ const resolveVideoExtension = (mediaType?: string): string => {
     return "mp4";
   }
 
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from subtypeWithParams.split(...).at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const subtype = subtypeWithParams
-    .split(";")
-    .at(FIRST_SUBTYPE_INDEX)
-    ?.trim()
+  const subtype = (subtypeWithParams.split(";").at(FIRST_SUBTYPE_INDEX) ?? "")
+    .trim()
     .toLowerCase();
   if (!(typeof subtype === "string" && subtype !== "")) {
     return "mp4";
@@ -53,7 +47,6 @@ const resolveVideoExtension = (mediaType?: string): string => {
   return videoExtensions.get(subtype) ?? "mp4";
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveVideoModel's awaited sequencing and rejected-Promise behavior. */
 const resolveVideoModel = async (
   modelProvider: Readonly<typeof eveToolModelProvider>,
   selectedModel?: string
@@ -76,7 +69,6 @@ const resolveVideoModel = async (
   }
   return modelId;
 };
-/* oxlint-enable oxc/no-async-await */
 type Context = Readonly<
   Pick<ToolContext, "session"> & { abortSignal: Readonly<AbortSignal> }
 >;
@@ -119,13 +111,11 @@ const videoRequest = (
   model: eveToolModelProvider.createVideoModel(modelId),
   prompt: options.prompt,
   providerOptions: {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (isGoogleModel && {       google: { aspectRatio: options.aspectRatio },     }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(isGoogleModel && {
       google: { aspectRatio: options.aspectRatio },
     }),
   },
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeWithDomainFailure's awaited sequencing and rejected-Promise behavior. */
 // A completed generation followed by a storage failure is an explicit domain result.
 const storeWithDomainFailure = async (
   upload: () => ReturnType<ReturnType<typeof eveGeneratedFileUploader>>,
@@ -137,8 +127,6 @@ const storeWithDomainFailure = async (
     return usage.fail();
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeGeneratedResult's awaited sequencing and rejected-Promise behavior. */
 const storeGeneratedResult = async (
   upload: () => ReturnType<ReturnType<typeof eveGeneratedFileUploader>>,
   summary: Readonly<{ modelId: string; prompt: string; startMs: number }>,
@@ -159,8 +147,6 @@ const storeGeneratedResult = async (
     videoUrl: uploaded.url,
   };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateAndStoreVideo's awaited sequencing and rejected-Promise behavior. */
 const generateAndStoreVideo = async (
   modelId: string,
   options: GenerationOptions,
@@ -177,8 +163,7 @@ const generateAndStoreVideo = async (
     throw new Error("No video generated");
   }
   // Provider usage is billable even if the subsequent storage upload fails.
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addAPICost from integration.costAccumulator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  integration.costAccumulator?.addAPICost("generateVideo", COST_CENTS);
+  integration.costAccumulator.addAPICost("generateVideo", COST_CENTS);
   const buffer = Buffer.from(video.uint8Array);
   const uploadArguments = [
     `generated-video-${Date.now()}.${resolveVideoExtension(video.mediaType)}`,
@@ -191,7 +176,6 @@ const generateAndStoreVideo = async (
     integration.usage
   );
 };
-/* oxlint-enable oxc/no-async-await */
 const prepareGeneration = (
   input: Input,
   context: Context,
@@ -201,9 +185,8 @@ const prepareGeneration = (
   const costAccumulator = createEveToolCost(usage);
   const modelProvider = eveToolModelProvider;
   const uploadFile = eveGeneratedFileUploader(context);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const selected = context.session.auth.current?.attributes.modelId;
-  // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Start/failure logger payloads keep an own selectedModel field, while the optional resolver argument is absent unless the SDK auth attribute is a string.; no-ternary: Keep selectedModel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  const { current } = context.session.auth;
+  const selected = current && current.attributes.modelId;
   const selectedModel = typeof selected === "string" ? selected : undefined;
   const startMs = Date.now();
   return {
@@ -225,7 +208,6 @@ const throwVideoFailure = (
   startMs: number,
   selectedModel?: string
 ): never => {
-  // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const errorMessage = error instanceof Error ? error.message : "";
   const isUnsupportedVideoGateway = errorMessage.includes(
     "does not support video models"
@@ -234,7 +216,6 @@ const throwVideoFailure = (
   log.error(
     {
       error:
-        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error
           ? { message: error.message, name: error.name }
           : error,
@@ -254,8 +235,6 @@ const throwVideoFailure = (
   throw error;
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (generateVideoTool); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateVideoTool's awaited sequencing and rejected-Promise behavior. */
 export const generateVideoTool = defineTool({
   description:
     "Generate a short video clip from a text prompt. Use this when the user asks to create, make, or generate a video.",
@@ -303,5 +282,3 @@ export const generateVideoTool = defineTool({
   inputSchema: generateVideoInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

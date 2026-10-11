@@ -1,22 +1,15 @@
-/* oxlint-disable max-lines -- File writes, document writes and acceptance share one saved-copy lifecycle; their transaction sequencing remains in this module. */
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { and, eq, inArray } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Keep eve-copy-journal evaluation after direct client initialization; the journal imports client, eve-queries, schema and copy-transcript. */
 import {
   EveCopySourceChangedError,
   assertEveCopySourceAvailable,
   lockEveCopyOwners,
   readEveCopy,
 } from "./eve-copy-journal";
-/* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
-/* oxlint-disable sort-imports -- Keep direct schema import after the journal and eve-queries imports; schema builds pgTable objects at module load. */
 import {
   eveConversationCopy,
   eveConversationCopyFile,
@@ -27,17 +20,9 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveStoredFile,
 } from "./schema";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_ROW_INDEX = 0;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveCopyFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-params, max-statements --
-max-lines-per-function (#510): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * The family lock fences writes against rejection/deletion, including an uncertain storage reply.
  * @param {string} ownerId Owner of the allocated destination copy.
@@ -94,7 +79,6 @@ const writeEveCopyFile = async (
       if (receipt.writtenAt) {
         return receipt;
       }
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from copy.plan; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const file = copy.plan?.files.find(
         (candidate: { readonly key: string }) => candidate.key === key
       );
@@ -103,7 +87,6 @@ const writeEveCopyFile = async (
       }
       await assertEveCopySourceAvailable(tx, copy);
       const blob =
-        // oxlint-disable-next-line no-ternary -- Keep blob as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         file.source.kind === "inline"
           ? new Blob([Buffer.from(file.source.base64, "base64")], {
               type: file.mediaType,
@@ -137,16 +120,7 @@ const writeEveCopyFile = async (
     }
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveCopyDocuments's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-params, max-statements */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
-max-lines-per-function (#510): writeEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): writeEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): writeEveCopyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-
-unicorn/no-null (#570): writeEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * All ancestry and heads commit together, before any copy can be accepted.
  * @param {string} ownerId Owner whose copy family lock authorizes the destination writes.
@@ -190,7 +164,6 @@ const writeEveCopyDocuments = async (
                 (typeof document.revisions)[number]
               >
             ) => ({
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...revision,
               conversationId,
               createdAt: new Date(revision.createdAt),
@@ -242,7 +215,6 @@ const writeEveCopyDocuments = async (
                 conversationId,
                 messageIndex: checkpoint.messageIndex,
                 ownerId,
-                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing head own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 ...head,
               })
             )
@@ -258,17 +230,7 @@ const writeEveCopyDocuments = async (
     }
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve acceptEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
-max-lines-per-function (#510): acceptEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): acceptEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): acceptEveCopy uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-
-unicorn/max-nested-calls (#568): acceptEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): acceptEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * This short transaction is the publication boundary; no native or storage I/O runs inside it.
  * @param {string} ownerId Owner whose copy and source family are locked for publication.
@@ -302,7 +264,6 @@ const acceptEveCopy = async (
       }
       await assertEveCopySourceAvailable(tx, copy);
       const heads =
-        // oxlint-disable-next-line no-ternary -- Keep heads as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         copy.plan.sourceHeads.length > 0
           ? await tx
               .select({
@@ -393,8 +354,4 @@ const acceptEveCopy = async (
     }
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null */
 export { acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile };
-/* oxlint-enable import/no-named-export */

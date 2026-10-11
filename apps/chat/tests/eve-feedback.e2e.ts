@@ -1,62 +1,33 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
 import { execFileSync } from "node:child_process";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
 import { readFileSync } from "node:fs";
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { readFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { Request, TestInfo } from "@playwright/test";
-/* oxlint-enable eslint/sort-imports */
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveVote } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable node/no-process-env */
 
 const votesRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
   url.pathname.includes("eve.votes");
 const mutationRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
   url.pathname.includes("eve.vote") && !url.pathname.includes("eve.votes");
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-void-return --
- * max-lines-per-function (#510): test("assistant feedback survives reload, recovers from errors and stays out of publi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("assistant feedback survives reload, recovers from errors and stays out of publi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("assistant feedback survives reload, recovers from errors and stays out of publi uses 0, 1100, 390, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("assistant feedback survives reload, recovers from errors and stays out of publi uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-void-return --
  * typescript/promise-function-async (#606): test("assistant feedback survives reload, recovers from errors and stays out of publi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("assistant feedback survives reload, recovers from errors and stays out of publi's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("assistant feedback survives reload, recovers from errors and stays out of public shares", async ({
   page,
   browser,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -98,7 +69,6 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       (url: Readonly<Pick<URL, "pathname">>) =>
         url.pathname.includes("eve.vote") &&
         !url.pathname.includes("eve.votes"),
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       (route) =>
         route.fulfill({
           body: "{}",
@@ -116,7 +86,6 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await page.reload();
     await expect(down).toHaveAttribute("aria-pressed", "true");
 
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
     await page.route(votesRoute, (route) =>
       route.fulfill({
         body: "{}",
@@ -143,8 +112,8 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     const staleReadFinished = Promise.withResolvers<undefined>();
     await page.route(
       mutationRoute,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.continue() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
+        // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
         mutationStarted.resolve(undefined);
         await resumeMutation.promise;
         await route.continue();
@@ -153,14 +122,15 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     );
     await page.route(
       votesRoute,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
         const response = await route.fetch();
+        // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
         staleReadStarted.resolve(undefined);
         await releaseStaleRead.promise;
         try {
           await route.fulfill({ response });
         } finally {
+          // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
           staleReadFinished.resolve(undefined);
         }
       },
@@ -174,8 +144,10 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         globalThis.dispatchEvent(new Event("visibilitychange"))
       );
       await staleReadStarted.promise;
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       resumeMutation.resolve(undefined);
       await expect(up).toHaveAttribute("aria-pressed", "true");
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       releaseStaleRead.resolve(undefined);
       await staleReadFinished.promise;
       // A following browser task runs after the completed response is processed.
@@ -188,7 +160,9 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       await expect(up).toHaveAttribute("aria-pressed", "true");
       await expect(down).toBeEnabled();
     } finally {
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       resumeMutation.resolve(undefined);
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       releaseStaleRead.resolve(undefined);
     }
 
@@ -203,10 +177,8 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         feedbackRequests.push(request.url());
       }
     });
-    await publicPage.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await publicPage.goto(`${new URL(page.url()).origin}/share/${binding.id}`);
     await expect(publicPage.getByRole("log")).toContainText(
@@ -228,25 +200,15 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       .where(eq(eveConversation.id, binding.id));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
- * max-statements (#512): test("shared feedback controls render unrated, selected and pending states") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("shared feedback controls render unrated, selected and pending states") uses 4, 0, 1, 2, 3, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("shared feedback controls render unrated, selected and pending states") uses execFileSync("bun", [ "build", "tests/eve-feedback-fixture.tsx", "--target=browser", ; readFileSync(bundle, "utf-8") within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("shared feedback controls render unrated, selected and pending states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.addScriptTag() on the original Page/locator receiver to change the live browser or route state.
 test("shared feedback controls render unrated, selected and pending states", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const styles = await page
     .locator('link[rel="stylesheet"]')
@@ -290,5 +252,4 @@ test("shared feedback controls render unrated, selected and pending states", asy
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

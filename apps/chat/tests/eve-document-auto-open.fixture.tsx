@@ -1,31 +1,19 @@
-/* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-artifact-layout"; "../components/eve/eve-document-tool"; "../components/ui/sidebar"; "../hooks/use-artifact"; "../trpc/react" dependency within this package instead of introducing an alias or barrel API. */
 import { QueryClientProvider } from "@tanstack/react-query";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessagePart } from "eve/client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
-/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveArtifactLayout } from "../components/eve/eve-artifact-layout";
-/* oxlint-enable sort-imports */
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { useArtifact } from "../hooks/use-artifact";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { TRPCProvider } from "../trpc/react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationId,
   existingId,
   queryClient,
   trpcClient,
 } from "./eve-artifact-query.fixture";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;
 const completed: Part = {
@@ -43,10 +31,6 @@ const completed: Part = {
   toolName: "createTextDocument",
   type: "dynamic-tool",
 };
-/* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, no-undefined, react/only-export-components -- max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
 
 const Fixture = ({
   switchBranch,
@@ -95,7 +79,7 @@ const Fixture = ({
           Switch branch
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             setPart({
               input: {
                 content:
@@ -106,14 +90,14 @@ const Fixture = ({
               toolCallId: "write-1",
               toolName: "createTextDocument",
               type: "dynamic-tool",
-            })
-          }
+            });
+          }}
           type="button"
         >
           Start write
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             setPart({
               errorText: "Document cancelled.",
               input: {},
@@ -121,43 +105,39 @@ const Fixture = ({
               toolCallId: "write-1",
               toolName: "createTextDocument",
               type: "dynamic-tool",
-            })
-          }
+            });
+          }}
           type="button"
         >
           Fail write
         </button>
         <button
-          onClick={() =>
-            setPart(
-              /* oxlint-disable oxc/no-rest-spread-properties -- Keep the fresh shallow copy of completed rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign. */
-              { ...completed }
-              /* oxlint-enable oxc/no-rest-spread-properties */
-            )
-          }
+          onClick={() => {
+            setPart({ ...completed });
+          }}
           type="button"
         >
           Complete write
         </button>
         <button
-          onClick={() =>
-            setPart(
-              /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing completed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
-              { ...completed, toolName: "readDocument" }
-              /* oxlint-enable oxc/no-rest-spread-properties */
-            )
-          }
+          onClick={() => {
+            setPart({ ...completed, toolName: "readDocument" });
+          }}
           type="button"
         >
           Complete read
         </button>
-        <button onClick={() => setReadOnly((value) => !value)} type="button">
+        <button
+          onClick={() => {
+            setReadOnly((value) => !value);
+          }}
+          type="button"
+        >
           Toggle readonly
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             setArtifact({
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing artifact own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...artifact,
               conversationId,
               documentId: existingId,
@@ -165,29 +145,19 @@ const Fixture = ({
               isVisible: true,
               revisionId: undefined,
               title: "Existing draft",
-            })
-          }
+            });
+          }}
           type="button"
         >
           Open existing
         </button>
       </div>
-      <p /* oxlint-disable no-ternary -- Keep the read-only/owner fixture caption as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
-      >
-        Mode: {readOnly ? "readonly" : "owner"}
-      </p /* oxlint-enable no-ternary */>
+      <p>Mode: {readOnly ? "readonly" : "owner"}</p>
       <EveDocumentTool isReadonly={readOnly} messageId="message" part={part} />
     </main>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- App renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
-/* oxlint-enable max-lines-per-function, no-undefined, react/only-export-components */
-/* oxlint-disable no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/promise-function-async -- * no-undefined (#519): App uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react-perf/jsx-no-new-function-as-prop (#557): App creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/no-multi-comp (#552): App keeps related fixture render states together; extraction changes component, state, and layout boundaries.
- * react/only-export-components (#553): App is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/promise-function-async (#606): App preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): App preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 const App = (): React.JSX.Element => {
   const [branch, setBranch] = useState(conversationId);
   const [replaying, setReplaying] = useState(false);
@@ -201,7 +171,6 @@ const App = (): React.JSX.Element => {
         logicalChatId="logical-chat"
         replaying={replaying}
         isExecutionBusy={
-          // oxlint-disable-next-line no-ternary -- Keep isExecutionBusy JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           busy === undefined ? undefined : (id) => busy && id === conversationId
         }
         onStopExecution={(id) => {
@@ -211,22 +180,28 @@ const App = (): React.JSX.Element => {
         }}
       >
         <Fixture
-          startReplay={() => setReplaying(true)}
-          finishReplay={() => setReplaying(false)}
-          startBackground={() => setBusy(true)}
-          switchBranch={() => setBranch("00000000-0000-4000-8000-000000000099")}
+          startReplay={() => {
+            setReplaying(true);
+          }}
+          finishReplay={() => {
+            setReplaying(false);
+          }}
+          startBackground={() => {
+            setBusy(true);
+          }}
+          switchBranch={() => {
+            setBranch("00000000-0000-4000-8000-000000000099");
+          }}
         />
       </EveArtifactLayout>
     </>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }
-/* oxlint-disable react/jsx-max-depth -- * react/jsx-max-depth (#548): createRoot(root).render keeps related fixture render states together; extraction changes component, state, and layout boundaries. */
 createRoot(root).render(
   <QueryClientProvider client={queryClient}>
     <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
@@ -236,4 +211,3 @@ createRoot(root).render(
     </TRPCProvider>
   </QueryClientProvider>
 );
-/* oxlint-enable react/jsx-max-depth */

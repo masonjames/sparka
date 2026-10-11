@@ -36,40 +36,25 @@ const buttonVariants = cva(
   }
 );
 
-/* oxlint-disable react/react-in-jsx-scope -- Button uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-
-const Button = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    variant,
-    size,
-    asChild = false,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant, size, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: ReactComponentProps<"button"> &
-    VariantProps<typeof buttonVariants> & {
-      readonly asChild?: boolean;
-    }
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): ReactJSX.Element => {
-  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+const Button = ({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: ReactComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    readonly asChild?: boolean;
+  }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
-      // oxlint-disable-next-line react/forbid-component-props -- Comp accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(buttonVariants({ className, size, variant }))}
       data-slot="button"
-      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Button's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Button, buttonVariants); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-disable react/only-export-components -- button.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Button, buttonVariants };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/only-export-components */

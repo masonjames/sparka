@@ -13,8 +13,6 @@ const SLIDER_START = 20;
 const SLIDER_END = 70;
 const SLIDER_DEFAULT_RANGE = [SLIDER_START, SLIDER_END];
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- The parent fixture uses this named control-defaults capture; the pinned import/no-default-export rule rejects a default export. */
-/* oxlint-disable react/jsx-no-literals -- These authored labels identify the native links, slider and resize panels in the default-state capture. */
 export const ControlDefaultsVisualFixture = (): React.JSX.Element => {
   const slottedLink = (
     <BreadcrumbLink asChild>
@@ -40,5 +38,3 @@ export const ControlDefaultsVisualFixture = (): React.JSX.Element => {
     </section>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -1,11 +1,7 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
 
-/* oxlint-disable oxc/no-async-await -- Probe one native manifest asynchronously; treat missing files as nonmatches while preserving other read and parse failures. */
 const hasMatchingPackageManifest = async (
   directory: string,
   packageName: string
@@ -29,10 +25,7 @@ const hasMatchingPackageManifest = async (
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolvePackageDirectory); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolvePackageDirectory's awaited sequencing and rejected-Promise behavior. */
 /**
  * Resolve an installed package from the workspace that declares the dependency.
  * @param {string} packageName Package identifier to resolve through workspace dependencies.
@@ -59,5 +52,3 @@ export const resolvePackageDirectory = async (
 
   throw new Error(`Could not locate the installed ${packageName} package.`);
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

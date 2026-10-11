@@ -6,7 +6,6 @@ import { coreFeatureEnvRequirements } from "./config-requirements";
 const requiredMcpEncryptionKeyCount = 1;
 const mcpRequirementGroupCount = 2;
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 describe("collectEnvChecklist", () => {
   it("uses the LiteLLM base URL as the gateway requirement", () => {
     const entries = collectEnvChecklist({
@@ -162,9 +161,7 @@ describe("collectEnvChecklist", () => {
     ).toBe(true);
   });
 });
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 it("includes every installed MCP requirement and preserves combined and alternative groups", () => {
   const previous = coreFeatureEnvRequirements.mcp;
   coreFeatureEnvRequirements.mcp = [
@@ -225,4 +222,3 @@ it("includes every installed MCP requirement and preserves combined and alternat
     coreFeatureEnvRequirements.mcp = previous;
   }
 });
-/* oxlint-enable eslint/max-lines-per-function */

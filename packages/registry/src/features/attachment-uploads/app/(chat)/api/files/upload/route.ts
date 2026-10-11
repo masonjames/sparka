@@ -1,18 +1,11 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { headers } from "next/headers";
-/* oxlint-disable sort-imports -- Keep the current runtime declaration order; transitive initializer independence across this comparator boundary remains unproved. */
 import { NextResponse } from "next/server";
-/* oxlint-enable sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Keep the current runtime declaration order; transitive initializer independence across this comparator boundary remains unproved. */
 import { auth } from "@/lib/auth";
-/* oxlint-enable sort-imports */
 import { config } from "@/lib/config";
-/* oxlint-disable sort-imports -- Keep config/auth initialization before the upload DB graph; commuting these effects across the member-syntax boundary remains unproved. */
 import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
-/* oxlint-enable sort-imports */
-/* oxlint-disable-next-line sort-imports -- Keep the current runtime declaration order; transitive initializer independence across this comparator boundary remains unproved. */
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 
 // Allow multipart headers and fields without buffering an unbounded request.
@@ -52,7 +45,6 @@ const limitUploadBody = (
 } => {
   let receivedBytes = 0;
   let exceedsLimit = false;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pipeThrough from request.body; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const body = request.body?.pipeThrough(
     new TransformStream<Uint8Array, Uint8Array>({
       transform(
@@ -116,11 +108,6 @@ const validateUploadForm = (
   return { file };
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- After extracting synchronous byte accounting and file validation, keep authentication, multipart parsing, reservation-before-write and their original catch boundaries together. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const POST = async (
   request: ReadonlyNativeSurface<Request>
@@ -182,9 +169,4 @@ export const POST = async (
     );
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

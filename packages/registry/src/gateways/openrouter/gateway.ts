@@ -62,10 +62,8 @@ const providerModelListSchema = z.object({
 });
 
 const deriveTags = (model: Readonly<OpenRouterModelResponse>): string[] => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
-  const inputMods = model.architecture?.input_modalities ?? ["text"];
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
-  const outputMods = model.architecture?.output_modalities ?? ["text"];
+  const inputMods = (model.architecture ?? {}).input_modalities ?? ["text"];
+  const outputMods = (model.architecture ?? {}).output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
 
   const capabilities: readonly (readonly [boolean, string])[] = [
@@ -89,8 +87,7 @@ const toAiGatewayModel = (
   model: Readonly<OpenRouterModelResponse>
 ): AiGatewayModel => {
   const tags = deriveTags(model);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
-  const outputMods = model.architecture?.output_modalities ?? ["text"];
+  const outputMods = (model.architecture ?? {}).output_modalities ?? ["text"];
 
   let type: "language" | "embedding" | "image" = "language";
   if (!outputMods.includes("text") && outputMods.includes("image")) {
@@ -106,26 +103,18 @@ const toAiGatewayModel = (
     description: model.description ?? "",
     id: model.id,
     max_tokens:
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading max_completion_tokens from model.top_provider; preserve one receiver evaluation, skipped accesses and the existing UNKNOWN_MODEL_LIMIT fallback.
-      model.top_provider?.max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
+      (model.top_provider ?? {}).max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
     name: model.name ?? model.id,
     object: "model",
     owned_by,
     pricing: {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      image: model.pricing?.image,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      input: model.pricing?.prompt,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_cache_read from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      input_cache_read: model.pricing?.input_cache_read,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_cache_write from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      input_cache_write: model.pricing?.input_cache_write,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading completion from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      output: model.pricing?.completion,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading web_search from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      web_search: model.pricing?.web_search,
+      image: (model.pricing ?? {}).image,
+      input: (model.pricing ?? {}).prompt,
+      input_cache_read: (model.pricing ?? {}).input_cache_read,
+      input_cache_write: (model.pricing ?? {}).input_cache_write,
+      output: (model.pricing ?? {}).completion,
+      web_search: (model.pricing ?? {}).web_search,
     },
-    // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.; no-ternary: Keep tags as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     tags: tags.length > EMPTY_TAG_COUNT ? tags : undefined,
     type,
   };
@@ -151,7 +140,6 @@ const parseProviderModels = (value: unknown): AiGatewayModel[] => {
   return result;
 };
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 class OpenRouterGateway
   extends GatewayRuntime
   implements GatewayProvider<"openrouter", string, never, never>
@@ -189,8 +177,6 @@ class OpenRouterGateway
     return this.env.OPENROUTER_API_KEY;
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line eslint/max-statements -- Preserve the native fetch, response validation, ordered log calls, and catch fallback in one operation; the exact unmasked statement count is recorded in the lane evidence.
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -233,8 +219,5 @@ class OpenRouterGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable unicorn/no-null */
-// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (Gateway, OpenRouterGateway); the enabled import/no-default-export convention rejects the default-export alternative.
 export { OpenRouterGateway as Gateway, OpenRouterGateway };

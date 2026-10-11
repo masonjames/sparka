@@ -50,7 +50,6 @@ const toAiGatewayModel = (
   name: model.id,
   object: "model",
   owned_by:
-    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
   pricing: {},
   type: "language",
@@ -76,7 +75,6 @@ const parseProviderModels = (value: unknown): AiGatewayModel[] => {
   return result;
 };
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 class OpenAIGateway
   extends GatewayRuntime
   implements
@@ -93,7 +91,6 @@ class OpenAIGateway
   }
 
   public createLanguageModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
     modelId: ExtractModelIdFromProvider<typeof createOpenAI>
   ): LanguageModelV4 {
     const provider = this.getProvider();
@@ -115,8 +112,6 @@ class OpenAIGateway
     return this.env.OPENAI_API_KEY;
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line eslint/max-statements -- Preserve the native fetch, response validation, ordered log calls, and catch fallback in one operation; the exact unmasked statement count is recorded in the lane evidence.
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -159,8 +154,5 @@ class OpenAIGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable unicorn/no-null */
-// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (Gateway, OpenAIGateway); the enabled import/no-default-export convention rejects the default-export alternative.
 export { OpenAIGateway as Gateway, OpenAIGateway };

@@ -4,10 +4,8 @@ import type { ReadonlyDeep } from "./readonly-types";
 
 const SDK_PARAMETER_INDEX = 0;
 
-// oxlint-disable-next-line unicorn/no-null -- The reconnect stream uses the SDK-required null sentinel for its empty state.
 const NO_RECONNECT_STREAM = null;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ControlledTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: {
     abortSignal: AbortSignal | undefined;
@@ -22,7 +20,6 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     | ReadableStream<UIMessageChunk>
     | typeof NO_RECONNECT_STREAM = NO_RECONNECT_STREAM;
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendMessages's awaited sequencing and rejected-Promise behavior. */
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
     options: ReadonlyDeep<
       Parameters<
@@ -54,8 +51,6 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
         },
       })
     );
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconnectToStream's awaited sequencing and rejected-Promise behavior. */
   public async reconnectToStream(
     _options: ReadonlyDeep<
       Parameters<
@@ -67,7 +62,6 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.#reconnectStream = NO_RECONNECT_STREAM;
     return await Promise.resolve(stream);
   }
-  /* oxlint-enable oxc/no-async-await */
   public prepareReconnect(): ReadableStreamDefaultController<UIMessageChunk> {
     const holder: {
       controller?: Readonly<ReadableStreamDefaultController<UIMessageChunk>>;
@@ -124,4 +118,3 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     }
   }
 }
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

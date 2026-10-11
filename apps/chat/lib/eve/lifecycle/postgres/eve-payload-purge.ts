@@ -15,8 +15,6 @@ const receiptSchema = z.object({
   streamIds: z.array(z.string()),
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPayloadPurgeReady's awaited sequencing and rejected-Promise behavior. */
-
 const assertPayloadPurgeReady = async (
   query: PayloadQuery,
   taskIdentifier: string,
@@ -50,9 +48,6 @@ const assertPayloadPurgeReady = async (
     throw new Error("Clear queued payloads before purging native runs.");
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEvePostgresSessionPayloads); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresSessionPayloads's awaited sequencing and rejected-Promise behavior. */
 
 const inventoryPayloadPurge = async (
   query: PayloadQuery,
@@ -150,5 +145,3 @@ export const purgeEvePostgresSessionPayloads = async (
     }
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

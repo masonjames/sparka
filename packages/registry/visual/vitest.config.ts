@@ -1,14 +1,8 @@
 import type { Page, Route } from "playwright";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createRequire } from "node:module";
-/* oxlint-enable import/no-nodejs-modules */
 import { defineConfig } from "vitest/config";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 import { playwright } from "@vitest/browser-playwright";
 import { registeredProjectsPlugin } from "./registered-projects-plugin";
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
@@ -17,7 +11,6 @@ const appRequire = createRequire(
   new URL("../../../apps/chat/package.json", import.meta.url)
 );
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
 export default defineConfig({
   css: {
     postcss: fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
@@ -75,7 +68,6 @@ export default defineConfig({
   test: {
     browser: {
       commands: {
-        /* oxlint-disable oxc/no-async-await -- Install the fixture's external logo response before rendering and await each native Playwright route fulfillment. */
         modelAssets: async ({
           page,
         }: {
@@ -91,7 +83,6 @@ export default defineConfig({
             }
           );
         },
-        /* oxlint-enable oxc/no-async-await */
       },
       enabled: true,
       headless: true,
@@ -105,4 +96,3 @@ export default defineConfig({
     ],
   },
 });
-/* oxlint-enable import/no-default-export */

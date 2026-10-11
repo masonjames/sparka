@@ -1,7 +1,5 @@
 import { invalidateAllMcpCaches } from "@/lib/ai/mcp/cache";
-/* oxlint-disable sort-imports -- Keep Next cache and its logger initialization before MCP client OAuth-provider lock-pool, database and logger initialization; independence of these runtime graphs is not proven. */
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
-/* oxlint-enable sort-imports */
 
 // Map to store active MCP clients by connector ID
 const clientsMap = new Map<string, MCPClient>();
@@ -30,14 +28,15 @@ const getOrCreateMcpClient = (
       id,
       name,
       { headers, oauthClientId, oauthClientSecret, type, url },
-      () => invalidateAllMcpCaches(id)
+      () => {
+        invalidateAllMcpCaches(id);
+      }
     );
     clientsMap.set(id, client);
   }
   return client;
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeMcpClient's awaited sequencing and rejected-Promise behavior. */
 /**
  * Remove an MCP client from the cache and close it.
  * @param {string} id - Connector whose client should close.
@@ -49,20 +48,22 @@ const removeMcpClient = async (
 ): Promise<void> => {
   const client = clientsMap.get(id);
   if (client) {
-    if (
-      typeof expectedOAuthState === "string" &&
-      (client.status !== "authorizing" ||
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Client existence guard does not establish authorization URL presence. getAuthorizationUrl returns the class optional authorizationUrl state; an authorizing client without matching URL/state must be rejected without throwing.
-        client.getAuthorizationUrl()?.searchParams.get("state") !==
-          expectedOAuthState)
-    ) {
-      return;
+    if (typeof expectedOAuthState === "string") {
+      if (client.status !== "authorizing") {
+        return;
+      }
+      const authorizationUrl = client.getAuthorizationUrl();
+      if (
+        !authorizationUrl ||
+        authorizationUrl.searchParams.get("state") !== expectedOAuthState
+      ) {
+        return;
+      }
     }
     clientsMap.delete(id);
     await client.close();
   }
 };
-/* oxlint-enable oxc/no-async-await */
 /**
  * Create a fresh MCP client for OAuth callback handling.
  * Does NOT use the cache - creates a new instance to avoid state conflicts.
@@ -86,9 +87,9 @@ const createMcpClientForCallback = (
     id,
     name,
     { headers, oauthClientId, oauthClientSecret, type, url },
-    () => invalidateAllMcpCaches(id)
+    () => {
+      invalidateAllMcpCaches(id);
+    }
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createMcpClientForCallback, getOrCreateMcpClient, removeMcpClient); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createMcpClientForCallback, getOrCreateMcpClient, removeMcpClient };
-/* oxlint-enable import/no-named-export */

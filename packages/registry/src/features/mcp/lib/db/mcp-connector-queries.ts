@@ -2,12 +2,9 @@ import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import type { McpConnector } from "@/lib/db/schema";
 import { db } from "@/lib/db/client";
 import { mcpConnector } from "@/lib/db/schema";
-/* oxlint-disable sort-imports -- Keep database/schema initialization before Pino logger initialization; their complete runtime graphs have not been proved to commute. */
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable sort-imports */
 
 const log = createModuleLogger("mcp-queries");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorsByUserId's awaited sequencing and rejected-Promise behavior. */
 // MCP Connector queries
 
 const getMcpConnectorsByUserId = async ({
@@ -26,8 +23,6 @@ const getMcpConnectorsByUserId = async ({
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorById's awaited sequencing and rejected-Promise behavior. */
 const getMcpConnectorById = async ({
   id,
 }: Readonly<{
@@ -47,8 +42,6 @@ const getMcpConnectorById = async ({
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorByNameId's awaited sequencing and rejected-Promise behavior. */
 const getMcpConnectorByNameId = async ({
   userId,
   nameId,
@@ -61,14 +54,12 @@ const getMcpConnectorByNameId = async ({
   try {
     const conditions = [
       eq(mcpConnector.nameId, nameId),
-      // oxlint-disable-next-line no-ternary -- Keep ArrayLiteralExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       userId === null
         ? isNull(mcpConnector.userId)
         : eq(mcpConnector.userId, userId),
     ];
 
     const whereClause =
-      // oxlint-disable-next-line no-ternary -- Keep whereClause as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof excludeId === "string" && excludeId !== ""
         ? and(...conditions, sql`${mcpConnector.id} != ${excludeId}::uuid`)
         : and(...conditions);
@@ -83,8 +74,6 @@ const getMcpConnectorByNameId = async ({
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createMcpConnector's awaited sequencing and rejected-Promise behavior. */
 const createMcpConnector = async ({
   userId,
   name,
@@ -108,9 +97,7 @@ const createMcpConnector = async ({
       .values({
         name,
         nameId,
-        // oxlint-disable-next-line unicorn/no-null -- Explicit SQL NULL clears an absent OAuth credential; empty strings are credentials and omitting the binding delegates to column defaults.
         oauthClientId: oauthClientId ?? null,
-        // oxlint-disable-next-line unicorn/no-null -- Explicit SQL NULL clears an absent OAuth secret; empty strings are credentials and omitting the binding delegates to column defaults.
         oauthClientSecret: oauthClientSecret ?? null,
         type,
         url,
@@ -123,8 +110,6 @@ const createMcpConnector = async ({
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateMcpConnector's awaited sequencing and rejected-Promise behavior. */
 const updateMcpConnector = async ({
   id,
   updates,
@@ -147,7 +132,6 @@ const updateMcpConnector = async ({
     await db
       .update(mcpConnector)
       .set({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing updates own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...updates,
         updatedAt: new Date(),
       })
@@ -157,8 +141,6 @@ const updateMcpConnector = async ({
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteMcpConnector's awaited sequencing and rejected-Promise behavior. */
 const deleteMcpConnector = async ({
   id,
 }: Readonly<{ id: string }>): Promise<void> => {
@@ -169,8 +151,6 @@ const deleteMcpConnector = async ({
     throw error;
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createMcpConnector, deleteMcpConnector, getMcpConnectorById, getMcpConnectorByNameId, getMcpConnectorsByUserId, updateMcpConnector); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
 export {
   createMcpConnector,
   deleteMcpConnector,
@@ -179,4 +159,3 @@ export {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 };
-/* oxlint-enable import/no-named-export */

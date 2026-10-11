@@ -1,29 +1,20 @@
 import { afterEach, expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line sort-imports -- Preserve node:os before #cli/helpers/scaffold while their runtime initialization order is still under site review.
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
 
-// oxlint-disable-next-line sort-imports -- Preserve #cli/helpers/scaffold before #cli/registry/shadcn while their runtime initialization order is still under site review.
 import { installItems } from "#cli/registry/shadcn";
 
-// oxlint-disable-next-line sort-imports -- Preserve #cli/registry/shadcn before ./install-plan while their runtime initialization order is still under site review.
 import { installPlan, recordInstalledSource } from "./install-plan";
 
 import { planInstallation } from "./installation-plan";
 
-// oxlint-disable-next-line sort-imports -- Preserve ./installation-plan before ./sync-tools while their runtime initialization order is still under site review.
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
 
 const roots: string[] = [];
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
@@ -32,10 +23,7 @@ afterEach(async (): Promise<void> => {
       .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const server = (): Bun.Server<undefined> =>
   Bun.serve({
     fetch(request: Readonly<Pick<Request, "url">>): Response {
@@ -44,7 +32,6 @@ const server = (): Bun.Server<undefined> =>
         contractVersion: 1,
         id,
         kind: "tool",
-        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (id === "extra"           ? {}           : {               codeExecutionCapabilities: {                 cancellation: "terminate",                 cleanup: "durable-allocation",                 files: "ephemeral",                 languages: ["python", "javascript"],                 timeout: "bounded",                 usage: "single-receipt",               },               codeExecutorExport: "executeCode",               slot: "codeExecution",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(id === "extra"
           ? {}
           : {
@@ -59,7 +46,6 @@ const server = (): Bun.Server<undefined> =>
               codeExecutorExport: "executeCode",
               slot: "codeExecution",
             }),
-        // oxlint-disable-next-line no-ternary -- Keep toolExport as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tools: [{ toolExport: id === "extra" ? "extra" : "executeCode" }],
       };
       return Response.json({
@@ -71,7 +57,6 @@ const server = (): Bun.Server<undefined> =>
             type: "registry:file",
           },
           {
-            // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             content: `export const ${id === "extra" ? "extra" : "executeCode"} = {};\n`,
             path: "tool.ts",
             target: `~/tools/chatjs/${id}/tool.ts`,
@@ -86,20 +71,13 @@ const server = (): Bun.Server<undefined> =>
     hostname: "127.0.0.1",
     port: 0,
   });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-replacement-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
   return root;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -157,16 +135,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["registration", "finalization"] as const)'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test.each(["registration", "finalization"] as const)(
   "failed %s restores previous provider source, manifest, receipts and lockfiles",
@@ -281,16 +250,8 @@ test.each(["registration", "finalization"] as const)(
   },
   30_000
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("native shadcn source can be composed without overwriting or blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -324,14 +285,7 @@ test("native shadcn source can be composed without overwriting or blessing user 
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("registration refreshes untouched rollback baselines without blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const file = path.join(root, ".env.example");
@@ -426,15 +380,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("provider installation refuses inferred native dependency destinations before any overwrite", async (): Promise<void> => {
   const root = await fixture();
@@ -528,10 +474,4 @@ test("provider installation refuses inferred native dependency destinations befo
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

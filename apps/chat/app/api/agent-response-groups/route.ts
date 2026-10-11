@@ -2,11 +2,9 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { env } from "@/lib/env";
 import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { createEveResponseGroup } from "@/lib/eve/response-group";
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
@@ -32,7 +30,6 @@ const scheduleResponseGroupTitle = (
     const source = result.candidates.find(
       (candidate) => candidate.state === "bound"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (source?.state === "bound") {
       after(() =>
         persistGeneratedEveConversationTitle({
@@ -45,14 +42,6 @@ const scheduleResponseGroupTitle = (
   }
 };
 /* oxlint-enable typescript/promise-function-async */
-
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-statements, no-undefined, unicorn/no-null --
-max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): POST uses undefined for absent or optional values; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
 export const POST = async (
   request: ReadonlyNativeSurface<Request>
@@ -75,7 +64,6 @@ export const POST = async (
   }
   try {
     const admission =
-      // oxlint-disable-next-line no-ternary -- Keep admission as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       principal.kind === "guest"
         ? await admitGuestResponseGroup(request, principal, input.data)
         : undefined;
@@ -97,6 +85,3 @@ export const POST = async (
     );
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-undefined, unicorn/no-null */

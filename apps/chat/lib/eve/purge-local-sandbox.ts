@@ -1,13 +1,9 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { readFile, readdir } from "node:fs/promises";
 import type { Snapshot as MicrosandboxSnapshot } from "microsandbox";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { localEveSandboxOwnerSchema } from "./local-sandbox-inventory";
 import nodePath from "node:path";
 import { z } from "zod";
-/* oxlint-enable import/no-nodejs-modules */
 
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const FORK_MANIFEST_VERSION = 1;
@@ -54,7 +50,6 @@ const parseOwnedResourceRecord = (
 ): z.output<typeof resourceSchema> => {
   const record = resourceSchema.parse(JSON.parse(recordText));
   const pattern =
-    // oxlint-disable-next-line no-ternary -- Keep pattern as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     record.kind === "sandbox" ? sandboxNamePattern : stateSnapshotPattern;
   if (
     record.sessionKey !== input.sessionKey ||
@@ -65,7 +60,6 @@ const parseOwnedResourceRecord = (
   }
   return record;
 };
-/* oxlint-disable oxc/no-async-await -- Preserve missing-directory fallback and rejection identity for both local inventory scans. */
 const readDirectoryEntries = async (directory: string): Promise<string[]> => {
   try {
     return await readdir(directory);
@@ -76,8 +70,6 @@ const readDirectoryEntries = async (directory: string): Promise<string[]> => {
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readResourceRecords's awaited sequencing and rejected-Promise behavior. */
 const readResourceRecords = async (
   input: SessionResourceInput
 ): Promise<z.output<typeof resourceSchema>[]> => {
@@ -98,10 +90,7 @@ const readResourceRecords = async (
   }
   return records;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalSandboxResources's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- readLocalSandboxResources uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const readLocalSandboxMetadata = async (
   sessionDirectory: string
 ): Promise<
@@ -116,7 +105,6 @@ const readLocalSandboxMetadata = async (
     }
     throw error;
   });
-  // oxlint-disable-next-line no-ternary -- Keep metadata as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   return metadataText === undefined
     ? undefined
     : metadataSchema.parse(JSON.parse(metadataText));
@@ -129,12 +117,10 @@ const collectLocalSandboxResourceNames = async (
   sandboxNames: Set<string>;
   recordedSnapshots: Set<string>;
 }> => {
-  // oxlint-disable-next-line no-ternary -- Keep Set argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const sandboxNames = new Set<string>(metadata ? [metadata.sandboxName] : []);
   const recordedSnapshots = new Set<string>();
   const recorded = await readResourceRecords(input);
   for (const record of recorded) {
-    // oxlint-disable-next-line no-ternary -- Keep add receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (record.kind === "sandbox" ? sandboxNames : recordedSnapshots).add(
       record.name
     );
@@ -154,7 +140,6 @@ const assertSnapshotRemovalProgress = (
   }
 };
 const removeRecordedSnapshotPass = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the full native Snapshot static type; a narrower handwritten interface would drift from the SDK contract.
   Snapshot: ReadonlyNativeSurface<typeof MicrosandboxSnapshot>,
   pending: ReadonlyNativeSurface<Set<string>>
 ): Promise<void> => {
@@ -200,7 +185,7 @@ const readForkCheckpointSnapshotNames = async (
   const directory = nodePath.join(input.sessionDirectory, "fork-checkpoints");
   const entries = await readDirectoryEntries(directory);
   const snapshots: string[] =
-    // oxlint-disable-next-line no-ternary, typescript/strict-boolean-expressions -- Preserve lazy snapshot selection (pinned unicorn/prefer-ternary rejects if/else assignment), the original optional-name guard, and the separate selected-value getter read while narrowing original metadata.
+    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve lazy snapshot selection (pinned unicorn/prefer-ternary rejects if/else assignment), the original optional-name guard, and the separate selected-value getter read while narrowing original metadata.
     metadata && metadata.stateSnapshotName
       ? [metadata.stateSnapshotName, ...recordedSnapshots]
       : [...recordedSnapshots];
@@ -266,9 +251,6 @@ const readLocalSandboxResources = async (
     snapshotNames: [...new Set(snapshots)],
   };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeRecordedSnapshots's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
 const removeRecordedSnapshots = async (
   snapshotNames: readonly string[]
@@ -282,10 +264,7 @@ const removeRecordedSnapshots = async (
     await removeRecordedSnapshotPass(Snapshot, pending);
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeLocalEveSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Preserve sequential lookup and destruction of each owned sandbox handle. */
 const destroyOwnedSandboxes = async (
   resources: readonly ReadonlySandboxResources[]
 ): Promise<void> => {
@@ -313,9 +292,7 @@ const destroyOwnedSandboxes = async (
     }
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeLocalEveSandboxes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async -- Keep the inventory map callback as a direct promise return; adding async wraps each promise and changes promise identity. */
 /**
  * Purges only validated local-provider resources after every supplied family member is retired.
@@ -341,6 +318,4 @@ export const purgeLocalEveSandboxes = async (
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */

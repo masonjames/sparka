@@ -55,8 +55,6 @@ const createPipRedactionFixture = (
   };
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([0, 1])'s awaited sequencing and rejected-Promise behavior. */
-
 it.each([SUCCESS_EXIT_CODE, FAILED_EXIT_CODE])(
   "does not log package credentials when pip exits with %s",
   async (exitCode) => {
@@ -93,7 +91,6 @@ it.each([SUCCESS_EXIT_CODE, FAILED_EXIT_CODE])(
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
 
 it.each([
   {
@@ -133,7 +130,6 @@ it.each([
   },
 ])(
   "chart envelope $chart is accepted only when it is an object",
-  // oxlint-disable-next-line oxc/no-async-await -- Await the mocked sandbox command lifecycle for each wire-envelope fixture.
   async ({
     chart,
     expectedChart,

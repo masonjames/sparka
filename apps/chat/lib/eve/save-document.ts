@@ -1,10 +1,8 @@
 import { Client } from "eve/client";
-/* oxlint-disable sort-imports -- Eve SDK bundled Zod initializes globalThis.__zod_globalRegistry before the DB external Zod import. Moving DB first selects a different registry prototype/constructor; preserve SDK-first registry identity. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "@/lib/db/eve-documents";
-/* oxlint-enable sort-imports */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { assertEveConfigured } from "./server";
 import { documentHistoryTurns } from "./document-history";
@@ -31,9 +29,6 @@ const savedDocumentReceipt = (
   kind: saved.kind,
   title: saved.title,
 });
-
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (saveManualEveDocument); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveManualEveDocument's awaited sequencing and rejected-Promise behavior. */
 
 type BoundManualConversation = ReadonlyNativeSurface<
   NonNullable<Awaited<ReturnType<typeof getEveConversation>>>
@@ -77,8 +72,6 @@ const resolveManualDocumentContext = async (
   return { conversation, previous };
 };
 
-/* oxlint-disable no-undefined, unicorn/no-null -- * no-undefined (#519): saveManualEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): saveManualEveDocument preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 export const saveManualEveDocument = async (
   ownerId: string,
   value: ReadonlyNativeSurface<z.input<typeof eveManualDocumentInput>>
@@ -96,7 +89,6 @@ export const saveManualEveDocument = async (
   const turns = documentHistoryTurns(snapshot.events);
   const saved = await saveEveDocumentRevision(
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
       kind: previous.kind,
@@ -109,6 +101,3 @@ export const saveManualEveDocument = async (
   );
   return savedDocumentReceipt(saved);
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined, unicorn/no-null */

@@ -27,7 +27,6 @@ const resolveAppUrl = (
 };
 
 // Passing the process environment here preserves lazy NODE_ENV access in the fallback.
-// oxlint-disable-next-line node/no-process-env -- Electron resolves its renderer URL at this process boundary; downstream consumers receive only APP_URL.
 const APP_URL = resolveAppUrl(process.env);
 
 const WINDOW_DEFAULTS = {
@@ -36,6 +35,4 @@ const WINDOW_DEFAULTS = {
   minWidth: 800,
   width: 1280,
 } as const;
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS };
-/* oxlint-enable import/no-named-export */

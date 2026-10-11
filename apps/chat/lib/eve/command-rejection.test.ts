@@ -2,10 +2,6 @@ import { expect, it } from "vitest";
 import { isEveCommandRejection, rejectEveCommand } from "./command-rejection";
 import { ClientError } from "eve/client";
 
-/* oxlint-disable oxc/no-async-await -- Await the Response body before constructing the native ClientError used by rejection classification. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("recognizes an explicit local refusal without treating a failed connection as reje uses 402, 502, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("recognizes an explicit local refusal without treating a failed connection as rejection", async () => {
   const response = rejectEveCommand("Insufficient credits", 402);
   const error = new ClientError(response.status, await response.text());
@@ -30,5 +26,3 @@ it("recognizes an explicit local refusal without treating a failed connection as
     false
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */

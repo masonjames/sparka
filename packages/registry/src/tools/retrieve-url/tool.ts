@@ -1,7 +1,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
 import { env } from "@/lib/env";
-// oxlint-disable-next-line sort-imports -- Preserve createEnv/gateway validation before logger constructs Pino and captures process.env.NODE_ENV; native sorting would initialize the host logger first.
 import { createModuleLogger } from "@/lib/logger";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { retrievedInput } from "./schemas";
@@ -23,14 +22,10 @@ const hasNonEmptyValue = (value: string | null | undefined): value is string =>
 const UNBILLED_TOOL_COST_USD = 0;
 const log = createModuleLogger("tools/retrieve-url");
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-// oxlint-disable-next-line no-ternary -- Keep app as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
 const app = hasNonEmptyValue(env.FIRECRAWL_API_KEY)
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const parseUrl = (url: string): URL | null => {
   try {
     const parsed = new URL(url);
@@ -42,15 +37,10 @@ const parseUrl = (url: string): URL | null => {
     return null;
   }
 };
-/* oxlint-enable unicorn/no-null */
 
 const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
   `${url.origin}${url.pathname}`;
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (retrieveUrl); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retrieveUrl's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const retrieveUrl = defineTool({
@@ -145,7 +135,6 @@ Avoid:
         log.error(
           {
             err: error,
-            // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             url: parsedUrl ? redactUrl(parsedUrl) : "<invalid-url>",
           },
           "Firecrawl API error in retrieveUrl tool"
@@ -156,9 +145,5 @@ Avoid:
   inputSchema: retrievedInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */

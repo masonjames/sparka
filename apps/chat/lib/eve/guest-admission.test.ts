@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import {
   admitGuestCreation,
   guestRequestIpHash,
@@ -9,11 +6,6 @@ import {
 import { beforeEach, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable no-undefined --
- * no-undefined (#519): mocks uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 const mocks = vi.hoisted(() => ({
   commit: vi.fn(),
   env: {
@@ -29,7 +21,6 @@ const mocks = vi.hoisted(() => ({
   reserve: vi.fn(),
   source: vi.fn(),
 }));
-/* oxlint-enable no-undefined */
 vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: {
@@ -54,40 +45,36 @@ vi.mock("./model-selection", () => ({
   loadEveModelDefinition: mocks.model,
 }));
 const HASH = /^[0-9a-f]{64}$/u;
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): principal uses 64 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 const principal = {
   kind: "guest",
   ownerId: "guest",
   state: "pending",
   tokenHash: "a".repeat(64),
 } as const;
-/* oxlint-enable no-magic-numbers */
 const input = {
   message: "hello",
   modelId: "cheap",
   operationId: crypto.randomUUID(),
 };
 const request = new Request("http://localhost/api/agent-conversations");
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.env.NODE_ENV = "development";
   mocks.env.VERCEL_URL = "";
   mocks.env.TRUSTED_CLIENT_IP_HEADER = undefined;
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.source.mockResolvedValue(undefined);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.existing.mockResolvedValue(undefined);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.files.mockResolvedValue(undefined);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.model.mockResolvedValue(undefined);
   mocks.reserve.mockResolvedValue({
     reservationId: "attempt",
     status: "reserved",
   });
 });
-/* oxlint-enable no-undefined */
 
 const requestHash = (value: Readonly<typeof input>): string =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -121,7 +108,6 @@ it("self-hosted guest quotas use only the configured proxy header", () => {
   expect(
     guestRequestIpHash(
       new Request(request, {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         headers: { ...headers, "x-forwarded-for": "203.0.113.3" },
       })
     )
@@ -142,10 +128,8 @@ it("self-hosted guest quotas use only the configured proxy header", () => {
   ).toThrow("Trusted client address");
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("checks guest policy and ownership before reserving account/quota", async () => {
   const denied = await admitGuestCreation(request, principal, {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     modelId: "premium",
   });
@@ -153,7 +137,6 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(
     await admitGuestCreation(request, principal, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     })
@@ -165,8 +148,6 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("binds quota to the complete creation intent and retains native operation replays", async () => {
   expect(await admitGuestCreation(request, principal, input)).toEqual({
     reservationId: "attempt",
@@ -194,8 +175,6 @@ it("binds quota to the complete creation intent and retains native operation rep
     status: "replay",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("recovers an active durable reservation without repeating volatile validation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -212,11 +191,6 @@ it("recovers an active durable reservation without repeating volatile validation
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("rejects changed replay content before volatile validation") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("rejects changed replay content before volatile validation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -224,7 +198,6 @@ it("rejects changed replay content before volatile validation", async () => {
     state: "reserved",
   });
   const response = await admitGuestCreation(request, principal, {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     message: "changed",
   });
@@ -237,9 +210,6 @@ it("rejects changed replay content before volatile validation", async () => {
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it("runs full validation before reusing a released operation", async () => {
   mocks.existing.mockResolvedValue({
@@ -255,11 +225,6 @@ it("runs full validation before reusing a released operation", async () => {
   expect(mocks.files).toHaveBeenCalled();
   expect(mocks.reserve).toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("refunds only explicit rejection, keeps ambiguous reservations, and commits success", async () => {
   for (const response of [
     new Response(null, { status: 502 }),
@@ -292,9 +257,6 @@ it("refunds only explicit rejection, keeps ambiguous reservations, and commits s
     "attempt"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
 it("propagates the atomic refund decision when a creation already exists", async () => {
   mocks.release.mockResolvedValue(false);
@@ -308,4 +270,3 @@ it("propagates the atomic refund decision when a creation already exists", async
   ).toBe(false);
   expect(mocks.commit).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

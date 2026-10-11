@@ -16,9 +16,7 @@ const isDesktopAppEnabled = (): boolean => config.desktopApp.enabled;
 
 const isElectronRenderer = (): boolean =>
   isDesktopAppEnabled() &&
-  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window !== "undefined" &&
-  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
   typeof window.requestAuth === "function";
 
 type SearchParamValue = string | readonly string[] | undefined;
@@ -57,7 +55,6 @@ const buildSocialAuthRequest = (
   const isElectronTransfer =
     isDesktopAppEnabled() && isElectronTransferQuery(query);
   const deviceLoginCallbackURL =
-    // oxlint-disable-next-line no-ternary -- Keep deviceLoginCallbackURL as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof origin === "string" && origin !== ""
       ? new URL("/device-login", origin).toString()
       : "/device-login";
@@ -66,8 +63,10 @@ const buildSocialAuthRequest = (
     return {
       callbackURL: deviceLoginCallbackURL,
       onRedirectToUrl: (url: string): void => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading assign from globalThis.location; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-        globalThis.location?.assign(url);
+        const { location } = globalThis;
+        if (typeof location === "object" && location !== null) {
+          location.assign(url);
+        }
       },
       signInOptions: {
         disableRedirect: true,
@@ -82,7 +81,6 @@ const buildSocialAuthRequest = (
   };
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ELECTRON_AUTH_CLIENT_ID, ELECTRON_AUTH_COOKIE_PREFIX, ELECTRON_AUTH_CALLBACK_PATH, ELECTRON_APP_SCHEME, ELECTRON_TRUSTED_ORIGINS, isDesktopAppEnabled, isElectronRenderer, toSearchParamRecord, isElectronTransferQuery, buildSocialAuthRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
@@ -95,4 +93,3 @@ export {
   isElectronTransferQuery,
   buildSocialAuthRequest,
 };
-/* oxlint-enable import/no-named-export */

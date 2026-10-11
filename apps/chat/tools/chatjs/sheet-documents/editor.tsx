@@ -3,7 +3,6 @@
 import "react-data-grid/lib/styles.css";
 import React, { memo, useMemo, useState } from "react";
 import { parse, unparse } from "papaparse";
-// oxlint-disable-next-line sort-imports -- Papa’s browser factory can register jQuery.fn.parse before react-data-grid loads ReactDOM and invokes its devtools hook; preserve plugin visibility at that callback.
 import type { CellClickArgs, CellMouseEvent } from "react-data-grid";
 import DataGrid, { textEditor } from "react-data-grid";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -22,14 +21,6 @@ interface SheetEditorProps {
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 const PureSpreadsheetEditor = ({
   content,
   saveContent,
@@ -47,7 +38,6 @@ const PureSpreadsheetEditor = ({
     }
     const result = parse<string[]>(content, { skipEmptyLines: true });
 
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Pad an independent row so the parsed CSV data remains unchanged.
     const paddedData = result.data.map(
       (row: ReadonlyNativeSurface<string[]>): string[] => {
         const paddedRow = [...row];
@@ -86,7 +76,6 @@ const PureSpreadsheetEditor = ({
       }),
       key: i.toString(),
       name: String.fromCodePoint(65 + i),
-      // oxlint-disable-next-line no-ternary -- Keep renderEditCell as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       renderEditCell: isReadonly === true ? undefined : textEditor,
       width: 120,
     }));
@@ -148,7 +137,6 @@ const PureSpreadsheetEditor = ({
 
   return (
     <DataGrid
-      // oxlint-disable-next-line react/forbid-component-props, no-ternary -- DataGrid accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       className={resolvedTheme === "dark" ? "rdg-dark" : "rdg-light"}
       columns={columns}
       defaultColumnOptions={{
@@ -167,22 +155,12 @@ const PureSpreadsheetEditor = ({
           args.selectCell(true);
         }
       }}
-      // oxlint-disable-next-line no-ternary -- Keep onRowsChange JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       onRowsChange={isReadonly === true ? undefined : handleRowsChange}
       rows={localRows}
-      // oxlint-disable-next-line react/forbid-component-props -- DataGrid accepts style in its styling contract; preserve this caller's layout and appearance.
       style={{ height: "100%" }}
     />
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 const areEqual = (
   prevProps: ReadonlyNativeSurface<SheetEditorProps>,
@@ -194,7 +172,5 @@ const areEqual = (
   prevProps.content === nextProps.content &&
   prevProps.saveContent === nextProps.saveContent &&
   prevProps.isReadonly === nextProps.isReadonly;
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SpreadsheetEditor); the enabled import/no-default-export convention rejects the default-export alternative. */
 
 export const SpreadsheetEditor = memo(PureSpreadsheetEditor, areEqual);
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

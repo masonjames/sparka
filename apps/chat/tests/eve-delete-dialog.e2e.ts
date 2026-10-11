@@ -1,24 +1,11 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- */
-
 import { execFileSync } from "node:child_process";
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { TestInfo } from "@playwright/test";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-magic-numbers, node/no-sync, typescript/promise-function-async --
- * no-magic-numbers (#517): test("deletion dialog state gallery") uses 20, 1024, 7 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("deletion dialog state gallery") uses execFileSync( "bun", [ "-e", 'const result = await Bun.build({entrypoints:["test; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("deletion dialog state gallery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.addScriptTag() on the original Page/locator receiver to change the live browser or route state.
 test("deletion dialog state gallery", async ({ page }, testInfo: Readonly<
   Pick<TestInfo, "outputPath">
 >) => {
@@ -38,14 +25,11 @@ test("deletion dialog state gallery", async ({ page }, testInfo: Readonly<
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route(
-    "http://eve-delete-dialog.test/",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    (route) =>
-      route.fulfill({
-        body: `<!doctype html><html class="dark"><head><style>${css} body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px} #root{display:contents} [data-slot="dialog-overlay"],[data-radix-focus-guard]{display:none!important} [data-slot="dialog-content"]{position:relative!important;inset:auto!important;transform:none!important;translate:none!important;max-width:none!important;animation:none!important;align-self:start}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
-        contentType: "text/html",
-      })
+  await page.route("http://eve-delete-dialog.test/", (route) =>
+    route.fulfill({
+      body: `<!doctype html><html class="dark"><head><style>${css} body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px} #root{display:contents} [data-slot="dialog-overlay"],[data-radix-focus-guard]{display:none!important} [data-slot="dialog-content"]{position:relative!important;inset:auto!important;transform:none!important;translate:none!important;max-width:none!important;animation:none!important;align-self:start}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
+      contentType: "text/html",
+    })
   );
   await page.goto("http://eve-delete-dialog.test/");
   await page.addScriptTag({ content: script, type: "module" });
@@ -57,5 +41,4 @@ test("deletion dialog state gallery", async ({ page }, testInfo: Readonly<
     path: testInfo.outputPath("deletion-states.png"),
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, node/no-sync, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

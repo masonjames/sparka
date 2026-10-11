@@ -26,8 +26,6 @@ const variants: readonly ("default" | "amber" | "red")[] = [
   "red",
 ];
 
-/* oxlint-disable react/jsx-max-depth -- Native router and Motion providers surround the same banner instances; preserve their context and independent dismissal state. */
-/* oxlint-disable oxc/no-async-await -- Await the native React mount, finite Motion animation, capture and unmount lifecycle. */
 test("login banner variants settle together", async () => {
   const fixture = await mount(
     <AppRouterContext.Provider value={router}>
@@ -58,7 +56,6 @@ test("login banner variants settle together", async () => {
         expect(banners).toHaveLength(BANNER_COUNT);
         for (const banner of banners) {
           expect(getComputedStyle(banner).opacity).toBe("1");
-          // oxlint-disable-next-line no-magic-numbers -- Zero is the native collapsed-height boundary; the banner must expand above it.
           expect(banner.getBoundingClientRect().height).toBeGreaterThan(0);
         }
       });
@@ -75,7 +72,6 @@ test("login banner variants settle together", async () => {
   }
 });
 
-/* oxlint-disable max-lines-per-function, max-statements -- Verify independent banner instances through a rerender, dismissal and key remount under both native Motion reduction modes. */
 const reductionModes: readonly ("always" | "never")[] = ["always", "never"];
 test.each(reductionModes)(
   "login banner lifecycle with reduced motion %s",
@@ -160,7 +156,3 @@ test.each(reductionModes)(
     }
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements */
-/* oxlint-enable oxc/no-async-await */
-
-/* oxlint-enable react/jsx-max-depth */

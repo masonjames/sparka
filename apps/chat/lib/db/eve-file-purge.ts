@@ -1,9 +1,7 @@
 import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Keep the native client pool initialized before schema table/custom-type construction; schema loads env-backed encryption definitions and executes pgTable builders. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-enable sort-imports */
 
 const EMPTY_RESULT_COUNT = 0;
 const EXISTENCE_QUERY_LIMIT = 1;
@@ -14,7 +12,6 @@ type FilePurgeWriteTransaction = Readonly<
   Pick<typeof db, "select" | "execute" | "update" | "delete">
 >;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletingFamilyIds's awaited sequencing and rejected-Promise behavior. */
 const deletingFamilyIds = async (
   tx: FilePurgeReadTransaction,
   ownerId: string,
@@ -40,8 +37,6 @@ const deletingFamilyIds = async (
   }
   return family.map((row: Readonly<{ id: string }>) => row.id);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveFamilyFilePurge's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Fence exclusively referenced files before external deletion; retain references for retries.
@@ -85,8 +80,6 @@ const prepareEveFamilyFilePurge = async (
       .returning({ key: eveStoredFile.key });
     return files.map((file: Readonly<{ key: string }>) => file.key).toSorted();
   });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveFilePurge's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Call only after the provider confirms removal; no file identity is recycled.
@@ -116,10 +109,7 @@ const completeEveFilePurge = async (
       );
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveFamilyFileReferences's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function -- Keep the owner advisory lock, deleting-family validation, exclusive-file check and reference deletion visibly ordered under this transaction; extracting helpers must preserve its shared capability and error boundary. */
 /**
  * Release references only after file cleanup; retry cleanup if another family released first.
  * @param {string} ownerId Owner whose deleting family is locked while file cleanup is checked.
@@ -143,7 +133,6 @@ const releaseEveFamilyFileReferences = async (
           notInArray(eveFileReference.conversationId, ids)
         )
       );
-    /* oxlint-disable unicorn/max-nested-calls -- The correlated exclusive-file check selects family keys and excludes outside references before deciding whether cleanup blocks release. */
     const unremovedRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveStoredFile)
@@ -162,7 +151,6 @@ const releaseEveFamilyFileReferences = async (
         )
       )
       .limit(EXISTENCE_QUERY_LIMIT);
-    /* oxlint-enable unicorn/max-nested-calls */
     const unremoved = unremovedRows.at(FIRST_ROW_INDEX);
     if (unremoved) {
       throw new Error(
@@ -179,12 +167,8 @@ const releaseEveFamilyFileReferences = async (
       );
   });
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeEveFilePurge, prepareEveFamilyFilePurge, releaseEveFamilyFileReferences); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function */
 export {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
   releaseEveFamilyFileReferences,
 };
-/* oxlint-enable import/no-named-export */

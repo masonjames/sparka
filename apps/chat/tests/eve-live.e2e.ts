@@ -1,43 +1,21 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E fixture runs in Node and intentionally uses this built-in.
 import { mkdir } from "node:fs/promises";
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:fs/promises" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "@/lib/eve/lifecycle/postgres/eve-stream-positions"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, getTableColumns } from "drizzle-orm";
-/* oxlint-enable eslint/sort-imports */
 import { Client } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 
 import { getEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
 import { getEveUsageCursor } from "../lib/db/eve-billing";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveChat, eveConversation, eveUsage } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EVE_MESSAGE_OPERATION_HEADER } from "../lib/eve/message-delivery";
-/* oxlint-enable eslint/sort-imports */
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 type TurnStartedEventReader =
   | {
@@ -51,33 +29,20 @@ type TurnStartedEventReader =
       readonly data?: unknown;
     };
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 
 const conversationUrl = /\/chat\/[^/]+$/u;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("real provider, native application tool and replay-safe usage ledger") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("real provider, native application tool and replay-safe usage ledger") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("real provider, native application tool and replay-safe usage ledger") uses 180_000, 120_000, -1, 0, 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): test("real provider, native application tool and replay-safe usage ledger") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("real provider, native application tool and replay-safe usage ledger") intentionally keeps the existing falsy-value behavior of id; conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.setDefaultNavigationTimeout(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("real provider, native application tool and replay-safe usage ledger", async ({
   page,
 }) => {
   test.setTimeout(180_000);
   page.setDefaultNavigationTimeout(120_000);
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash" },
@@ -112,14 +77,12 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   }
   const [conversation] = await db
     .select({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getTableColumns(eveConversation) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...getTableColumns(eveConversation),
       updatedAt: eveChat.updatedAt,
     })
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
   }
@@ -195,7 +158,6 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   for (const event of compactionUsage) {
     expect(event.meta.id.startsWith("evt_")).toBe(true);
     expect(event.data.sessionId).toBe(sessionId);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(event.data.usage?.costUsd).toBeGreaterThan(0);
     // No reconciliation before this read: the authored billing hook must have
     // received and recorded the same event delivered by the public client.
@@ -203,9 +165,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
       .select()
       .from(eveUsage)
       .where(eq(eveUsage.eventId, event.meta.id));
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from recorded; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(recorded?.sessionId).toBe(sessionId);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from recorded; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
   }
   const rewind = await client.sessions.attach(sessionId).snapshot();
@@ -250,26 +210,16 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     path: "tests/eve-results/screenshots/tool-word-count.png",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("the composer selects models for initial and subsequent durable turns") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("the composer selects models for initial and subsequent durable turns") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("the composer selects models for initial and subsequent durable turns") uses -1, 400, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): test("the composer selects models for initial and subsequent durable turns") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("the composer selects models for initial and subsequent durable turns") intentionally keeps the existing falsy-value behavior of id; conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("the composer selects models for initial and subsequent durable turns", async ({
   page,
 }) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.goto("/");
   await page.getByTestId("model-selector").filter({ visible: true }).click();
@@ -311,14 +261,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
   }
   const [conversation] = await db
     .select({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getTableColumns(eveConversation) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...getTableColumns(eveConversation),
       updatedAt: eveChat.updatedAt,
     })
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session");
   }
@@ -375,7 +323,6 @@ test("the composer selects models for initial and subsequent durable turns", asy
     ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
       event.type === "step.started"
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from firstStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(firstStep?.data.modelId).toBe("gateway/openai/gpt-4.1-mini-fast");
   await expect(
     page.getByTestId("model-selector").filter({ visible: true })
@@ -386,7 +333,6 @@ test("the composer selects models for initial and subsequent durable turns", asy
     ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
       event.type === "step.started"
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from lastStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(lastStep?.data.modelId).toBe(`gateway/${selected}`);
   expect(
     snapshot.events.filter(
@@ -397,14 +343,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
   const [activeConversation] = await db
     .select({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getTableColumns(eveConversation) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...getTableColumns(eveConversation),
       updatedAt: eveChat.updatedAt,
     })
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, conversation.id));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from activeConversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(activeConversation?.updatedAt.getTime()).toBeGreaterThan(
     conversation.updatedAt.getTime()
   );
@@ -440,37 +384,26 @@ test("the composer selects models for initial and subsequent durable turns", asy
     )
   ).toBe(chargedCents);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): test("a definitive model rejection unlocks the composer and releases the operation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("a definitive model rejection unlocks the composer and releases the operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("a definitive model rejection unlocks the composer and releases the operation", async ({
   page,
 }) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.goto("/");
-  await page.route(
-    "**/api/agent-conversations",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    (route) =>
-      route.fulfill({
-        body: JSON.stringify({
-          error: "This model is not available for chat.",
-          creationRejected: true,
-        }),
-        contentType: "application/json",
-        status: 400,
-      })
+  await page.route("**/api/agent-conversations", (route) =>
+    route.fulfill({
+      body: JSON.stringify({
+        error: "This model is not available for chat.",
+        creationRejected: true,
+      }),
+      contentType: "application/json",
+      status: 400,
+    })
   );
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
@@ -501,7 +434,4 @@ test("a definitive model rejection unlocks the composer and releases the operati
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   expect(second.modelId).toBe("openai/gpt-4.1-mini-fast");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This eve-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+/* oxlint-enable typescript/promise-function-async */

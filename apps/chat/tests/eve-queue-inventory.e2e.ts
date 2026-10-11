@@ -1,18 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import postgres from "postgres";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { readEvePostgresQueueInventory } from "@/lib/eve/lifecycle/postgres/eve-queue-inventory";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue inventory acceptance requires local Postgres.");
@@ -20,10 +12,6 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const taskIdentifier = `eve-queue-fixture-${crypto.randomUUID()}`;
 const jobIds: string[] = [];
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (jobIds.length > 0) {
     // Only the fixture jobs are deliberately locked by this test.
@@ -34,9 +22,6 @@ afterAll(async () => {
   await query`delete from graphile_worker._private_tasks where identifier = ${taskIdentifier}`;
   await query.end();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve job's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 async function job(body: unknown): Promise<string> {
   const [row] = await query<
@@ -54,10 +39,7 @@ async function job(body: unknown): Promise<string> {
   jobIds.push(row.id);
   return row.id;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-// oxlint-disable-next-line max-statements -- Keep retry setup, queued child creation, and absence assertions in their existing database order.
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();
   const retry = await job({
@@ -97,8 +79,6 @@ test("finds retries and queued child creation without returning input payloads",
   });
   expect(unrelatedInventory.jobs).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("reports worker locks and unsupported messages; ignores ordinary health probes", async () => {
   const runId = crypto.randomUUID();
@@ -114,8 +94,6 @@ test("reports worker locks and unsupported messages; ignores ordinary health pro
   expect(result.jobs).toEqual([{ id: locked, locked: true, runId }]);
   expect(result.unsupportedJobIds).toEqual([unsupported]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("missing envelopes are reported and invalid encoding cannot silently disappear", async () => {
   const runId = crypto.randomUUID();
   const id = await job({ runId });
@@ -130,4 +108,3 @@ test("missing envelopes are reported and invalid encoding cannot silently disapp
     readEvePostgresQueueInventory(query, { runIds: [runId], taskIdentifier })
   ).rejects.toThrow();
 });
-/* oxlint-enable oxc/no-async-await */

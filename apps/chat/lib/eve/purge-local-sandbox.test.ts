@@ -1,17 +1,12 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import nodePath from "node:path";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
 
 const mocks = vi.hoisted(() => ({ destroySandbox: vi.fn(), remove: vi.fn() }));
 const { remove } = mocks;
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("microsandbox")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("microsandbox") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 vi.mock("microsandbox", () => ({
@@ -29,31 +24,19 @@ vi.mock("microsandbox", () => ({
   },
   Snapshot: { remove: mocks.remove },
 }));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 const directories: string[] = [];
 beforeEach(() => {
   remove.mockReset();
   mocks.destroySandbox.mockReset();
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterEach(async () => {
   for (const directory of directories.splice(0)) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await rm(directory, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type --
- * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): fixture uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 const fixture = async (letter = "a") => {
   const root = await mkdtemp(nodePath.join(tmpdir(), "eve-snapshot-purge-"));
   directories.push(root);
@@ -88,9 +71,6 @@ const fixture = async (letter = "a") => {
     snapshotName,
   };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type */
 
 test("retains identities through provider failure and treats only explicit missing snapshots as removed", async () => {
   const input = await fixture();
@@ -117,20 +97,11 @@ test("retains identities through provider failure and treats only explicit missi
     errors: [expect.objectContaining({ message: "runtime library not found" })],
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("validates all records before deletion and rejects another session or shared tem keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("validates all records before deletion and rejects another session or shared tem uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("validates all records before deletion and rejects another session or shared template", async () => {
   const input = await fixture();
   for (const record of [
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.record, sessionKey: "other-session" },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.record, optionsHash: 42 },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
@@ -149,13 +120,8 @@ test("validates all records before deletion and rejects another session or share
   expect(remove).not.toHaveBeenCalled();
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-statements (#512): test("validates the whole family and removes all VMs before resolving snapshot depend keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("validates the whole family and removes all VMs before resolving snapshot depend uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("validates the whole family and removes all VMs before resolving snapshot depend preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
@@ -163,7 +129,6 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   const child = await fixture("b");
   await writeFile(
     child.path,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing child.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...child.record, sessionKey: "foreign" })
   );
   await expect(purgeLocalEveSandboxes([parent, child])).rejects.toThrow(
@@ -191,14 +156,8 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     parent.snapshotName,
   ]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("retains resources created before metadata and across replacements") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("retains resources created before metadata and across replacements") uses 32, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("retains resources created before metadata and across replacements", async () => {
   const input = await fixture();
   await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
@@ -214,7 +173,6 @@ test("retains resources created before metadata and across replacements", async 
     await writeFile(
       nodePath.join(directory, `${name}.json`),
       JSON.stringify({
-        // oxlint-disable-next-line no-ternary -- Keep kind as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         kind: name === snapshot ? "snapshot" : "sandbox",
         name,
         sessionKey: input.sessionKey,
@@ -243,15 +201,7 @@ test("retains resources created before metadata and across replacements", async 
   );
   expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
- * max-statements (#512): test("an owned attempt that failed before provider creation can finish cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("an owned attempt that failed before provider creation can finish cleanup") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("an owned attempt that failed before provider creation can finish cleanup") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("an owned attempt that failed before provider creation can finish cleanup", async () => {
   const input = await fixture();
   await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
@@ -267,7 +217,6 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   };
   await writeFile(
     ownerPath,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...owner, writeAheadResources: undefined })
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
@@ -281,7 +230,6 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   expect(JSON.parse(await readFile(ownerPath, "utf-8"))).toEqual(owner);
   await writeFile(
     ownerPath,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...owner, sessionKey: "foreign" })
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
@@ -291,5 +239,3 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
   expect(remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined */

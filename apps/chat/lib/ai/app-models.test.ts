@@ -42,28 +42,21 @@ const baseModel: ModelData = {
   type: "language",
 };
 const catalog: ModelData[] = [
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/new" },
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/known", owned_by: "secondary" },
   {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...baseModel,
     id: "openai/gpt-5-mini",
     owned_by: "preferred",
     reasoning: true,
   },
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/disabled", owned_by: "preferred" },
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/image", type: "image" },
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/last" },
 ];
 
 beforeEach(() => vi.mocked(fetchModels).mockResolvedValue(catalog));
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("chat catalogs preserve reasoning variants, disabled filtering, and provider order", async () => {
   const models = await fetchChatModels();
   expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
@@ -87,8 +80,6 @@ test("chat catalogs preserve reasoning variants, disabled filtering, and provide
     )
   ).toMatchObject({ reasoning: true });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("readonly catalogs enable curated reasoning variants and newly discovered IDs", async () => {
   const models = Object.freeze(await fetchChatModels());
   const enabled = getDefaultEnabledModels(models);
@@ -99,4 +90,3 @@ test("readonly catalogs enable curated reasoning variants and newly discovered I
     "fixture/last",
   ]);
 });
-/* oxlint-enable oxc/no-async-await */

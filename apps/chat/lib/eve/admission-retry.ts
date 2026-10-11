@@ -9,8 +9,6 @@ const isEveAdmissionBusy = (error: unknown): boolean =>
   error instanceof EveUsageReconciliationBusyError ||
   (error instanceof ClientError && error.code === "usage_reconciliation_busy");
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retryEveAdmission's awaited sequencing and rejected-Promise behavior. */
-
 /**
  * Replay only a server-certified undispatched admission, retaining its closure/ID.
  * @param {() => Promise<AdmissionResult>} admit Replays the caller's admission closure after certified backpressure.
@@ -38,8 +36,5 @@ const retryEveAdmission = async <AdmissionResult>(
     }
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isEveAdmissionBusy, retryEveAdmission); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
 export { isEveAdmissionBusy, retryEveAdmission };
-/* oxlint-enable import/no-named-export */

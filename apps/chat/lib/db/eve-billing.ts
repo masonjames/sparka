@@ -6,7 +6,6 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { env } from "@/lib/env";
 import postgres from "postgres";
 
-/* oxlint-disable sort-imports -- Keep schema table/custom-type construction after the native client pool; client already evaluates the same Drizzle, Postgres and env prerequisites in that order. */
 import {
   eveConversation,
   eveGuest,
@@ -14,7 +13,6 @@ import {
   user,
   userCredit,
 } from "./schema";
-/* oxlint-enable sort-imports */
 
 const ZERO_CENTS = 0;
 const MINIMUM_COST_USD = 0;
@@ -31,8 +29,6 @@ const hasConflictingCost = (
   incoming: string | null
 ): boolean =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve debitTurnUsage's awaited sequencing and rejected-Promise behavior. */
 
 const debitTurnUsage = async (
   tx: UsageTransaction,
@@ -57,7 +53,6 @@ const debitTurnUsage = async (
         eq(eveUsage.ownerId, input.ownerId)
       )
     );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading due from totals; preserve one receiver evaluation, skipped accesses and the existing ZERO_CENTS fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading paid from totals; preserve one receiver evaluation, skipped accesses and the existing ZERO_CENTS fallback. The app guidance prefers optional chaining.
   const delta = (totals?.due ?? ZERO_CENTS) - (totals?.paid ?? ZERO_CENTS);
   if (delta > ZERO_CENTS) {
     await tx
@@ -70,15 +65,7 @@ const debitTurnUsage = async (
       .where(eq(eveUsage.eventId, input.eventId));
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveUsage's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-
-unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * A replay can arrive concurrently with the hook. Both use the same durable event ID.
  * @param {{ eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd?: number; generationId?: string; }} input Native usage event identity and optional provider cost evidence.
@@ -122,7 +109,6 @@ const recordEveUsage = async (input: {
   const hasSettledUsage = Boolean(settled);
   if (hasSettledUsage) {
     const incoming =
-      // oxlint-disable-next-line no-ternary -- Keep incoming as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
         ? null
         : input.costUsd.toFixed(COST_DECIMAL_PLACES);
@@ -150,7 +136,6 @@ const recordEveUsage = async (input: {
         .for("update");
     }
     const costUsd =
-      // oxlint-disable-next-line no-ternary -- Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
         ? null
         : input.costUsd.toFixed(COST_DECIMAL_PLACES);
@@ -179,7 +164,6 @@ const recordEveUsage = async (input: {
           .where(eq(eveUsage.eventId, input.eventId));
       }
     } else {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
     // Guest admission spends message quota. Keep provider costs without granting
@@ -187,14 +171,10 @@ const recordEveUsage = async (input: {
     if (!isGuest) {
       await debitTurnUsage(tx, input);
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from existing; preserve one receiver evaluation, skipped accesses and the existing existing?.costUsd fallback. The app guidance prefers optional chaining.
     const recordedCost = costUsd ?? existing?.costUsd;
     return recordedCost !== null && recordedCost !== undefined;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, unicorn/no-null */
 
 /**
  * This cursor is billing progress, never a second copy of the transcript.
@@ -222,8 +202,6 @@ const getEveUsageCursor = async (
   const [row] = rows;
   return row.streamIndex;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve advanceEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Advance only after durable ingestion; concurrent older readers cannot rewind it.
@@ -259,13 +237,7 @@ const advanceEveUsageCursor = async (
     throw new Error("Conversation not found.");
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withManagedUsageReconciliation's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-
- */
 /**
  * Serialize managed fallback sweeps across deployments, without locking credit debits.
  * @param {string} ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
@@ -282,7 +254,6 @@ const withManagedUsageReconciliation = async (
   // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
   const settings = databaseConnection(env);
   const connection = postgres(settings.url, {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing settings.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...settings.options,
     max: 1,
     prepare: false,
@@ -337,7 +308,6 @@ const withManagedUsageReconciliation = async (
     });
   } catch (error) {
     const cause =
-      // oxlint-disable-next-line no-ternary -- Preserve the original truthy cause selection and getter evaluation order.
       error instanceof Error && Boolean(error.cause) ? error.cause : error;
     if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
       throw new EveUsageReconciliationBusyError();
@@ -347,13 +317,9 @@ const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveUsageCursor, getEveUsageCursor, recordEveUsage, withManagedUsageReconciliation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements */
 export {
   advanceEveUsageCursor,
   getEveUsageCursor,
   recordEveUsage,
   withManagedUsageReconciliation,
 };
-/* oxlint-enable import/no-named-export */

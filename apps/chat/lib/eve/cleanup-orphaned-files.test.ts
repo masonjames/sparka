@@ -31,7 +31,6 @@ beforeEach(() => {
     Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
   );
 });
-/* oxlint-disable oxc/no-async-await -- Await completion or rejection of the inventory sweep before asserting provider deletions and durable fence completion. */
 /* oxlint-enable typescript/promise-function-async */
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
@@ -65,12 +64,6 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
   expect(mocks.remove).toHaveBeenCalledWith([`/api/files/${key}`]);
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await completion or rejection of the inventory sweep before asserting provider deletions and durable fence completion. */
-/* oxlint-disable no-magic-numbers, no-undefined --
- * no-magic-numbers (#517): test("a failed batch retains its deletion fence without starving subsequent batches") uses 24, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("a failed batch retains its deletion fence without starving subsequent batches") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("a failed batch retains its deletion fence without starving subsequent batches", async () => {
   const keys = Array.from({ length: 101 }, (_unused, fileIndex) =>
     String(fileIndex).padStart(24, "0")
@@ -82,6 +75,7 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   });
   mocks.remove
     .mockRejectedValueOnce(new Error("partial storage failure"))
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
     .mockResolvedValue(undefined);
   await expect(cleanupEveOrphanedFiles(cutoff)).rejects.toThrow("incomplete");
 
@@ -93,5 +87,3 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   ).toEqual([100, 1]);
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, no-undefined */

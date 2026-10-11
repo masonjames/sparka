@@ -1,18 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-shared-messages"; "../lib/eve/shared-messages" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-// oxlint-disable-next-line sort-imports -- Keep the separate readonly type import in Oxfmt module grouping; sort-imports instead orders runtime and type bindings together.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSharedMessages } from "../components/eve/eve-shared-messages";
-/* oxlint-enable sort-imports */
 import { sharedEvePart } from "../lib/eve/shared-messages";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const parts: EveMessagePart[] = [
   {
@@ -60,9 +53,6 @@ const parts: EveMessagePart[] = [
     type: "dynamic-tool",
   },
 ];
-/* oxlint-disable unicorn/max-nested-calls --
- * unicorn/max-nested-calls (#568): process.stdout.write keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 process.stdout.write(
   renderToStaticMarkup(
     createElement(EveSharedMessages, {
@@ -76,4 +66,3 @@ process.stdout.write(
     })
   )
 );
-/* oxlint-enable unicorn/max-nested-calls */

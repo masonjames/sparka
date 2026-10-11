@@ -1,33 +1,22 @@
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, typescript/promise-function-async --
- * max-lines-per-function (#510): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("disposable guest presentation uses stable desktop and mobile baselines") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.addStyleTag() on the original Page/locator receiver to change the live browser or route state.
 test("disposable guest presentation uses stable desktop and mobile baselines", async ({
   page,
 }) => {
-  await page.route(
-    "**/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.fulfill({ body: "", contentType: "text/javascript" })
+  await page.route("**/react-scan/**", (route) =>
+    route.fulfill({ body: "", contentType: "text/javascript" })
   );
-  await page.route(
-    "**/api/eve-guest",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.fulfill({ json: { error: "Unavailable" }, status: 502 })
+  await page.route("**/api/eve-guest", (route) =>
+    route.fulfill({ json: { error: "Unavailable" }, status: 502 })
   );
-  await page.route(
-    "https://models.dev/logos/openai.svg",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    (route) =>
-      route.fulfill({
-        contentType: "image/svg+xml",
-        path: "tests/fixtures/models/openai.svg",
-      })
+  await page.route("https://models.dev/logos/openai.svg", (route) =>
+    route.fulfill({
+      contentType: "image/svg+xml",
+      path: "tests/fixtures/models/openai.svg",
+    })
   );
   await page.goto("/visual-fixtures/disposable-guest");
   await page.addStyleTag({
@@ -75,5 +64,4 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
   await expect(fixture.getByRole("heading")).toBeVisible();
   await expect(fixture).toHaveScreenshot("guest-welcome-mobile.png");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

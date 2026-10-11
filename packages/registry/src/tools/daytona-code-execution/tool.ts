@@ -7,13 +7,10 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { defineTool } from "eve/tools";
 import { env } from "@/lib/env";
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
-// oxlint-disable-next-line sort-imports -- Preserve ownership's database/environment initialization before logger constructs Pino; sorting createModuleLogger first changes the validation and host setup order.
 import { createModuleLogger } from "@/lib/logger";
-// oxlint-disable-next-line sort-imports -- Preserve database validation and Pino initialization before Daytona → axios → https-proxy-agent/debug mutates process.env.DEBUG and probes tty.isatty; native sorting moves that host work earlier.
 import { createDaytonaProvider } from "./sandbox";
 import { executeInDaytona } from "./execution";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-// oxlint-disable-next-line import/max-dependencies -- This native tool integrates schemas, provider execution, durable ownership and cleanup; the retained dependency-count boundary remains under review.
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 
@@ -32,7 +29,6 @@ const provider = (): ReturnType<typeof createDaytonaProvider> => {
   return providerCache.current;
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
 const executeCode: CodeExecutor = async (
   input,
   context: ReadonlyNativeSurface<CodeExecutionContext>
@@ -58,7 +54,6 @@ const executeCode: CodeExecutor = async (
         {
           callId: context.callId,
           language: input.language,
-          // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           reason: error instanceof Error ? error.message : "Unknown error",
           sessionId: context.session.id,
         },
@@ -67,7 +62,6 @@ const executeCode: CodeExecutor = async (
       return usage.fail();
     }
   });
-/* oxlint-enable oxc/no-async-await */
 const codeExecution = withCodeSandboxCleanup(
   defineTool({
     description:
@@ -79,6 +73,4 @@ const codeExecution = withCodeSandboxCleanup(
   { createCleanupSession: () => provider().cleanup }
 );
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecution, executeCode); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { codeExecution, executeCode };
-/* oxlint-enable import/no-named-export */

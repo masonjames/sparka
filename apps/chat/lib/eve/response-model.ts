@@ -42,7 +42,6 @@ const responseModelReferences = (
   const models = new Map<string, string>();
   for (const event of events) {
     const candidates =
-      // oxlint-disable-next-line no-ternary -- Keep candidates as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       event.type === "history.restored" ? event.data.events : [event];
     for (const candidate of candidates) {
       if (
@@ -67,13 +66,10 @@ const responseModel = (
   turnId: string,
   importedModelId?: string
 ): string => {
-  // oxlint-disable-next-line no-ternary -- Keep reference as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const reference = turnId
     ? responseModelReferences(events).get(turnId)
     : importedModelId;
-  // oxlint-disable-next-line oxc/no-optional-chaining, no-magic-numbers -- Keep the existing nullish guard when reading indexOf from reference; preserve one receiver evaluation, skipped accesses and the existing -1 fallback. The app guidance prefers optional chaining.
-  const separator = reference?.indexOf("/") ?? -1;
-  /* oxlint-disable no-magic-numbers -- A provider separator must be after the first character and before the final character; slice starts one character after the slash. */
+  const separator = (reference ?? "").indexOf("/");
   if (
     typeof reference === "string" &&
     reference !== "" &&
@@ -82,11 +78,8 @@ const responseModel = (
   ) {
     return reference.slice(separator + 1);
   }
-  /* oxlint-enable no-magic-numbers */
   throw new Error(
     "The response model is unavailable. Reload before regenerating."
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (responseModel, responseModelReferences); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { responseModel, responseModelReferences };
-/* oxlint-enable import/no-named-export */

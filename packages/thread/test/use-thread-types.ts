@@ -10,8 +10,6 @@ import { useThread } from "#thread-source/react";
 
 declare const messageId: string;
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const useCompatibilityCheck = (): UseThreadHelpers => {
   const thread = useThread();
   const chatCompatible: UseChatHelpers<UIMessage> = thread;
@@ -42,8 +40,6 @@ const useCompatibilityCheck = (): UseThreadHelpers => {
   const explicitHelpers: UseThreadHelpers<UIMessage> = thread;
   return explicitHelpers;
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 
 class StateBackedThread extends AbstractThread {
   public constructor(threadState: Readonly<ThreadState>) {
@@ -91,7 +87,6 @@ const useCanonicalMetadataCheck = (): void => {
   const labeled = new Thread<LabeledMessage>();
   const helpers = useThread({ thread: labeled });
   const [message] = helpers.messages;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading label from message.metadata; read metadata from message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const label: string | undefined = message?.metadata?.label;
   void label;
 };
@@ -115,7 +110,6 @@ const useNormalizedHookCheck = (): void => {
   const helpers = useThread({ thread: new Thread<ExtendedMessage>() });
   const [message] = helpers.messages;
   // @ts-expect-error Hooks must not reintroduce the unsupported extension.
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tenant from message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   void message?.tenant;
 };
 
@@ -127,7 +121,6 @@ declare const labeledInitialMessages: LabeledMessage[];
 const useInitialMessageInferenceCheck = (): void => {
   const inferred = new Thread({ messages: labeledInitialMessages });
   const [message] = inferred.getSnapshot().messages;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading label from message.metadata; read metadata from message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const label: string | undefined = message?.metadata?.label;
   void label;
 };

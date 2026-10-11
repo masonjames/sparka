@@ -1,17 +1,14 @@
-/* oxlint-disable import/max-dependencies -- The additional readonly message-part dependency is erased and describes the historical validation seam; it adds no runtime module evaluation. */
 import { Client, defaultMessageReducer } from "eve/client";
 import { attachmentDigest, draftAttachment } from "./draft";
 
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 import type { SessionSnapshot } from "eve/client";
 import { config } from "@/lib/config";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   canReadEveFile,
   reserveEveUpload,
   writeEveUpload,
 } from "@/lib/db/eve-files";
-/* oxlint-enable sort-imports */
 import {
   createFileId,
   downloadFile,
@@ -102,7 +99,6 @@ const describeHistoricalAttachment = (
   return { contentType, name, url };
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Replay accepts the original shallow readonly SDK snapshot and forwards its original mutable events to reducer.reduce; deep readonly projections are rejected by the SDK receiver (pinned TS2345 proof). */
 const replayHistoricalUserMessage = (
   snapshot: Readonly<SessionSnapshot>,
   input: Readonly<{ messageId: string }>
@@ -125,7 +121,6 @@ const replayHistoricalUserMessage = (
   }
   return message;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type HistoricalConversation = Readonly<
   Pick<
@@ -140,7 +135,6 @@ const isBoundHistoricalConversation = (
   readonly sessionId: string;
   readonly state: "bound";
 } => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the original single guard read; attach separately reads the original session ID again.
   const sessionId = conversation?.sessionId;
   if (!conversation) {
     return false;
@@ -152,9 +146,6 @@ const isBoundHistoricalConversation = (
   );
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (restoreMessageAttachments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restoreMessageAttachments's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements -- Preflight and copying keep their original await continuations; extracting async admission or copy phases inserts observable reaction turns between metadata, original part reads, copying and public settlement. */
 /* oxlint-disable typescript/promise-function-async -- Stored read callbacks forward original download promises and inline read callbacks retain their Blob promises. */
 /**
  * Copy trusted native history for editing after validating every historical attachment.
@@ -218,7 +209,6 @@ export const restoreMessageAttachments = async (
     );
     attachments.push(
       draftAttachment.parse({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing copied own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...copied,
         contentType,
         // oxlint-disable-next-line eslint/no-await-in-loop -- Digest exact historical bytes.
@@ -229,7 +219,4 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/promise-function-async */
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/max-dependencies */
+/* oxlint-enable typescript/promise-function-async */

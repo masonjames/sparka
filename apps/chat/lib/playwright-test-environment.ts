@@ -6,9 +6,7 @@ const isEnabledFlag = (value: string | undefined): boolean => {
   const normalizedValue = value.trim().toLowerCase();
   return !["0", "false", "no", "off"].includes(normalizedValue);
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (isPlaywrightTestEnvironment); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable node/no-process-env, typescript/strict-boolean-expressions --
- * node/no-process-env (#537): isPlaywrightTestEnvironment reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): isPlaywrightTestEnvironment intentionally keeps the existing falsy-value behavior of env.PLAYWRIGHT_TEST_BASE_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 export const isPlaywrightTestEnvironment = (
@@ -20,5 +18,4 @@ export const isPlaywrightTestEnvironment = (
     isEnabledFlag(env.PLAYWRIGHT) ||
     isEnabledFlag(env.CI_PLAYWRIGHT)
   );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable node/no-process-env, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */

@@ -12,7 +12,6 @@ const unexpected = (): never => {
   throw new Error("Word count must not acquire external resources");
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("word count source handles empty text and whitespace without phantom words", async () => {
   const options = {
     abortSignal: new AbortController().signal,
@@ -22,7 +21,6 @@ test("word count source handles empty text and whitespace without phantom words"
     getToken: unexpected,
     requireAuth: unexpected,
     session: {
-      // oxlint-disable-next-line unicorn/no-null -- Eve SessionAuth uses null for both absent current and initiating authentication; undefined or an invented authenticated context would change this anonymous-tool fixture.
       auth: { current: null, initiator: null },
       id: "test",
       turn: { id: "turn", sequence: 0 },
@@ -49,4 +47,3 @@ test("word count source handles empty text and whitespace without phantom words"
     words: 3,
   });
 });
-/* oxlint-enable oxc/no-async-await */

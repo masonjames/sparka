@@ -50,10 +50,6 @@ beforeEach(() => {
   mocks.refund.mockResolvedValue(true);
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("refunds undispatched siblings after a proven primary rejection") uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("refunds undispatched siblings after a proven primary rejection", async () => {
   const result = await createEveResponseGroup("guest", input, admission);
   expect(result.candidates.map((candidate) => candidate.state)).toEqual([
@@ -71,9 +67,6 @@ it("refunds undispatched siblings after a proven primary rejection", async () =>
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it("retains recovery if a sibling has concurrently claimed its creation", async () => {
   mocks.refund.mockResolvedValue(false);
@@ -81,8 +74,6 @@ it("retains recovery if a sibling has concurrently claimed its creation", async 
     createEveResponseGroup("guest", input, admission)
   ).rejects.toThrow("Retain comparison recovery");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not declare terminal rejection when the primary refund cannot prove non-admission", async () => {
   mocks.settle.mockResolvedValue(false);
   const result = await createEveResponseGroup("guest", input, admission);
@@ -92,15 +83,9 @@ it("does not declare terminal rejection when the primary refund cannot prove non
   ]);
   expect(mocks.refund).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("marks every multi-model edited candidate with the shared user intent") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("marks every multi-model edited candidate with the shared user intent", async () => {
   mocks.reserve.mockResolvedValue(group);
   await createEveResponseGroup("owner", {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     forkKind: "edit",
@@ -116,5 +101,3 @@ it("marks every multi-model edited candidate with the shared user intent", async
     )
   ).toEqual(["edit", "edit"]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */

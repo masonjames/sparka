@@ -1,5 +1,7 @@
 # Oxlint `unicorn/prefer-ternary` ticket #807
 
+Historical audit: the current [lint policy](lint-policy.md) follows stock presets and no longer enables `no-ternary`. The opposing-rule justification below describes the frozen audit configuration; it does not justify new exceptions under the current policy. Existing `unicorn/prefer-ternary` exceptions remain subject to individual review.
+
 ## Scope and frozen inputs
 
 This disposition covers only the three canonical files named in the released owner manifest at `/Users/fran/.codex/visualizations/2026/10/08/786-released-807-c5f232b599/manifest.json`. The manifest declares source commit `c5f232b5992156934b249d400264c73c8a033aa0`, `released: true`, and `noActiveEdits: true`. Its three source files matched their declared SHA-256 hashes before edits:
@@ -21,7 +23,7 @@ The released manifest selects zero generated mirrors. The pinned review snapshot
 | File-wide `unicorn/prefer-ternary` scopes | 2 | 0 |
 | Line-scoped `unicorn/prefer-ternary` scopes | 2 | 4 |
 
-Removing the two broad test-file scopes exposed four native findings. Each now has one line-scoped exception. These are four justified conflicts, not fixed findings: the existing project policy enables `eslint(no-ternary)` as an error, so converting the statements to ternary expressions creates four violations of that policy. The effective configuration was read from the repository and standalone chat configs: `no-ternary` is explicitly set to `error` in `apps/chat/oxlint-policy.ts`; `unicorn/prefer-ternary` is enabled by the pinned Ultracite preset. The exceptions are not based on a general readability or argument-shape preference.
+Removing the two broad test-file scopes exposed four native findings. The audit left one line-scoped exception for each. These were four conflicts under the audit configuration, not fixed findings: the project policy then enabled `eslint(no-ternary)` as an error, so converting the statements to ternary expressions created four violations of that policy. The effective configuration was read from the repository and standalone chat configs: `no-ternary` was explicitly set to `error` in the former `apps/chat/oxlint-policy.ts`; `unicorn/prefer-ternary` was enabled by the pinned Ultracite preset. The exceptions were not based on a general readability or argument-shape preference.
 
 Native proof used Oxlint `1.82.0`, the version pinned in `bun.lock`. With the four original directives temporarily removed, configured Oxlint reported `unicorn(prefer-ternary)` at `eve-conversation.tsx:540` and `:685`, `eve-browser.e2e.ts:469`, and `eve-delete-ui.e2e.ts:48`. Temporary equivalent ternary rewrites reported `eslint(no-ternary)` at those same four branches. The temporary edits were restored before the final source edits. Focused lint of the final files passes and reports no unused directive for these scopes.
 
