@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import { customType } from "drizzle-orm/pg-core";
 
 import { env } from "@/lib/env";
-/* oxlint-enable import/no-nodejs-modules */
 
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -79,6 +75,4 @@ const encryptedJson = customType<{
   toDriver: (value: Readonly<Record<string, unknown>>): string =>
     encrypt(JSON.stringify(value)),
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (encryptedJson, encryptedText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { encryptedJson, encryptedText };
-/* oxlint-enable import/no-named-export */

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/ui/button and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-/* oxlint-enable sort-imports */
 import type { ComposerControlProps } from "./control";
 
 import { Plus } from "lucide-react";
@@ -23,28 +21,19 @@ import { composerControls } from "@/composer-controls";
 import { getToolDisplay } from "./tool-display";
 
 import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ComposerMenu); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- ComposerMenu renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, unicorn/no-null -- ComposerMenu: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-/* oxlint-disable react/forbid-component-props -- Button, Plus, DropdownMenuContent accept the supplied styling props; preserve this composition's layout and appearance. */
-// oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
 export const ComposerMenu = (
   props: ComposerControlProps
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
   const controls = composerControls.filter(
-    (
-      {
-        Component,
-      }: {
-        readonly Component: Readonly<
-          Pick<(typeof composerControls)[number]["Component"], "isAvailable">
-        >;
-      }
-
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish read and fallback, including one receiver evaluation; the app guidance prefers optional chaining.
-    ) => Component.isAvailable?.(mobile) ?? true
+    ({
+      Component,
+    }: {
+      readonly Component: Readonly<
+        Pick<(typeof composerControls)[number]["Component"], "isAvailable">
+      >;
+    }) => Component.isAvailable?.(mobile) ?? true
   );
   if (controls.length === 0 && !props.selectedTool) {
     return null;
@@ -80,14 +69,13 @@ export const ComposerMenu = (
               {controls.length > 0 && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 disabled={props.disabled}
-                onSelect={() => props.onToolChange(null)}
+                onSelect={() => {
+                  props.onToolChange(null);
+                }}
               >
                 Clear{" "}
-                {
-                  /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading shortName from getToolDisplay(...); preserve one receiver evaluation, skipped accesses and the existing "unavailable tool" fallback. The app guidance prefers optional chaining. */
-                  getToolDisplay(props.selectedTool)?.shortName ??
-                    /* oxlint-enable oxc/no-optional-chaining */ "unavailable tool"
-                }
+                {getToolDisplay(props.selectedTool)?.shortName ??
+                  "unavailable tool"}
               </DropdownMenuItem>
             </>
           )}
@@ -96,7 +84,3 @@ export const ComposerMenu = (
     </DropdownMenu>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/forbid-component-props */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, unicorn/no-null */

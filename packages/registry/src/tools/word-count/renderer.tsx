@@ -10,7 +10,6 @@ type WordCountRendererTool = ToolRendererProps<
   typeof wordCountResult
 >["tool"];
 
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 const Stat = ({
   label,
   value,
@@ -20,13 +19,7 @@ const Stat = ({
     <span className="text-muted-foreground text-xs">{label}</span>
   </div>
 );
-/* oxlint-disable react/jsx-no-literals -- WordCountView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable react/only-export-components */
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const WordCountView = ({
   tool,
@@ -62,17 +55,10 @@ const WordCountView = ({
     </div>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WordCountRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable react/no-multi-comp */
 
 export const WordCountRenderer = defineToolRenderer({
   inputSchema: wordCountInput,
   outputSchema: wordCountResult,
   render: WordCountView,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

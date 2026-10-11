@@ -1,20 +1,12 @@
 import { expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture launches package-manager, Git, or command subprocesses through native process APIs.
 import { execFileSync } from "node:child_process";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { existsSync } from "node:fs";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import nodePath from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it("refuses to distribute a stale installed runtime", async () => {
   const root = await mkdtemp(
     nodePath.join(tmpdir(), "eve-stale-package-test-")
@@ -53,14 +45,7 @@ it("refuses to distribute a stale installed runtime", async () => {
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve each archive case's awaited install and validation sequence. */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it.each([
   {
     archiveName: "ai-sdk-mcp-2.0.45.tgz",
@@ -129,7 +114,3 @@ it.each([
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

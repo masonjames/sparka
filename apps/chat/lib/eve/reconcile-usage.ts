@@ -1,15 +1,10 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "eve/client" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
 /* oxlint-disable eslint/no-await-in-loop -- Settle evidence and advance durable cursors in stream order. */
 import { Client } from "eve/client";
-/* oxlint-disable sort-imports -- eve/client installs the global Zod postprocessor; the DB dependencies construct connection/env schemas. Keep EVE initialization before those app schemas. */
 import {
   advanceEveSubagentUsageCursor,
   getEveSubagent,
   listEveSubagents,
 } from "@/lib/db/eve-subagents";
-/* oxlint-enable sort-imports */
 import {
   advanceEveUsageCursor,
   getEveUsageCursor,
@@ -31,13 +26,7 @@ const STREAM_EVENT_INCREMENT = 1;
 const STREAM_READ_TIMEOUT_MS = 15_000;
 const MAX_CONCURRENT_USAGE_READS = 4;
 const NO_UNPRICED_SESSIONS = 0;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveSubagentUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined --
-max-lines-per-function (#510): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): reconcileEveSubagentUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Settle native descendants before admission or erasing a root session.
  * @param {string} ownerId - Owner whose child sessions and billing cursors are reconciled.
@@ -58,7 +47,6 @@ const reconcileEveSubagentUsage = async (
     descendants.map((child) => child.sessionId)
   );
   for (const child of descendants) {
-    // oxlint-disable-next-line no-ternary -- Keep start as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const start = replayUnpriced
       ? INITIAL_STREAM_INDEX
       : child.usageStreamIndex;
@@ -69,7 +57,6 @@ const reconcileEveSubagentUsage = async (
       );
     }
     if (!replayUnpriced && length === start) {
-      // oxlint-disable-next-line no-continue -- Skip an already-settled child before opening its stream; enclosing the stream and nested-binding checks in a guard exceeds the configured max-depth (5 > 4).
       continue;
     }
     let childIndex = start;
@@ -110,14 +97,7 @@ const reconcileEveSubagentUsage = async (
   }
   return !unresolved;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements --
-
-max-lines-per-function (#510): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): Root and descendant pricing must succeed before the durable cursor advances. */
 /**
  * Repair missed usage/activity hooks from Eve's authoritative stream.
  * @param {string} ownerId - Owner whose root and descendant usage will be ingested.
@@ -129,7 +109,6 @@ const reconcileEveUsage = async (
   replayUnpriced = false
 ): Promise<void> => {
   assertEveConfigured();
-  // oxlint-disable-next-line no-ternary -- Keep startIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const startIndex = replayUnpriced
     ? INITIAL_STREAM_INDEX
     : await getEveUsageCursor(ownerId, sessionId);
@@ -137,7 +116,6 @@ const reconcileEveUsage = async (
   const session = client.sessions.attach(sessionId);
   let streamIndex = startIndex;
   let unresolved = false;
-  // oxlint-disable-next-line init-declarations -- Empty streams have no activity to publish; the last message event assigns this only when one exists.
   let latestActivity: MessageStreamEvent | undefined;
   for await (const event of session.stream({
     follow: false,
@@ -177,13 +155,7 @@ const reconcileEveUsage = async (
     await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileAllOwnerUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined -- * max-lines-per-function (#510): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): reconcileAllOwnerUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const reconcileAllOwnerUsage = async (
   ownerId: string,
   unpricedSessions: Readonly<ReadonlySet<string>> = new Set<string>()
@@ -214,7 +186,6 @@ const reconcileAllOwnerUsage = async (
   ]);
   for (const row of bindings) {
     const length =
-      // oxlint-disable-next-line no-ternary -- Keep length as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof row.sessionId === "string" && row.sessionId !== ""
         ? positions.get(row.sessionId)
         : undefined;
@@ -249,7 +220,6 @@ const reconcileAllOwnerUsage = async (
         positions.get(row.sessionId) !== row.usageStreamIndex
     )
     .values();
-  // oxlint-disable-next-line init-declarations -- Workers share the first caught failure; its initial absence allows scheduling until a read fails.
   let failure:
     | {
         cause: unknown;
@@ -290,9 +260,6 @@ const reconcileAllOwnerUsage = async (
     throw failure.cause;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveOwnerUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined */
 
 const reconcileEveOwnerUsage = async (
   ownerId: string,
@@ -319,8 +286,5 @@ const reconcileEveOwnerUsage = async (
     }
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };
-/* oxlint-enable import/no-named-export */

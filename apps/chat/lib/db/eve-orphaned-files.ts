@@ -1,10 +1,7 @@
 import { and, eq, inArray, lt, notExists, sql } from "drizzle-orm";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Keep the native client pool initialized before schema table/custom-type construction; schema loads env-backed encryption definitions and executes pgTable builders. */
 import { eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveOrphanedFilePurge's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
 const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
 const EMPTY_RESULT_COUNT = 0;
@@ -13,8 +10,6 @@ type OrphanPurgeTransaction = Readonly<
   Pick<typeof db, "select" | "execute" | "update">
 >;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveOrphanedFilePurge); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function -- Keep candidate ownership checks and per-owner advisory-locked fencing in one transaction workflow. */
 /**
  * Storage inventory is only a candidate list; durable ownership and references decide deletion.
  * @param {readonly string[]} keys Inventoried storage keys to recheck against durable ownership and references.
@@ -76,6 +71,3 @@ export const prepareEveOrphanedFilePurge = async (
   }
   return files;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function */

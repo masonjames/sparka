@@ -16,14 +16,11 @@ const mocks = vi.hoisted(() => ({
   text: vi.fn(),
   upload: vi.fn(),
 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock(import("ai"), async (original) => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...(await original()),
   generateImage: mocks.image,
   generateText: mocks.text,
 }));
-/* oxlint-enable oxc/no-async-await */
 vi.mock("@/lib/eve/tool-models", () => ({
   eveToolModelProvider: {
     createImageModel: (): MockImageModelV3 => new MockImageModelV3(),
@@ -68,7 +65,6 @@ vi.mock("@/lib/url", () => ({
   getBaseUrl: (): string => "https://example.com",
 }));
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve execute's awaited sequencing and rejected-Promise behavior. */
 const execute = async (
   context: ReadonlyNativeSurface<
     ReturnType<typeof testToolContext>
@@ -77,10 +73,6 @@ const execute = async (
   toolResultSchema.parse(
     await generateImageTool.execute({ prompt: "Blue sky" }, context)
   );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.catalog.mockResolvedValue([
@@ -98,8 +90,6 @@ beforeEach(() => {
   });
   mocks.images.mockReturnValue({ attachments: [], lastGeneratedImage: null });
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 it("uses native image context for editing and persists provider cost", async () => {
   mocks.images.mockReturnValue({
     attachments: [
@@ -130,8 +120,6 @@ it("uses native image context for editing and persists provider cost", async () 
     usage: { costUsd: 0.04 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("generates from a prompt without edit images", async () => {
   await execute();
   expect(mocks.image).toHaveBeenCalledOnce();
@@ -139,11 +127,6 @@ it("generates from a prompt without edit images", async () => {
     expect.objectContaining({ prompt: "Blue sky" })
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("retains provider cost if authorized storage fails") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("retains provider cost if authorized storage fails", async () => {
   mocks.upload.mockRejectedValue(new Error("Private storage details"));
   expect(await execute()).toMatchObject({
@@ -152,9 +135,6 @@ it("retains provider cost if authorized storage fails", async () => {
     usage: { costUsd: 0.04 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 it("forwards cancellation to EVE", async () => {
   const controller = new AbortController();
   /* oxlint-disable typescript/promise-function-async -- Return the exact pending provider promise after registering its abort listener; an async callback would wrap that promise. */
@@ -169,7 +149,9 @@ it("forwards cancellation to EVE", async () => {
       const pending = Promise.withResolvers<never>();
       abortSignal.addEventListener(
         "abort",
-        () => pending.reject(abortSignal.reason),
+        () => {
+          pending.reject(abortSignal.reason);
+        },
         { once: true }
       );
       return pending.promise;
@@ -177,13 +159,13 @@ it("forwards cancellation to EVE", async () => {
   );
   /* oxlint-enable typescript/promise-function-async */
   const result = execute(testToolContext({ abortSignal: controller.signal }));
-  await vi.waitFor(() => expect(mocks.image).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(mocks.image).toHaveBeenCalledOnce();
+  });
   controller.abort();
   await expect(result).rejects.toBe(controller.signal.reason);
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("uses the selected native model and accounts nested model tokens", async () => {
   const expectedTokenCostUsd = 0.000011;
   mocks.definition.mockResolvedValue({
@@ -203,17 +185,13 @@ it("uses the selected native model and accounts nested model tokens", async () =
     principalType: "user",
   };
   const result = await execute({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...context,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     session: { ...context.session, auth: { current, initiator: current } },
   });
   expect(mocks.languageModel).toHaveBeenCalledWith("google/image");
   expect(result.usage.costUsd).toBeCloseTo(expectedTokenCostUsd);
   expect(mocks.image).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "http://127.0.0.1/private",   "https://attacker.example/image.png",   "https://attacker.'s awaited sequencing and rejected-Promise behavior. */
 it.each([
   "http://127.0.0.1/private",
   "https://attacker.example/image.png",
@@ -230,8 +208,6 @@ it.each([
     expect(mocks.image).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("reads approved uploads directly from storage", async () => {
   mocks.images.mockReturnValue({
     attachments: [],
@@ -244,14 +220,11 @@ it("reads approved uploads directly from storage", async () => {
   await execute();
   expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("missing provider pricing stays unknown", async () => {
   mocks.catalog.mockRejectedValue(new Error("Catalog unavailable"));
   const result = await execute();
   expect(result.usage.costUsd).toBeUndefined();
 });
-/* oxlint-enable oxc/no-async-await */
 it("accepts saved results without file IDs", () => {
   const saved = {
     imageUrl: "/api/files/abcdefghijklmnopqrstuvwx",

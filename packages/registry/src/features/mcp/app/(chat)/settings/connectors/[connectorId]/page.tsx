@@ -1,20 +1,15 @@
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { connection } from "next/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
-/* oxlint-enable sort-imports */
 
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
-/* oxlint-enable sort-imports */
 import { Skeleton } from "@/components/ui/skeleton";
 import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
-/* oxlint-disable react/jsx-no-literals -- ConnectorDetailsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 const ConnectorDetailsHeader = (): React.JSX.Element => (
   <SettingsPageHeader>
@@ -24,37 +19,16 @@ const ConnectorDetailsHeader = (): React.JSX.Element => (
     </p>
   </SettingsPageHeader>
 );
-/* oxlint-enable react/jsx-no-literals */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 
 const ConnectorDetailsBodyFallback = (): React.JSX.Element => (
   <div className="flex flex-col gap-3">
-    <Skeleton
-      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="h-10 w-48"
-    />
-    <Skeleton
-      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="h-24 w-full"
-    />
-    <Skeleton
-      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="h-24 w-full"
-    />
-    <Skeleton
-      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="h-16 w-5/6"
-    />
+    <Skeleton className="h-10 w-48" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-16 w-5/6" />
   </div>
 );
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorDetailsContent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 const ConnectorDetailsContent = async ({
   params,
 }: {
@@ -77,13 +51,7 @@ const ConnectorDetailsContent = async ({
     </HydrationBoundary>
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 const ConnectorDetailsPage = ({
   params,
 }: {
@@ -100,9 +68,5 @@ const ConnectorDetailsPage = ({
     <ConnectorDetailsContent params={params} />
   </Suspense>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
 export default ConnectorDetailsPage;
-/* oxlint-enable import/no-default-export */

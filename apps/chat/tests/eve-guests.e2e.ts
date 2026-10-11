@@ -1,18 +1,11 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-guests"; "../lib/db/eve-queries"; "../lib/db/eve-response-groups" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray } from "drizzle-orm";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test, vi } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   commitEveGuestMessage,
   createEveGuest,
@@ -21,10 +14,8 @@ import {
   reserveEveGuestMessage,
   reserveEveGuestMessages,
 } from "../lib/db/eve-guests";
-/* oxlint-enable eslint/sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
 import { reserveEveResponseGroupInTransaction } from "../lib/db/eve-response-groups";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveGuest,
@@ -35,25 +26,18 @@ import {
   user,
   userCredit,
 } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createEveGuestCredential,
   eveGuestOwnerId,
 } from "../lib/eve/guest-credential";
-/* oxlint-enable eslint/sort-imports */
 import { eveResponseGroupCandidates } from "../lib/eve/response-group-candidates";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 const ips: string[] = [];
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findEveGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): findEveGuest intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -67,17 +51,10 @@ async function findEveGuest(
   if (row && row.expiresAt > new Date()) {
     return row;
   }
-  // oxlint-disable-next-line no-undefined -- No matching unexpired guest preserves the optional fixture result; no row fields or clock are read when the row is absent.
   return undefined;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve guest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
- * no-magic-numbers (#517): guest uses 10, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep guest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 async function guest(messageLimit = 10) {
   const credential = createEveGuestCredential();
   const row = await createEveGuest({
@@ -88,12 +65,7 @@ async function guest(messageLimit = 10) {
   owners.push(row.ownerId);
   return row;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 function request(ownerId: string) {
   const ipHash = createEveGuestCredential().tokenHash;
   ips.push(ipHash);
@@ -106,12 +78,7 @@ function request(ownerId: string) {
     requestsPerMonth: 100,
   };
 }
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (owners.length > 0) {
     await db.delete(eveUsage).where(inArray(eveUsage.ownerId, owners));
@@ -124,17 +91,10 @@ afterAll(async () => {
     await db.delete(eveGuestRate).where(inArray(eveGuestRate.ipHash, ips));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("guest identity is server-owned, expires and grants no BetterAuth session or sig uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("guest identity is server-owned, expires and grants no BetterAuth session or signup credits", async () => {
   const row = await guest();
   const guestIdentity = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from guestIdentity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestIdentity?.ownerId).toBe(row.ownerId);
   expect(
     await findEveGuest(createEveGuestCredential().tokenHash)
@@ -154,12 +114,8 @@ test("guest identity is server-owned, expires and grants no BetterAuth session o
     status: "unavailable",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("concurrent replay reserves once and rejects changed request content") uses 1, 7, 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("concurrent replay reserves once and rejects changed request content") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("concurrent replay reserves once and rejects changed request content", async () => {
@@ -175,7 +131,6 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     7
   );
   const guestAfterReplay = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterReplay?.remainingMessages).toBe(9);
   const rates = await db
     .select()
@@ -186,18 +141,14 @@ test("concurrent replay reserves once and rejects changed request content", asyn
   ).toEqual([1, 1]);
   expect(
     await reserveEveGuestMessage({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       requestHash: createEveGuestCredential().tokenHash,
     })
   ).toEqual({ status: "conflict" });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("distinct concurrent sends cannot overspend the guest balance") uses 1, 5, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("distinct concurrent sends cannot overspend the guest balance") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("distinct concurrent sends cannot overspend the guest balance", async () => {
@@ -205,7 +156,6 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   const input = request(row.ownerId);
   const results = await Promise.all(
     Array.from({ length: 6 }, () =>
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       reserveEveGuestMessage({ ...input, operationId: crypto.randomUUID() })
     )
   );
@@ -216,33 +166,24 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
     results.filter((result) => result.status === "exhausted")
   ).toHaveLength(5);
   const guestAfterCompetingSends = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCompetingSends; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCompetingSends?.remainingMessages).toBe(0);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("IP quotas survive cookie replacement and rejected limits spend no guest balance uses 10, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("IP quotas survive cookie replacement and rejected limits spend no guest balance", async () => {
   const first = await guest();
   const second = await guest();
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request(first.ownerId) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const input = { ...request(first.ownerId), requestsPerMonth: 1 };
   const initialReservation = await reserveEveGuestMessage(input);
   expect(initialReservation.status).toBe("reserved");
   expect(
     await reserveEveGuestMessage({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
       ownerId: second.ownerId,
     })
   ).toEqual({ status: "rate-limited" });
   const secondGuestAfterRateLimit = await findEveGuest(second.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from secondGuestAfterRateLimit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(secondGuestAfterRateLimit?.remainingMessages).toBe(10);
   const ipQuotaRowsAfterLimit = await db
     .select()
@@ -254,19 +195,14 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
     )
   ).toEqual([1, 1]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 test("simultaneous guests share one IP admission limit", async () => {
   const first = await guest();
   const second = await guest();
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request(first.ownerId) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const input = { ...request(first.ownerId), requestsPerMinute: 1 };
   const results = await Promise.all([
     reserveEveGuestMessage(input),
     reserveEveGuestMessage({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
       ownerId: second.ownerId,
@@ -277,12 +213,7 @@ test("simultaneous guests share one IP admission limit", async () => {
     "reserved",
   ]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" uses 1, 10, 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry", async () => {
@@ -311,7 +242,6 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
   );
   expect(releases.filter(Boolean)).toHaveLength(1);
   const guestAfterConcurrentRelease = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterConcurrentRelease; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterConcurrentRelease?.remainingMessages).toBe(10);
   const retry = await reserveEveGuestMessage(input);
   if (retry.status !== "reserved") {
@@ -340,16 +270,10 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
     )
   ).toBe(false);
   const guestAfterRetryCommit = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterRetryCommit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterRetryCommit?.remainingMessages).toBe(9);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("committing and releasing the same attempt are mutually exclusive") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("committing and releasing the same attempt are mutually exclusive", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -363,18 +287,12 @@ test("committing and releasing the same attempt are mutually exclusive", async (
   ]);
   expect(results.filter(Boolean)).toHaveLength(1);
   const guestAfterCommitReleaseRace = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCommitReleaseRace; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCommitReleaseRace?.remainingMessages).toBe(
-    // oxlint-disable-next-line no-ternary -- Keep expect(guestAfterCommitReleaseRace?.remainingMessages). as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     results[0] ? 0 : 1
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("guest provider accounting survives expiry and replay without creating monetary  uses 0, 1, 0.002 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("guest provider accounting survives expiry and replay without creating monetary  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("guest provider accounting survives expiry and replay without creating monetary credit", async () => {
@@ -392,7 +310,6 @@ test("guest provider accounting survives expiry and replay without creating mone
   expect(await recordEveUsage(evidence)).toBe(false);
   await Promise.all(
     Array.from({ length: 6 }, () =>
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing evidence own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       recordEveUsage({ ...evidence, costUsd: 0.002 })
     )
   );
@@ -407,13 +324,9 @@ test("guest provider accounting survives expiry and replay without creating mone
     await db.select().from(userCredit).where(eq(userCredit.userId, row.ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-statements (#512): test("first admission creates one guest and reserves once across different IPs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("first admission creates one guest and reserves once across different IPs") uses 60_000, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("first admission creates one guest and reserves once across different IPs") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("first admission creates one guest and reserves once across different IPs", async () => {
@@ -430,7 +343,6 @@ test("first admission creates one guest and reserves once across different IPs",
     Array.from({ length: 6 }, () => {
       const other = request(ownerId);
       return reserveEveGuestMessage(
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         { ...input, ipHash: other.ipHash },
         bootstrap
       );
@@ -443,7 +355,6 @@ test("first admission creates one guest and reserves once across different IPs",
     5
   );
   const bootstrappedGuest = await findEveGuest(credential.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from bootstrappedGuest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bootstrappedGuest?.remainingMessages).toBe(1);
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toHaveLength(
     1
@@ -452,13 +363,8 @@ test("first admission creates one guest and reserves once across different IPs",
     await db.select().from(userCredit).where(eq(userCredit.userId, ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("denied first admission creates no account or quota rows") uses 0, 100, 60_000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("denied first admission creates no account or quota rows", async () => {
   for (const denial of ["rate", "balance"] as const) {
     const credential = createEveGuestCredential();
@@ -467,20 +373,16 @@ test("denied first admission creates no account or quota rows", async () => {
     const input = request(ownerId);
     const result = await reserveEveGuestMessage(
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
-        // oxlint-disable-next-line no-ternary -- Keep requestsPerMinute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         requestsPerMinute: denial === "rate" ? 0 : 100,
       },
       {
         expiresAt: new Date(Date.now() + 60_000),
-        // oxlint-disable-next-line no-ternary -- Keep messageLimit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         messageLimit: denial === "balance" ? 0 : 2,
         tokenHash: credential.tokenHash,
       }
     );
     expect(result.status).toBe(
-      // oxlint-disable-next-line no-ternary -- Keep expect(result.status).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       denial === "rate" ? "rate-limited" : "exhausted"
     );
     expect(await findEveGuest(credential.tokenHash)).toBeUndefined();
@@ -495,14 +397,7 @@ test("denied first admission creates no account or quota rows", async () => {
     ).toEqual([]);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): test("bootstrap cannot replace an expired identity or reset its balance") uses 1, 60_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): test("bootstrap cannot replace an expired identity or reset its balance") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("bootstrap cannot replace an expired identity or reset its balance", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -530,20 +425,13 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
     reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
   ).rejects.toThrow("Invalid guest admission");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("comparison admission rolls back a fresh account when any candidate exceeds quot uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("comparison admission rolls back a fresh account when any candidate exceeds quota", async () => {
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
   owners.push(ownerId);
   const first = request(ownerId);
   const result = await reserveEveGuestMessages(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     [first, { ...first, operationId: crypto.randomUUID() }],
     {
       expiresAt: new Date(Date.now() + 60_000),
@@ -566,14 +454,7 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("failed mixed replay/new comparison leaves prior admission intact and rolls back keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("failed mixed replay/new comparison leaves prior admission intact and rolls back uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("failed mixed replay/new comparison leaves prior admission intact and rolls back new debits", async () => {
   const row = await guest(2);
   const first = request(row.ownerId);
@@ -581,19 +462,15 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
   expect(accepted.status).toBe("reserved");
   const result = await reserveEveGuestMessages([
     first,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...first, operationId: crypto.randomUUID() },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...first, operationId: crypto.randomUUID() },
   ]);
   expect(result).toEqual({ status: "exhausted" });
   expect(await reserveEveGuestMessage(first)).toEqual({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing accepted own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...accepted,
     status: "replay",
   });
   const guestAfterMixedReplay = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterMixedReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterMixedReplay?.remainingMessages).toBe(1);
   const entries = await db
     .select()
@@ -610,20 +487,13 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     )
   ).toEqual([1, 1]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-statements (#512): test("concurrent comparison retries debit each distinct candidate exactly once") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("concurrent comparison retries debit each distinct candidate exactly once") uses 2, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("concurrent comparison retries debit each distinct candidate exactly once") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-/* oxlint-disable eslint/max-lines-per-function -- #786 adds readonly database-row contracts; keep this concurrent comparison scenario and its assertions together. */
 test("concurrent comparison retries debit each distinct candidate exactly once", async () => {
   const row = await guest(2);
   const first = request(row.ownerId);
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const inputs = [first, { ...first, operationId: crypto.randomUUID() }];
   const results = await Promise.all(
     Array.from({ length: 4 }, () => reserveEveGuestMessages(inputs))
@@ -687,7 +557,6 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     )
   ).toHaveLength(1);
   const guestAfterConcurrentComparison = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterConcurrentComparison; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterConcurrentComparison?.remainingMessages).toBe(0);
   const ipQuotaRowsAfterComparison = await db
     .select()
@@ -699,27 +568,18 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     )
   ).toEqual([2, 2]);
 });
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("comparison rate limits roll back all candidates and reject duplicate operation  uses 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("comparison rate limits roll back all candidates and reject duplicate operation IDs", async () => {
   const row = await guest(10);
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request(row.ownerId) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const first = { ...request(row.ownerId), requestsPerMinute: 1 };
   expect(
     await reserveEveGuestMessages([
       first,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...first, operationId: crypto.randomUUID() },
     ])
   ).toEqual({ status: "rate-limited" });
   const guestAfterComparisonRateLimit = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterComparisonRateLimit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterComparisonRateLimit?.remainingMessages).toBe(10);
   expect(
     await db
@@ -733,19 +593,13 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
   await expect(
     reserveEveGuestMessages([
       first,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...first, operationId: first.operationId.toUpperCase() },
     ])
   ).rejects.toThrow("unique operations");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async, unicorn/max-nested-calls --
- * no-magic-numbers (#517): test("comparison persistence failure rolls back guest identity and every quota reserv uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("comparison persistence failure rolls back guest identity and every quota reserv preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): test("comparison persistence failure rolls back guest identity and every quota reserv keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test("comparison persistence failure rolls back guest identity and every quota reservation", async () => {
   const credential = createEveGuestCredential();
@@ -764,10 +618,8 @@ test("comparison persistence failure rolls back guest identity and every quota r
   );
   await expect(
     reserveEveGuestMessages(
-      // oxlint-disable-next-line oxc/no-map-spread -- #541: Each guest candidate needs a distinct reservation fixture while preserving the shared first reservation.
       candidates.map(
         (candidate: Readonly<{ modelId: string; operationId: string }>) => ({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...first,
           operationId: candidate.operationId,
         })
@@ -777,7 +629,6 @@ test("comparison persistence failure rolls back guest identity and every quota r
         messageLimit: 2,
         tokenHash: credential.tokenHash,
       },
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native Drizzle PgTransaction is passed to reserveEveResponseGroupInTransaction, which inserts the response-group reservation and guest rows through this live database transaction.
       (tx) => reserveEveResponseGroupInTransaction(tx, ownerId, input)
     )
   ).rejects.toThrow("Source conversation not found");
@@ -795,14 +646,8 @@ test("comparison persistence failure rolls back guest identity and every quota r
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves `native-${input.operationId}` for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("refunded guest creation cannot dispatch late, while a new admission can recover keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("refunded guest creation cannot dispatch late, while a new admission can recover uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("refunded guest creation cannot dispatch late, while a new admission can recover", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -847,18 +692,10 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
     )
   ).toBe(false);
   const guestAfterCreationRefund = await findEveGuest(row.tokenHash);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCreationRefund; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCreationRefund?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves `native-race-${input.operationId}` for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("creation claims and refunds serialize without a free native dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("creation claims and refunds serialize without a free native dispatch") uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("creation claims and refunds serialize without a free native dispatch", async () => {
   for (let index = 0; index < 4; index += 1) {
     const row = await guest(1);
@@ -886,24 +723,16 @@ test("creation claims and refunds serialize without a free native dispatch", asy
       expect(creation.status).toBe("rejected");
       expect(dispatch).not.toHaveBeenCalled();
       const guestAfterRefundWins = await findEveGuest(row.tokenHash);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterRefundWins; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(guestAfterRefundWins?.remainingMessages).toBe(1);
     } else {
       expect(creation.status).toBe("fulfilled");
       expect(dispatch).toHaveBeenCalledTimes(1);
       const guestAfterCreationWins = await findEveGuest(row.tokenHash);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCreationWins; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(guestAfterCreationWins?.remainingMessages).toBe(0);
     }
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves `native-${input.operationId}` for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("committed quota without a creation journal cannot authorize a new dispatch") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("committed quota without a creation journal cannot authorize a new dispatch", async () => {
   const row = await guest(1);
   const input = request(row.ownerId);
@@ -924,7 +753,3 @@ test("committed quota without a creation journal cannot authorize a new dispatch
   ).rejects.toThrow("Committed guest admission has no creation journal");
   expect(dispatch).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */
-
-/* oxlint-disable max-lines -- #509: This eve-guests.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

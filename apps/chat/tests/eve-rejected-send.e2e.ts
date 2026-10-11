@@ -1,47 +1,23 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { Request, Response, TestInfo } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import { eq } from "drizzle-orm";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, userCredit } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("rejected send survives reload as an unsent draft and can be restored and sent o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("rejected send survives reload as an unsent draft and can be restored and sent o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("rejected send survives reload as an unsent draft and can be restored and sent o uses 210_000, 402, 0, 1, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("rejected send survives reload as an unsent draft and can be restored and sent o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("rejected send survives reload as an unsent draft and can be restored and sent once", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(210_000);
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -140,25 +116,19 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     page.url()
   ).href;
   const operationIds: string[] = [];
-  await page.route(
-    commandUrl,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    (route) => {
-      operationIds.push(
-        route.request().headers()["x-chatjs-message-operation"]
-      );
-      return route.fulfill({
-        body: JSON.stringify({
-          code: "usage_reconciliation_busy",
-          error: "Usage reconciliation is busy.",
-          retryable: true,
-        }),
-        contentType: "application/json",
-        headers: { "Retry-After": "2" },
-        status: 503,
-      });
-    }
-  );
+  await page.route(commandUrl, (route) => {
+    operationIds.push(route.request().headers()["x-chatjs-message-operation"]);
+    return route.fulfill({
+      body: JSON.stringify({
+        code: "usage_reconciliation_busy",
+        error: "Usage reconciliation is busy.",
+        retryable: true,
+      }),
+      contentType: "application/json",
+      headers: { "Retry-After": "2" },
+      status: 503,
+    });
+  });
   const retryMessage = "Reply only with busy-message-74.";
   await composer.fill(retryMessage);
   await page.getByRole("button", { exact: true, name: "Send" }).click();
@@ -195,7 +165,6 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   await expect(retryButton).toHaveCount(0);
 
   // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
   await page.route(commandUrl, (route) =>
     route.fulfill({
       body: JSON.stringify({ error: "Upstream response failed" }),
@@ -223,5 +192,4 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   expect(failedRead.status()).toBe(404);
   expect(await failedRead.json()).not.toHaveProperty("code");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

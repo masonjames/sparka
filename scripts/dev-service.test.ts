@@ -33,7 +33,6 @@ interface Fixture {
   };
 }
 
-/* oxlint-disable oxc/no-async-await -- The service operation fixture observes awaited subprocess ordering and rejected-Promise behavior. */
 const runCommand = async (
   key: string,
   options: FixtureOptions
@@ -99,9 +98,7 @@ const fixture = (options: FixtureOptions = {}): Fixture => {
   };
   return { events, operations };
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("start awaits setup, stops the existing service, then bootstraps", async (): Promise<void> => {
   const { events, operations } = fixture();
   await runDevService("start", operations, "darwin");
@@ -117,8 +114,6 @@ test("start awaits setup, stops the existing service, then bootstraps", async ()
     expect.stringMatching(/^log:Started /u),
   ]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("start leaves the current service alone when setup fails", async (): Promise<void> => {
   const { events, operations } = fixture({ failAt: "write" });
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun's promise matcher declarations expose a void return.
@@ -127,24 +122,13 @@ test("start leaves the current service alone when setup fails", async (): Promis
   );
   expect(events.some((event) => event.startsWith("run:launchctl"))).toBe(false);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("stop awaits launchd shutdown before removing the plist", async (): Promise<void> => {
   const { events, operations } = fixture({ loaded: false });
   await runDevService("stop", operations, "darwin");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_STOP_BOOTOUT]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  expect(events[EVENT_STOP_BOOTOUT]?.startsWith("run:launchctl bootout ")).toBe(
-    true
-  );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_STOP_PRINT]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  expect(events[EVENT_STOP_PRINT]?.startsWith("run:launchctl print ")).toBe(
-    true
-  );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_REMOVE]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  expect(events[EVENT_REMOVE]?.startsWith("remove:")).toBe(true);
+  expect(events[EVENT_STOP_BOOTOUT]).toStartWith("run:launchctl bootout ");
+  expect(events[EVENT_STOP_PRINT]).toStartWith("run:launchctl print ");
+  expect(events[EVENT_REMOVE]).toStartWith("remove:");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("rejects unsupported platforms before invoking service operations", async (): Promise<void> => {
   const { events, operations } = fixture();
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun's promise matcher declarations expose a void return.
@@ -153,4 +137,3 @@ test("rejects unsupported platforms before invoking service operations", async (
   );
   expect(events).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */

@@ -1,4 +1,3 @@
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveWorkflowWorld); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Shared by agent compilation, runtime validation and setup; no user backend switch.
  * @param {{ readonly VERCEL?: string; readonly VERCEL_ENV?: string; readonly NODE_ENV?: string; }} environment Deployment flags, defaulting to the current process environment.
@@ -9,7 +8,6 @@ export const resolveWorkflowWorld = (
     readonly VERCEL?: string;
     readonly VERCEL_ENV?: string;
     readonly NODE_ENV?: string;
-    // oxlint-disable-next-line node/no-process-env -- Resolve deployment flags from the current process only when the caller omits its explicit environment.
   } = process.env
 ): "vercel" | "@workflow/world-postgres" => {
   // `vercel dev` / pulled development environments still use local PostgreSQL.
@@ -24,4 +22,3 @@ export const resolveWorkflowWorld = (
   }
   return "@workflow/world-postgres";
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

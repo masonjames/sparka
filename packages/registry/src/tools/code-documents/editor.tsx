@@ -7,9 +7,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ViewUpdate } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
-// oxlint-disable-next-line sort-imports -- CodeMirror modules allocate shared public Facet/provider IDs with nextID++; moving Python, oneDark or basicSetup changes exported language IDs (native control Python 130→135, JavaScript 119→176).
 import { oneDark } from "@codemirror/theme-one-dark";
-// oxlint-disable-next-line sort-imports -- CodeMirror modules allocate shared public Facet/provider IDs with nextID++; moving Python, oneDark or basicSetup changes exported language IDs (native control Python 130→135, JavaScript 119→176).
 import { basicSetup } from "codemirror";
 
 interface EditorProps {
@@ -41,9 +39,6 @@ const getLanguageExtension = (language: string): ReturnType<typeof python> => {
     }
   }
 };
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const PureCodeEditor = ({
   content,
@@ -75,7 +70,6 @@ const PureCodeEditor = ({
   }, []);
 
   useEffect((): void => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dispatch from editorRef.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     editorRef.current?.dispatch({
       effects: configuration.current.reconfigure([
         getLanguageExtension(language),
@@ -122,11 +116,7 @@ const PureCodeEditor = ({
   );
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 const areEqual = (
   prevProps: ReadonlyNativeSurface<EditorProps>,
   nextProps: ReadonlyNativeSurface<EditorProps>
@@ -152,8 +142,5 @@ const areEqual = (
 
   return true;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (CodeEditor); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable eslint/max-statements */
 
 export const CodeEditor = memo(PureCodeEditor, areEqual);
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

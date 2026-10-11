@@ -1,51 +1,30 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
 import { Client } from "eve/client";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import separate from runtime bindings; it has no runtime module-order effect.
 import type { MessageStreamEvent } from "eve/client";
-// oxlint-disable-next-line eslint/sort-imports -- Keep this type-only import separate from runtime bindings; it has no runtime module-order effect.
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
-/* oxlint-enable eslint/sort-imports */
+
 import { z } from "zod";
 
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveConversationCopy,
   eveFileReference,
 } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationBinding,
   createConversationInput,
 } from "../lib/eve/contracts";
-/* oxlint-enable eslint/sort-imports */
 import { eveCopyInput } from "../lib/eve/copy-input";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { textPdf } from "./eve-attachment-fixtures";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 type MessageCompletedEventReader =
@@ -64,26 +43,14 @@ type MessageCompletedEventReader =
     }>;
 const modelId = "google/gemini-2.5-flash-lite";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, unicorn/no-null --
- * init-declarations (#507): test("saves without generation, recovers after source revocation and reload, and cont assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("saves without generation, recovers after source revocation and reload, and cont uses 1000, 2000, 4000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("saves without generation, recovers after source revocation and reload, and cont uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("saves without generation, recovers after source revocation and reload, and cont preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("saves without generation, recovers after source revocation and reload, and cont preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.unroute() on the original Page/locator receiver to change the live browser or route state.
 test("saves without generation, recovers after source revocation and reload, and continues the native copy", async ({
   page,
   browser,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", { data: { model: modelId } });
@@ -116,7 +83,6 @@ test("saves without generation, recovers after source revocation and reload, and
           snapshot.events.some(
             (event: MessageCompletedEventReader) =>
               event.type === "message.completed" &&
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim() === "COPY-ORCHID"
           )
         );
@@ -156,19 +122,15 @@ test("saves without generation, recovers after source revocation and reload, and
     path: testInfo.outputPath("copy-ready.png"),
   });
   let rejectedOperation: string | undefined;
-  await page.route(
-    "**/api/agent-conversation-copies",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    async (route) => {
-      rejectedOperation = eveCopyInput.parse(
-        route.request().postDataJSON()
-      ).operationId;
-      await route.fulfill({
-        json: { error: "This copy is no longer available.", retryable: false },
-        status: 409,
-      });
-    }
-  );
+  await page.route("**/api/agent-conversation-copies", async (route) => {
+    rejectedOperation = eveCopyInput.parse(
+      route.request().postDataJSON()
+    ).operationId;
+    await route.fulfill({
+      json: { error: "This copy is no longer available.", retryable: false },
+      status: 409,
+    });
+  });
   await save.getByRole("button", { name: "Save to your chats" }).click();
   await expect(
     save.getByRole("button", { name: "Save another copy" })
@@ -181,26 +143,23 @@ test("saves without generation, recovers after source revocation and reload, and
   const copied = Promise.withResolvers<z.infer<typeof conversationBinding>>();
   const held = Promise.withResolvers<undefined>();
   const started = Promise.withResolvers<undefined>();
-  await page.route(
-    "**/api/agent-conversation-copies",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.abort() to resolve the intercepted live request through the original native Route receiver.
-    async (route) => {
-      const input = eveCopyInput.parse(route.request().postDataJSON());
-      expect(input.modelId).toBe(modelId);
-      expect(input.operationId).not.toBe(rejectedOperation);
-      started.resolve(undefined);
-      await held.promise;
-      try {
-        const response = await route.fetch();
-        expect(response.ok(), await response.text()).toBe(true);
-        copied.resolve(conversationBinding.parse(await response.json()));
-        await route.abort();
-      } catch (error) {
-        copied.reject(error);
-        throw error;
-      }
+  await page.route("**/api/agent-conversation-copies", async (route) => {
+    const input = eveCopyInput.parse(route.request().postDataJSON());
+    expect(input.modelId).toBe(modelId);
+    expect(input.operationId).not.toBe(rejectedOperation);
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
+    started.resolve(undefined);
+    await held.promise;
+    try {
+      const response = await route.fetch();
+      expect(response.ok(), await response.text()).toBe(true);
+      copied.resolve(conversationBinding.parse(await response.json()));
+      await route.abort();
+    } catch (error) {
+      copied.reject(error);
+      throw error;
     }
-  );
+  });
   await save.getByRole("button", { name: "Save another copy" }).click();
   await started.promise;
   try {
@@ -212,6 +171,7 @@ test("saves without generation, recovers after source revocation and reload, and
       path: testInfo.outputPath("copy-pending.png"),
     });
   } finally {
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     held.resolve(undefined);
   }
   const destination = await copied.promise;
@@ -240,11 +200,9 @@ test("saves without generation, recovers after source revocation and reload, and
   ).toBe(false);
   // Reproduce a crash after native acceptance but before application binding commits.
   const seed = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepareEveCopyTranscript(snapshot.events).seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...prepareEveCopyTranscript(snapshot.events).seed,
     attachments: "channel",
   };
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.update() to perform the native database transaction/write operation.
   await db.transaction(async (tx) => {
     await tx
       .update(eveConversation)
@@ -252,7 +210,6 @@ test("saves without generation, recovers after source revocation and reload, and
       .where(eq(eveConversation.id, destination.id));
     await tx
       .update(eveConversationCopy)
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .set({ phase: "accepted", seed: { ...seed, attachments: "channel" } })
       .where(eq(eveConversationCopy.conversationId, destination.id));
   });
@@ -317,7 +274,6 @@ test("saves without generation, recovers after source revocation and reload, and
         return continued.events.some(
           (event: MessageCompletedEventReader) =>
             event.type === "message.completed" &&
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             event.data.message?.trim() === "COPY-ORCHID"
         );
       },
@@ -332,14 +288,9 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * init-declarations (#507): for (const attachment of [ { answer: "red", bytes: Buff assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const attachment of [ { answer: "red", bytes: Buff uses 360_000, 120_000, 1000, 2000, 4000, 1, 0, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): for (const attachment of [ { answer: "red", bytes: Buff preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 for (const attachment of [
@@ -365,8 +316,6 @@ for (const attachment of [
       "What is the verification code in the document attached earlier? Reply only with the code. Do not call tools.",
   },
 ]) {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.setDefaultNavigationTimeout(), page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
   test(`copied ${attachment.name} survives source deletion, continuation, and imported editing`, async ({
     page,
   }, testInfo: Readonly<{
@@ -375,10 +324,8 @@ for (const attachment of [
   }>) => {
     test.setTimeout(360_000);
     page.setDefaultNavigationTimeout(120_000);
-    await page.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await page.request.get("/api/dev-login", {
       maxRedirects: 0,
@@ -411,7 +358,6 @@ for (const attachment of [
           {
             type: "text",
             text:
-              // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               attachment.mediaType === "application/pdf"
                 ? "Do not read or transcribe this PDF yet. Save it for my next question. For now respond with only: attachment-ready"
                 : "Reply exactly attachment-ready as plain text. Do not describe the attachment or call tools.",
@@ -443,7 +389,6 @@ for (const attachment of [
             snapshot.events.some(
               (event: MessageCompletedEventReader) =>
                 event.type === "message.completed" &&
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 event.data.message?.trim() === "attachment-ready"
             )
           );
@@ -538,7 +483,6 @@ for (const attachment of [
           return continued.events.some(
             (event: MessageCompletedEventReader) =>
               event.type === "message.completed" &&
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim().toLowerCase().replaceAll(".", "") ===
                 attachment.answer
           );
@@ -593,7 +537,6 @@ for (const attachment of [
             .getAnimations({ subtree: true })
             .filter(
               (animation: ReadonlyNativeSurface<Animation>) =>
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getTiming from animation.effect; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 animation.effect?.getTiming().iterations !==
                 Number.POSITIVE_INFINITY
             )
@@ -612,7 +555,6 @@ for (const attachment of [
     let edited: z.infer<typeof conversationBinding> | undefined;
     await page.route(
       "**/api/agent-conversations",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
       async (route) => {
         const input = createConversationInput.parse(
           route.request().postDataJSON()
@@ -644,9 +586,7 @@ for (const attachment of [
       { times: 1 }
     );
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from edited; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect.poll(() => edited?.id, { timeout: 95_000 }).toBeTruthy();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from edited; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect(page).toHaveURL(`${origin}/chat/${edited?.id}`, {
       timeout: 120_000,
     });
@@ -665,8 +605,5 @@ for (const attachment of [
     expect(originalCopyFile.status()).toBe(200);
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
-
-/* oxlint-disable max-lines -- #509: This eve-copy-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+/* oxlint-enable typescript/promise-function-async */

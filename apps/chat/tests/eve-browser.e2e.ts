@@ -1,39 +1,22 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { mkdir } from "node:fs/promises";
 
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import type { Page, Request, Response } from "@playwright/test";
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-/* oxlint-enable eslint/sort-imports */
 import { eq } from "drizzle-orm";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
 const conversationUrl = /\/chat\/[^/]+$/u;
 const failureMessage = /failure|failed/iu;
 const connectionFailure = /fetch|failed/iu;
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
 
 async function capture(
   page: Readonly<Pick<Page, "screenshot">>,
@@ -47,30 +30,20 @@ async function capture(
       "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility: hidden !important; }",
   });
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.beforeEach's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test.beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test.beforeEach(async ({ page }) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.goto("/");
   await expect(
     page.getByRole("heading", { exact: true, name: "Chat" })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls locator.fill(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 async function create(page: Page, message: string): Promise<void> {
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
@@ -78,15 +51,7 @@ async function create(page: Page, message: string): Promise<void> {
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(conversationUrl);
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("native transcript survives reload; streaming preserves the next draft; cancella keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native transcript survives reload; streaming preserves the next draft; cancella keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native transcript survives reload; streaming preserves the next draft; cancella uses 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), page.setViewportSize(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("native transcript survives reload; streaming preserves the next draft; cancellation permits another send", async ({
   page,
 }) => {
@@ -144,11 +109,7 @@ test("native transcript survives reload; streaming preserves the next draft; can
     )
   ).toBe(true);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), locator.fill(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("freeform agent question survives reload and accepts an answer", async ({
   page,
 }) => {
@@ -166,11 +127,8 @@ test("freeform agent question survives reload and accepts an answer", async ({
     page.getByText("Answer received.", { exact: true })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await */
 
 for (const decision of ["Approve", "Cancel"]) {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), locator.click() on the original Page/locator receiver to change the live browser or route state.
   test(`pending tool survives reload and ${decision.toLowerCase()} completes`, async ({
     page,
   }) => {
@@ -189,21 +147,14 @@ for (const decision of ["Approve", "Cancel"]) {
     ).toBeVisible();
     await expect(
       page.getByText(
-        // oxlint-disable-next-line no-ternary -- Keep page.getByText argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         decision === "Approve" ? "Tool completed." : "Request declined.",
         { exact: true }
       )
     ).toBeVisible();
     await capture(page, `tool-${decision.toLowerCase()}`);
   });
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("failed turn is visible and the conversation can continue") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), locator.fill(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("failed turn is visible and the conversation can continue", async ({
   page,
 }) => {
@@ -229,41 +180,27 @@ test("failed turn is visible and the conversation can continue", async ({
     page.getByText("Verified: recovered", { exact: true })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers --
- * init-declarations (#507): test("lost creation reply retries the same conversation and access checks reject bypa assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("lost creation reply retries the same conversation and access checks reject bypa keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("lost creation reply retries the same conversation and access checks reject bypa keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("lost creation reply retries the same conversation and access checks reject bypa uses 404, 403, 400, 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.unroute(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("lost creation reply retries the same conversation and access checks reject bypasses", async ({
   page,
   browser,
   baseURL,
 }) => {
   let acceptedId: string | undefined;
-  await page.route(
-    "**/api/agent-conversations",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.fetch() and route.abort() to resolve the intercepted live request through the original native Route receiver.
-    async (route) => {
-      const response = await route.fetch();
-      const body: unknown = await response.json();
-      if (
-        typeof body === "object" &&
-        body !== null &&
-        "id" in body &&
-        typeof body.id === "string"
-      ) {
-        acceptedId = body.id;
-      }
-      await route.abort("failed");
-      await page.unroute("**/api/agent-conversations");
+  await page.route("**/api/agent-conversations", async (route) => {
+    const response = await route.fetch();
+    const body: unknown = await response.json();
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "id" in body &&
+      typeof body.id === "string"
+    ) {
+      acceptedId = body.id;
     }
-  );
+    await route.abort("failed");
+    await page.unroute("**/api/agent-conversations");
+  });
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("retained intent");
@@ -309,16 +246,10 @@ test("lost creation reply retries the same conversation and access checks reject
     await anonymous.close();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions --
- * max-statements (#512): test("exhausted credits block new messages but permit rejecting an approval") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("exhausted credits block new messages but permit rejecting an approval") uses 402 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): test("exhausted credits block new messages but permit rejecting an approval") intentionally keeps the existing falsy-value behavior of owner; balance; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), locator.click(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("exhausted credits block new messages but permit rejecting an approval", async ({
   page,
 }) => {
@@ -369,17 +300,11 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .where(eq(userCredit.userId, owner.id));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-statements (#512): test("unknown completed usage prevents new admission until its cost is reconciled") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("unknown completed usage prevents new admission until its cost is reconciled") uses -1, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): test("unknown completed usage prevents new admission until its cost is reconciled") intentionally keeps the existing falsy-value behavior of id; conversation?.sessionId; usage; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): test("unknown completed usage prevents new admission until its cost is reconciled") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.request.post() and navigates the original Page/locator receiver during this live browser scenario.
 test("unknown completed usage prevents new admission until its cost is reconciled", async ({
   page,
   baseURL,
@@ -396,7 +321,6 @@ test("unknown completed usage prevents new admission until its cost is reconcile
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
   }
@@ -431,14 +355,8 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .where(eq(eveUsage.eventId, usage.eventId));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("normal navigation and sidebar search use Eve without sending to the old chat AP keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), locator.click(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("normal navigation and sidebar search use Eve without sending to the old chat API", async ({
   page,
 }) => {
@@ -487,14 +405,7 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   ).toBeVisible();
   expect(legacyRequests).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("unknown conversations and removed legacy APIs are unavailable") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("unknown conversations and removed legacy APIs are unavailable", async ({
   page,
 }) => {
@@ -517,14 +428,7 @@ test("unknown conversations and removed legacy APIs are unavailable", async ({
     expect(response.status()).toBe(404);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("ChatJS editor supports Enter, multiline drafts and composition") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.on(), locator.fill(), locator.press() on the original Page/locator receiver to change the live browser or route state.
 test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   page,
 }) => {
@@ -549,16 +453,7 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   await expect(page.getByRole("log")).toContainText("Verified: keyboard send");
   expect(errors).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers --
- * init-declarations (#507): test("stalled creation releases the composer and retries the retained operation") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-statements (#512): test("stalled creation releases the composer and retries the retained operation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("stalled creation releases the composer and retries the retained operation") uses 90_000, 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), locator.fill(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("stalled creation releases the composer and retries the retained operation", async ({
   page,
 }) => {
@@ -568,24 +463,20 @@ test("stalled creation releases the composer and retries the retained operation"
   const stalled = new Promise<void>((resolve) => {
     release = resolve;
   });
-  await page.route(
-    "**/api/agent-conversations",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() and route.fulfill() to resolve the intercepted live request through the original native Route receiver.
-    async (route) => {
-      attempts.push(route.request().postDataJSON());
-      if (attempts.length === 1) {
-        await stalled;
-        await route.abort().catch(() => {
-          // The browser may have already closed this request after its timeout.
-        });
-      } else {
-        await route.fulfill({
-          json: { error: "Worker is unavailable. Please retry." },
-          status: 503,
-        });
-      }
+  await page.route("**/api/agent-conversations", async (route) => {
+    attempts.push(route.request().postDataJSON());
+    if (attempts.length === 1) {
+      await stalled;
+      await route.abort().catch(() => {
+        // The browser may have already closed this request after its timeout.
+      });
+    } else {
+      await route.fulfill({
+        json: { error: "Worker is unavailable. Please retry." },
+        status: 503,
+      });
     }
-  );
+  });
   try {
     const composer = page.getByRole("textbox", {
       exact: true,
@@ -599,7 +490,6 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(composer).toBeEditable();
     await expect(composer).toHaveText("retained timeout message");
     await capture(page, "creation-timeout");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling release; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     release?.();
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
@@ -608,15 +498,10 @@ test("stalled creation releases the composer and retries the retained operation"
     expect(attempts).toHaveLength(2);
     expect(attempts[1]).toEqual(attempts[0]);
   } finally {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling release; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     release?.();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-statements, no-magic-numbers */
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), locator.fill(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("reload during an accepted turn restores the user message and follows the response", async ({
   page,
 }) => {
@@ -641,14 +526,7 @@ test("reload during an accepted turn restores the user message and follows the r
     page.getByText("Verified: slow reload recovery", { exact: true })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("reload before acceptance recovers a late message without resending") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("reload before acceptance recovers a late message without resending") uses 500, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.reload(), locator.fill(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("reload before acceptance recovers a late message without resending", async ({
   page,
 }) => {
@@ -680,16 +558,10 @@ test("reload before acceptance recovers a late message without resending", async
   ).toHaveText("");
   await capture(page, "reload-recovered");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-void-return --
- * max-statements (#512): test("reload retains text when the send never reaches the server") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("reload retains text when the send never reaches the server") uses 5000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/strict-void-return --
  * typescript/strict-void-return (#611): test("reload retains text when the send never reaches the server")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.reload(), locator.fill() on the original Page/locator receiver to change the live browser or route state.
 test("reload retains text when the send never reaches the server", async ({
   page,
 }) => {
@@ -697,22 +569,18 @@ test("reload retains text when the send never reaches the server", async ({
   await expect(
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
-  await page.route(
-    "**/api/eve/v1/session/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() and route.continue() to resolve the intercepted live request through the original native Route receiver.
-    async (route) => {
-      if (route.request().method() === "POST") {
-        await new Promise((resolve) => {
-          setTimeout(resolve, 5000);
-        });
-        await route.abort().catch(() => {
-          /* Ignore abort errors when the route has already completed. */
-        });
-      } else {
-        await route.continue();
-      }
+  await page.route("**/api/eve/v1/session/**", async (route) => {
+    if (route.request().method() === "POST") {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 5000);
+      });
+      await route.abort().catch(() => {
+        /* Ignore abort errors when the route has already completed. */
+      });
+    } else {
+      await route.continue();
     }
-  );
+  });
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("retained before delivery");
@@ -740,7 +608,4 @@ test("reload retains text when the send never reaches the server", async ({
     page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/strict-void-return */
-
-/* oxlint-disable max-lines -- #509: This eve-browser.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+/* oxlint-enable typescript/strict-void-return */

@@ -24,16 +24,11 @@ const CodeEditor = dynamic(
     ssr: false,
   }
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentUi); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
 export const documentUi: DocumentUi = {
   Body: ({ title, editorProps }: ReadonlyNativeSurface<DocumentBodyProps>) => (
-    <ScrollArea
-      // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="min-h-0 flex-1"
-    >
+    <ScrollArea className="min-h-0 flex-1">
       <CodeEditor
         {...editorProps}
         language={getLanguageFromFileName(title) || "python"}
@@ -41,5 +36,3 @@ export const documentUi: DocumentUi = {
     </ScrollArea>
   ),
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-props-no-spreading */

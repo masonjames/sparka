@@ -1,20 +1,13 @@
 import { expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- Use the existing package-local registry contract and test fixture in the standalone CLI layout.
 import { toolDefinitionSchema } from "../../../registry/metadata";
 
-// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/metadata before ./installation-dependencies while their runtime initialization order is still under site review.
 import { prepareDependencyUpdate } from "./installation-dependencies";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-// oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
 test("replacement prunes only owned, unchanged, unused dependencies", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-dependencies-"));
   try {
@@ -39,7 +32,6 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
       slot: "webSearch",
       tools: [{ toolExport: "search" }],
     });
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing previous own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const next = toolDefinitionSchema.parse({ ...previous, id: "second" });
     const first = await prepareDependencyUpdate(cwd, {
       items: [
@@ -74,7 +66,6 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     await writeFile(
       manifest,
       JSON.stringify({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing dependencies own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         dependencies: { ...dependencies, pinned: "2" },
         private: true,
       })
@@ -111,4 +102,3 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     await rm(cwd, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */

@@ -52,7 +52,6 @@ interface EnvChecklistInput {
 const requirementToEntries = (
   requirement: EnvRequirementLike
 ): EnvVarEntry[] => {
-  // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for one alternative; pinned init-declarations requires this initializer.
   let oneOfGroup: string | undefined = undefined;
   if (requirement.options.length > singleAlternative) {
     oneOfGroup = requirement.options
@@ -183,9 +182,5 @@ const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
     ...collectAuthEntries(input),
   ];
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (collectEnvChecklist); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { collectEnvChecklist };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EnvVarEntry); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { EnvVarEntry };
-/* oxlint-enable import/no-named-export */

@@ -6,7 +6,6 @@ const READY_FAILURE_GRACE_MS = 120_000;
 const MIN_READINESS_FAILURES = 3;
 const NO_PREVIOUS_START_FAILURES = 0;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (shouldRestartAfterReadinessFailures); the enabled import/no-default-export convention rejects the default-export alternative. */
 /**
  * Allow cold compilation and brief resource contention before replacing a runtime.
  * @param {object} options - Readiness-failure counts and elapsed time used to select the grace period.
@@ -34,8 +33,6 @@ export const shouldRestartAfterReadinessFailures = ({
   );
   return (
     consecutiveFailures >= MIN_READINESS_FAILURES &&
-    // oxlint-disable-next-line no-ternary -- Keep >= operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     unreadyForMs >= (hasBeenReady ? READY_FAILURE_GRACE_MS : startupGraceMs)
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

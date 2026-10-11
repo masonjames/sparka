@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ModelData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface ModelData {
   readonly context_window: number;
   readonly description: string;
@@ -34,4 +33,3 @@ export interface ModelData {
   readonly toolCall: boolean | undefined;
   readonly type: "language" | "embedding" | "image" | "video";
 }
-/* oxlint-enable import/no-named-export */

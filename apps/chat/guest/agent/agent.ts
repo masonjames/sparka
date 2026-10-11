@@ -1,14 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/eve/disposable-guest"; "../../lib/eve/model-selection" dependency within this package instead of introducing an alias or barrel API.
- */
 import { defineAgent, defineDynamic } from "eve";
 
 import { GUEST_SESSION_DURATION_MS } from "../../lib/eve/disposable-guest";
 import { resolveEveModel } from "../../lib/eve/model-selection";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, typescript/promise-function-async -- import/no-default-export (#526): Preserve the existing default export import contract; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): default export preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+/* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): default export preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 
 export default defineAgent({
   defaultTools: false,
@@ -32,7 +27,6 @@ export default defineAgent({
           }>;
         }>
       ) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const modelId = context.session.auth.initiator?.attributes.modelId;
         if (typeof modelId !== "string") {
           throw new TypeError("Guest session has no authorized model.");
@@ -42,4 +36,4 @@ export default defineAgent({
     },
   }),
 });
-/* oxlint-enable import/no-default-export, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

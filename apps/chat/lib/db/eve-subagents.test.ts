@@ -1,18 +1,10 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- */
 /* oxlint-disable eslint/no-await-in-loop -- Apply real migrations and verify ordered durable billing operations. */
 import { readFile } from "node:fs/promises";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PGlite } from "@electric-sql/pglite";
-/* oxlint-enable sort-imports */
 import { drizzle } from "drizzle-orm/pglite";
-/* oxlint-disable sort-imports -- The EVE event type and Vitest runtime import occupy conflicting native binding-syntax and local-binding sort groups; retain the test runner import with this suite's hoisted mocks. */
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 
 const postgres = new PGlite();
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
@@ -22,18 +14,11 @@ const {
   getEveSubagent,
   advanceEveSubagentUsageCursor,
   listEveSubagents,
-  // oxlint-disable-next-line node/no-top-level-await -- This Vitest suite loads subagent queries after installing its PGlite database mock.
 } = await import("./eve-subagents");
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/usage" dependency within this package instead of introducing an alias or barrel API.
- */
-// oxlint-disable-next-line node/no-top-level-await -- This Vitest suite loads usage ingestion after installing the same PGlite database mock.
 const { ingestEveUsage } = await import("../eve/usage");
-/* oxlint-enable import/no-relative-parent-imports */
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
 const MIGRATION_FIXTURE_SETUP_TIMEOUT_MS = 30_000;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 beforeAll(async () => {
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const journal = JSON.parse(
@@ -70,12 +55,10 @@ beforeAll(async () => {
     );
   }
 }, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 afterAll(() => postgres.close());
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
@@ -102,12 +85,6 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
     registerEveSubagent("owner", "root", "child", "turn_2")
   ).rejects.toThrow("fresh child");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): it("advances child cursors monotonically and revokes stream access when the root is d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("advances child cursors monotonically and revokes stream access when the root is deleted") advances the cursor to 20 then submits stale cursor 10 and asserts the persisted cursor remains 20; these values exercise the monotonicity contract.
- */
 it("advances child cursors monotonically and revokes stream access when the root is deleted", async () => {
   await registerEveSubagent("owner", "root", "cursor-child", "turn_1");
   await advanceEveSubagentUsageCursor("owner", "cursor-child", 20);
@@ -129,13 +106,7 @@ it("advances child cursors monotonically and revokes stream access when the root
     "update \"EveConversation\" set state='bound' where \"sessionId\"='root'"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("charges native child receipts once and rounds their combined cost on the root turn") asserts two receipts contribute $0.002 and round to one cent; event sequence and step indices begin at 0 per the native receipt schema.
- */
 it("charges native child receipts once and rounds their combined cost on the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_3" };
   for (const sessionId of ["paid-one", "paid-two", "paid-one"]) {
@@ -176,5 +147,3 @@ it("charges native child receipts once and rounds their combined cost on the roo
     total: "0.002000000000",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */

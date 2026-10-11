@@ -104,7 +104,6 @@ const TOOLS: readonly Feature[] = [
   },
 ];
 
-/* oxlint-disable react/jsx-max-depth -- FeatureCard: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* ── Shared card component ────────────────────────────────────────── */
 
 const FeatureCard = ({
@@ -127,9 +126,7 @@ const FeatureCard = ({
     </div>
   </div>
 );
-/* oxlint-enable react/jsx-max-depth */
 
-/* oxlint-disable react/no-multi-comp -- SectionLabel: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const SectionLabel = ({
   children,
 }: {
@@ -142,13 +139,7 @@ const SectionLabel = ({
     <div className="bg-border h-px flex-1" />
   </div>
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Features); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Features renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-
-/* oxlint-disable react/jsx-max-depth -- Features: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* ── Main component ───────────────────────────────────────────────── */
 
 export const Features = (): React.JSX.Element => (
@@ -188,8 +179,3 @@ export const Features = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react/no-multi-comp */

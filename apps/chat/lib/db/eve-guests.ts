@@ -1,16 +1,10 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { and, eq, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveGuestOwnerId } from "@/lib/eve/guest-credential";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Loading the database client here validates env and creates the Postgres client after guest credential helpers initialize. */
 import { db } from "./client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep db's env validation and postgres(connection) initialization before schema's pgTable construction. */
 import {
   eveConversation,
   eveGuest,
@@ -18,8 +12,6 @@ import {
   eveGuestRate,
   user,
 } from "./schema";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 
 const hasQueryRow: (row: unknown) => boolean = Boolean;
 
@@ -95,8 +87,6 @@ const windows = (now: ReadonlyNativeSurface<Date>): GuestRateWindow[] =>
     ),
   }));
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveGuest's awaited sequencing and rejected-Promise behavior. */
-
 const createEveGuest = async (
   input: ReadonlyNativeSurface<{
     tokenHash: string;
@@ -121,14 +111,11 @@ const createEveGuest = async (
     });
     const [guest] = await tx
       .insert(eveGuest)
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .values({ ...input, ownerId, remainingMessages: input.messageLimit })
       .returning();
     return guest;
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readExistingEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
 
 const readExistingEveGuestMessage = async (
   ownerId: string,
@@ -154,7 +141,6 @@ const readExistingEveGuestMessage = async (
     );
   return message;
 };
-/* oxlint-enable oxc/no-async-await */
 interface GuestBootstrap {
   tokenHash: string;
   messageLimit: number;
@@ -180,8 +166,6 @@ const validateReservation = (
   }
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rateAvailable's awaited sequencing and rejected-Promise behavior. */
-
 const rateAvailable = async (
   tx: Readonly<Pick<GuestTransaction, "select">>,
   input: ReadonlyNativeSurface<{
@@ -193,7 +177,6 @@ const rateAvailable = async (
 ): Promise<boolean> => {
   for (const period of periods) {
     const limit =
-      // oxlint-disable-next-line no-ternary -- Keep limit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       period.seconds === MINUTE_WINDOW_SECONDS
         ? input.requestsPerMinute
         : input.requestsPerMonth;
@@ -208,20 +191,13 @@ const rateAvailable = async (
           eq(eveGuestRate.startsAt, period.startsAt)
         )
       );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading requests from bucket; preserve one receiver evaluation, skipped accesses and the existing EMPTY_QUOTA fallback. The app guidance prefers optional chaining.
     if ((bucket?.requests ?? EMPTY_QUOTA) >= limit) {
       return false;
     }
   }
   return true;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admissionGuest's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-params, max-statements --
- * max-params (#511): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const admissionGuest = async (
   tx: GuestWriteTransaction,
   input: ReadonlyNativeSurface<GuestReservationInput>,
@@ -257,7 +233,6 @@ const admissionGuest = async (
     [guest] = await tx
       .insert(eveGuest)
       .values({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing bootstrap own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...bootstrap,
         ownerId: input.ownerId,
         remainingMessages: bootstrap.messageLimit,
@@ -269,14 +244,7 @@ const admissionGuest = async (
   }
   return { guest, status: "ready" } as const;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params, max-statements */
 
-/* oxlint-disable max-lines-per-function, max-statements --
- * max-lines-per-function (#510): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const reserveMessage = async (
   tx: GuestWriteTransaction,
   input: ReadonlyNativeSurface<GuestReservationInput>,
@@ -362,9 +330,6 @@ const reserveMessage = async (
     });
   return { reservationId, status: "reserved" } as const;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements */
 
 /* oxlint-disable typescript/promise-function-async -- Preserve the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
@@ -382,7 +347,6 @@ const reserveEveGuestMessage = async (
     reserveMessage(tx, input, bootstrap)
   );
 };
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 type GuestReservationFailure = Exclude<
@@ -398,10 +362,6 @@ class GuestBatchRejectedError extends Error {
   }
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGuestMessages's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements --
-max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-*/
 /**
  * Comparisons admit every candidate or none, including first-guest account creation.
  * @param {readonly ReadonlyNativeSurface<GuestReservationInput>[]} inputs Candidate operations sharing one owner, address and quota policy.
@@ -412,7 +372,6 @@ max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and in
 const reserveEveGuestMessages = async <Admission = undefined>(
   inputs: readonly ReadonlyNativeSurface<GuestReservationInput>[],
   bootstrap?: ReadonlyNativeSurface<GuestBootstrap>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Public admission callbacks may require the full native transaction, including its protected schema/index members; a method projection would reject previously accepted callbacks (TS2345).
   persistAdmission?: (tx: GuestTransaction) => Promise<Admission>
 ): Promise<GuestBatchResult<Admission>> => {
   const [first] = inputs;
@@ -436,7 +395,6 @@ const reserveEveGuestMessages = async <Admission = undefined>(
     operations.add(input.operationId.toLowerCase());
   }
   try {
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the unchanged native transaction to the public admission callback; its accepted full-native parameter contract rejects a method projection (TS2345).
     return await db.transaction(async (tx: GuestTransaction) => {
       const reservations: {
         operationId: string;
@@ -449,10 +407,8 @@ const reserveEveGuestMessages = async <Admission = undefined>(
         if (result.status !== "reserved" && result.status !== "replay") {
           throw new GuestBatchRejectedError(result);
         }
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         reservations.push({ operationId: input.operationId, ...result });
       }
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling persistAdmission; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       const admission = await persistAdmission?.(tx);
       return { admission, reservations, status: "admitted" } as const;
     });
@@ -463,9 +419,6 @@ const reserveEveGuestMessages = async <Admission = undefined>(
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve commitEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
 const commitEveGuestMessage = async (
   ownerId: string,
@@ -486,13 +439,6 @@ const commitEveGuestMessage = async (
     .returning();
   return Boolean(row);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-params, max-statements --
- * max-lines-per-function (#510): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const releaseMessage = async (
   ownerId: string,
   operationId: string,
@@ -568,9 +514,6 @@ const releaseMessage = async (
     }
     return true;
   });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-params, max-statements */
 
 /**
  * Only a proven unaccepted request can be refunded; never use this on a timeout.
@@ -585,8 +528,6 @@ const releaseEveGuestMessage = async (
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, false);
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /**
  * Serialize proof of no creation with the same family lock used before native dispatch.
  * @param {string} ownerId Owner whose guest and conversation family locks fence the refund.
@@ -600,8 +541,6 @@ const releaseEveGuestCreation = async (
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, true);
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveGuestOwner's awaited sequencing and rejected-Promise behavior. */
 /**
  * Includes expired identities so cleanup and policy never reclassify a guest as a user.
  * @param {string} ownerId Durable guest owner identity inspected by cleanup or policy.
@@ -616,10 +555,6 @@ const readEveGuestOwner = async (
     .where(eq(eveGuest.ownerId, ownerId));
   return guest;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (commitEveGuestMessage, createEveGuest, readEveGuestOwner, readExistingEveGuestMessage, releaseEveGuestCreation, releaseEveGuestMessage, reserveEveGuestMessage, reserveEveGuestMessages); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
- */
 export {
   commitEveGuestMessage,
   createEveGuest,
@@ -630,4 +565,3 @@ export {
   reserveEveGuestMessage,
   reserveEveGuestMessages,
 };
-/* oxlint-enable import/no-named-export */

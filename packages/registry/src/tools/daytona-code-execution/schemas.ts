@@ -14,7 +14,6 @@ const codeExecutionInput = z.object({
   title: z.string().describe("The title of the code snippet."),
 });
 
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const codeExecutionResult = z.object({
   chart: z.union([
     z.string(),
@@ -23,7 +22,4 @@ const codeExecutionResult = z.object({
   ]),
   message: z.string(),
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecutionInput, codeExecutionResult); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable unicorn/max-nested-calls */
 export { codeExecutionInput, codeExecutionResult };
-/* oxlint-enable import/no-named-export */

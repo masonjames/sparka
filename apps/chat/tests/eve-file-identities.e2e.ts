@@ -1,39 +1,19 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-files"; "../lib/db/file-storage-keys"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- */
 import { readFile } from "node:fs/promises";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable eslint/sort-imports */
 import { expect, test } from "vitest";
 
 import { db } from "../lib/db/client";
 import { reserveEveUpload } from "../lib/db/eve-files";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
 } from "../lib/db/file-storage-keys";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveStoredFile, user } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("file identity survives changing its private storage location") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("file identity survives changing its private storage location") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("file identity survives changing its private storage location", async () => {
   const owner = crypto.randomUUID();
   const fileId = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
@@ -65,19 +45,12 @@ test("file identity survives changing its private storage location", async () =>
     await db.delete(user).where(eq(user.id, owner));
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("document migration backfills owned attachments and retention from existing cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("document migration backfills owned attachments and retention from existing content", async () => {
   const migration = await readFile(
     new URL("../lib/db/migrations/0003_ambitious_oracle.sql", import.meta.url),
     "utf-8"
   );
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.execute() to perform the native database transaction/write operation.
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`CREATE TEMP TABLE "EveDocumentRevision" ("id" text, "conversationId" text, "ownerId" text, "content" text) ON COMMIT DROP`
@@ -116,5 +89,3 @@ test("document migration backfills owned attachments and retention from existing
     expect([...references]).toEqual([{ key: image }, { key: video }]);
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */

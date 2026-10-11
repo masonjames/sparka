@@ -1,17 +1,12 @@
 import { expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test uses native assertions to await rejection and verify integration contracts.
 import assert from "node:assert/strict";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 import { scaffoldElectron } from "./scaffold";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 const electronOptions = { projectName: "json-contract" };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("Electron scaffolding preserves missing and syntactically invalid project manifest errors", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "scaffold-json-errors-"));
   try {
@@ -33,8 +28,6 @@ test("Electron scaffolding preserves missing and syntactically invalid project m
     await rm(directory, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("Electron scaffolding rejects malformed exclusions without rewriting tsconfig", async () => {
   const directory = await mkdtemp(
     path.join(tmpdir(), "scaffold-json-exclusions-")
@@ -54,4 +47,3 @@ test("Electron scaffolding rejects malformed exclusions without rewriting tsconf
     await rm(directory, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */

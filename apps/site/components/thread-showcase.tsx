@@ -3,7 +3,6 @@
 import type { ThreadInit, ThreadRun, ThreadRunHandle } from "@chat-js/thread";
 import { getMessageText } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
-/* oxlint-disable sort-imports -- Preserve useThread's environment initialization before the playground model creates its dated initial messages; globally sorting these declarations moves that model ahead of the native hook module. */
 import {
   Check,
   ChevronLeft,
@@ -17,7 +16,6 @@ import {
   Sparkles,
   Square,
 } from "lucide-react";
-/* oxlint-enable sort-imports */
 import type {
   PlaygroundMessage,
   PlaygroundChat as ThreadChat,
@@ -66,7 +64,6 @@ type ReadonlyStringIterable = Readonly<{
 type ThreadFinishEvent = Parameters<
   NonNullable<ThreadInit<PlaygroundMessage>["onFinish"]>
 >["0"];
-// oxlint-disable-next-line eslint/no-magic-numbers -- Select getMessageText's sole receiver from its native Parameters tuple.
 type PlaygroundMessageReader = Parameters<typeof getMessageText>[0] &
   Readonly<Pick<PlaygroundMessage, "metadata">>;
 
@@ -85,9 +82,6 @@ const responseState = (
   }
   return "complete";
 };
-/* oxlint-disable react/jsx-no-literals -- ResponseStatus renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-
-/* oxlint-disable eslint/no-magic-numbers -- ResponseStatus: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
 const ResponseStatus = ({
   isAssistant,
@@ -104,16 +98,12 @@ const ResponseStatus = ({
     <span className={styles.responseStatus} data-state={state}>
       <span
         aria-hidden="true"
-        // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         className={live ? styles.streamingRing : styles.statusDot}
       />
       <span>
-        {
-          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          state === "submitted"
-            ? "Starting"
-            : state.charAt(0).toUpperCase() + state.slice(1)
-        }
+        {state === "submitted"
+          ? "Starting"
+          : state.charAt(0).toUpperCase() + state.slice(1)}
       </span>
       {isAssistant && (
         <span
@@ -126,41 +116,29 @@ const ResponseStatus = ({
     </span>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- ThreadInstallCommand renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-disable react/no-multi-comp -- ThreadInstallCommand: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/no-magic-numbers -- ThreadInstallCommand: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-
-/* oxlint-disable react/jsx-max-depth -- ThreadInstallCommand: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 const ThreadInstallCommand = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyCommand's awaited sequencing and rejected-Promise behavior. */
   const copyCommand = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(INSTALL_COMMAND);
       setCopied(true);
-      globalThis.setTimeout((): void => setCopied(false), 1600);
+      globalThis.setTimeout((): void => {
+        setCopied(false);
+      }, 1600);
     } catch {
       setCopied(false);
     }
   };
-  /* oxlint-enable oxc/no-async-await */
   return (
     <div className="border-border bg-card mt-8 max-w-3xl border">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
         <span className="text-muted-foreground flex items-center gap-2 px-2 text-sm">
-          <Package
-            // oxlint-disable-next-line react/forbid-component-props -- Package accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="size-3.5"
-          />
+          <Package className="size-3.5" />
           npm package
         </span>
-        <button /* oxlint-disable no-ternary -- Keep the copied install-command icon as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
+        <button
           aria-label="Copy installation command"
           className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center transition-colors"
           onClick={(): void => {
@@ -168,18 +146,8 @@ const ThreadInstallCommand = (): React.JSX.Element => {
           }}
           type="button"
         >
-          {copied ? (
-            <Check
-              // oxlint-disable-next-line react/forbid-component-props -- Check accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="size-4"
-            />
-          ) : (
-            <Copy
-              // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="size-4"
-            />
-          )}
-        </button /* oxlint-enable no-ternary */>
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        </button>
       </div>
       <div className="overflow-x-auto px-4 py-4">
         <code className="font-mono text-sm whitespace-nowrap">
@@ -190,22 +158,7 @@ const ThreadInstallCommand = (): React.JSX.Element => {
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- Conversation renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- Conversation: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- Conversation: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/no-undefined -- Conversation: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable eslint/no-magic-numbers -- Conversation: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-
-/* oxlint-disable react/jsx-max-depth -- Conversation: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-
-/* oxlint-disable unicorn/no-null -- Conversation: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 /* oxlint-disable typescript/strict-boolean-expressions -- Conversation: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const Conversation = ({
   chat,
@@ -240,7 +193,9 @@ const Conversation = ({
       }
     });
     observer.observe(element);
-    return (): void => observer.disconnect();
+    return (): void => {
+      observer.disconnect();
+    };
   }, []);
   const { cursorId } = chat.tree;
   const textLength = chat.messages.reduce(
@@ -250,7 +205,6 @@ const Conversation = ({
   );
   useEffect((): void => {
     if (textLength && followTranscript.current) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading scrollTo from transcript.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       transcript.current?.scrollTo({
         behavior: "instant",
         top: transcript.current.scrollHeight,
@@ -260,7 +214,6 @@ const Conversation = ({
   useEffect((): void => {
     followTranscript.current = true;
     if (cursorId) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading scrollTo from transcript.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       transcript.current?.scrollTo({
         behavior: "instant",
         top: transcript.current.scrollHeight,
@@ -274,12 +227,8 @@ const Conversation = ({
         <div>
           <p className="text-sm font-medium">Chat</p>
           <p className="text-muted-foreground font-mono text-[11px]">
-            {
-              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from chat.tree.messagesById[chat.tree.cursorId ?? ""].metadata; read metadata from chat.tree.messagesById[chat.tree.cursorId ?? ""]; preserve one receiver evaluation, skipped accesses and the existing "Start a conversation" fallback. */
-              chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
-                ?.title ??
-                /* oxlint-enable oxc/no-optional-chaining */ "Start a conversation"
-            }
+            {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
+              ?.title ?? "Start a conversation"}
           </p>
         </div>
         <span className={styles.viewingBadge}>
@@ -309,7 +258,6 @@ const Conversation = ({
           let state: ReturnType<typeof responseState> = "complete";
           if (message.role === "assistant") {
             state = responseState(
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard when reading status from getRunForMessage(...); retain the SDK query's undefined result.
               chat.tree.getRunForMessage(message.id)?.status,
               chat.stoppedIds.has(message.id)
             );
@@ -327,13 +275,11 @@ const Conversation = ({
               return;
             }
             const leaf = chat.tree.getLeaves(sibling.id).at(-1);
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from leaf; preserve one receiver evaluation, skipped accesses and the existing sibling.id fallback.
             chat.tree.setCursor(leaf?.id ?? sibling.id);
           };
 
           return (
             <article
-              // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               className={`${styles.message} ${isUser ? styles.userMessage : styles.assistantMessage}`}
               data-selected={chat.tree.cursorId === message.id}
               key={message.id}
@@ -344,12 +290,7 @@ const Conversation = ({
                     <Sparkles size={14} />
                   </span>
                 )}
-                <span>
-                  {
-                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                    isUser ? "You" : "Assistant"
-                  }
-                </span>
+                <span>{isUser ? "You" : "Assistant"}</span>
                 {chat.tree.cursorId === message.id && (
                   <span className={styles.currentTurn}>Selected</span>
                 )}
@@ -375,55 +316,43 @@ const Conversation = ({
                   }}
                   type="button"
                 >
-                  <GitBranch
-                    // oxlint-disable-next-line react/forbid-component-props -- GitBranch accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="size-3"
-                  />
+                  <GitBranch className="size-3" />
                   Branch from here
                 </button>
-                {
-                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                  hasSiblings ? (
-                    <fieldset className="ml-auto flex items-center gap-0.5">
-                      <legend className="sr-only">
-                        Branch navigation for {message.id}
-                      </legend>
-                      <button
-                        aria-label={`Previous branch for ${message.id}`}
-                        className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
-                        disabled={siblingIndex === 0}
-                        onClick={(): void =>
-                          navigateToSibling(siblingIndex - 1)
-                        }
-                        title="Previous version"
-                        type="button"
-                      >
-                        <ChevronLeft
-                          // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
-                          className="size-3.5"
-                        />
-                      </button>
-                      <span className="min-w-8 text-center font-mono text-[10px]">
-                        Branch {siblingIndex + 1} / {siblings.length}
-                      </span>
-                      <button
-                        aria-label={`Next branch for ${message.id}`}
-                        className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
-                        disabled={siblingIndex === siblings.length - 1}
-                        onClick={(): void =>
-                          navigateToSibling(siblingIndex + 1)
-                        }
-                        title="Next version"
-                        type="button"
-                      >
-                        <ChevronRight
-                          // oxlint-disable-next-line react/forbid-component-props -- ChevronRight accepts className in its styling contract; preserve this caller's layout and appearance.
-                          className="size-3.5"
-                        />
-                      </button>
-                    </fieldset>
-                  ) : null
-                }
+                {hasSiblings ? (
+                  <fieldset className="ml-auto flex items-center gap-0.5">
+                    <legend className="sr-only">
+                      Branch navigation for {message.id}
+                    </legend>
+                    <button
+                      aria-label={`Previous branch for ${message.id}`}
+                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
+                      disabled={siblingIndex === 0}
+                      onClick={(): void => {
+                        navigateToSibling(siblingIndex - 1);
+                      }}
+                      title="Previous version"
+                      type="button"
+                    >
+                      <ChevronLeft className="size-3.5" />
+                    </button>
+                    <span className="min-w-8 text-center font-mono text-[10px]">
+                      Branch {siblingIndex + 1} / {siblings.length}
+                    </span>
+                    <button
+                      aria-label={`Next branch for ${message.id}`}
+                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
+                      disabled={siblingIndex === siblings.length - 1}
+                      onClick={(): void => {
+                        navigateToSibling(siblingIndex + 1);
+                      }}
+                      title="Next version"
+                      type="button"
+                    >
+                      <ChevronRight className="size-3.5" />
+                    </button>
+                  </fieldset>
+                ) : null}
               </div>
             </article>
           );
@@ -442,12 +371,8 @@ const Conversation = ({
         <p className={styles.composerContext}>
           <GitBranch size={12} /> Continuing from{" "}
           <strong>
-            {
-              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from chat.tree.messagesById[chat.tree.cursorId ?? ""].metadata; read metadata from chat.tree.messagesById[chat.tree.cursorId ?? ""]; preserve one receiver evaluation, skipped accesses and the existing "the beginning" fallback. */
-              chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
-                ?.title ??
-                /* oxlint-enable oxc/no-optional-chaining */ "the beginning"
-            }
+            {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
+              ?.title ?? "the beginning"}
           </strong>
         </p>
         <div className="border-border focus-within:border-foreground/40 rounded-lg border">
@@ -458,17 +383,16 @@ const Conversation = ({
               event: Readonly<{
                 target: Pick<HTMLTextAreaElement, "value">;
               }>
-            ): void => onDraftChange(event.target.value)}
+            ): void => {
+              onDraftChange(event.target.value);
+            }}
             placeholder="Message this branch…"
             rows={2}
             value={draft}
           />
           <div className="border-border flex items-center justify-between gap-2 border-t p-1.5">
             <label className="text-muted-foreground flex h-8 items-center gap-1.5 px-2 text-xs">
-              <GitBranch
-                // oxlint-disable-next-line react/forbid-component-props -- GitBranch accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="size-3.5"
-              />
+              <GitBranch className="size-3.5" />
               <span>Responses</span>
               <select
                 aria-label="Number of responses"
@@ -477,7 +401,9 @@ const Conversation = ({
                   event: Readonly<{
                     target: Pick<HTMLSelectElement, "value">;
                   }>
-                ): void => onResponseCountChange(Number(event.target.value))}
+                ): void => {
+                  onResponseCountChange(Number(event.target.value));
+                }}
                 value={responseCount}
               >
                 {[1, 2, 3, 4].map((count) => (
@@ -512,14 +438,10 @@ const Conversation = ({
                 title="Stop all responses"
                 type="button"
               >
-                <Square
-                  // oxlint-disable-next-line react/forbid-component-props -- Square accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-3.5"
-                />
+                <Square className="size-3.5" />
               </button>
               <button
                 aria-label={`Send message with ${responseCount} ${
-                  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   responseCount === 1 ? "response" : "responses"
                 }`}
                 className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-md disabled:opacity-40"
@@ -530,10 +452,7 @@ const Conversation = ({
                 title="Send message"
                 type="submit"
               >
-                <Send
-                  // oxlint-disable-next-line react/forbid-component-props -- Send accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-4"
-                />
+                <Send className="size-4" />
               </button>
             </div>
           </div>
@@ -548,25 +467,7 @@ const Conversation = ({
     </section>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- TreeCanvas renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- TreeCanvas: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- TreeCanvas: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable eslint/no-undefined -- TreeCanvas: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable eslint/no-magic-numbers -- TreeCanvas: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-
-/* oxlint-disable react/jsx-max-depth -- TreeCanvas: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable unicorn/no-null -- TreeCanvas: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- TreeCanvas: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const TreeCanvas = ({
@@ -595,16 +496,17 @@ const TreeCanvas = ({
       // oxlint-disable-next-line unicorn/no-useless-undefined -- Keep React's explicit no-cleanup result; bare return conflicts with typescript/consistent-return when the other branch returns cleanup.
       return undefined;
     }
-    const observer = new ResizeObserver((): void =>
+    const observer = new ResizeObserver((): void => {
       setViewportSize({
         height: viewport.clientHeight,
         width: viewport.clientWidth,
-      })
-    );
+      });
+    });
     observer.observe(viewport);
-    return (): void => observer.disconnect();
+    return (): void => {
+      observer.disconnect();
+    };
   }, []);
-  // oxlint-disable-next-line no-ternary -- Keep scale as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const scale = viewportSize.width
     ? Math.max(
         0.75,
@@ -652,7 +554,6 @@ const TreeCanvas = ({
                 return (
                   <path
                     className={
-                      // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       activeIds.has(childId) ? styles.selectedEdge : styles.edge
                     }
                     d={`M${node.x} ${node.y + 43} C${node.x} ${node.y + 65}, ${child.x} ${child.y - 65}, ${child.x} ${child.y - 43}`}
@@ -675,7 +576,6 @@ const TreeCanvas = ({
             let state: ReturnType<typeof responseState> = "complete";
             if (message.role === "assistant") {
               state = responseState(
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard when reading status from getRunForMessage(...); retain the SDK query's undefined result.
                 chat.tree.getRunForMessage(message.id)?.status,
                 chat.stoppedIds.has(message.id)
               );
@@ -689,7 +589,9 @@ const TreeCanvas = ({
                 data-path={isActive}
                 data-state={state}
                 key={node.id}
-                onClick={(): void => chat.tree.setCursor(node.id)}
+                onClick={(): void => {
+                  chat.tree.setCursor(node.id);
+                }}
                 style={{ left: node.x, top: node.y }}
                 type="button"
               >
@@ -699,41 +601,28 @@ const TreeCanvas = ({
                   </span>
                 )}
                 <span className={styles.nodeTitle}>
-                  {
-                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                    message.role === "user" ? (
-                      <GitBranch size={12} />
-                    ) : (
-                      <span className={styles.assistantGlyph}>✦</span>
-                    )
-                  }
-                  {
-                    /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from message.metadata; preserve one receiver evaluation, skipped accesses and the existing message.role fallback. */
-                    message.metadata?.title ??
-                      /* oxlint-enable oxc/no-optional-chaining */ message.role
-                  }
+                  {message.role === "user" ? (
+                    <GitBranch size={12} />
+                  ) : (
+                    <span className={styles.assistantGlyph}>✦</span>
+                  )}
+                  {message.metadata?.title ?? message.role}
                 </span>
                 <span className={styles.nodePreview}>
                   {getMessageText(message) || "Waiting for first token…"}
                 </span>
-                {
-                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                  message.role === "assistant" ? (
-                    <ResponseStatus
-                      isAssistant={message.role === "assistant"}
-                      state={state}
-                      text={getMessageText(message)}
-                    />
-                  ) : (
-                    <span className={styles.promptLabel}>
-                      Prompt
-                      {
-                        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                        isActive ? " · on selected path" : ""
-                      }
-                    </span>
-                  )
-                }
+                {message.role === "assistant" ? (
+                  <ResponseStatus
+                    isAssistant={message.role === "assistant"}
+                    state={state}
+                    text={getMessageText(message)}
+                  />
+                ) : (
+                  <span className={styles.promptLabel}>
+                    Prompt
+                    {isActive ? " · on selected path" : ""}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -742,18 +631,8 @@ const TreeCanvas = ({
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable unicorn/no-null -- messageInput: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const messageInput = (
   text: string,
   title: string,
@@ -775,20 +654,7 @@ const messageInput = (
   },
   text,
 });
-/* oxlint-disable react/jsx-no-literals -- PlaygroundSession renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable eslint/max-statements -- PlaygroundSession: The component shares hook order and closure state; extraction requires a component/state-boundary design. */
-/* oxlint-disable react/no-multi-comp -- PlaygroundSession: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/max-lines-per-function -- PlaygroundSession: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable unicorn/no-null -- PlaygroundSession: React refs/rendering and selected-state contracts use null as an explicit empty state. */
-/* oxlint-disable eslint/no-magic-numbers -- PlaygroundSession: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable eslint/id-length -- PlaygroundSession: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable eslint/no-undefined -- PlaygroundSession: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-
-/* oxlint-disable react/jsx-max-depth -- PlaygroundSession: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- PlaygroundSession: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- PlaygroundSession: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable typescript/promise-function-async -- PlaygroundSession: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 /* oxlint-disable typescript/strict-boolean-expressions -- PlaygroundSession: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const PlaygroundSession = (): React.JSX.Element => {
@@ -823,10 +689,8 @@ const PlaygroundSession = (): React.JSX.Element => {
     },
     transport: createPlaygroundTransport(),
   });
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing thread own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const chat: PlaygroundChat = { ...thread, stoppedIds };
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendDraft's awaited sequencing and rejected-Promise behavior. */
   const sendDraft = async (
     input?: string,
     count = responseCount
@@ -843,7 +707,6 @@ const PlaygroundSession = (): React.JSX.Element => {
         request: {
           body: {
             responseLabel:
-              // oxlint-disable-next-line no-ternary -- Keep responseLabel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               count === 1 ? "Assistant reply" : `Response 1 of ${count}`,
           },
         },
@@ -870,13 +733,10 @@ const PlaygroundSession = (): React.JSX.Element => {
       await Promise.all(completions);
     } catch (error) {
       setPlaygroundError(
-        // oxlint-disable-next-line no-ternary -- Keep setPlaygroundError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to start this response"
       );
     }
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve branchFrom's awaited sequencing and rejected-Promise behavior. */
   const branchFrom = async (messageId: string): Promise<void> => {
     setPlaygroundError(null);
     try {
@@ -900,12 +760,10 @@ const PlaygroundSession = (): React.JSX.Element => {
       );
     } catch (error) {
       setPlaygroundError(
-        // oxlint-disable-next-line no-ternary -- Keep setPlaygroundError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to create this branch"
       );
     }
   };
-  /* oxlint-enable oxc/no-async-await */
   return (
     <div className={styles.playground} data-testid="thread-playground">
       <div className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
@@ -974,26 +832,9 @@ const PlaygroundSession = (): React.JSX.Element => {
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable react/jsx-no-literals -- ThreadPlayground renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react/jsx-max-depth */
 
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable react/no-multi-comp */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable react/no-multi-comp -- ThreadPlayground: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/no-magic-numbers -- ThreadPlayground: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-
-/* oxlint-disable react/jsx-max-depth -- ThreadPlayground: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 const ThreadPlayground = (): React.JSX.Element => {
   const [session, setSession] = useState(0);
   return (
@@ -1004,7 +845,9 @@ const ThreadPlayground = (): React.JSX.Element => {
           Local simulation · ≈ token counts are estimates, not provider usage
         </span>
         <button
-          onClick={(): void => setSession((value): number => value + 1)}
+          onClick={(): void => {
+            setSession((value): number => value + 1);
+          }}
           type="button"
         >
           <RotateCcw size={12} /> Reset demo
@@ -1013,22 +856,12 @@ const ThreadPlayground = (): React.JSX.Element => {
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth */
 
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- ThreadShowcase: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 const ThreadShowcase = (): React.JSX.Element => (
   <>
     <ThreadPlayground />
     <ThreadInstallCommand />
   </>
 );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ThreadInstallCommand, ThreadPlayground, ThreadShowcase); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable max-lines -- ThreadShowcase: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
 export { ThreadInstallCommand, ThreadPlayground, ThreadShowcase };
-/* oxlint-enable import/no-named-export */

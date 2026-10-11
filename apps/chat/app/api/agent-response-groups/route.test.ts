@@ -53,9 +53,7 @@ beforeEach(() => {
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ candidates: [], id: input.operationId });
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- Assert the omitted optional third argument in the adapter call explicitly. */
 test("authenticates and checks origin before dispatching with server-owned identity", async () => {
   const resolvedResult1 = await POST(request("https://foreign.invalid"));
   expect(resolvedResult1.status).toBe(HTTP_STATUS.forbidden);
@@ -65,22 +63,16 @@ test("authenticates and checks origin before dispatching with server-owned ident
   expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
     "owner",
     input,
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Assert the exact call arguments, including the explicit absent third argument.
     undefined
   );
 });
-/* oxlint-enable no-undefined */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable unicorn/no-null -- The principal mock uses null for the unauthenticated state. */
 test("unauthenticated requests cannot create groups", async () => {
   mocks.principal.mockResolvedValue(null);
   const resolvedResult3 = await POST(request());
   expect(resolvedResult3.status).toBe(HTTP_STATUS.unauthorized);
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("reads only through the authenticated owner's scope and does not cache bindings", async () => {
   const params = Promise.resolve({ id: input.operationId });
@@ -93,10 +85,7 @@ test("reads only through the authenticated owner's scope and does not cache bind
     "private, no-store"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements, unicorn/no-null -- Keep this ordered admission and response contract together; Response(null) models an empty upstream rejection body. */
 test("guest comparisons cannot dispatch without successful batch admission", async () => {
   mocks.principal.mockResolvedValue({
     kind: "guest",
@@ -123,9 +112,6 @@ test("guest comparisons cannot dispatch without successful batch admission", asy
   await GET(request(), { params: Promise.resolve({ id: input.operationId }) });
   expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });
-/* oxlint-enable max-statements, unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("schedules one title generation for an initial comparison chat", async () => {
   mocks.create.mockResolvedValue({
@@ -160,8 +146,6 @@ test("schedules one title generation for an initial comparison chat", async () =
     ownerId: "owner",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("does not retitle a forked comparison chat", async () => {
   mocks.create.mockResolvedValue({
@@ -180,7 +164,6 @@ test("does not retitle a forked comparison chat", async () => {
     "http://localhost:3790/api/agent-response-groups",
     {
       body: JSON.stringify({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         fork: {
           beforeTurnId: "turn_0",
@@ -197,4 +180,3 @@ test("does not retitle a forked comparison chat", async () => {
 
   expect(mocks.after).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

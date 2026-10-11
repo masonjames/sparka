@@ -1,14 +1,10 @@
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
 
 import { authSessionOptions } from "@/lib/auth-session-options";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GET } from "./route";
-/* oxlint-enable sort-imports */
 
 const HTTP_STATUS = {
   found: 302,
@@ -45,7 +41,6 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 vi.mock("@/lib/env", () => ({ env: { AUTH_SECRET: state.secret } }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 // Keep the route's database writes and Better Auth's reads in the same store.
 type MockRows = Readonly<Record<string, unknown>>[];
 interface MockReturning {
@@ -66,7 +61,6 @@ vi.mock("@/lib/db/client", async (): Promise<{ db: MockDatabase }> => {
     db: {
       insert: (table: unknown): ReturnType<MockDatabase["insert"]> => ({
         values: (row: Readonly<Record<string, unknown>>): MockInsertResult => {
-          // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           const target = table === user ? state.data.user : state.data.session;
           if (table !== user) {
             target.push(row);
@@ -103,7 +97,6 @@ vi.mock("@/lib/db/client", async (): Promise<{ db: MockDatabase }> => {
     },
   };
 });
-/* oxlint-enable oxc/no-async-await */
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -111,15 +104,12 @@ afterEach(() => {
   state.data.session.length = 0;
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["http://localhost:3100", "https://localhost:3100"])'s awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-statements, typescript/promise-function-async -- Keep the Better Auth integration scenario cohesive and preserve its returned promise and rejection behavior. */
+/* oxlint-disable typescript/promise-function-async -- Keep the Better Auth integration scenario cohesive and preserve its returned promise and rejection behavior. */
 it.each(["http://localhost:3100", "https://localhost:3100"])(
   "dev-login issues a valid configured cookie on %s",
   async (baseUrl) => {
     vi.stubEnv("NODE_ENV", "development");
     const auth = betterAuth({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing authSessionOptions({         baseUrl,         databaseUrl: "postgres://dev:secret@localhost:5432/chat",         development: true,       }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...authSessionOptions({
         baseUrl,
         databaseUrl: "postgres://dev:secret@localhost:5432/chat",
@@ -158,9 +148,7 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
     expect(state.data.session).toHaveLength(EXPECTED_DEVELOPMENT_SESSION_COUNT);
   }
 );
-/* oxlint-enable max-statements, typescript/promise-function-async */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable typescript/promise-function-async */
 
 it("does not create a session outside development", async () => {
   vi.stubEnv("NODE_ENV", "production");
@@ -169,4 +157,3 @@ it("does not create a session outside development", async () => {
   expect(response.headers.getSetCookie()).toEqual([]);
   expect(state.data.session).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */

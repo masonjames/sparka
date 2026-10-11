@@ -1,12 +1,8 @@
 import "./sandbox.css";
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
-/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ReasonSearchResearchProgress } from "@/tools/chatjs/deep-research/progress";
@@ -104,8 +100,6 @@ const findSearchRow = (container: SearchRowContainer): Element => {
   throw new Error("The child search row was not rendered.");
 };
 
-/* oxlint-disable max-statements, oxc/no-async-await -- One visual fixture lifecycle mounts progress states, waits for motion to settle, captures, and unmounts in order. */
-// oxlint-disable-next-line eslint/max-lines-per-function -- Keep the paired ResearchTasks and progress-panel states in one browser fixture and capture lifecycle.
 test("research task progress renders its update states together", async () => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("main");
@@ -128,7 +122,7 @@ test("research task progress renders its update states together", async () => {
     await takeSnapshot("research-task-progress-states");
 
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act is thenable at runtime; await it to flush the progress rerender before assertions.
-    await act(() =>
+    await act(() => {
       root.render(
         <div className="grid gap-4">
           <section aria-label="Research in progress">
@@ -138,8 +132,8 @@ test("research task progress renders its update states together", async () => {
             <ReasonSearchResearchProgress updates={updates} />
           </section>
         </div>
-      )
-    );
+      );
+    });
     await expect
       .poll(() => container.textContent)
       .toContain("Writing the answer");
@@ -164,23 +158,21 @@ test("research task progress renders its update states together", async () => {
     container.remove();
   }
 });
-/* oxlint-enable max-statements, oxc/no-async-await */
 
-/* oxlint-disable max-statements, oxc/no-async-await -- Verify row identity across the actual workflow/search ordering before cleaning up the browser fixture. */
 test("search rows keep identity when workflow updates append", async () => {
   const container = document.createElement("main");
   const root = createRoot(container);
   try {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable; await it to flush rendering before reading the search row.
-    await act(() =>
-      root.render(<ResearchTasks updates={workflowWithSearch} />)
-    );
+    await act(() => {
+      root.render(<ResearchTasks updates={workflowWithSearch} />);
+    });
     const initialSearchRow = findSearchRow(container);
 
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must flush the workflow insertion before checking that the same row remains mounted.
-    await act(() =>
-      root.render(<ResearchTasks updates={workflowAfterAnotherUpdate} />)
-    );
+    await act(() => {
+      root.render(<ResearchTasks updates={workflowAfterAnotherUpdate} />);
+    });
     const updatedSearchRow = findSearchRow(container);
     expect(updatedSearchRow).toBe(initialSearchRow);
   } finally {
@@ -189,4 +181,3 @@ test("search rows keep identity when workflow updates append", async () => {
     container.remove();
   }
 });
-/* oxlint-enable max-statements, oxc/no-async-await */

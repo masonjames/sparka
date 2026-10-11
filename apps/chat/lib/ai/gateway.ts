@@ -43,7 +43,6 @@ class VercelGateway
   public readonly type = "vercel" as const;
 
   public createLanguageModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
     modelId: Parameters<
       (typeof gateway)["languageModel"]
     >[typeof MODEL_ID_PARAMETER_INDEX]
@@ -51,15 +50,11 @@ class VercelGateway
     return this.getProvider()(modelId);
   }
 
-  public createImageModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
-    modelId: VercelImageModelId
-  ): ImageModel {
+  public createImageModel(modelId: VercelImageModelId): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
   public createVideoModel(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK literal suggestions and open string intersection: downstream StrictLiterals derives configuration model IDs from this exact factory parameter. A plain string erases that contract; the faithful primitive-preserving readonly projection retains the alias and the pinned rule still flags it.
     modelId: VercelVideoModelId
   ): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);
@@ -81,8 +76,6 @@ class VercelGateway
     return this.env.VERCEL_OIDC_TOKEN;
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- This ordered gateway fetch validates and filters the native catalog, reports unsupported types, and catches failures before fallback; native counts are 27 statements and 66 lines against limits 10/50.
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -119,7 +112,6 @@ class VercelGateway
         const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
         if (isAiGatewayModelType(type)) {
           const model = aiGatewayModelSchema.parse(candidate);
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           models.push({ ...model, type });
         } else {
           unsupportedTypes.add(type);
@@ -150,7 +142,5 @@ class VercelGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
-  /* oxlint-enable oxc/no-async-await */
 }
-// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (Gateway, VercelGateway); the enabled import/no-default-export convention rejects the default-export alternative.
 export { VercelGateway as Gateway, VercelGateway };

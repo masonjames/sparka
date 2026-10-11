@@ -1,11 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { z } from "zod";
-
-/* oxlint-enable import/no-nodejs-modules */
 
 const MINUTES_PER_HOUR = 60;
 const SECONDS_PER_MINUTE = 60;
@@ -49,8 +44,6 @@ const newGuestClaims = (
   ownerId: randomUUID(),
 });
 
-/* oxlint-disable max-statements, unicorn/no-null -- max-statements (#512): readGuestCredential keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): readGuestCredential preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const readGuestCredential = (
   token: string | null
 ): z.infer<typeof claimsSchema> | null => {
@@ -84,12 +77,9 @@ const readGuestCredential = (
     return null;
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (GUEST_SESSION_DURATION_MS, issueGuestCredential, newGuestClaims, readGuestCredential); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-statements, unicorn/no-null */
 export {
   GUEST_SESSION_DURATION_MS,
   issueGuestCredential,
   newGuestClaims,
   readGuestCredential,
 };
-/* oxlint-enable import/no-named-export */

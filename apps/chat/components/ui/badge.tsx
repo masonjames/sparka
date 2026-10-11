@@ -31,25 +31,12 @@ interface BadgeProps
     ReactHTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
-/* oxlint-disable react/react-in-jsx-scope -- Badge uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Badge = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    variant,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: BadgeProps
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): ReactJSX.Element => (
-  <div
-    className={cn(badgeVariants({ variant }), className)}
-    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Badge's native div attributes, preserving caller events and accessibility props.
-    {...props}
-  />
+const Badge = ({
+  className,
+  variant,
+  ...props
+}: BadgeProps): ReactJSX.Element => (
+  <div className={cn(badgeVariants({ variant }), className)} {...props} />
 );
-/* oxlint-enable react/react-in-jsx-scope */
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep Badge's existing named component binding; the enabled import/no-default-export and app named-export convention reject the default-export alternative. */
 export { Badge };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -4,7 +4,6 @@ import {
 } from "@tanstack/react-query";
 import { SuperJSON } from "superjson";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (makeQueryClient); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 const QUERY_STALE_TIME_MS = 60_000;
 
 export const makeQueryClient = (): QueryClient => {
@@ -12,10 +11,7 @@ export const makeQueryClient = (): QueryClient => {
     defaultOptions: {
       dehydrate: {
         serializeData: SuperJSON.serialize,
-        shouldDehydrateQuery: (
-          // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Pass the original Query to defaultShouldDehydrateQuery; a mapped surface loses the native class private-field identity.
-          query
-        ): boolean =>
+        shouldDehydrateQuery: (query): boolean =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === "pending",
         // Don't redact Next.js server errors; Next relies on them to detect dynamic pages.
@@ -34,4 +30,3 @@ export const makeQueryClient = (): QueryClient => {
   });
   return queryClient;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

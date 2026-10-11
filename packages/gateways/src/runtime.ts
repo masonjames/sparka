@@ -9,11 +9,9 @@ interface GatewayLogger {
 
 interface GatewayOptions {
   env?: Record<string, string | undefined>;
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep the existing callback surface, which accepts ordinary callbacks without Bun's fetch.preconnect property. Shallow Readonly projections still trigger Oxlint; a deep readonly RequestInit cannot forward readonly header tuples to native fetch. */
   fetch?: (
     ...args: Parameters<typeof globalThis.fetch>
   ) => ReturnType<typeof globalThis.fetch>;
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
   getFallbackModels?: (gateway: string) => readonly AiGatewayModel[];
   logger?: GatewayLogger;
 }
@@ -47,24 +45,19 @@ class GatewayRuntime {
   protected readonly log: GatewayLogger;
 
   public constructor(options: GatewayReaderOptions = {}) {
-    // oxlint-disable-next-line node/no-process-env -- Omitted env intentionally reads the live process environment; injected env objects and later environment updates retain their existing behavior.
     this.env = options.env ?? process.env;
     this.fetch =
       options.fetch ??
-      /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- Forward the exact native argument objects and promise from dynamically selected global fetch; readonly parameter conversion or async adoption changes that boundary. */
+      /* oxlint-disable typescript/promise-function-async -- Forward the exact native argument objects and promise from dynamically selected global fetch; readonly parameter conversion or async adoption changes that boundary. */
       ((
         ...args: Parameters<typeof globalThis.fetch>
       ): ReturnType<typeof globalThis.fetch> => globalThis.fetch(...args));
-    /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+    /* oxlint-enable typescript/promise-function-async */
     this.getFallbackModels = options.getFallbackModels ?? ((): never[] => []);
     this.log = options.logger ?? silentLogger;
   }
 }
 
-/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (GatewayRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { GatewayRuntime };
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (GatewayOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { GatewayOptions };
-/* oxlint-enable import/no-named-export */

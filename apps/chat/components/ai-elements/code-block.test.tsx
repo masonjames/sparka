@@ -18,8 +18,6 @@ vi.mock("shiki", () => ({
 /* oxlint-enable typescript/promise-function-async */
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations -- code-block.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state;  */
 
 test("an older empty highlight cannot block streamed code until remount", async () => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
@@ -32,7 +30,6 @@ test("an older empty highlight cannot block streamed code until remount", async 
   try {
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     await act(() => {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading update from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       renderer?.update(
         <CodeBlock code="print(53 * 41244)" language="python" />
       );
@@ -49,15 +46,12 @@ test("an older empty highlight cannot block streamed code until remount", async 
         resolve("<pre>print(53 * 41244)</pre>");
       }
     });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toJSON from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(JSON.stringify(renderer?.toJSON())).toContain(
       "<pre>print(53 * 41244)</pre>"
     );
   } finally {
-    // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await act(() => renderer?.unmount());
     pending.clear();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations */

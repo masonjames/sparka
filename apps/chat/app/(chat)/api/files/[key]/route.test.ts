@@ -36,7 +36,6 @@ describe("file route", () => {
   const getFile: () => ReturnType<typeof getPathFile> = () =>
     getPathFile(request, { params: Promise.resolve({ key }) });
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("a deletion fence denies storage redirects and bytes", async () => {
     mocks.access.mockResolvedValue({ allowed: false, managed: true });
     const response = await getFile();
@@ -45,8 +44,6 @@ describe("file route", () => {
     expect(mocks.access).toHaveBeenCalledWith(key, "owner");
     expect(mocks.serve).not.toHaveBeenCalled();
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([true, false])'s awaited sequencing and rejected-Promise behavior. */
   test.each([true, false])(
     "authorized managed=%s files use the correct storage access",
     async (managed) => {
@@ -67,9 +64,7 @@ describe("file route", () => {
       });
     }
   );
-  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async*/
 
 test("invalid path keys are rejected before authorization", async () => {
@@ -83,4 +78,3 @@ test("invalid path keys are rejected before authorization", async () => {
   expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.serve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

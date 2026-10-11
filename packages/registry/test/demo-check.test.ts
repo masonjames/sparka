@@ -1,11 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports -- Compare against the package-private canonical demo installer; existing aliases and ./r-only exports do not resolve this source entry. */
 import {
   baselinePath,
   demoRoot,
   generateDemo,
   syncDemo,
 } from "../scripts/demo-sync";
-/* oxlint-enable import/no-relative-parent-imports */
 import { expect, test } from "bun:test";
 
 const GENERATION_TIMEOUT_MS = 60_000;
@@ -85,7 +83,6 @@ const verifyExcludedFiles = (
   }
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test(
   "demo stays aligned with full canonical installation source",
   async () => {
@@ -104,4 +101,3 @@ test(
   },
   GENERATION_TIMEOUT_MS
 );
-/* oxlint-enable oxc/no-async-await */

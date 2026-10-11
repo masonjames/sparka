@@ -8,7 +8,6 @@ const NEXT_INVENTORY_PASS = 1;
 const MAX_INVENTORY_PASSES = 100;
 const NO_RESOURCES = 0;
 
-/* oxlint-disable oxc/no-async-await -- Postgres executes lazy queries when awaited; these helpers preserve transaction sequencing and rejected-Promise behavior. */
 const readFenceableSessionInventory = async (
   query: PostgresLifecycleQuery,
   sessionId: string,
@@ -55,7 +54,6 @@ const recordFencedResources = (
   }
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- The application requires this named provider binding; import/no-default-export rejects the alternative. */
 /**
  * Fence the reachable native run/stream graph for an authorized, retired session.
  * Unknown/unlinked resources, queues, sandboxes, and blobs remain outside this
@@ -108,5 +106,3 @@ export const fenceEvePostgresSession = async (
       throw new Error("Session inventory did not stabilize; retry fencing.");
     }
   );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

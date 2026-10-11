@@ -1,13 +1,7 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-// oxlint-disable-next-line sort-imports -- Preserve the transitive initializer sequence recorded for this declaration in the exact import-graph audit; the adjacent sorted swap changes that sequence.
 import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
-
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null -- { params, }: { params: Promise<{ id: string; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
 export const GET = async (
   request: ReadonlyNativeSurface<Pick<Request, "headers">>,
@@ -38,6 +32,3 @@ export const GET = async (
   }
   return new Response(null, { status: 404 });
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */

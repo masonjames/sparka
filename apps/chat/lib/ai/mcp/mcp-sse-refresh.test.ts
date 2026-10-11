@@ -8,14 +8,6 @@ const endpointUrl = `${serverUrl}messages`;
 const authorizationServerUrl = "https://auth.test/";
 const tokenEndpoint = `${authorizationServerUrl}token`;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([{ timing: "simultaneous" }, { timing: "after-save" }])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * init-declarations: The SSE controller is unavailable until the transport invokes stream.start; initialize it through that actual native callback.
- * max-lines-per-function, max-statements: This native SDK integration fixture serves SSE, resource discovery, authorization discovery, token refresh and resource requests against shared token state. The two barriers distinguish overlapping 401s from a 401 arriving after token persistence, and client.close remains in finally.
- * no-magic-numbers: Counters and expectations distinguish the first refresh and two old-token requests; these are independent scenario assertions.
- * no-undefined: Completion barriers resolve with undefined without adding a payload or changing their Promise types.
- * unicorn/no-null: Bodyless HTTP responses use the native null sentinel; parsed JSON may also contain null and must be excluded before testing its request ID.
- */
 test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
   "SSE $timing 401 responses share one complete OAuth refresh",
   async ({ timing }: Readonly<{ timing: string }>) => {
@@ -50,6 +42,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
       },
       saveTokens: (nextTokens): void => {
         tokens = nextTokens;
+        // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
         firstRefreshSaved.resolve(undefined);
       },
       tokens: () => tokens,
@@ -58,7 +51,6 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     const fakeFetch = async (
       input: string | ReadonlyNativeSurface<URL | Request>,
 
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original RequestInit to new Request; recursively readonly headers contain readonly tuples that its native HeadersInit rejects.
       init?: Readonly<RequestInit>
     ): Promise<Response> => {
       const request = new Request(input, init);
@@ -118,6 +110,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
         if (authorization !== `Bearer ${validAccessToken}`) {
           oldTokenRequests += 1;
           if (oldTokenRequests >= 2) {
+            // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
             bothOldTokenRequestsStarted.resolve(undefined);
           }
           if (timing === "after-save" && oldTokenRequests === 2) {
@@ -131,10 +124,10 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
           typeof message === "object" &&
           message !== null &&
           "id" in message &&
-          (typeof message.id === "string" || typeof message.id === "number")
+          (typeof message.id === "string" || typeof message.id === "number") &&
+          streamController
         ) {
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from streamController; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-          streamController?.enqueue(
+          streamController.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 id: message.id,
@@ -177,5 +170,3 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */

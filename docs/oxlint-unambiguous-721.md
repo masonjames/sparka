@@ -1,6 +1,8 @@
 # Import/unambiguous exception audit (#721)
 
-The Electron declaration now uses an external declaration module with all three declarations inside `declare global`. The root and app configurations retain only the CommonJS Forge launcher exception; `import/unambiguous` remains `error` elsewhere. This audit starts at `8aa25747122b53e7b4cbd2ed394db0ca0e1429e6` and compares the original issue snapshot `e56e9b74be3ce464b7f49bb4d8367475c8000193`.
+Historical audit: the current [lint policy](lint-policy.md) follows stock presets, where `import/unambiguous` and `import/no-named-export` are disabled. Their old overrides and source exceptions are obsolete. The declaration/runtime findings and verification below describe the original audit, not the current rule configuration.
+
+The audit changed the Electron declaration to an external declaration module with all three declarations inside `declare global`. At that point, the root and app configurations retained only the CommonJS Forge launcher exception; `import/unambiguous` remained `error` elsewhere. This audit starts at `8aa25747122b53e7b4cbd2ed394db0ca0e1429e6` and compares the original issue snapshot `e56e9b74be3ce464b7f49bb4d8367475c8000193`.
 
 ## Ownership and disposition
 

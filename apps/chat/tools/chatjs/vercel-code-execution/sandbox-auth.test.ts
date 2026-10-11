@@ -7,15 +7,13 @@ const jwt = (payload: unknown): string =>
   `header.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.signature`;
 
 describe("resolveSandboxAuth", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("resolves request-scoped OIDC credentials without an environment token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
-    // oxlint-disable-next-line no-undefined -- Explicitly remove the environment fallback so the request header is the only token source.
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest requires an explicit undefined value to remove this environment variable.
     vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
     vi.stubGlobal(Symbol.for("@vercel/request-context"), {
       get: () => ({ headers: { "x-vercel-oidc-token": token } }),
     });
-    // oxlint-disable-next-line node/no-sync -- This assertion exercises the synchronous SDK request-header lookup before module loading.
     expect(getVercelOidcTokenSync()).toBe(token);
     const { resolveSandboxAuth } = await import("./execution-sandbox");
 
@@ -25,8 +23,6 @@ describe("resolveSandboxAuth", () => {
       token,
     });
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("resolves the provider scope from an OIDC token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
     vi.stubEnv("VERCEL_OIDC_TOKEN", token);
@@ -38,8 +34,6 @@ describe("resolveSandboxAuth", () => {
       token,
     });
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("pins explicitly configured opaque credentials", async () => {
     configureSandboxCredentials();
     const { resolveSandboxAuth } = await import("./execution-sandbox");
@@ -50,10 +44,8 @@ describe("resolveSandboxAuth", () => {
       token: "opaque",
     });
   });
-  /* oxlint-enable oxc/no-async-await */
 });
 
-/* oxlint-disable oxc/no-async-await -- Apply the credential scenario before module loading; resolveSandboxAuth throws synchronously inside the assertion. */
 it.each([
   {
     configured: true,
@@ -99,9 +91,7 @@ it.each([
     expect(() => resolveSandboxAuth()).toThrow(error);
   }
 );
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("resolveSandboxAuth uses each request's token for execution and cleanup instead of a stale environment token", async () => {
   vi.stubEnv(
     "VERCEL_OIDC_TOKEN",
@@ -126,4 +116,3 @@ it("resolveSandboxAuth uses each request's token for execution and cleanup inste
     token,
   });
 });
-/* oxlint-enable oxc/no-async-await */

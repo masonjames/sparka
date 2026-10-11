@@ -138,7 +138,6 @@ const resolveMaintainerPreviewDatabase = (
   source: Environment
 ): { DATABASE_MIGRATION_URL: string; DATABASE_URL: string } | undefined => {
   if (source.VERCEL !== "1" || source.VERCEL_ENV !== "preview") {
-    // oxlint-disable-next-line eslint/no-undefined -- Explicitly return the documented no-preview sentinel; consistent-return requires a value alongside the configured result.
     return undefined;
   }
 
@@ -149,6 +148,4 @@ const resolveMaintainerPreviewDatabase = (
 
   return { DATABASE_MIGRATION_URL: direct, DATABASE_URL: pooled };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (PreviewConfigurationError, resolveMaintainerPreviewDatabase); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { PreviewConfigurationError, resolveMaintainerPreviewDatabase };
-/* oxlint-enable import/no-named-export */

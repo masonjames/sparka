@@ -38,7 +38,6 @@ const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
 const packageName = (spec: string): string =>
   spec.split(PACKAGE_SPEC_SPLIT_RE)[PACKAGE_NAME_INDEX].toLowerCase();
-/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 
 const installBasePackages = async (
   basePackages: readonly string[],
@@ -54,7 +53,6 @@ const installBasePackages = async (
   if (installStep.exitCode !== PROCESS_SUCCESS) {
     const errorOutput = await installStep.stderr();
     const standardOutput =
-      // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       errorOutput.trim() === "" ? await installStep.stdout() : "";
     const installStderr = errorOutput.trim() || standardOutput.trim();
     log.error(
@@ -72,8 +70,6 @@ const installBasePackages = async (
   log.info({ requestId }, "base packages installed");
   return { success: true };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 
 const pythonPackagePlan = (
   code: string,
@@ -110,7 +106,6 @@ interface PythonPackagePreparation {
   };
 }
 
-/* oxlint-disable eslint/max-statements -- These 12 statements keep dynamic installation, stderr-before-stdout fallback, failure logging, and the original-source failure result in one awaited operation; an asynchronous helper would introduce additional Promise settlement steps. */
 const processExtraPackages = async (
   code: string,
   basePackages: readonly string[],
@@ -136,7 +131,6 @@ const processExtraPackages = async (
   if (dynamicInstall.exitCode !== PROCESS_SUCCESS) {
     const errorOutput = await dynamicInstall.stderr();
     const standardOutput =
-      // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
     const stderr = errorOutput.trim() || standardOutput.trim();
     log.error(
@@ -160,10 +154,7 @@ const processExtraPackages = async (
     installResult: { success: true },
   };
 };
-/* oxlint-enable eslint/max-statements */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the generated Python preamble and its code/path interpolations in one template to preserve script syntax. */
 const createWrappedCode = (codeToRun: string, chartPath: string): string => `
 import sys
 import json
@@ -215,11 +206,7 @@ except Exception as e:
     print(json.dumps(error_info))
     sys.exit(1)
 `;
-/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-statements -- Parse the status trailer, remove optional chart output, and retain the raw-output fallback for malformed protocol text. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const parseExecutionOutput = async (
   execResult: Readonly<{
     stdout: () => Promise<string>;
@@ -271,10 +258,6 @@ const parseExecutionOutput = async (
 
   return { chartData, execInfo, outputText };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 
 // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
@@ -295,7 +278,6 @@ const checkForChart = async (
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
 const buildResponseMessage = ({
   outputText,
@@ -328,11 +310,7 @@ const buildResponseMessage = ({
 
   return message;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executePythonInSandbox); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 
-/* oxlint-disable eslint/max-statements -- This entry point installs dependencies, runs the sandbox, then parses output and checks for a chart. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered Python execution stages together because later stages consume earlier install and output results. */
 export const executePythonInSandbox = async ({
   sandbox,
   code,
@@ -396,9 +374,3 @@ export const executePythonInSandbox = async ({
     message: message.trim(),
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep the generated Python wrapper and its stdout protocol parser together; splitting only to satisfy a file-line quota separates their producer and consumer. */

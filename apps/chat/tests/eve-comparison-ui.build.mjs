@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { build } from "bun";
 
 const imageImport = /^next\/image$/u;
@@ -17,10 +16,6 @@ const replacements = {
   "internal-link.tsx": "InternalLink",
   "session-provider.tsx": "useSession",
 };
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): result uses 2, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line node/no-top-level-await -- This Bun fixture builder waits for its comparison bundle before publishing it to stdout.
 const result = await build({
   define: {
     "process.env": "{}",
@@ -30,7 +25,6 @@ const result = await build({
   plugins: [
     {
       name: "strict-comparison-fixture-boundaries",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Register onResolve/onLoad callbacks on Bun's original shared PluginBuilder; these calls mutate the build's resolver/loader registry.
       setup(builder) {
         builder.onResolve({ filter: imageImport }, () => ({
           path: "fixture-next-image",
@@ -79,7 +73,6 @@ const result = await build({
   ],
   target: "browser",
 });
-/* oxlint-enable no-magic-numbers */
 
 if (!result.success) {
   throw new Error(
@@ -95,9 +88,4 @@ if (!result.success) {
   );
 }
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): process.stdout.write uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-// oxlint-disable-next-line node/no-top-level-await -- This Bun fixture builder reads the completed comparison bundle before writing it to stdout.
 process.stdout.write(await result.outputs[0].text());
-/* oxlint-enable no-magic-numbers */

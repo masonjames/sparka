@@ -1,14 +1,11 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, readdir, stat, writeFile } from "node:fs/promises";
 
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import type { planInstallation } from "./installation-plan";
 
 import { z } from "zod";
-// oxlint-disable-next-line sort-imports -- Preserve zod before ./preflight while their runtime initialization order is still under site review.
 import { preflight } from "./preflight";
 
 const dependencyReceipt = ".chatjs/installed-dependencies.json";
@@ -23,14 +20,12 @@ const receiptSchema = z.object({
   owned: dependencyMap,
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readManifest's awaited sequencing and rejected-Promise behavior. */
 const readManifest = async (
   cwd: string
 ): Promise<z.infer<typeof manifestSchema>> => {
   const source = await readFile(path.join(cwd, "package.json"), "utf-8");
   return manifestSchema.parse(JSON.parse(source));
 };
-/* oxlint-enable oxc/no-async-await */
 const dependencyName = (specifier: string): string =>
   specifier.replace(/(?<!^)@[^/]*$/u, "");
 
@@ -77,9 +72,7 @@ const binaryAssets = new Set([
 ]);
 const maxSourceBytes = 1_048_576;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sourceUses's awaited sequencing and rejected-Promise behavior. */
 // Conservative protection for dependencies used by source outside registry items.
-// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
 const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
   const entries = await readdir(cwd, { withFileTypes: true });
   for (const entry of entries) {
@@ -90,7 +83,6 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
       (entry.isFile() &&
         binaryAssets.has(path.extname(entry.name).toLowerCase()))
     ) {
-      // oxlint-disable-next-line eslint/no-continue -- Skip ignored directories before examining their files.
       continue;
     }
     if (entry.isSymbolicLink()) {
@@ -119,10 +111,6 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
   }
   return false;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareDependencyUpdate); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareDependencyUpdate's awaited sequencing and rejected-Promise behavior. */
-// oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
 export const prepareDependencyUpdate = async (
   cwd: string,
   plan: ReadonlyInput<
@@ -155,9 +143,7 @@ export const prepareDependencyUpdate = async (
   for (const item of plan.items) {
     const descriptor = z
       .object({ id: z.string(), kind: z.string() })
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       .safeParse(item.meta?.chatjs);
-    // oxlint-disable-next-line no-ternary -- Keep key as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const key = descriptor.success
       ? `${descriptor.data.kind}:${descriptor.data.id}`
       : `item:${item.name}`;
@@ -166,19 +152,15 @@ export const prepareDependencyUpdate = async (
       ...(item.devDependencies ?? []),
     ].map((specifier) => dependencyName(specifier));
   }
-  // oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
   return async (): Promise<void> => {
     const manifest = await readManifest(cwd);
     const required = new Set(Object.values(receipt.items).flat());
     for (const name of required) {
       const version =
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the existing manifest.devDependencies?.[name] fallback. Keep the existing nullish guard when reading name from manifest.devDependencies; preserve one receiver evaluation, skipped accesses and the existing manifest.devDependencies?.[name] fallback.
         manifest.dependencies?.[name] ?? manifest.devDependencies?.[name];
       if (
         typeof version === "string" &&
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from before.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         typeof before.dependencies?.[name] !== "string" &&
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from before.devDependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         typeof before.devDependencies?.[name] !== "string"
       ) {
         receipt.owned[name] = version;
@@ -186,7 +168,6 @@ export const prepareDependencyUpdate = async (
     }
     for (const [name, installedVersion] of Object.entries(receipt.owned)) {
       const group =
-        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- The dependency-key read is lazy; an empty string selects dependencies while a missing value falls back to devDependencies. The equivalent if/else conflicts with pinned unicorn/prefer-ternary.
         typeof manifest.dependencies?.[name] === "string"
           ? manifest.dependencies
           : manifest.devDependencies;
@@ -203,15 +184,11 @@ export const prepareDependencyUpdate = async (
     }
     await writeFile(
       path.join(cwd, "package.json"),
-      // oxlint-disable-next-line unicorn/no-null, eslint/no-magic-numbers -- JSON.stringify accepts null to select its default replacer while retaining readable indentation. These local values specify JSON indentation, source offsets or bounded test fixtures.
       `${JSON.stringify(manifest, null, 2)}\n`
     );
     await writeFile(
       path.join(cwd, dependencyReceipt),
-      // oxlint-disable-next-line unicorn/no-null, eslint/no-magic-numbers -- JSON.stringify accepts null to select its default replacer while retaining readable indentation. These local values specify JSON indentation, source offsets or bounded test fixtures.
       `${JSON.stringify(receipt, null, 2)}\n`
     );
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

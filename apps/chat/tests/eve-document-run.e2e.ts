@@ -1,40 +1,20 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This Playwright E2E test runs under Node and intentionally uses this built-in fixture API.
 import { execFileSync } from "node:child_process";
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
 import type { TestInfo } from "@playwright/test";
-/* oxlint-enable eslint/sort-imports */
 import { eq } from "drizzle-orm";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Client } from "eve/client";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import separate from runtime bindings; it has no runtime module-order effect.
 import type { MessageStreamEvent } from "eve/client";
-/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
-/* oxlint-enable eslint/sort-imports */
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 type RunCodeActionResultReader =
@@ -54,22 +34,13 @@ type RunCodeActionResultReader =
       data?: unknown;
     }>;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async --
- * max-statements (#512): test("saved-code controls cover pending, disabled, denied and error states") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("saved-code controls cover pending, disabled, denied and error states") uses 2, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): test("saved-code controls cover pending, disabled, denied and error states") uses execFileSync("bun", ["tests/eve-document-run-fixture.ts"], { encoding: "utf-8", }) within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("saved-code controls cover pending, disabled, denied and error states") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.setViewportSize() on the original Page/locator receiver to change the live browser or route state.
 test("saved-code controls cover pending, disabled, denied and error states", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
@@ -103,17 +74,11 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("artifact Run executes saved source, retains output across reload and sharing, a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("artifact Run executes saved source, retains output across reload and sharing, a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("artifact Run executes saved source, retains output across reload and sharing, a uses 180_000, 20_000, 15_000, 1, 0.05, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("artifact Run executes saved source, retains output across reload and sharing, a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.setDefaultTimeout(), page.addInitScript(), page.route() on the original Page/locator receiver to change the live browser or route state.
 test("artifact Run executes saved source, retains output across reload and sharing, and bills once", async ({
   page,
   browser,
@@ -128,11 +93,7 @@ test("artifact Run executes saved source, retains output across reload and shari
       document.head.append(style);
     });
   });
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.evaluate(
     async (
@@ -203,7 +164,6 @@ test("artifact Run executes saved source, retains output across reload and shari
   expect(executions).toHaveLength(1);
   const [event] = executions;
   if (
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from event; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     event?.type !== "action.result" ||
     event.data.result.kind !== "tool-result"
   ) {
@@ -250,10 +210,8 @@ test("artifact Run executes saved source, retains output across reload and shari
     .where(eq(eveConversation.id, binding.id));
   const publicContext = await browser.newContext();
   try {
-    await publicContext.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await publicContext.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await publicContext.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
@@ -290,5 +248,4 @@ test("artifact Run executes saved source, retains output across reload and shari
     await publicContext.close();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

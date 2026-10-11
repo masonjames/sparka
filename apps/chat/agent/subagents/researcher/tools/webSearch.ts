@@ -1,5 +1,4 @@
 import { defineState } from "eve/context";
-// oxlint-disable-next-line sort-imports -- eve/context initializes ContextKey registry entries with collision checks before eve/tools initializes shared Zod and the definition-source registry; preserve those shared mutations and failure order.
 import { defineDynamic } from "eve/tools";
 
 import { providers } from "@/tools/chatjs/providers";
@@ -35,7 +34,6 @@ const requireResearchSearch =
     return search;
   };
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
 export default defineDynamic({
   events: {
     "step.started": (_event, context: ResearchSearchContext) => {
@@ -50,11 +48,9 @@ export default defineDynamic({
       researchSteps.update((count) => count + SEARCH_ROUND_INCREMENT);
 
       if (searchRounds >= MAX_RESEARCH_SEARCH_ROUNDS) {
-        // oxlint-disable-next-line unicorn/no-null -- defineDynamic uses null to contribute no tool after the final search round (eve DynamicSentinel contract).
         return null;
       }
       return search;
     },
   },
 });
-/* oxlint-enable import/no-default-export */

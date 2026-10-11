@@ -2,9 +2,7 @@
 
 import { formatDistance } from "date-fns";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping date-fns and lucide-react; keep this adjacent import pair ordered. */
 import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-/* oxlint-enable sort-imports */
 
 import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
@@ -15,21 +13,17 @@ import { InternalLink } from "@/components/internal-link";
 
 import { ShareDialog } from "@/components/share-button";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/share-button and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-/* oxlint-enable sort-imports */
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectChatItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- ProjectChatItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async -- ProjectChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable typescript/promise-function-async -- ProjectChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 export const ProjectChatItem = ({
   chat,
@@ -56,18 +50,16 @@ export const ProjectChatItem = ({
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleRename's awaited sequencing and rejected-Promise behavior. */
   const handleRename = async (title: string): Promise<void> => {
     await onRename(chat.id, title);
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable no-ternary, typescript/strict-boolean-expressions -- The original Date/string predicate narrows the conditional second chat.updatedAt read for the native Date constructor. Guarding a captured value does not narrow the preserved second property read; reusing one captured value changes dynamic-getter behavior. */
+  /* oxlint-disable typescript/strict-boolean-expressions -- The original Date/string predicate narrows the conditional second chat.updatedAt read for the native Date constructor. Guarding a captured value does not narrow the preserved second property read; reusing one captured value changes dynamic-getter behavior. */
   const lastMessageText = chat.updatedAt
     ? formatDistance(new Date(chat.updatedAt), new Date(), {
         addSuffix: true,
       })
     : "";
-  /* oxlint-enable no-ternary, typescript/strict-boolean-expressions */
+  /* oxlint-enable typescript/strict-boolean-expressions */
 
   return (
     <>
@@ -75,7 +67,6 @@ export const ProjectChatItem = ({
         <div className="hover:bg-muted/50 relative flex items-center gap-3 px-4 py-3 transition-colors">
           <InternalLink
             aria-label={chat.title}
-            // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
             className="absolute inset-0 z-10"
             href={chatHref}
           />
@@ -89,7 +80,6 @@ export const ProjectChatItem = ({
             <DropdownMenu modal>
               <DropdownMenuTrigger asChild>
                 <Button
-                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
                   size="icon"
                   type="button"
@@ -102,9 +92,10 @@ export const ProjectChatItem = ({
 
               <DropdownMenuContent align="end" side="bottom">
                 <DropdownMenuItem
-                  // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="cursor-pointer"
-                  onClick={() => setRenameDialogOpen(true)}
+                  onClick={() => {
+                    setRenameDialogOpen(true);
+                  }}
                 >
                   <Pencil size={16} />
                   <span>Rename</span>
@@ -117,13 +108,18 @@ export const ProjectChatItem = ({
                   </DropdownMenuItem>
                 )}
 
-                <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
+                <ShareMenuItem
+                  onShare={() => {
+                    setShareDialogOpen(true);
+                  }}
+                />
 
                 {onDelete && (
                   <DropdownMenuItem
-                    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
                     className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
-                    onSelect={() => onDelete(chat.id)}
+                    onSelect={() => {
+                      onDelete(chat.id);
+                    }}
                   >
                     <Trash2 size={16} />
                     <span>Delete</span>
@@ -154,6 +150,4 @@ export const ProjectChatItem = ({
     </>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

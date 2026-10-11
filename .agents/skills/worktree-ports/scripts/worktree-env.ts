@@ -14,27 +14,23 @@ const SUCCESS_EXIT_CODE = 0;
 const FAILURE_EXIT_CODE = 1;
 const args = process.argv.slice(ARGUMENT_START_INDEX);
 const configFile = ".worktree-env.json";
-// oxlint-disable-next-line node/no-top-level-await -- This Bun executable loads its worktree configuration before spawning the requested command.
 const config = await loadWorktreeConfig(configFile);
 // This CLI resolves the ambient slot setting before forwarding its validated app environment.
-// oxlint-disable-next-line node/no-process-env -- The CLI boundary reads the configured slot from this process environment.
 const runtime = resolveWorktreeRuntime(config, process.env);
 
 const fail: (message: string) => never = (message) => {
-  // oxlint-disable-next-line eslint/no-console -- The operator-facing failure diagnostic must stay on stderr.
   console.error(message);
   process.exit(FAILURE_EXIT_CODE);
 };
 
-// oxlint-disable-next-line eslint/no-console -- The status output is the CLI's documented human and --info output channel.
-const writeStatus = (message: string): void => console.log(message);
+const writeStatus = (message: string): void => {
+  console.log(message);
+};
 
 if (args[FIRST_ARGUMENT_INDEX] === "--info") {
-  // oxlint-disable-next-line eslint/sort-keys -- Preserve the documented worktree --info JSON field order.
   const info = { apps: runtime.apps, slot: runtime.slot, configFile };
   if (args[SECOND_ARGUMENT_INDEX] === "--json") {
     // JSON.stringify treats a null replacer as absent; the third argument controls indentation.
-    // oxlint-disable-next-line unicorn/no-null -- Use the native serializer without a filtering replacer for the CLI's JSON output.
     writeStatus(JSON.stringify(info, null, JSON_INDENT_SPACES));
   } else {
     writeStatus(`Worktree slot ${runtime.slot}`);
@@ -72,7 +68,6 @@ const spawnChild = (
 ): ReturnType<typeof spawn> => {
   try {
     return spawn([...commandArgs], {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Pass Bun a fresh own-property snapshot, preserving enumerable string and symbol keys, getter receiver/order, and native CopyDataProperties behavior; Object.entries drops symbols and Object.assign invokes target setters, while prefer-object-spread rejects Object.assign.
       env: { ...environment },
       stderr: "inherit",
       stdin: "inherit",
@@ -80,18 +75,17 @@ const spawnChild = (
     });
   } catch (error) {
     return fail(
-      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `Failed to start "${commandArgs[COMMAND_ARGUMENT_INDEX]}": ${error instanceof Error ? error.message : String(error)}`
     );
   }
 };
 
 // Forward ambient variables for commands that rely on inherited setup alongside app-specific overrides.
-// oxlint-disable-next-line node/no-process-env, oxc/no-rest-spread-properties -- Forward the CLI's native process environment and app exports. Preserve enumerable string and symbol keys, getter receiver/order, and app override order; Object.entries drops symbols and Object.assign invokes target setters, while prefer-object-spread rejects Object.assign.
 const childEnvironment = { ...process.env, ...app.env };
 const child = spawnChild(args, childEnvironment);
 
-process.on("SIGTERM", () => child.kill("SIGTERM"));
+process.on("SIGTERM", () => {
+  child.kill("SIGTERM");
+});
 
-// oxlint-disable-next-line node/no-top-level-await -- This Bun executable forwards the child exit status only after that process has exited.
 process.exit(await child.exited);

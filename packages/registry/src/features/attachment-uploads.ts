@@ -1,8 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { featureDefinitionSchema } from "../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 
 // Canonical upload implementation; apps/chat contains installed demo copies.
 const attachmentUploadFiles = [
@@ -33,6 +31,4 @@ const attachmentUploadsItem: RegistryItem = {
   name: "attachment-uploads",
   type: "registry:item",
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (attachmentUploadFiles, attachmentUploadsItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { attachmentUploadFiles, attachmentUploadsItem };
-/* oxlint-enable import/no-named-export */

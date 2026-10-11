@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
 
 vi.mock("./turn-tools", () => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of tools rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   filterEveTools: <Tools>(tools: Tools): Partial<Tools> => ({ ...tools }),
 }));
 
@@ -46,7 +45,6 @@ test("document definitions retain distinct create, edit, and read contracts", ()
   >().toEqualTypeOf<string>();
 });
 
-/* oxlint-disable oxc/no-async-await -- Await rejection from the native tool executor before completing the output-contract assertion. */
 test("document output is validated before crossing the native result boundary", async () => {
   mocks.execute.mockResolvedValue({ revisionId: "invalid", status: "success" });
   await expect(
@@ -56,7 +54,6 @@ test("document output is validated before crossing the native result boundary", 
     )
   ).rejects.toThrow();
 });
-/* oxlint-enable oxc/no-async-await */
 test("native workflow outputs retain the report revision and clarification contracts", () => {
   type Research = NativeToolUI<typeof research>;
   expectTypeOf<

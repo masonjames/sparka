@@ -19,13 +19,7 @@ const cancel = z
     turnId: z.string().min(MIN_FIELD_LENGTH).max(MAX_TURN_ID_LENGTH).optional(),
   })
   .strict();
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authenticateDisposableGuest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateDisposableGuest's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, unicorn/no-null -- * init-declarations (#507): authenticateDisposableGuest assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): authenticateDisposableGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): authenticateDisposableGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): authenticateDisposableGuest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** EVE's stream route delegates ownership checks to channel auth. Bind every
  * permitted operation to the exact server-issued session credential.
  * @param {ReadonlyNativeSurface<Request>} request - Native operation request whose credential, path and body are checked.
@@ -41,10 +35,9 @@ export const authenticateDisposableGuest = async (
   principalType: "user";
   subject: string;
 } | null> => {
-  const authorization = request.headers.get("authorization");
+  const authorization = request.headers.get("authorization") ?? "";
   const claims = readGuestCredential(
-    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading startsWith from authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep readGuestCredential argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    authorization?.startsWith(BEARER_PREFIX) === true
+    authorization.startsWith(BEARER_PREFIX)
       ? authorization.slice(BEARER_PREFIX.length)
       : null
   );
@@ -95,6 +88,3 @@ export const authenticateDisposableGuest = async (
     subject: claims.ownerId,
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, unicorn/no-null */

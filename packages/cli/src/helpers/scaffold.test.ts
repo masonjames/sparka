@@ -1,10 +1,6 @@
-/* oxlint-disable import/max-dependencies -- This integration test/command composes its existing installer adapters and their canonical JSON readers explicitly. */
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 import { afterEach, describe, expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { existsSync, readFileSync } from "node:fs";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   readFile,
@@ -19,14 +15,10 @@ import {
   scaffoldFromTemplate,
 } from "./scaffold";
 import { buildConfigTs } from "./config-builder";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
 import { parseJsonObject } from "./json-object";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration test supplies the same file URL exposed by Node's native ESM import.meta.
 import { pathToFileURL } from "node:url";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 import ts from "typescript";
 import { z } from "zod";
@@ -36,9 +28,7 @@ const SUCCESS_EXIT_CODE = 0;
 const FIRST_TEMP_DIRECTORY_INDEX = 0;
 const EXPECTED_SINGLE_ITEM_COUNT = 1;
 const MINIMUM_NONEMPTY_FILE_LENGTH = 0;
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalUserAgent = process.env.npm_config_user_agent;
-/* oxlint-enable node/no-process-env */
 
 const makeTempDir = (name: string): string => {
   const dir = pathModule.join(
@@ -52,7 +42,6 @@ const makeTempDir = (name: string): string => {
 const getCliPackageRoot = (): string =>
   pathModule.resolve(import.meta.dirname, "../..");
 
-/* oxlint-disable oxc/no-async-await -- Await the generated package manager process and collect its output before checking the exit status. */
 const runGeneratedPackageManagerCommand = async (
   command: readonly string[],
   destination: string,
@@ -74,9 +63,7 @@ const runGeneratedPackageManagerCommand = async (
     );
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- The generated app must finish scaffolding and dependency-link setup before its native package-manager test command runs. */
 const runGeneratedGatewaySnapshotWarningTest = async (
   destination: string,
   packageManager: "bun" | "npm"
@@ -124,11 +111,7 @@ const runGeneratedGatewaySnapshotWarningTest = async (
   expect(generatedTest).toContain(expectedCommand);
   await runGeneratedPackageManagerCommand(command, destination, packageManager);
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   if (originalUserAgent === undefined) {
@@ -142,12 +125,8 @@ afterEach(async (): Promise<void> => {
       .map((dir): Promise<void> => rm(dir, { force: true, recursive: true }))
   );
 });
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 describe("buildConfigTs", (): void => {
   it("writes desktopApp.enabled=false for web-only scaffolds", (): void => {
     const output = buildConfigTs({
@@ -233,15 +212,9 @@ describe("buildConfigTs", (): void => {
     expect(output).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });
-/* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldFromTemplate", (): void => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
@@ -270,8 +243,6 @@ describe("scaffoldFromTemplate", (): void => {
       ).toBe(true);
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("omits maintainer harnesses while preserving application source and starter tests", async (): Promise<void> => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
@@ -369,7 +340,7 @@ describe("scaffoldFromTemplate", (): void => {
       // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.devDependencies[dependency]).toBeUndefined();
     }
-    // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary. Optional chain: Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary. Optional chain: Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(manifest.overrides?.evalite).toBeUndefined();
     for (const script of [
       "eval:dev",
@@ -382,8 +353,6 @@ describe("scaffoldFromTemplate", (): void => {
       expect(manifest.scripts[script]).toBeUndefined();
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("leaves the storage slot and provider peers to registry installation", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
@@ -403,8 +372,6 @@ describe("scaffoldFromTemplate", (): void => {
       ).exists()
     ).toBe(false);
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("writes a standalone-safe root package.json", async (): Promise<void> => {
     const destination = makeTempDir("chat-app");
 
@@ -429,17 +396,12 @@ describe("scaffoldFromTemplate", (): void => {
     expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.6.2");
     expect(packageJson.dependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "@better-auth/core" from packageJson.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading build from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.build).toBe(
       "tsx lib/db/migrate.ts --deployment && eve build && next build"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prebuild from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "redis:connect" from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading format from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.format).toBe("oxfmt --write .");
     expect(existsSync(pathModule.join(destination, "biome.jsonc"))).toBe(false);
     expect(existsSync(pathModule.join(destination, "oxlint.config.ts"))).toBe(
@@ -483,8 +445,6 @@ describe("scaffoldFromTemplate", (): void => {
       )
     ).toBe(true);
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("rewrites the generated web app to be npm-friendly", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-npm");
 
@@ -577,8 +537,6 @@ describe("scaffoldFromTemplate", (): void => {
     expect(report).not.toContain("npm run fetch:models");
     await runGeneratedGatewaySnapshotWarningTest(destination, "bun");
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("allows known native package build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
     const destination = makeTempDir("chat-app-pnpm");
@@ -610,8 +568,6 @@ describe("scaffoldFromTemplate", (): void => {
     expect(workspaceConfig).toContain("macos-alias: true");
     expect(workspaceConfig).toContain("sharp: true");
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("starts generated apps with an empty installable tool registry", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-tools");
 
@@ -646,8 +602,6 @@ describe("scaffoldFromTemplate", (): void => {
       )
     ).not.toContain("GetWeatherRenderer");
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("falls back to repo source apps when synced templates are missing", async (): Promise<void> => {
     const projectDir = makeTempDir("chat-app-fallback");
     const templatesDir = pathModule.join(getCliPackageRoot(), "templates");
@@ -740,18 +694,10 @@ describe("scaffoldFromTemplate", (): void => {
       }
     }
   });
-  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 describe("scaffoldFromGit", (): void => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
-  // oxlint-disable-next-line max-statements -- Keep the Git fixture setup, scaffold operation, and JSON output assertions in the same integration scenario.
   it("leaves repositories without the ChatJS storage seam untouched", async (): Promise<void> => {
     const source = makeTempDir("plain-git-source");
     const destination = makeTempDir("plain-git-destination");
@@ -789,20 +735,10 @@ describe("scaffoldFromGit", (): void => {
       .parse(packageJsonValue);
     expect(packageJson.dependencies).toEqual({});
   });
-  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable node/no-sync */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldElectron", (): void => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-node-prebuild");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -864,8 +800,6 @@ describe("scaffoldElectron", (): void => {
       expect(icon.length).toBeGreaterThan(MINIMUM_NONEMPTY_FILE_LENGTH);
     }
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Forge prebuild and build hooks with the selected package manager", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -903,7 +837,6 @@ describe("scaffoldElectron", (): void => {
     const configModule = new SourceTextModule(outputText, {
       context,
       identifier: configPath,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Node's vm.initializeImportMeta contract requires populating the supplied mutable import.meta object.
       initializeImportMeta: (meta): void => {
         meta.dirname = electronDir;
         meta.filename = configPath;
@@ -979,8 +912,6 @@ describe("scaffoldElectron", (): void => {
       { args: ["run", "build"], command: "npm", nodeEnv: "production" },
     ]);
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("pins Better Auth versions in the generated electron app", async (): Promise<void> => {
     const projectDir = makeTempDir("electron");
 
@@ -1044,7 +975,6 @@ describe("scaffoldElectron", (): void => {
       expect(script).not.toContain("bun ");
       expect(script).not.toContain("bunx");
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "@better-auth/core" from packageJson.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
       await readFile(
@@ -1053,8 +983,6 @@ describe("scaffoldElectron", (): void => {
       )
     ).not.toContain("bun ");
   });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
   it("allows Electron install/build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
     const projectDir = makeTempDir("electron-pnpm");
@@ -1089,15 +1017,5 @@ describe("scaffoldElectron", (): void => {
     expect(workspaceConfig).toContain("macos-alias: true");
     expect(workspaceConfig).toContain("sharp: true");
   });
-  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

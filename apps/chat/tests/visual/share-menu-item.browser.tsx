@@ -15,7 +15,6 @@ import { takeSnapshot } from "@uiverify/vitest";
 interface SessionFixture {
   readonly data: { readonly user: { readonly id: string } } | null;
 }
-// oxlint-disable-next-line unicorn/no-null -- The mocked session boundary uses the same explicit signed-out null sentinel as useSession.
 const anonymousSession: SessionFixture = { data: null };
 const authenticatedSession: SessionFixture = {
   data: { user: { id: "share-menu-fixture" } },
@@ -25,10 +24,6 @@ vi.mock("@/providers/session-provider", () => ({
   useSession: (): SessionFixture => useContext(SessionContext),
 }));
 
-/* oxlint-disable oxc/no-async-await -- Await the native Radix browser selections, popover visibility, capture and React cleanup. */
-/* oxlint-disable react/jsx-no-literals -- These fixed fixture labels identify the two session states and authenticated child in the paired native menu capture. */
-/* oxlint-disable react/jsx-max-depth -- The session boundary and native Dropdown providers are required for each ShareMenuItem branch. */
-/* oxlint-disable max-lines-per-function, max-statements -- Keep the paired session branches and native selection lifecycle in one interaction capture. */
 test("share menu preserves anonymous selection and authenticated sharing", async () => {
   const anonymousOpenChange = vi.fn<(open: boolean) => void>();
   const authenticatedOpenChange = vi.fn<(open: boolean) => void>();
@@ -91,15 +86,15 @@ test("share menu preserves anonymous selection and authenticated sharing", async
     expect(onShare).toHaveBeenCalledOnce();
     await act(async () => {
       await Promise.all(
-        document.getAnimations().map(
-          /* oxlint-disable typescript/prefer-readonly-parameter-types -- Animation.finished resolves to its mutable native Animation instance; retain the DOM completion and cancellation contract while awaiting these CSS transitions. */
-          async (
-            animation: Readonly<Pick<Animation, "finished">>
-          ): Promise<void> => {
-            await animation.finished;
-          }
-          /* oxlint-enable typescript/prefer-readonly-parameter-types */
-        )
+        document
+          .getAnimations()
+          .map(
+            async (
+              animation: Readonly<Pick<Animation, "finished">>
+            ): Promise<void> => {
+              await animation.finished;
+            }
+          )
       );
       await takeSnapshot("share-menu-session-branches");
       await page.screenshot({ path: "share-menu-session-branches.png" });
@@ -108,7 +103,3 @@ test("share menu preserves anonymous selection and authenticated sharing", async
     await unmount(fixture);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements */
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable oxc/no-async-await */

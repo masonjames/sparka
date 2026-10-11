@@ -8,7 +8,6 @@ import { LogoCloud } from "@/components/logo-cloud";
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Platforms } from "@/components/platforms";
-// oxlint-disable-next-line import/max-dependencies -- HomePage is the route composition root for ten landing-page sections; direct imports preserve their visible render order alongside its metadata and site configuration.
 import React from "react";
 import { TechStack } from "@/components/tech-stack";
 import { UseCases } from "@/components/use-cases";
@@ -82,11 +81,5 @@ const HomePage = (): React.JSX.Element => (
   </div>
 );
 
-/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default HomePage;
-/* oxlint-enable import/no-default-export */

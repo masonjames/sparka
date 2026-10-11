@@ -25,7 +25,6 @@ class RunRegistry<TMessage extends UIMessage> {
   readonly #concurrency: Required<ThreadConcurrency>;
   readonly #ownership = new RunMessageOwnership();
   readonly #runsById = new Map<string, RunRecord<TMessage>>();
-  // oxlint-disable-next-line unicorn/no-null -- Preserve the serialized and selection contract: null means no selected run.
   #selectedRunId: string | null = null;
 
   public constructor(concurrency: Readonly<ThreadConcurrency> = {}) {
@@ -36,7 +35,6 @@ class RunRegistry<TMessage extends UIMessage> {
     };
   }
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keeps the live RunRecord and its SDK chat/spec references; the thread mutates spec.messageId and error/status after insertion.
   public add(record: RunRecord<TMessage>): void {
     if (this.#runsById.has(record.spec.id)) {
       throw new Error(`Run ${record.spec.id} already exists`);
@@ -59,7 +57,6 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public clear(): void {
-    // oxlint-disable-next-line unicorn/no-null -- Clear selection to the existing explicit null sentinel.
     this.#selectedRunId = null;
     this.#ownership.clear();
     this.#runsById.clear();
@@ -275,11 +272,7 @@ class RunRegistry<TMessage extends UIMessage> {
     return [...this.#runsById.values()];
   }
 }
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (RunRegistry); the enabled import/no-default-export convention rejects the default-export alternative. */
 
 export { RunRegistry };
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (RunRecord); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { RunRecord };
-/* oxlint-enable import/no-named-export */

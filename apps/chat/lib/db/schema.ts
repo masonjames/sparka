@@ -1,7 +1,6 @@
 import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   boolean,
   check,
@@ -19,7 +18,6 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-/* oxlint-enable sort-imports */
 
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
@@ -87,7 +85,6 @@ const userModelPreference = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     index("UserModelPreference_user_id_idx").on(columns.userId),
     primaryKey({ columns: [columns.userId, columns.modelId] }),
@@ -113,7 +110,6 @@ const project = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     unique("Project_id_user").on(columns.id, columns.userId),
     index("Project_user_id_idx").on(columns.userId),
@@ -138,7 +134,6 @@ const eveGuest = pgTable(
     remainingMessages: integer("remainingMessages").notNull(),
     tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     check(
       "EveGuest_message_balance",
@@ -157,7 +152,6 @@ const eveGuestRate = pgTable(
     startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
     windowSeconds: integer("windowSeconds").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     primaryKey({
       columns: [columns.ipHash, columns.windowSeconds, columns.startsAt],
@@ -185,7 +179,6 @@ const eveGuestMessage = pgTable(
       .$type<"reserved" | "committed" | "released">()
       .notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     primaryKey({ columns: [columns.ownerId, columns.operationId] }),
     check(
@@ -281,7 +274,6 @@ const mcpConnector = pgTable(
     // Null = global.
     userId: text("userId").references(() => user.id, { onDelete: "cascade" }),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     index("McpConnector_user_id_idx").on(columns.userId),
     index("McpConnector_user_name_id_idx").on(columns.userId, columns.nameId),
@@ -316,7 +308,6 @@ const mcpOAuthSession = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (columns) => [
     index("McpOAuthSession_connector_idx").on(columns.mcpConnectorId),
     index("McpOAuthSession_state_idx").on(columns.state),
@@ -346,7 +337,6 @@ const eveChat = pgTable(
       .default("pending"),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     unique("EveChat_id_owner").on(table.id, table.ownerId),
     index("EveChat_search_title").using(
@@ -367,8 +357,6 @@ const eveChat = pgTable(
 
 type EveChat = InferSelectModel<typeof eveChat>;
 
-/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): eveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 // One logical chat may contain several private native EVE sessions.
 const eveConversation = pgTable(
   "EveConversation",
@@ -413,7 +401,6 @@ const eveConversation = pgTable(
       .notNull()
       .default("private"),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     check(
       "EveConversation_creation_kind",
@@ -483,7 +470,6 @@ const eveConversation = pgTable(
     ),
   ]
 );
-/* oxlint-enable max-lines-per-function */
 
 /** Temporary copy preparation is discarded once native history is bound. */
 const eveConversationCopy = pgTable(
@@ -506,7 +492,6 @@ const eveConversationCopy = pgTable(
     sourceOwnerId: text("sourceOwnerId").notNull(),
     sourceSessionId: text("sourceSessionId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     unique("EveConversationCopy_owner_identity").on(
       table.conversationId,
@@ -544,7 +529,6 @@ const eveConversationCopyFile = pgTable(
     size: integer("size").notNull(),
     writtenAt: timestamp("writtenAt"),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.key] }),
     foreignKey({
@@ -588,7 +572,6 @@ const eveResponseGroup = pgTable(
       .notNull()
       .default(false),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     uniqueIndex("EveResponseGroup_owner_operation").on(
       table.ownerId,
@@ -605,7 +588,6 @@ const eveChatProject = pgTable(
     ownerId: text("ownerId").notNull(),
     projectId: uuid("projectId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     index("EveChatProject_project").on(table.projectId),
     foreignKey({
@@ -629,7 +611,6 @@ const eveVote = pgTable(
     isUpvoted: boolean("isUpvoted").notNull(),
     messageId: text("messageId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [primaryKey({ columns: [table.conversationId, table.messageId] })]
 );
 
@@ -651,7 +632,6 @@ const eveStoredFile = pgTable(
       .default(sql`gen_random_uuid()::text`)
       .unique(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     index("EveStoredFile_owner").on(table.ownerId),
     unique("EveStoredFile_key_owner").on(table.key, table.ownerId),
@@ -665,7 +645,6 @@ const eveFileReference = pgTable(
     key: text("key").notNull(),
     ownerId: text("ownerId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.key] }),
     index("EveFileReference_key").on(table.key),
@@ -694,7 +673,6 @@ const eveCodeSandbox = pgTable(
       .notNull()
       .default("unresolved"),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     foreignKey({
       columns: [table.conversationId, table.ownerId],
@@ -717,7 +695,6 @@ const eveSubagentSession = pgTable(
       .notNull()
       .default(INITIAL_USAGE_STREAM_INDEX),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     foreignKey({
       columns: [table.conversationId, table.ownerId],
@@ -749,7 +726,6 @@ const eveUsage = pgTable(
     sessionId: text("sessionId").notNull(),
     turnId: text("turnId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     index("EveUsage_session_turn").on(table.sessionId, table.turnId),
     index("EveUsage_unpriced_owner")
@@ -774,7 +750,6 @@ const eveDocumentRevision = pgTable(
     title: text("title").notNull(),
     turnIndex: integer("turnIndex"),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     uniqueIndex("EveDocumentRevision_operation").on(
       table.conversationId,
@@ -807,7 +782,6 @@ const eveDocumentHead = pgTable(
     ownerId: text("ownerId").notNull(),
     revisionId: uuid("revisionId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.documentId] }),
     foreignKey({
@@ -836,7 +810,6 @@ const eveDocumentCheckpoint = pgTable(
     ownerId: text("ownerId").notNull(),
     turnIndex: integer("turnIndex").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.turnIndex] }),
     unique("EveDocumentCheckpoint_owner_identity").on(
@@ -865,7 +838,6 @@ const eveDocumentCheckpointEntry = pgTable(
     revisionId: uuid("revisionId").notNull(),
     turnIndex: integer("turnIndex").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({
       columns: [table.conversationId, table.turnIndex, table.documentId],
@@ -900,7 +872,6 @@ const eveNamedDocumentCheckpoint = pgTable(
     ownerId: text("ownerId").notNull(),
     turnIndex: integer("turnIndex").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.checkpointId] }),
     unique("EveNamedDocumentCheckpoint_owner_identity").on(
@@ -929,7 +900,6 @@ const eveNamedDocumentCheckpointEntry = pgTable(
     ownerId: text("ownerId").notNull(),
     revisionId: uuid("revisionId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({
       columns: [table.conversationId, table.checkpointId, table.documentId],
@@ -963,7 +933,6 @@ const eveImportedDocumentCheckpoint = pgTable(
     messageIndex: integer("messageIndex").notNull(),
     ownerId: text("ownerId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.messageIndex] }),
     unique("EveImportedDocumentCheckpoint_owner_identity").on(
@@ -992,7 +961,6 @@ const eveImportedDocumentCheckpointEntry = pgTable(
     ownerId: text("ownerId").notNull(),
     revisionId: uuid("revisionId").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({
       columns: [table.conversationId, table.messageIndex, table.documentId],
@@ -1027,7 +995,6 @@ const eveSearchText = pgTable(
     ownerId: text("ownerId").notNull(),
     text: text("text").notNull(),
   },
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle columns pass unchanged to index/foreign-key/primary-key builders; a complete readonly projection loses their protected config at these receivers (TS2345/TS2769).
   (table) => [
     primaryKey({ columns: [table.conversationId, table.key] }),
     foreignKey({
@@ -1041,9 +1008,7 @@ const eveSearchText = pgTable(
     ),
   ]
 );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (account, eveChat, eveChatProject, eveCodeSandbox, eveConversation, eveConversationCopy, eveConversationCopyFile, eveDocumentCheckpoint, eveDocumentCheckpointEntry, eveDocumentHead, eveDocumentRevision, eveFileReference, eveGuest, eveGuestMessage, eveGuestRate, eveImportedDocumentCheckpoint, eveImportedDocumentCheckpointEntry, eveNamedDocumentCheckpoint, eveNamedDocumentCheckpointEntry, eveResponseGroup, eveSearchText, eveStoredFile, eveSubagentSession, eveUsage, eveVote, eveWorkflowBackend, mcpConnector, mcpOAuthSession, project, schema, session, user, userCredit, userModelPreference, verification); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
-/* oxlint-disable max-lines -- #509: This schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {
   account,
   eveChat,
@@ -1081,8 +1046,6 @@ export {
   userModelPreference,
   verification,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveChat, EveDocumentRevision, McpConnector, McpOAuthSession, Project, User, UserCredit, UserModelPreference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   EveChat,
   EveDocumentRevision,
@@ -1093,4 +1056,3 @@ export type {
   UserCredit,
   UserModelPreference,
 };
-/* oxlint-enable import/no-named-export */

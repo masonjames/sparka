@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports the unexported Registry adapter source directly; the test file is excluded from published gateway artifacts. */
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
-/* oxlint-enable import/no-relative-parent-imports */
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -46,7 +44,6 @@ const modelCatalogResponse = {
 };
 
 describe("VercelGateway", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("skips unsupported models before validating supported model metadata", async () => {
     vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
     vi.stubGlobal(
@@ -72,5 +69,4 @@ describe("VercelGateway", () => {
       type: "language",
     });
   });
-  /* oxlint-enable oxc/no-async-await */
 });

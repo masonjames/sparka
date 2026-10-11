@@ -1,38 +1,22 @@
 import { afterEach, expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { toolDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 
-// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/metadata before ./installation-plan while their runtime initialization order is still under site review.
 import { planInstallation } from "./installation-plan";
 
 const roots: string[] = [];
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots
-      .splice(0)
-      .map(
-        async (root): Promise<void> =>
-          await rm(root, { force: true, recursive: true })
-      )
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
@@ -53,12 +37,10 @@ test("plans transitive dependencies and repairs against the complete resulting i
   const server = Bun.serve({
     fetch(request: Readonly<Pick<Request, "url">>): Response {
       const isReader = new URL(request.url).pathname.includes("read-document");
-      // oxlint-disable-next-line no-ternary -- Keep definition as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const definition = isReader ? reader : documents;
       return Response.json({
         meta: { chatjs: definition },
         name: definition.id,
-        // oxlint-disable-next-line no-ternary -- Keep registryDependencies as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         registryDependencies: isReader
           ? []
           : [`http://127.0.0.1:${server.port}/read-document.json`],
@@ -122,14 +104,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
     await server.stop(true);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("validates feature dependencies and exclusive storage slots before writing", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-feature-"));
   roots.push(root);
@@ -137,7 +112,6 @@ test("validates feature dependencies and exclusive storage slots before writing"
     fetch(request: Readonly<Pick<Request, "url">>): Response {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const chatjs =
-        // oxlint-disable-next-line no-ternary -- Keep chatjs as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         name === "langfuse"
           ? {
               contractVersion: 1,
@@ -148,14 +122,12 @@ test("validates feature dependencies and exclusive storage slots before writing"
           : {
               contractVersion: 1,
               id: name,
-              // oxlint-disable-next-line no-ternary -- Keep kind as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               kind: name === "mcp" ? "feature" : "storage",
             };
       return Response.json({
         meta: { chatjs },
         name,
         registryDependencies:
-          // oxlint-disable-next-line no-ternary -- Keep registryDependencies as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           name === "first"
             ? [`http://127.0.0.1:${server.port}/second.json`]
             : [],
@@ -215,7 +187,3 @@ test("validates feature dependencies and exclusive storage slots before writing"
     await server.stop(true);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

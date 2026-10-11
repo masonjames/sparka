@@ -1,58 +1,31 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- */
-
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only import required by consistent-type-imports; it has no runtime evaluation order.
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+
 import { eq, sql } from "drizzle-orm";
-/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { conversationBinding } from "../lib/eve/contracts";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-enable node/no-process-env */
 
 const modelId = "openai/gpt-5-nano";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
- * init-declarations (#507): test("fork API preserves native history in ChatJS and rejects changed retries and for assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test("fork API preserves native history in ChatJS and rejects changed retries and for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("fork API preserves native history in ChatJS and rejects changed retries and for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("fork API preserves native history in ChatJS and rejects changed retries and for uses 180_000, 2, 409, 1, 404, 400, 150_000, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("fork API preserves native history in ChatJS and rejects changed retries and for preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("fork API preserves native history in ChatJS and rejects changed retries and for preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("fork API preserves native history in ChatJS and rejects changed retries and foreign sources", async ({
   page,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright TestInfo callback calls testInfo.setTimeout()/testInfo.annotations() to update the native test runner timeout/attachment state.
 }, testInfo) => {
   test.setTimeout(180_000);
   let cleanup: { id: string; origin: string } | undefined;
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route(
-      "https://unpkg.com/react-scan/**",
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-      (route) => route.abort()
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
     );
     await page.goto("/api/dev-login");
     await page.request.post("/api/chat-model", {
@@ -145,9 +118,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     expect(conversationBinding.parse(await replay.json())).toEqual(branch);
     const changed = await page.request.post("/api/agent-conversations", {
       data: {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...operation,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         fork: { ...operation.fork, beforeTurnId: "turn_0" },
       },
       headers,
@@ -172,9 +143,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, branch.id));
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(stored?.parentConversationId).toBe(source.id);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootConversationId from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(stored?.rootConversationId).toBe(source.id);
     await page.goto(`/chat/${source.id}`);
     await expect(page.getByRole("log")).toContainText(
@@ -200,9 +169,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     try {
       const forbidden = await page.request.post("/api/agent-conversations", {
         data: {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...operation,
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           fork: { ...operation.fork, conversationId: foreignId },
           operationId: crypto.randomUUID(),
         },
@@ -211,7 +178,6 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       expect(forbidden.status()).toBe(404);
       const raw = await page.request.post("/api/agent-conversations", {
         data: {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...operation,
           fork: { beforeTurnId: "turn_1", sessionId: source.sessionId },
         },
@@ -237,7 +203,6 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from response; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               if (response?.status() !== 200) {
                 return null;
               }
@@ -262,5 +227,4 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     throw cleanupFailure.error;
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async */

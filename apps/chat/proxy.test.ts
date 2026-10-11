@@ -8,15 +8,10 @@ vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock("@/lib/config", () => ({ config: { desktopApp: { enabled: false } } }));
 vi.mock("@/lib/constants", () => ({ isPlaywrightTestEnvironment: false }));
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 beforeEach(() => {
   mocks.session.mockClear();
   mocks.session.mockResolvedValue(null);
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
 it("lets guest EVE conversations reach page-level ownership checks", async () => {
   expect(
@@ -34,8 +29,6 @@ it.each([
   expect(response).toBeUndefined();
   expect(mocks.session).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("keeps registered-only pages behind login", async () => {
   for (const path of ["/project/private", "/chat/private/settings"]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
@@ -50,9 +43,7 @@ it("keeps registered-only pages behind login", async () => {
     );
   }
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- These request-contract tests await the native asynchronous session lookup before inspecting its redirect. */
 it("keeps native headers and searchParams receiver through an authenticated redirect", async () => {
   mocks.session.mockResolvedValue({ user: { id: "registered-user" } });
   const request = new NextRequest(
@@ -86,4 +77,3 @@ it.each(["", "//external.example/path", "https://external.example/path"])(
     expect(response.headers.get("location")).toBe("http://localhost/");
   }
 );
-/* oxlint-enable oxc/no-async-await */

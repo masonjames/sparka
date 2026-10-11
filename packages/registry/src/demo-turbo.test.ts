@@ -7,17 +7,11 @@ import {
   parseJsonObject,
   taskList,
 } from "./test-json";
-/* oxlint-disable import/no-nodejs-modules -- Create, snapshot, and remove a real temporary Git repository; Bun.file alone does not allocate temporary directories or create/remove directory trees. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
 import type { TaskPlan } from "./test-json";
-/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 import { runTestProcess } from "./features/test-runtime";
-/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
 import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
 
 const SUCCESS_EXIT_CODE = 0;
 const EXPECTED_AFFECTED_EXIT = 1;
@@ -25,7 +19,6 @@ const EXPECTED_DEMO_CHECK_TASKS = 1;
 
 const repoRoot = path.resolve(import.meta.dir, "../../..");
 const turbo = path.join(repoRoot, "node_modules/.bin/turbo");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyFixtureFiles's awaited sequencing and rejected-Promise behavior. */
 const copyFixtureFiles = async (directory: string): Promise<void> => {
   const files = [
     "turbo.json",
@@ -69,8 +62,6 @@ const copyFixtureFiles = async (directory: string): Promise<void> => {
     })
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve gitIn's awaited sequencing and rejected-Promise behavior. */
 const gitIn = async (
   directory: string,
   ...args: readonly string[]
@@ -81,8 +72,6 @@ const gitIn = async (
   }
   return result.stdout.trim();
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeGitFixture's awaited sequencing and rejected-Promise behavior. */
 const initializeGitFixture = async (directory: string): Promise<void> => {
   await gitIn(directory, "init", "-b", "main");
   await gitIn(directory, "add", ".");
@@ -97,8 +86,6 @@ const initializeGitFixture = async (directory: string): Promise<void> => {
     "Baseline"
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFixture's awaited sequencing and rejected-Promise behavior. */
 const createFixture = async (): Promise<string> => {
   const directory = await mkdtemp(path.join(tmpdir(), "chatjs-demo-turbo-"));
   try {
@@ -110,17 +97,12 @@ const createFixture = async (): Promise<string> => {
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-// oxlint-disable-next-line node/no-top-level-await -- This Bun suite prepares its shared temporary Git fixture before registering command scenarios.
 const fixture = await createFixture();
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve git's awaited sequencing and rejected-Promise behavior. */
 const git = async (...args: readonly string[]): Promise<string> => {
   const output = await gitIn(fixture, ...args);
   return output;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
 const run = async (...args: readonly string[]): Promise<TaskPlan> => {
   const result = await runTestProcess([turbo, "run", ...args, "--dry=json"], {
     cwd: fixture,
@@ -131,27 +113,19 @@ const run = async (...args: readonly string[]): Promise<TaskPlan> => {
   }
   return { tasks: taskList(result.stdout) };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registryTask's awaited sequencing and rejected-Promise behavior. */
 const registryTask = async (
   taskName: string
 ): Promise<TaskPlan["tasks"][number]> => {
   const { tasks } = await run(taskName, "--filter=@chat-js/registry");
   return findTask(tasks, `@chat-js/registry#${taskName}`);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve taskHash's awaited sequencing and rejected-Promise behavior. */
 const taskHash = async (taskName: string): Promise<string> => {
   const selected = await registryTask(taskName);
   return jsonString(selected.hash);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await rm(fixture, { force: true, recursive: true });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("demo check hashes every owned copy and never restores app files; sync is uncached", async () => {
   const task = await registryTask("demo:check");
   const baseline = parseJsonObject(
@@ -174,8 +148,6 @@ test("demo check hashes every owned copy and never restores app files; sync is u
   const unit = await registryTask("test:unit");
   expect(unit.dependencies).toContain("@chat-js/registry#demo:check");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   ["packages/registry/src/tools/word-count/tool.ts", true],   ["packages/registry/regist's awaited sequencing and rejected-Promise behavior. */
 test.each([
   ["packages/registry/src/tools/word-count/tool.ts", true],
   ["packages/registry/registry.ts", true],
@@ -202,15 +174,12 @@ test.each([
   const before = await taskHash("demo:check");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
-  // oxlint-disable-next-line no-ternary -- Keep previous as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
   await writeFile(target, `${previous}\n// changed input\n`);
   expect((await taskHash("demo:check")) === before).toBe(!invalidates);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve affectedTaskNames's awaited sequencing and rejected-Promise behavior. */
 const affectedTaskNames = async (base: string): Promise<readonly string[]> => {
   const query = await runTestProcess(
     [
@@ -231,8 +200,6 @@ const affectedTaskNames = async (base: string): Promise<readonly string[]> => {
   expect(query.exitCode, query.stderr).toBe(EXPECTED_AFFECTED_EXIT);
   return parseAffectedTaskNames(query.stdout);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyAffectedExecution's awaited sequencing and rejected-Promise behavior. */
 const verifyAffectedExecution = async (base: string): Promise<void> => {
   const execution = await runTestProcess(
     [turbo, "run", "test:unit", "demo:check", "--affected", "--dry=json"],
@@ -248,8 +215,6 @@ const verifyAffectedExecution = async (base: string): Promise<void> => {
     )
   ).toHaveLength(EXPECTED_DEMO_CHECK_TASKS);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   "packages/registry/src/tools/word-count/tool.ts",   "apps/chat/tools/chatjs/word-count's awaited sequencing and rejected-Promise behavior. */
 test.each([
   "packages/registry/src/tools/word-count/tool.ts",
   "apps/chat/tools/chatjs/word-count/tool.ts",
@@ -275,8 +240,6 @@ test.each([
     await verifyAffectedExecution(base);
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   "packages/cli/src/utils/installation-plan.ts",   "packages/gateways/src/definition.ts"'s awaited sequencing and rejected-Promise behavior. */
 test.each([
   "packages/cli/src/utils/installation-plan.ts",
   "packages/gateways/src/definition.ts",
@@ -284,15 +247,12 @@ test.each([
   const before = await taskHash("test:types");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
-  // oxlint-disable-next-line no-ternary -- Keep previous as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
   await writeFile(target, `${previous}\n// changed type boundary\n`);
   expect(await taskHash("test:types")).not.toBe(before);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("registry typecheck restores gateway declaration outputs on cache hits", async () => {
   const { tasks } = await run("test:types", "--filter=@chat-js/registry");
   const registry = findTask(tasks, "@chat-js/registry#test:types");
@@ -302,4 +262,3 @@ test("registry typecheck restores gateway declaration outputs on cache hits", as
     "dist/**",
   ]);
 });
-/* oxlint-enable oxc/no-async-await */

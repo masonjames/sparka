@@ -6,7 +6,6 @@ import React from "react";
 
 const GITHUB_URL = "https://github.com/franciscomoretti/chat-js";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GitHubLink); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const GitHubLink = (): React.JSX.Element => (
   <Button asChild size="icon" type="button" variant="ghost">
     <a
@@ -19,4 +18,3 @@ export const GitHubLink = (): React.JSX.Element => (
     </a>
   </Button>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

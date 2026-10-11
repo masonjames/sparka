@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
@@ -10,13 +7,8 @@ import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
 
-/* oxlint-disable sort-imports -- Loading the database client here validates env and creates the Postgres client after response-group contract modules initialize. */
 import { db } from "./client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep db's env validation and postgres(connection) initialization before schema's pgTable construction. */
 import { eveConversation, eveResponseGroup } from "./schema";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 import type { z } from "zod";
 
 const hasQueryRow: (row: unknown) => boolean = Boolean;
@@ -46,13 +38,6 @@ type ReservedResponseGroup = ReadonlyNativeSurface<
   }
 >;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveGroupRow's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --
- * max-lines-per-function (#510): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- *
- * unicorn/no-null (#570): reserveGroupRow preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const reserveGroupRow = async (
   tx: ResponseGroupWriteTransaction,
   ownerId: string,
@@ -70,7 +55,6 @@ const reserveGroupRow = async (
     eq(eveResponseGroup.operationId, input.operationId)
   );
   const [existing] = await tx.select().from(eveResponseGroup).where(condition);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading deleted from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (existing?.deleted) {
     throw new Error("This response group has been deleted.");
   }
@@ -79,10 +63,8 @@ const reserveGroupRow = async (
       "This response group already has a different message, model order, tool selection, or source."
     );
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from input.fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   const sourceId = input.fork?.conversationId ?? null;
   const [source] =
-    // oxlint-disable-next-line no-ternary -- Keep [source] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof sourceId === "string" && sourceId !== ""
       ? await tx
           .select()
@@ -134,8 +116,6 @@ const reserveGroupRow = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return group;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */
 
 const requireGroup = (
   result: ReadonlyNativeSurface<Awaited<ReturnType<typeof reserveGroupRow>>>
@@ -147,13 +127,11 @@ const requireGroup = (
     throw new Error("Response group content is unavailable.");
   }
   return {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
     candidates: result.candidates,
     inputHash: result.inputHash,
   };
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable typescript/promise-function-async --
 typescript/promise-function-async (#606): reserveEveResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -173,8 +151,6 @@ const reserveEveResponseGroup = async (
   );
   return requireGroup(result);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveResponseGroupInTransaction's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /**
@@ -190,12 +166,7 @@ const reserveEveResponseGroupInTransaction = async (
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ReservedResponseGroup> =>
   requireGroup(await reserveGroupRow(tx, ownerId, value));
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tombstoneEveResponseGroups's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --unicorn/max-nested-calls (#568): tombstoneEveResponseGroups keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * Caller holds the owner family lock; retain identities but erase request metadata.
  * @param {ResponseGroupTransaction} tx Native deletion transaction already holding the owner family lock.
@@ -247,12 +218,7 @@ const tombstoneEveResponseGroups = async (
       )
     );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveResponseGroupRejection's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-params --max-params (#511): recordEveResponseGroupRejection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Clear an old rejection before retry; only a definitive result may replace it.
  * @param {string} ownerId Owner whose family lock serializes the candidate update.
@@ -280,7 +246,6 @@ const recordEveResponseGroupRejection = async (
     );
     const [group] = await tx.select().from(eveResponseGroup).where(condition);
     if (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from group.candidates; read candidates from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       group?.candidates?.some(
         (candidate: { readonly operationId: string }) =>
           candidate.operationId === operationId
@@ -288,7 +253,6 @@ const recordEveResponseGroupRejection = async (
     ) {
       throw new Error("Response group is unavailable.");
     }
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
     const candidates = group.candidates.map(
       (
         candidate: ReadonlyNativeSurface<
@@ -299,7 +263,6 @@ const recordEveResponseGroupRejection = async (
           return {
             modelId: candidate.modelId,
             operationId,
-            // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (rejection ? { rejection } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             ...(rejection ? { rejection } : {}),
           };
         }
@@ -309,12 +272,7 @@ const recordEveResponseGroupRejection = async (
     await tx.update(eveResponseGroup).set({ candidates }).where(condition);
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params */
 
-/* oxlint-disable max-lines-per-function --max-lines-per-function (#510): getEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Owner-only ordered bindings; transcript content remains in native sessions.
  * @param {string} ownerId Owner used to authorize group and conversation lookups.
@@ -335,7 +293,6 @@ const getEveResponseGroup = async (
         eq(eveResponseGroup.deleted, false)
       )
     );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading candidates from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!group?.candidates) {
     return;
   }
@@ -372,10 +329,8 @@ const getEveResponseGroup = async (
           (conversation: Readonly<Pick<ConversationRow, "operationId">>) =>
             conversation.operationId === candidate.operationId
         );
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (row?.state === "bound" && isNonemptyString(row.sessionId)) {
           return {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
             conversationId: row.id,
             sessionId: row.sessionId,
@@ -383,33 +338,19 @@ const getEveResponseGroup = async (
           };
         }
         if (row) {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           return { ...identity, state: "unresolved" };
         }
 
         if (candidate.rejection) {
-          return (
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing candidate.rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            { ...identity, state: "rejected", ...candidate.rejection }
-          );
+          return { ...identity, state: "rejected", ...candidate.rejection };
         }
-        return (
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          { ...identity, state: "waiting" }
-        );
+        return { ...identity, state: "waiting" };
       }
     ),
     id: group.id,
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveResponseGroupForConversation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function */
 
-/* oxlint-disable max-lines-per-function, max-statements, unicorn/max-nested-calls -- max-lines-per-function (#510): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/max-nested-calls (#568): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const getEveResponseGroupForConversation = async (
   ownerId: string,
   conversationId: string
@@ -456,7 +397,6 @@ const getEveResponseGroupForConversation = async (
   const boundFamily = family.flatMap(
     (member: ReadonlyNativeSurface<(typeof family)[number]>) => {
       if (isNonemptyString(member.sessionId)) {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         return [{ ...member, sessionId: member.sessionId }];
       }
       return [];
@@ -559,7 +499,6 @@ const getEveResponseGroupForConversation = async (
   const boundGroupFamilies = groupFamilies.flatMap(
     (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) => {
       if (isNonemptyString(member.sessionId)) {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         return [{ ...member, sessionId: member.sessionId }];
       }
       return [];
@@ -579,9 +518,7 @@ const getEveResponseGroupForConversation = async (
   }
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroupForConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing group own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...group,
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
     candidates: group.candidates.map(
       (
         candidate: ReadonlyNativeSurface<
@@ -593,22 +530,14 @@ const getEveResponseGroupForConversation = async (
         );
 
         if (candidate.state === "bound" && replacement) {
-          return (
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing replacement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            { ...candidate, ...replacement }
-          );
+          return { ...candidate, ...replacement };
         }
         return candidate;
       }
     ),
   });
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveResponseGroup, getEveResponseGroupForConversation, recordEveResponseGroupRejection, reserveEveResponseGroup, reserveEveResponseGroupInTransaction, tombstoneEveResponseGroups); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines -- #509: This eve-response-groups.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
- */
 export {
   getEveResponseGroup,
   getEveResponseGroupForConversation,
@@ -617,4 +546,3 @@ export {
   reserveEveResponseGroupInTransaction,
   tombstoneEveResponseGroups,
 };
-/* oxlint-enable import/no-named-export */

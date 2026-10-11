@@ -1,33 +1,25 @@
 import type {
   FeatureDefinition,
   ToolDefinition,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
 
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import path from "node:path";
 import { readFile } from "node:fs/promises";
 
-// oxlint-disable-next-line sort-imports -- Preserve node:fs/promises before @chat-js/gateways/definition while their runtime initialization order is still under site review.
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
-// oxlint-disable-next-line sort-imports -- Preserve @chat-js/gateways/definition before #cli/registry/shadcn while their runtime initialization order is still under site review.
 import { itemAddress, readItem } from "#cli/registry/shadcn";
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import type { InstallationSelection } from "../../../registry/installation";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { installationSelectionSchema } from "../../../registry/installation";
 
-// oxlint-disable-next-line sort-imports -- Preserve ../../../registry/installation before ../../../registry/metadata while their runtime initialization order is still under site review.
 import {
   featureDefinitionSchema,
   featureIdSchema,
   storageDefinitionSchema,
   toolDefinitionSchema,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
 import {
   registryMetadataKind,
@@ -38,7 +30,6 @@ import {
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
 
-// oxlint-disable-next-line sort-imports -- Preserve ./provider-config before ./sync-tools while their runtime initialization order is still under site review.
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
 
 type ReadonlyNative<Value> = Value extends (
@@ -51,14 +42,6 @@ type ReadonlyNative<Value> = Value extends (
 
 const EMPTY_DEPENDENCY_COUNT = 0;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (planInstallation); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve planInstallation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /**
  * Resolve the complete target installation before any source files are written.
  * @param {string} cwd Project directory used for provider, feature and tool preflight.
@@ -76,14 +59,12 @@ export const planInstallation = async (
   } = {}
 ) => {
   const selection = installationSelectionSchema.parse(input);
-  // oxlint-disable-next-line no-ternary -- Keep installed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
   const expected = new Map<string, ToolDefinition>();
   const sources = new Set<string>();
   const items = new Map<string, ReturnType<typeof readItem>>();
   const features = new Map<string, FeatureDefinition>();
   const providers = new Map<string, string>();
-  // oxlint-disable-next-line eslint/init-declarations -- The optional gateway is assigned only when the selected registry graph contains one.
   let gateway: GatewayDefinition | undefined;
   const selectProvider = (definition: {
     readonly kind: string;
@@ -105,7 +86,6 @@ export const planInstallation = async (
     const pending = items.get(source) ?? readItem(source, cwd);
     items.set(source, pending);
     const item = await pending;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const metadata: unknown = item.meta?.chatjs;
     validateRequestedKind(source, kind, registryMetadataKind(metadata));
     if (sources.has(source)) {
@@ -157,23 +137,22 @@ export const planInstallation = async (
     }
     await Promise.all(
       (item.registryDependencies ?? []).map(
-        async (dependency): Promise<void> => await visit(dependency)
+        async (dependency): Promise<void> => {
+          await visit(dependency);
+        }
       )
     );
   };
   await Promise.all([
-    ...selection.tools.map(
-      async (source): Promise<void> => await visit(itemAddress(source, "tool"))
-    ),
-    ...selection.features.map(
-      async (source): Promise<void> =>
-        await visit(itemAddress(source, "tool"), "feature")
-    ),
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    ...selection.tools.map(async (source): Promise<void> => {
+      await visit(itemAddress(source, "tool"));
+    }),
+    ...selection.features.map(async (source): Promise<void> => {
+      await visit(itemAddress(source, "tool"), "feature");
+    }),
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
       : []),
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(selection.storage
       ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
       : []),
@@ -184,7 +163,6 @@ export const planInstallation = async (
         throw new Error("Invalid exclusive provider kind.");
       }
       const previous =
-        // oxlint-disable-next-line no-ternary -- Keep previous as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         options.fresh === true ? undefined : await readProviderId(cwd, kind);
       if (
         typeof previous === "string" &&
@@ -269,7 +247,6 @@ export const planInstallation = async (
   }
   await validateToolInstallation(cwd, target());
   const installedFeatures =
-    // oxlint-disable-next-line no-ternary -- Keep installedFeatures as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options.fresh === true
       ? []
       : await Promise.all(
@@ -315,7 +292,6 @@ export const planInstallation = async (
   const featureIds = new Set(targetFeatures.keys());
   for (const feature of targetFeatures.values()) {
     const missing =
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filter from feature.requiresFeatures; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
       feature.requiresFeatures?.filter((id): boolean => !featureIds.has(id)) ??
       [];
     if (missing.length > EMPTY_DEPENDENCY_COUNT) {
@@ -353,13 +329,3 @@ export const planInstallation = async (
     sources: [...items.keys()],
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable max-lines -- Registry graph traversal, exclusive-provider validation, feature dependency checks, and the resolved installation snapshot share one memoized planning context. */

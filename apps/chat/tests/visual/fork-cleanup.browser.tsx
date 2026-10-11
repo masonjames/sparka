@@ -1,7 +1,3 @@
-/* oxlint-disable react/jsx-no-literals -- Fixed fixture labels and expected recovery copy form the accessible browser scenario; no translation API exists in the fixture. */
-/* oxlint-disable max-statements -- This integration scenario keeps the rejected request, visible recovery and storage-only retry assertions in one lifecycle. */
-/* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
-/* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React from "react";
 import { expect, test, vi } from "vitest";
@@ -13,14 +9,12 @@ import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "@/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   openRuntime: vi.fn(),
   resolveCreationRequest: vi.fn(),
   restoreAttachments: vi.fn(),
 }));
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutateAsync: mocks.restoreAttachments }),
@@ -37,19 +31,14 @@ vi.mock("@tanstack/react-query", () => ({
   }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
-
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/components/eve/eve-logical-context", () => ({
   useEveRuntime: () => mocks.openRuntime,
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
 vi.mock("@/lib/eve/resolve-creation-request", () => ({
   resolveCreationRequest: mocks.resolveCreationRequest,
 }));
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/features/installed-uploads", () => ({
   attachmentUploads: {
@@ -59,16 +48,10 @@ vi.mock("@/features/installed-uploads", () => ({
     }),
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: () => "openai/gpt-4.1",
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- use-eve-fork.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/trpc/react", () => ({
   useTRPC: () => ({
@@ -84,9 +67,7 @@ vi.mock("@/trpc/react", () => ({
     },
   }),
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable react/only-export-components -- This browser entrypoint mounts its local fixture; exporting it creates an unused test API. */
 const ForkFixture = (): React.JSX.Element => {
   const fork = useEveFork("test-owner", "11111111-1111-4111-8111-111111111111");
   return (
@@ -116,7 +97,6 @@ const ForkFixture = (): React.JSX.Element => {
   );
 };
 
-/* oxlint-enable react/only-export-components */
 test("rejected fork cleanup remains visible and retries only storage removal", async () => {
   sessionStorage.clear();
   mocks.resolveCreationRequest.mockRejectedValue(
@@ -163,7 +143,3 @@ test("rejected fork cleanup remains visible and retries only storage removal", a
     await unmount(fixture);
   }
 });
-
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */
-/* oxlint-enable react/jsx-no-literals */

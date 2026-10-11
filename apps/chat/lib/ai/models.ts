@@ -10,7 +10,6 @@ import { unstable_cache } from "next/cache";
 
 const log = createModuleLogger("ai/models");
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModelsRaw's awaited sequencing and rejected-Promise behavior. */
 const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
   const activeGateway = getActiveGateway();
 
@@ -31,9 +30,6 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
     throw error;
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fetchModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
 
 export const fetchModels = unstable_cache(
   async (): Promise<ModelData[]> => {
@@ -46,5 +42,3 @@ export const fetchModels = unstable_cache(
     tags: ["ai-gateway-models"],
   }
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

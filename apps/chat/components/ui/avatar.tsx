@@ -13,90 +13,67 @@ import type {
 import { cn } from "@/lib/utils";
 import { forwardRef as reactForwardRef } from "react";
 
-/* oxlint-disable react/react-in-jsx-scope -- Avatar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Avatar = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveRoot>
 >(
   (
-    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
+
     ref
-    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <AvatarPrimitiveRoot
-      // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
         className
       )}
       ref={ref}
-      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Avatar's AvatarPrimitiveRoot prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   )
 );
-/* oxlint-enable react/react-in-jsx-scope */
 
 Avatar.displayName = AvatarPrimitiveRoot.displayName;
 
-/* oxlint-disable react/react-in-jsx-scope -- AvatarImage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AvatarImage = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveImage>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveImage>
 >(
   (
-    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
+
     ref
-    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <AvatarPrimitiveImage
-      // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveImage accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("aspect-square h-full w-full", className)}
       ref={ref}
-      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AvatarImage's AvatarPrimitiveImage prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   )
 );
-/* oxlint-enable react/react-in-jsx-scope */
 
 AvatarImage.displayName = AvatarPrimitiveImage.displayName;
 
-/* oxlint-disable react/react-in-jsx-scope -- AvatarFallback uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AvatarFallback = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveFallback>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveFallback>
 >(
   (
-    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-    /* oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. Native props preserve CSSProperties, children and React open string aliases. */
     { className, ...props },
-    /* oxlint-enable typescript/prefer-readonly-parameter-types */ /* oxlint-disable typescript/prefer-readonly-parameter-types -- The primitive receives this original ref and assigns its current DOM element; retain native ref writer identity and its DOM type. */
+
     ref
-    /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ): ReactJSX.Element => (
     <AvatarPrimitiveFallback
-      // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveFallback accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "bg-muted flex h-full w-full items-center justify-center rounded-full",
         className
       )}
       ref={ref}
-      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AvatarFallback's AvatarPrimitiveFallback prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   )
 );
-/* oxlint-enable react/react-in-jsx-scope */
 
 AvatarFallback.displayName = AvatarPrimitiveFallback.displayName;
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Avatar, AvatarFallback, AvatarImage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Avatar, AvatarFallback, AvatarImage };
-/* oxlint-enable import/no-named-export */

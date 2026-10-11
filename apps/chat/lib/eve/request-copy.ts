@@ -11,7 +11,6 @@ const keyFor = (ownerId: string, sourceId: string): string =>
 
 type CopyStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable max-params -- Existing exported copy preparation API takes storage, owner, source and model separately.  */
 const preparePendingEveCopy = (
   storage: CopyStorage,
   ownerId: string,
@@ -21,7 +20,6 @@ const preparePendingEveCopy = (
   const key = keyFor(ownerId, sourceConversationId);
   const saved = storage.getItem(key);
   const input = eveCopyInput.parse(
-    // oxlint-disable-next-line no-ternary -- Keep eveCopyInput.parse argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     saved !== null && saved !== ""
       ? JSON.parse(saved)
       : { modelId, operationId: crypto.randomUUID(), sourceConversationId }
@@ -32,7 +30,6 @@ const preparePendingEveCopy = (
   storage.setItem(key, JSON.stringify(input));
   return input;
 };
-/* oxlint-enable max-params */
 
 const finishPendingEveCopy = (
   storage: CopyStorage,
@@ -71,7 +68,6 @@ const copyFailureSchema = z.object({
   retryable: z.boolean().optional(),
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCopyFailure's awaited sequencing and rejected-Promise behavior. */
 const readCopyFailure = async (
   response: ReadonlyNativeSurface<Response>
 ): Promise<EveCopyRequestError> => {
@@ -81,17 +77,13 @@ const readCopyFailure = async (
     })
   );
   return new EveCopyRequestError(
-    // oxlint-disable-next-line no-ternary -- Keep EveCopyRequestError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure.success
       ? failure.data.error
       : "Unable to save. Sign in and retry the same copy.",
-    // oxlint-disable-next-line no-ternary -- Keep EveCopyRequestError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure.success ? failure.data.retryable !== false : true,
-    // oxlint-disable-next-line no-undefined, no-ternary -- A malformed failure has no optional conversation identity; the constructor preserves absence.; no-ternary: Keep EveCopyRequestError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure.success ? failure.data.conversationId : undefined
   );
 };
-/* oxlint-enable oxc/no-async-await */
 const copyRequestError = (
   error: unknown,
   aborted: boolean
@@ -110,7 +102,6 @@ const copyRequestError = (
   );
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveCopy's awaited sequencing and rejected-Promise behavior. */
 const requestEveCopy = async (
   input: EveCopyInput
 ): Promise<z.output<typeof conversationBinding>> => {
@@ -130,12 +121,9 @@ const requestEveCopy = async (
     throw copyRequestError(error, signal.aborted);
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveCopyRequestError, finishPendingEveCopy, preparePendingEveCopy, requestEveCopy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 export {
   EveCopyRequestError,
   finishPendingEveCopy,
   preparePendingEveCopy,
   requestEveCopy,
 };
-/* oxlint-enable import/no-named-export */

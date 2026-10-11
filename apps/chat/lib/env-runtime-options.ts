@@ -78,7 +78,6 @@ const createEveInternalOriginSchema = (): z.ZodURL =>
 const createWorkflowPostgresUrlSchema = (
   environment: EveRuntimeEnvironment
 ): z.ZodOptional<z.ZodString> | z.ZodURL =>
-  // oxlint-disable-next-line no-ternary -- Keep WORKFLOW_POSTGRES_URL as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   resolveWorkflowWorld(environment) === "vercel"
     ? z
         .string()
@@ -103,7 +102,6 @@ const createWorkflowPostgresUrlSchema = (
         );
 
 const getEveRuntimeEnvOptions = (
-  /* oxlint-disable-next-line node/no-process-env -- Snapshot process.env when the environment schema module initializes, matching the prior configuration boundary. */
   environment: EveRuntimeEnvironment = process.env
 ): {
   EVE_GATEWAY_SECRET: z.ZodString;
@@ -120,6 +118,4 @@ const getEveRuntimeEnvOptions = (
   WORKFLOW_POSTGRES_URL: createWorkflowPostgresUrlSchema(environment),
 });
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export -- Keep the established named helper binding consumed by env-schema. */
 export { getEveRuntimeEnvOptions };
-/* oxlint-enable import/no-named-export, import/prefer-default-export */

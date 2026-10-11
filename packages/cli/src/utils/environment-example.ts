@@ -1,6 +1,4 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { preflight } from "./preflight";
@@ -37,8 +35,6 @@ const replaceEnvironmentSection = (
   return `${original}\n${block}\n`;
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (updateEnvironmentExample); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateEnvironmentExample's awaited sequencing and rejected-Promise behavior. */
 export const updateEnvironmentExample = async (
   cwd: string,
   section: "gateway-provider" | "storage-provider" | "installed-capabilities",
@@ -57,5 +53,3 @@ export const updateEnvironmentExample = async (
     replaceEnvironmentSection(original, section, variables)
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

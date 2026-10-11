@@ -1,5 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports -- The contract test exercises the canonical registry adapter without installing Daytona into the Vercel demo. */
-/* oxlint-disable unicorn/no-null -- Null is a malformed output fixture checked at the executor boundary. */
 import { beforeEach, expect, it, vi } from "vitest";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
@@ -32,7 +30,6 @@ beforeEach(() => {
   mocks.execute.mockReset();
 });
 
-/* oxlint-disable oxc/no-async-await -- Await the mocked canonical executor import and execution result before checking its cost receipt. */
 it("the selected typed executor returns exactly one completed usage receipt", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -46,8 +43,6 @@ it("the selected typed executor returns exactly one completed usage receipt", as
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await the mocked canonical executor import and execution result before checking its cost receipt. */
 it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -65,4 +60,3 @@ it("failed cleanup or invalid output does not receive a completed execution char
     usage: { costUsd: 0 },
   });
 });
-/* oxlint-enable oxc/no-async-await */

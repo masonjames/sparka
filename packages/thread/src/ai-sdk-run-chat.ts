@@ -16,7 +16,6 @@ const LAST_MESSAGE_INDEX = -1;
 
 // Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
 const NO_VALUE = globalThis.undefined;
-// oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream returns null when the server has no stream; the ready transition preserves an existing run error for that result.
 const NO_RECONNECT_STREAM = null;
 
 type RequestReader = Readonly<Omit<ChatRequestOptions, "headers" | "body">> & {
@@ -72,7 +71,6 @@ interface ThreadRunHost<TMessage extends UIMessage> {
   transport: ChatTransport<TMessage>;
   generateMessageId: () => string;
   getMessagePath: (messageId: string | null) => TMessage[];
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Existing run hosts receive mutable SDK message arrays; accepting readonly arrays rejects their contravariant callback implementations.
   updateRunPath: (messages: TMessage[]) => void;
   registerToolCall: (runId: string, toolCallId: string) => void;
   removeMessage: (messageId: string) => void;
@@ -85,47 +83,36 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   readonly #state: ThreadRunState<TMessage>;
 
   public constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK receives the original schema instances; recursive readonly JSONSchema arrays are incompatible with FlexibleSchema.
     host: RunChatHost<TMessage>,
     spec: Readonly<ThreadRunSpec>
   ) {
     const responseMessageId = host.generateMessageId();
     const state = new ThreadRunState(host, spec);
     const transport = ThreadRunChat.createTransport(host, spec, state);
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve super's awaited sequencing and rejected-Promise behavior. */
     super({
       dataPartSchemas: host.dataPartSchemas,
       generateId: (): string => responseMessageId,
       id: host.id,
       messageMetadataSchema: host.messageMetadataSchema,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onData; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
       onData: (event): void => host.onData?.(event),
       onError: (error: Readonly<Error>): void => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         host.onError?.(error);
       },
       onFinish: (event: FinishEventReader<TMessage>): void => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onFinish; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         host.onFinish?.({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event,
           messages: host.getMessagePath(spec.messageId ?? spec.parentMessageId),
         });
       },
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK static/dynamic generic tool-call union when forwarding to the current callback; mapped readonly changes its conditional assignability.
       onToolCall: async (event): Promise<void> => {
         host.registerToolCall(spec.id, event.toolCall.toolCallId);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onToolCall; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         await host.onToolCall?.(event);
       },
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The current SDK callback receives the original mutable message array; existing callbacks may update that array.
       sendAutomaticallyWhen: (event): boolean | PromiseLike<boolean> =>
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.sendAutomaticallyWhen; preserve one receiver evaluation, skipped call arguments and the existing false fallback.
         host.sendAutomaticallyWhen?.(event) ?? false,
       state,
       transport,
     });
-    /* oxlint-enable oxc/no-async-await */
     this.#state = state;
   }
 
@@ -147,7 +134,6 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           lastMessage.role === "assistant"
         ) {
           chunkToEnqueue = {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chunk own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...chunk,
             messageId: chunk.messageId ?? lastMessage.id,
             messageMetadata: chunk.messageMetadata ?? lastMessage.metadata,
@@ -177,10 +163,8 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   private static createTransport<TMessage extends UIMessage>(
     host: Readonly<Pick<RunChatHost<TMessage>, "transport">>,
     spec: Readonly<ThreadRunSpec>,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The transport owns resetting the resume prefix and preserving the reconnect error on this live run state; readonly properties prohibit these required writes.
     state: ThreadRunState<TMessage>
   ): ChatTransport<TMessage> {
-    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return {
       reconnectToStream: async (
         options: ReconnectReader<TMessage>
@@ -201,22 +185,18 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
       },
       // oxlint-disable-next-line typescript/promise-function-async -- Custom ChatTransport.sendMessages may throw before returning a promise. Direct forwarding lets SDK makeRequest invoke the public onError callback synchronously during Thread.regenerate; async+await defers that observable callback.
       sendMessages: (
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the SDK message array to the current transport without changing its mutable array contract or cloning its identity.
         options
       ): ReturnType<ChatTransport<TMessage>["sendMessages"]> => {
         state.resumePrefix = NO_VALUE;
         return host.transport.sendMessages({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...options,
           messageId:
-            // oxlint-disable-next-line no-ternary -- Keep messageId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             spec.messageId === NO_VALUE && options.trigger === "submit-message"
               ? NO_VALUE
               : options.messageId,
         });
       },
     };
-    /* oxlint-enable oxc/no-async-await */
   }
 
   protected override setStatus(
@@ -236,14 +216,10 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     this.#state.refreshPath();
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve start's awaited sequencing and rejected-Promise behavior. */
   public async start(options?: RequestReader): Promise<void> {
     await this.sendMessage(NO_VALUE, options);
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startWithMessage's awaited sequencing and rejected-Promise behavior. */
   public async startWithMessage(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AbstractChat.sendMessage accepts mutable parts arrays and native FileList input; readonly parts cannot be passed to that SDK method.
     message: NonNullable<
       Parameters<
         AbstractChat<TMessage>["sendMessage"]
@@ -253,22 +229,14 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   ): Promise<void> {
     await this.sendMessage(message, options);
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve regenerateMessage's awaited sequencing and rejected-Promise behavior. */
   public async regenerateMessage(
     messageId: string,
     options?: RequestReader
   ): Promise<void> {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await this.regenerate({ ...options, messageId });
   }
-  /* oxlint-enable oxc/no-async-await */
 }
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ThreadRunChat); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ThreadRunChat };
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ThreadRunSpec, ThreadRunHost, RequestReader); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ThreadRunSpec, ThreadRunHost, RequestReader };
-/* oxlint-enable import/no-named-export */

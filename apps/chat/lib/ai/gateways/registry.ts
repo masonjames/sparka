@@ -76,7 +76,6 @@ type GatewayVideoModelIdMap = Record<
     InstalledGateway["createVideoModel"]
   >[typeof MODEL_ID_PARAMETER_INDEX]
 >;
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (GatewayImageModelIdMap, GatewayModelIdMap, GatewayProvider, GatewayType, GatewayVideoModelIdMap, InstalledGateway); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
@@ -85,4 +84,3 @@ export type {
   GatewayVideoModelIdMap,
   InstalledGateway,
 };
-/* oxlint-enable import/no-named-export */

@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test";
 
 import { presentationAt, script, stateAt } from "./story";
 
-/* oxlint-disable eslint/no-magic-numbers -- Two-path story: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 describe("Two-path story", () => {
   it("keeps the original while its alternative streams in the background", () => {
     expect(stateAt(20).selected).toBe("city");
@@ -27,9 +26,7 @@ describe("Two-path story", () => {
   });
   it("uses overridden prompt copy throughout the edit", () => {
     const content = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing script own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...script,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing script.porto own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       porto: { ...script.porto, prompt: "Explore Rome." },
       prompt: "Explore Paris.",
     };
@@ -48,4 +45,3 @@ describe("Two-path story", () => {
     expect(presentationAt(12).demoTime).toBe(14);
   });
 });
-/* oxlint-enable eslint/no-magic-numbers */

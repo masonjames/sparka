@@ -1,27 +1,15 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { readFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { readFileSync } from "node:fs";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   KNOWN_CHATJS_TABLE_NAMES,
   getMigrationHistoryProblem,
 } from "./migration-history";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules */
 
 const baseline = { createdAt: 2, hash: "eve" };
 const next = { createdAt: 3, hash: "next" };
 
-/* oxlint-disable max-lines-per-function, node/no-sync --
- * max-lines-per-function (#510): describe("getMigrationHistoryProblem") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * node/no-sync (#538): describe("getMigrationHistoryProblem") uses readFileSync( new URL("migrations/0000_eve_baseline.sql", import.meta.url), "utf-8"  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- */
 describe("getMigrationHistoryProblem", () => {
   test("recognizes every baseline table and every retired table", () => {
     const baselineSql = readFileSync(
@@ -32,7 +20,6 @@ describe("getMigrationHistoryProblem", () => {
       ...baselineSql.matchAll(/^CREATE TABLE "(?<table>[^"]+)"/gmu),
     ].flatMap(
       (match: { readonly groups?: Readonly<Record<string, string>> }) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- The regexp match has optional named groups; skip table access when the runtime omits the groups object.
         const tableName = match.groups?.table;
         if (typeof tableName === "string" && tableName !== "") {
           return [tableName];
@@ -93,7 +80,6 @@ describe("getMigrationHistoryProblem", () => {
   test("rejects an altered baseline record", () => {
     expect(
       getMigrationHistoryProblem({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseline own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         applied: [{ ...baseline, hash: "modified" }],
         available: [baseline],
         hasChatJsTables: true,
@@ -128,4 +114,3 @@ describe("getMigrationHistoryProblem", () => {
     ).toMatch(/unknown/u);
   });
 });
-/* oxlint-enable max-lines-per-function, node/no-sync */

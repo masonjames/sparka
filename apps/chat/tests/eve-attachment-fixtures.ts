@@ -1,10 +1,3 @@
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (textPdf); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * max-statements (#512): textPdf keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): textPdf uses 0, 1, 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep textPdf's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep textPdf's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /**
  * Builds a minimal valid, single-page PDF fixture with selectable text and an accurate xref table.
@@ -35,5 +28,3 @@ export function textPdf(text: string) {
   result += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(result);
 }
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

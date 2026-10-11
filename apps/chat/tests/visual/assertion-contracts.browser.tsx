@@ -1,12 +1,3 @@
-/* oxlint-disable react/jsx-no-literals -- This visual fixture uses fixed authored labels and content to verify visible contract states. */
-/* oxlint-disable react/forbid-component-props -- The fixture controls SidebarProvider geometry to fit its capture; className is that primitive's supported prop. */
-/* oxlint-disable oxc/no-rest-spread-properties -- The retired fixture preserves the original project own fields while overriding its saved metadata. */
-/* oxlint-disable oxc/no-async-await -- Browser interactions and snapshots must settle in their authored order. */
-/* oxlint-disable import/max-dependencies -- This browser contract capture composes the affected application components with their real styles and providers. */
-/* oxlint-disable react/only-export-components -- Vitest browser fixtures are test entry points, not Fast Refresh modules. */
-/* oxlint-disable react/jsx-props-no-spreading, react/jsx-max-depth, react-perf/jsx-no-new-function-as-prop -- Exercise React Hook Form's native render callback, mutable controller fields, and required nested provider structure. */
-/* oxlint-disable eslint/max-statements, eslint/no-magic-numbers, no-undefined, unicorn/no-null, react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-jsx-as-prop -- The finite fixture matrix covers JSON, React nodes, absent output, and persisted metadata plus an ordered dialog interaction. */
-/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -32,18 +23,15 @@ import type { Project } from "@/lib/db/schema";
 import { DiffView } from "@/tools/chatjs/text-documents/diffview";
 
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
 
 const noop = (): void => {
   /* Capture callbacks do not persist fixture state. */
 };
 const renameProject = vi.fn().mockResolvedValue({});
 vi.mock("@/hooks/use-projects", () => ({
-  // oxlint-disable-next-line typescript/explicit-function-return-type -- Infer the hook mock from the typed Vitest mutation.
   useRenameProject: () => ({ isPending: false, mutateAsync: renameProject }),
 }));
 vi.mock("next/navigation", () => ({
-  // oxlint-disable-next-line typescript/explicit-function-return-type -- The mocked router exposes only the callback consumed by this capture.
   useRouter: () => ({ push: noop }),
 }));
 
@@ -54,7 +42,6 @@ const FixtureForm = ({
 }): React.JSX.Element => {
   const form = useForm({
     defaultValues: { name: "Project name" },
-    // oxlint-disable-next-line no-ternary -- Keep the fixture error map as the original lazy branch; prefer-ternary rejects if/else replacement.
     errors: invalid
       ? { name: { message: "Name is required", type: "required" } }
       : {},
@@ -116,7 +103,7 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
   document.body.append(container);
   const root = createRoot(container);
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React's synchronous act overload is typed void but must be awaited to settle the render.
-  await act((): void =>
+  await act((): void => {
     root.render(
       <>
         <FixtureForm invalid={false} />
@@ -146,8 +133,8 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
         </SidebarProvider>
         <DiffView oldContent="Original words" newContent="Revised words" />
       </>
-    )
-  );
+    );
+  });
   await expect.poll(() => container.textContent).toContain("Revised");
   expect(container.textContent).toContain("Name is required");
   expect(container.textContent).toContain("Custom element");

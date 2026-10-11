@@ -58,7 +58,6 @@ describe("getStreamErrorToastContent", () => {
   });
 
   it("falls back when an empty message has no usable cause", () => {
-    // oxlint-disable-next-line unicorn/no-null -- Null is an externally supplied Error.cause fixture; absent text must fall back.
     for (const cause of [null, "", "   ", false, { message: "" }]) {
       // oxlint-disable-next-line unicorn/error-message -- The AI SDK constructs Error(chunk.errorText); preserve its empty-message case to assert fallback behavior.
       expect(getStreamErrorToastContent(new Error("", { cause }))).toEqual({

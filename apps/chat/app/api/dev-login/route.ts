@@ -1,11 +1,7 @@
 import { eq } from "drizzle-orm";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auth } from "@/lib/auth";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { session, user } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
 import { db } from "@/lib/db/client";
 import { env } from "@/lib/env";
 
@@ -21,7 +17,6 @@ interface CookieAttributes {
   readonly expires?: Readonly<Pick<Date, "toUTCString">>;
 }
 
-// oxlint-disable-next-line max-statements -- Serialize the five independent native cookie options in their existing getter and output order; compact ternary concatenation conflicts with no-ternary.
 const formatSignedCookie = (
   name: string,
   signedValue: string,
@@ -50,7 +45,6 @@ const formatSignedCookie = (
   return cookie;
 };
 
-/* oxlint-disable oxc/no-async-await -- HMAC import and signing must settle in order, and crypto failures remain rejected promises. */
 const serializeSignedCookie = async (
   name: string,
   value: string,
@@ -76,13 +70,7 @@ const serializeSignedCookie = async (
 
   return formatSignedCookie(name, signedValue, configuration.settings);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements, node/no-process-env, unicorn/no-null -- * max-lines-per-function, max-statements: preserve the inline database read/create/reselect and session creation. An async lookup helper introduces a continuation before token/clock reads; the synchronous formatter has been extracted.
- * node/no-process-env (#537): GET reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 export const GET = async (): Promise<Response> => {
   if (process.env.NODE_ENV !== "development") {
     return new Response("Not found", { status: 404 });
@@ -152,6 +140,3 @@ export const GET = async (): Promise<Response> => {
     status: 302,
   });
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, node/no-process-env, unicorn/no-null */

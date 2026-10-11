@@ -7,13 +7,11 @@ import type { JSX as ReactJSX, ReactNode } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping sonner and @/components/ui/dropdown-menu; keep this adjacent import pair ordered. */
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-/* oxlint-enable sort-imports */
 
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { Input } from "@/components/ui/input";
@@ -22,16 +20,13 @@ import { InternalLink } from "@/components/internal-link";
 
 import { ShareDialog } from "@/components/share-button";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/share-button and @/components/ui/sidebar; keep this adjacent import pair ordered. */
 import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-/* oxlint-enable sort-imports */
-/* oxlint-disable react/jsx-no-literals -- PureSidebarChatItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable typescript/promise-function-async -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 const PureSidebarChatItem = ({
   chat,
@@ -67,7 +62,6 @@ const PureSidebarChatItem = ({
   const [, startEventAction] = React.useTransition();
   const { projectId } = chat;
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
-    // oxlint-disable-next-line no-ternary -- Keep chatHref as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     projectId !== null && projectId !== ""
       ? `/project/${chat.projectId}/chat/${chat.id}`
       : `/chat/${chat.id}`;
@@ -75,7 +69,6 @@ const PureSidebarChatItem = ({
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleRename's awaited sequencing and rejected-Promise behavior. */
   const handleRename = async (): Promise<void> => {
     if (editTitle.trim() === "" || editTitle === chat.title) {
       setIsEditing(false);
@@ -92,7 +85,6 @@ const PureSidebarChatItem = ({
       setIsEditing(false);
     }
   };
-  /* oxlint-enable oxc/no-async-await */
   const handleKeyDown = (
     event: Readonly<Pick<React.KeyboardEvent, "key">>
   ): void => {
@@ -106,46 +98,42 @@ const PureSidebarChatItem = ({
 
   return (
     <SidebarMenuItem>
-      {
-        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        isEditing ? (
-          <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
-            <Input
-              // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing inline Rename replaces the sidebar item with this focused title editor.
-              autoFocus
-              // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-              maxLength={255}
+      {isEditing ? (
+        <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
+          <Input
+            autoFocus
+            className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+            maxLength={255}
 
-              onBlur={() => {
-                startEventAction(handleRename);
-              }}
-              onChange={(event: {
-                readonly target: { readonly value: string };
-              }) => setEditTitle(event.target.value)}
-              onKeyDown={handleKeyDown}
-              value={editTitle}
-            />
-          </div>
-        ) : (
-          <SidebarMenuButton asChild isActive={isActive}>
-            <InternalLink
-              href={chatHref}
-              onNavigate={() => {
-                setOpenMobile(false);
-              }}
-              prefetch={prefetch}
-            >
-              <span>{chat.title}</span>
-            </InternalLink>
-          </SidebarMenuButton>
-        )
-      }
+            onBlur={() => {
+              startEventAction(handleRename);
+            }}
+            onChange={(event: {
+              readonly target: { readonly value: string };
+            }) => {
+              setEditTitle(event.target.value);
+            }}
+            onKeyDown={handleKeyDown}
+            value={editTitle}
+          />
+        </div>
+      ) : (
+        <SidebarMenuButton asChild isActive={isActive}>
+          <InternalLink
+            href={chatHref}
+            onNavigate={() => {
+              setOpenMobile(false);
+            }}
+            prefetch={prefetch}
+          >
+            <span>{chat.title}</span>
+          </InternalLink>
+        </SidebarMenuButton>
+      )}
 
       <DropdownMenu modal>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
-            // oxlint-disable-next-line react/forbid-component-props -- SidebarMenuAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
             showOnHover={!isActive}
           >
@@ -157,15 +145,24 @@ const PureSidebarChatItem = ({
         <DropdownMenuContent align="end" side="bottom">
           <ChatMenuItems
             isPinned={chat.isPinned}
-            // oxlint-disable-next-line no-ternary -- Keep onDelete JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            onDelete={onDelete ? (): void => onDelete(chat.id) : undefined}
+            onDelete={
+              onDelete
+                ? (): void => {
+                    onDelete(chat.id);
+                  }
+                : undefined
+            }
             onMoveProject={onMoveProject}
             onRename={() => {
               setIsEditing(true);
               setEditTitle(chat.title);
             }}
-            onShare={() => setShareDialogOpen(true)}
-            onTogglePin={() => onPin(chat.id, !chat.isPinned)}
+            onShare={() => {
+              setShareDialogOpen(true);
+            }}
+            onTogglePin={() => {
+              onPin(chat.id, !chat.isPinned);
+            }}
             showShare={showShare}
           />
         </DropdownMenuContent>
@@ -181,10 +178,7 @@ const PureSidebarChatItem = ({
     </SidebarMenuItem>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SidebarChatItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/promise-function-async */
-/* oxlint-disable max-statements -- SidebarChatItem: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation */
+/* oxlint-enable typescript/promise-function-async */
 
 export const SidebarChatItem = memo(
   PureSidebarChatItem,
@@ -218,5 +212,3 @@ export const SidebarChatItem = memo(
     return true;
   }
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-statements */

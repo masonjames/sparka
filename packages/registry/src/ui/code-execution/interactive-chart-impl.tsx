@@ -59,14 +59,6 @@ type BarChart = BaseChartCommon & {
 
 type BaseChart = LineChart | ScatterChart | BarChart;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/id-length -- ECharts gradient and Motion animation keys x/y are fixed native option names; preserve their external contract. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 const InteractiveChart = ({
   chart,
 }: {
@@ -74,11 +66,8 @@ const InteractiveChart = ({
 }): React.JSX.Element => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
-  // oxlint-disable-next-line no-ternary -- Keep textColor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const textColor = isDark ? "#e5e5e5" : "#262626";
-  // oxlint-disable-next-line no-ternary -- Keep gridColor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.15)";
-  // oxlint-disable-next-line no-ternary -- Keep tooltipBg as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const tooltipBg = isDark ? "#171717" : "#ffffff";
 
   const sharedOptions: EChartsOption = {
@@ -137,7 +126,6 @@ const InteractiveChart = ({
       const series = chart.elements.map(
         (element, index): LineSeriesOption | ScatterSeriesOption => ({
           areaStyle:
-            // oxlint-disable-next-line no-ternary -- Keep areaStyle as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             chart.type === "line"
               ? {
                   color: {
@@ -159,7 +147,6 @@ const InteractiveChart = ({
           data: element.points.map(
             (point: readonly [number | string, number]) => {
               const horizontalValue =
-                // oxlint-disable-next-line no-ternary -- Keep horizontalValue as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 chart.x_scale === "datetime"
                   ? new Date(point[0]).getTime()
                   : point[0];
@@ -175,14 +162,12 @@ const InteractiveChart = ({
           },
           name: element.label,
           smooth: true,
-          // oxlint-disable-next-line no-ternary -- Keep symbolSize as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           symbolSize: chart.type === "scatter" ? 10 : 0,
           type: chart.type,
         })
       );
 
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...sharedOptions,
         series,
         xAxis: {
@@ -190,15 +175,11 @@ const InteractiveChart = ({
           nameGap: 40,
           nameLocation: "middle",
           scale: true,
-          // oxlint-disable-next-line no-ternary -- Keep type as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           type: chart.x_scale === "datetime" ? "time" : "value",
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
           axisLabel: {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions.axisLabel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...defaultAxisOptions.axisLabel,
             formatter:
-              // oxlint-disable-next-line no-ternary -- Keep formatter as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               chart.x_scale === "datetime"
                 ? (value: number): string => {
                     const date = new Date(value);
@@ -217,7 +198,6 @@ const InteractiveChart = ({
           position: "right",
           scale: true,
           type: "value",
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
         },
       };
@@ -258,7 +238,6 @@ const InteractiveChart = ({
       );
 
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...sharedOptions,
         series,
         xAxis: {
@@ -266,7 +245,6 @@ const InteractiveChart = ({
           nameGap: 40,
           nameLocation: "middle",
           type: "category",
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
         },
         yAxis: {
@@ -275,7 +253,6 @@ const InteractiveChart = ({
           nameLocation: "middle",
           position: "right",
           type: "value",
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
         },
       };
@@ -290,10 +267,7 @@ const InteractiveChart = ({
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
     >
-      <Card
-        // oxlint-disable-next-line react/forbid-component-props -- Card accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="border-border bg-card overflow-hidden"
-      >
+      <Card className="border-border bg-card overflow-hidden">
         <div className="p-6">
           {chart.title && (
             <h3 className="text-foreground mb-4 text-lg font-medium">
@@ -303,9 +277,7 @@ const InteractiveChart = ({
           <ReactECharts
             notMerge
             option={getChartOptions()}
-            // oxlint-disable-next-line react/forbid-component-props -- ReactECharts accepts style in its styling contract; preserve this caller's layout and appearance.
             style={{ height: "400px", width: "100%" }}
-            // oxlint-disable-next-line no-ternary -- Keep theme JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             theme={resolvedTheme === "dark" ? "dark" : undefined}
           />
         </div>
@@ -313,18 +285,6 @@ const InteractiveChart = ({
     </motion.div>
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (BarChart, BaseChart, LineChart, ScatterChart); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 export type { BarChart, BaseChart, LineChart, ScatterChart };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-default-export -- #623: The chart loader and dynamic import consume this existing default chart entrypoint; preserving that contract retains its established Fast Refresh exception. */
 export default InteractiveChart;
-/* oxlint-enable import/no-default-export */

@@ -2,11 +2,6 @@ import { expect, test, vi } from "vitest";
 
 import { executeWithResearchProgress } from "./research-progress";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, unicorn/no-null --
- * no-magic-numbers (#517): test("progress is durable and an explicitly reported failure preserves known costs") uses 0.05, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("progress is durable and an explicitly reported failure preserves known costs") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("progress is durable and an explicitly reported failure preserves known costs", async () => {
   const results = await Array.fromAsync(
     executeWithResearchProgress(
@@ -39,12 +34,6 @@ test("progress is durable and an explicitly reported failure preserves known cos
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
-/* oxlint-disable no-undefined --
- * no-undefined (#519): test("closing the native iterator cancels provider work") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("closing the native iterator cancels provider work", async () => {
   const cancelled = vi.fn();
   const iterator = executeWithResearchProgress(
@@ -73,8 +62,7 @@ test("closing the native iterator cancels provider work", async () => {
     }
   );
   await iterator.next();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- The async iterator return API requires an explicit completion value.
   await iterator.return(undefined);
   expect(cancelled).toHaveBeenCalledOnce();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined */

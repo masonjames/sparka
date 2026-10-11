@@ -109,6 +109,4 @@ class RunMessageOwnership {
   }
 }
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- This internal ownership module uses the package's named bindings; the enforced no-default-export convention rejects a default export. */
 export { RunMessageOwnership };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

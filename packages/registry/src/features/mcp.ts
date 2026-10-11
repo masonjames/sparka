@@ -1,8 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { featureDefinitionSchema } from "../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 
 // Canonical MCP implementation; apps/chat contains installed demo copies.
 const mcpFiles = [
@@ -55,6 +53,4 @@ const mcpItem: RegistryItem = {
   name: "mcp",
   type: "registry:item",
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (mcpDefinition, mcpFiles, mcpItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { mcpDefinition, mcpFiles, mcpItem };
-/* oxlint-enable import/no-named-export */

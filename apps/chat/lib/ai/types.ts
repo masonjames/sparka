@@ -37,7 +37,6 @@ type SelectedModelCounts = Readonly<Partial<Record<AppModelId, number>>>;
 
 type SelectedModelValue = AppModelId | SelectedModelCounts;
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): isSelectedModelCounts uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const isSelectedModelCounts = (
   value: unknown
 ): value is SelectedModelCounts => {
@@ -57,13 +56,10 @@ const isSelectedModelCounts = (
       count > 0
   );
 };
-/* oxlint-enable no-magic-numbers */
 
 const isSelectedModelValue = (value: unknown): value is SelectedModelValue =>
   typeof value === "string" || isSelectedModelCounts(value);
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers (#517): getPrimarySelectedModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/no-null (#570): getPrimarySelectedModelId preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const getPrimarySelectedModelId = (
   selectedModel: SelectedModelValue | null | undefined
 ): AppModelId | null => {
@@ -83,9 +79,7 @@ const getPrimarySelectedModelId = (
   ) ?? [null];
   return firstSelectedModelId;
 };
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): expandSelectedModelValue uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const expandSelectedModelValue = (
   selectedModel: SelectedModelValue
 ): AppModelId[] => {
@@ -102,8 +96,6 @@ const expandSelectedModelValue = (
   }
   return expanded;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (expandSelectedModelValue, frontendToolsSchema, getPrimarySelectedModelId, isSelectedModelCounts, isSelectedModelValue, toolNameSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers */
 export {
   expandSelectedModelValue,
   frontendToolsSchema,
@@ -112,7 +104,4 @@ export {
   isSelectedModelValue,
   toolNameSchema,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (SelectedModelCounts, SelectedModelValue, ToolName, UiToolName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { SelectedModelCounts, SelectedModelValue, ToolName, UiToolName };
-/* oxlint-enable import/no-named-export */

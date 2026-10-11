@@ -1,57 +1,33 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 import { expect, test } from "@playwright/test";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { APIError, Sandbox } from "@vercel/sandbox";
-/* oxlint-enable eslint/sort-imports */
 import { eq } from "drizzle-orm";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   confirmEveCodeSandboxCreation,
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-/* oxlint-enable eslint/sort-imports */
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "../lib/logger";
-/* oxlint-enable eslint/sort-imports */
 import { executeJavaScriptInSandbox } from "../tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "../tools/chatjs/_shared/code-execution/python";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   cleanupSandbox,
   createSandbox,
   resolveSandboxAuth,
 } from "../tools/chatjs/vercel-code-execution/execution-sandbox";
-/* oxlint-enable eslint/sort-imports */
 import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
 import { testToolContext } from "./helpers/eve-tool-context";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): for (const language of ["javascript", "python"] as cons keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): for (const language of ["javascript", "python"] as cons uses 120_000, 30_000, 15_000, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 for (const language of ["javascript", "python"] as const) {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
     test.setTimeout(120_000);
     const auth = resolveSandboxAuth();
@@ -62,7 +38,6 @@ for (const language of ["javascript", "python"] as const) {
       sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
-      // oxlint-disable-next-line no-ternary -- Keep createSandbox argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       language === "javascript" ? "node22" : "python3.13",
       AbortSignal.timeout(30_000),
       name,
@@ -74,14 +49,12 @@ for (const language of ["javascript", "python"] as const) {
       expect(sandbox.persistent).toBe(false);
       expect(sandbox.name).toBe(name);
       const context = {
-        // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         code: language === "javascript" ? "console.log(6 * 7)" : "print(6 * 7)",
         log,
         requestId,
         sandbox,
       };
       const result =
-        // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         language === "javascript"
           ? await executeJavaScriptInSandbox(context)
           : await executePythonInSandbox(context);
@@ -95,7 +68,6 @@ for (const language of ["javascript", "python"] as const) {
         name: sandbox.name,
         resume: false,
         signal: AbortSignal.timeout(15_000),
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auth own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...auth,
       });
     } catch (error) {
@@ -106,18 +78,11 @@ for (const language of ["javascript", "python"] as const) {
       "Deleted sandbox must no longer be retrievable by its exact name"
     ).toBe(true);
   });
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): test("native sandbox ownership is durably released after real provider cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native sandbox ownership is durably released after real provider cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native sandbox ownership is durably released after real provider cleanup") uses 120_000, 60_000, 1, 0, 15_000, 404, 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): test("native sandbox ownership is durably released after real provider cleanup") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("native sandbox ownership is durably released after real provider cleanup") intentionally keeps the existing falsy-value behavior of tool.execute; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): test("native sandbox ownership is durably released after real provider cleanup") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("native sandbox ownership is durably released after real provider cleanup", async () => {
   test.setTimeout(120_000);
@@ -183,7 +148,6 @@ test("native sandbox ownership is durably released after real provider cleanup",
         name: resources[0].name,
         resume: false,
         signal: AbortSignal.timeout(15_000),
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resolveSandboxAuth() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...resolveSandboxAuth(),
       });
     } catch (error) {
@@ -234,5 +198,4 @@ test("native sandbox ownership is durably released after real provider cleanup",
     }
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

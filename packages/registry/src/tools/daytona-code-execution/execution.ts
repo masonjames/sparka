@@ -3,7 +3,6 @@ import type { CodeExecutionResult } from "@/tools/chatjs/_shared/code-execution/
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { createDaytonaProvider } from "./sandbox";
 import { createModuleLogger } from "@/lib/logger";
-// oxlint-disable-next-line sort-imports -- Preserve Pino/config initialization before Daytona → axios → https-proxy-agent/debug mutates process.env.DEBUG and probes tty.isatty; sorting commandSandbox first reverses those host effects.
 import { commandSandbox } from "./sandbox";
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
@@ -17,7 +16,6 @@ interface SandboxOwnership {
   release: () => Promise<void>;
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve observeCleanup's awaited sequencing and rejected-Promise behavior. */
 const observeCleanup = async (
   pending: Readonly<Promise<void>>
 ): Promise<void> => {
@@ -27,9 +25,6 @@ const observeCleanup = async (
     // The owner awaits the same promise in finally and propagates this failure.
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeInDaytona's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-params, eslint/max-statements -- This exported lifecycle contract takes input, provider, ownership and cancellation; its ordered reserve/create/confirm/run/finally-release sequence must preserve cancellation and cleanup failure precedence. */
 const executeInDaytona = async (
   input: CodeExecutionInput,
   selected: ReadonlyNativeSurface<ReturnType<typeof createDaytonaProvider>>,
@@ -60,7 +55,6 @@ const executeInDaytona = async (
       sandbox: commandSandbox(resource, signal),
     };
     const result =
-      // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.language === "javascript"
         ? await executeJavaScriptInSandbox(execution)
         : await executePythonInSandbox(execution);
@@ -73,8 +67,4 @@ const executeInDaytona = async (
     await ownership.release();
   }
 };
-/* oxlint-enable eslint/max-params, eslint/max-statements */
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeInDaytona); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
 export { executeInDaytona };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

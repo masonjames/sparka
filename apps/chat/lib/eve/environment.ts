@@ -7,7 +7,6 @@ const resolveWorkflowDatabaseUrl = (
   source: ReadonlyEnvironment
 ): string | undefined => {
   if (resolveWorkflowWorld(source) === "vercel") {
-    // oxlint-disable-next-line no-undefined -- Managed Workflow has no PostgreSQL URL; preserve the exported absent-value result.
     return undefined;
   }
   const configuredUrl = source.WORKFLOW_POSTGRES_URL;
@@ -92,10 +91,7 @@ const resolveEveEnvironment = (
  * @param {Environment} source Mutable server environment whose workflow URL is set to the selected nonempty PostgreSQL default.
  */
 
-const configureWorkflowEnvironment = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This shared environment writer assigns WORKFLOW_POSTGRES_URL on the original server environment.
-  source: Environment
-): void => {
+const configureWorkflowEnvironment = (source: Environment): void => {
   const url = resolveWorkflowDatabaseUrl(source);
   if (typeof url === "string" && url !== "") {
     source.WORKFLOW_POSTGRES_URL = url;
@@ -122,11 +118,9 @@ const isWorkflowTransactionPooler = (value: string): boolean => {
   );
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (configureWorkflowEnvironment, isWorkflowTransactionPooler, resolveEveEnvironment, resolveWorkflowDatabaseUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   configureWorkflowEnvironment,
   isWorkflowTransactionPooler,
   resolveEveEnvironment,
   resolveWorkflowDatabaseUrl,
 };
-/* oxlint-enable import/no-named-export */

@@ -1,5 +1,4 @@
 import { afterEach, expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   mkdtemp,
@@ -9,23 +8,16 @@ import {
   writeFile,
 } from "node:fs/promises";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line sort-imports -- Preserve node:os before ./sync-tools while their runtime initialization order is still under site review.
 import { syncTools } from "./sync-tools";
 
 const generatedRegistryRules: readonly string[] = [
-  "oxc/no-rest-spread-properties",
-  "import/no-named-export",
-  "import/prefer-default-export",
-  "sort-imports",
-  "import/max-dependencies",
+  "import/no-duplicates",
+  "typescript/consistent-type-definitions",
 ];
 
-/* oxlint-disable oxc/no-async-await -- Await the native linter and drain both diagnostic pipes before validating generated registry contracts. */
 const lintGeneratedRegistryComposition = async (
   root: string
 ): Promise<void> => {
@@ -54,29 +46,21 @@ const lintGeneratedRegistryComposition = async (
     new Response(result.stdout).text(),
     new Response(result.stderr).text(),
   ]);
-  /* oxlint-disable no-magic-numbers -- Zero status validates generated composition, export scopes, import order and unused directives together. */
   expect(
     exitCode,
     `Native registry validation failed:\n${stdout}\n${stderr}`
   ).toBe(0);
-  /* oxlint-enable no-magic-numbers */
 };
-/* oxlint-enable oxc/no-async-await */
 
 const roots: string[] = [];
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
     roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve project's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-magic-numbers */
 const project = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-sync-"));
   roots.push(root);
@@ -95,8 +79,6 @@ const project = async (): Promise<string> => {
   await syncTools(root);
   return root;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve install's awaited sequencing and rejected-Promise behavior. */
 const install = async (
   root: string,
   id = "word-count",
@@ -121,8 +103,6 @@ const install = async (
     "export const WordCountRenderer = () => null;"
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Validate empty and populated generated compositions only after their isolated fixture writes and native lint complete. */
 test("generated tool and renderer composition passes native rules without unused exceptions", async (): Promise<void> => {
   const root = await project();
   await lintGeneratedRegistryComposition(root);
@@ -130,10 +110,7 @@ test("generated tool and renderer composition passes native rules without unused
   await syncTools(root);
   await lintGeneratedRegistryComposition(root);
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("sync registers direct installs deterministically and preserves custom modules", async () => {
   const root = await project();
   const emptyTools = await readFile(
@@ -184,10 +161,6 @@ test("sync registers direct installs deterministically and preserves custom modu
   ).toBe(installedBefore);
   expect(await readFile(custom, "utf-8")).toContain("custom: {}");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("generated registries sort by registration key instead of directory name", async () => {
   const root = await project();
   await install(root, "a-tool", "zebra");
@@ -215,9 +188,6 @@ test("generated registries sort by registration key instead of directory name", 
   expect(tools.zebra).toBe(zebra);
   await syncTools(root);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 test("missing descriptors and edited generated output fail without dropping registrations", async () => {
   const root = await project();
   await install(root);
@@ -230,8 +200,6 @@ test("missing descriptors and edited generated output fail without dropping regi
   await writeFile(index, `${before}\n// custom edit`);
   expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("duplicate keys and symlink directories fail before writing indexes", async () => {
   const root = await project();
   await install(root);
@@ -244,8 +212,6 @@ test("duplicate keys and symlink directories fail before writing indexes", async
   );
   expect(syncTools(root)).rejects.toThrow("symlinks");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a requested tool cannot report successful registration without its descriptor", async () => {
   const root = await project();
   expect(
@@ -263,8 +229,6 @@ test("a requested tool cannot report successful registration without its descrip
     })
   ).rejects.toThrow("does not match requested");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installSearch's awaited sequencing and rejected-Promise behavior. */
 const installSearch = async (
   root: string,
   id: string,
@@ -285,15 +249,10 @@ const installSearch = async (
     })
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("search selections register standard tools without requiring a renderer", async () => {
   const root = await project();
   await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
   const definitions = await syncTools(root);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading envRequirements from definitions[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(definitions[0]?.envRequirements).toEqual([
     { options: [["EXTERNAL_SEARCH_KEY"]] },
   ]);
@@ -319,10 +278,6 @@ test("search selections register standard tools without requiring a renderer", a
     await readFile(path.join(root, "tools/chatjs/providers.ts"), "utf-8")
   ).not.toContain("external-search/tool");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installExecution's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 const installExecution = async (root: string, id: string): Promise<void> => {
   const dir = path.join(root, "tools/chatjs", id);
   await mkdir(dir, { recursive: true });
@@ -342,9 +297,6 @@ const installExecution = async (root: string, id: string): Promise<void> => {
     })
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("external execution tools compose with search and reject duplicate providers", async () => {
   const root = await project();
   await installSearch(root, "external-search", "SEARCH_KEY");
@@ -372,9 +324,6 @@ test("external execution tools compose with search and reject duplicate provider
   await writeFile(selection, "// user code");
   expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
 test("URL retrieval uses the selected export and rejects duplicate providers", async () => {
   const root = await project();
@@ -408,9 +357,6 @@ test("URL retrieval uses the selected export and rejects duplicate providers", a
     await readFile(path.join(root, "tools/chatjs/providers.ts"), "utf-8")
   ).toBe(server);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("tools register natively, retain renderers and cannot collide with custom tools", async () => {
   const root = await project();
   await install(root, "native-counter", "countWords");
@@ -436,11 +382,7 @@ test("tools register natively, retain renderers and cannot collide with custom t
     await readFile(path.join(root, "tools/chatjs/tools.ts"), "utf-8")
   ).toBe(before);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("sync preserves request-context auth and environment credential fallbacks", async () => {
   const root = await project();
   await installExecution(root, "vercel-runner");
@@ -451,7 +393,6 @@ test("sync preserves request-context auth and environment credential fallbacks",
   definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
   const definitions = await syncTools(root);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading envRequirements from definitions[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(definitions[0]?.envRequirements).toEqual([
     {
       options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]],
@@ -460,11 +401,7 @@ test("sync preserves request-context auth and environment credential fallbacks",
     { options: [["RUNNER_REGION"]] },
   ]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("a bundle registers each native tool and renderer and rejects cross-bundle collisions", async () => {
   const root = await project();
   const dir = path.join(root, "tools/chatjs/text-documents");
@@ -510,11 +447,7 @@ test("a bundle registers each native tool and renderer and rejects cross-bundle 
   await install(root, "other", "editTextDocument");
   expect(syncTools(root)).rejects.toThrow("Duplicate installed");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("sync rejects removing a dependency but permits uninstalling a complete bundle", async () => {
   const root = await project();
   await install(root, "read-document", "readDocument");
@@ -540,11 +473,7 @@ test("sync rejects removing a dependency but permits uninstalling a complete bun
   await syncTools(root);
   expect(await readFile(index, "utf-8")).not.toContain("createTextDocument");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("saved-code registration requires an explicitly compatible executor", async () => {
   const root = await project();
   await installExecution(root, "external-runner");
@@ -597,11 +526,7 @@ export const runCode = {};`
   );
   expect(typeof codeExecutor).toBe("function");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test.each([false, true])(
   "workflow installs stay static and reject custom collisions: %s",
   async (collision) => {
@@ -649,12 +574,7 @@ test.each([false, true])(
     expect(syncTools(root)).rejects.toThrow("Missing descriptor");
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("composer metadata follows installation and removal without editing UI order", async () => {
   const root = await project();
   await install(root);
@@ -686,13 +606,7 @@ test("composer metadata follows installation and removal without editing UI orde
     "// Application-owned ordering\n"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("invalid composer icon is rejected before generated files change", async () => {
   const root = await project();
   await install(root);
@@ -712,12 +626,7 @@ test("invalid composer icon is rejected before generated files change", async ()
   expect(syncTools(root)).rejects.toThrow("icon");
   expect(await readFile(generated, "utf-8")).toBe(before);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["GlobeIcon", "BookOpen", "Edit3"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test.each(["GlobeIcon", "BookOpen", "Edit3"])(
   "composer icon validation accepts %s",
   async (icon) => {
@@ -739,20 +648,13 @@ test.each(["GlobeIcon", "BookOpen", "Edit3"])(
     ).toContain(`${icon} as Icon0`);
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- This registration contract checks imported bindings, generated metadata, and a hash-validated repeat sync in one fixture. */
-/* oxlint-disable eslint/no-magic-numbers -- Eleven concrete tool bindings exercise the first lexical alias rollover; alternating icons make binding mismatches visible. */
 test("grouped tool and composer imports keep bindings attached beyond nine aliases", async () => {
   const root = await project();
   const directory = path.join(root, "tools/chatjs/composer-fixture");
   await mkdir(directory, { recursive: true });
   const tools = Array.from({ length: 11 }, (value, index) => ({
     composer: {
-      // oxlint-disable-next-line no-ternary -- Keep icon as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       icon: index % 2 === 0 ? "Globe" : "Wrench",
       name: `Tool ${index}`,
       shortName: `Tool ${index}`,
@@ -804,6 +706,3 @@ test("grouped tool and composer imports keep bindings attached beyond nine alias
   await syncTools(root);
   expect(await readFile(file, "utf-8")).toBe(generated);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */

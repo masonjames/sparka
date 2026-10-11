@@ -1,30 +1,18 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
 import { Geist, Geist_Mono } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import Script from "next/script";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./globals.css";
-/* oxlint-enable sort-imports */
 import React from "react";
 import { Toaster } from "sonner";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
-/* oxlint-enable sort-imports */
 import { ThemeProvider } from "@/components/theme-provider";
 import { installedLayoutComponents } from "@/features/installed-layout";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
-/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
-/* oxlint-enable import/max-dependencies */
 
 const metadata: Metadata = {
   description: config.appDescription,
@@ -76,12 +64,9 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
-/* oxlint-disable node/no-process-env, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- node/no-process-env (#537): RootLayout reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
-react/jsx-max-depth (#548): The root html/body, provider order and installed components form the application layout contract.
-typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): React accepts null as an empty child for the disabled development script. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 
-// oxlint-disable-next-line max-lines-per-function -- Keep the root document, scripts and ordered providers in the single Next.js root layout.
 const RootLayout = ({
   children,
 }: {
@@ -100,17 +85,14 @@ const RootLayout = ({
       <Script id="theme-color-script" strategy="beforeInteractive">
         {THEME_COLOR_SCRIPT}
       </Script>
-      {
-        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        process.env.NODE_ENV === "development" &&
-        !process.env.PLAYWRIGHT &&
-        env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
-          <Script
-            src="https://unpkg.com/react-scan/dist/auto.global.js"
-            strategy="beforeInteractive"
-          />
-        ) : null
-      }
+      {process.env.NODE_ENV === "development" &&
+      !process.env.PLAYWRIGHT &&
+      env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
+        <Script
+          src="https://unpkg.com/react-scan/dist/auto.global.js"
+          strategy="beforeInteractive"
+        />
+      ) : null}
     </head>
     <body className="antialiased">
       <ElectronAuthHandler />
@@ -145,13 +127,7 @@ const RootLayout = ({
     </body>
   </html>
 );
-/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable node/no-process-env, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;
-/* oxlint-enable import/no-default-export */

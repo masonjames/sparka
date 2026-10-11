@@ -60,10 +60,8 @@ const getProjectColorName = (value: string): ProjectColorName =>
   PROJECT_COLOR_NAMES.find((color) => color === value) ?? DEFAULT_PROJECT_COLOR;
 
 const getColorValue = (name: ProjectColorName): string =>
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing fallbackProjectColor.value fallback. The app guidance prefers optional chaining.
-  PROJECT_COLORS.find((color) => color.name === name)?.value ??
-  fallbackProjectColor.value;
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON, getColorValue, PROJECT_COLOR_NAMES, PROJECT_COLORS, PROJECT_ICONS); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+  (PROJECT_COLORS.find((color) => color.name === name) ?? fallbackProjectColor)
+    .value;
 export {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
@@ -74,7 +72,4 @@ export {
   PROJECT_COLORS,
   PROJECT_ICONS,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ProjectColorName, ProjectIconName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ProjectColorName, ProjectIconName };
-/* oxlint-enable import/no-named-export */

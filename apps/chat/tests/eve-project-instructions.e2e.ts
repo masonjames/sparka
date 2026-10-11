@@ -1,35 +1,17 @@
 import { expect, test } from "@playwright/test";
-// oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
- * max-lines-per-function (#510): test("project instructions apply from the first native turn, refresh, and clear after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("project instructions apply from the first native turn, refresh, and clear after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("project instructions apply from the first native turn, refresh, and clear after uses 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("project instructions apply from the first native turn, refresh, and clear after preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/max-nested-calls (#568): test("project instructions apply from the first native turn, refresh, and clear after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("project instructions apply from the first native turn, refresh, and clear after preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), page.reload() on the original Page/locator receiver to change the live browser or route state.
 test("project instructions apply from the first native turn, refresh, and clear after detachment", async ({
   page,
 }) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const createdProject = await page.request.post("/api/trpc/project.create", {
     data: {
@@ -117,5 +99,4 @@ test("project instructions apply from the first native turn, refresh, and clear 
     expect(deleted.ok(), await deleted.text()).toBe(true);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async */

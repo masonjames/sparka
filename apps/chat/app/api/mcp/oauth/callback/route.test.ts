@@ -1,14 +1,9 @@
 import { NextRequest } from "next/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
 
 import { GET } from "@/app/api/mcp/oauth/callback/route";
 import { MissingCredentialsError } from "@/lib/required-credentials";
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): mocks preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const HTTP_STATUS = {
   temporaryRedirect: 307,
 };
@@ -34,7 +29,6 @@ const mocks = vi.hoisted(() => {
     requireCredentials: vi.fn(),
   };
 });
-/* oxlint-enable unicorn/no-null */
 vi.mock("@/features/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
@@ -60,9 +54,6 @@ vi.mock("@/lib/nuqs/mcp-search-params.server", () => ({
   loadMcpOAuthCallbackSearchParams: (): typeof mocks.params => mocks.params,
 }));
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.params = {
@@ -72,8 +63,6 @@ beforeEach(() => {
     state: "state",
   };
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
 it("redirects an OAuth callback with an explicit setup error before accessing connector secrets", async () => {
   mocks.requireCredentials.mockImplementation(() => {
@@ -94,13 +83,7 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
   );
   expect(mocks.getSession).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): it("provider cancellation deletes only pending state and returns a safe connector-sco keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): it("provider cancellation deletes only pending state and returns a safe connector-sco preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("provider cancellation deletes only pending state and returns a safe connector-scoped message", async () => {
   mocks.params = {
     code: null,
@@ -126,14 +109,7 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
   expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   {     mcpConnectorId: "connector",     state: "state",     tokens: { access's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, unicorn/no-null */
 
-/* oxlint-disable no-undefined, unicorn/no-null --
- * no-undefined (#519): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it.each([
   undefined,
   {
@@ -167,7 +143,6 @@ it.each([
     );
     const location = new URL(response.headers.get("location") ?? "");
     expect(location.pathname).toBe(
-      // oxlint-disable-next-line no-ternary -- Keep expect(location.pathname).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       session ? "/settings/connectors/connector" : "/settings/connectors"
     );
     expect(mocks.deleteSession).not.toHaveBeenCalled();
@@ -175,14 +150,7 @@ it.each([
     expect(mocks.invalidate).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, unicorn/no-null */
 
-/* oxlint-disable no-undefined, unicorn/no-null --
- * no-undefined (#519): it("an attempt completed between lookup and deletion retains its client") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): it("an attempt completed between lookup and deletion retains its client") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("an attempt completed between lookup and deletion retains its client", async () => {
   mocks.params = {
     code: null,
@@ -195,6 +163,7 @@ it("an attempt completed between lookup and deletion retains its client", async 
     state: "state",
     tokens: null,
   });
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.deleteSession.mockResolvedValue(undefined);
   await GET(
     new NextRequest(
@@ -204,5 +173,3 @@ it("an attempt completed between lookup and deletion retains its client", async 
   expect(mocks.removeClient).not.toHaveBeenCalled();
   expect(mocks.invalidate).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined, unicorn/no-null */

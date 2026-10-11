@@ -1,28 +1,16 @@
 import { Copy, Pencil, PencilOff } from "lucide-react";
 import React, { useState } from "react";
-/* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/ai-elements/message"; "../hooks/use-mobile"; "../lib/utils" dependency within this package instead of introducing an alias or barrel API. */
 
-/* oxlint-disable sort-imports -- Keep the new type-only reader imports after the existing runtime modules; declaration sorting conflicts with the pinned formatter grouping. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Message,
   MessageAction,
   MessageActions,
   MessageContent,
 } from "../components/ai-elements/message";
-/* oxlint-enable sort-imports */
 import { useIsMobile } from "../hooks/use-mobile";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "../lib/utils";
-/* oxlint-enable sort-imports */
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function -- jsdoc/require-param (#534): LegacyMessageActionsReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): LegacyMessageActionsReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): LegacyMessageActionsReference keeps its scenario setup, action, and assertions together; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
 
 /**
  * Frozen presentation reference from main commit
@@ -54,43 +42,32 @@ const LegacyMessageActionsReference = ({
   const showActionsWithoutHover = isMobile || isEditing;
   return (
     <MessageActions
-      // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
       className={
-        // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         showActionsWithoutHover
           ? ""
           : "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-hover/message:opacity-100 focus-within:opacity-100 hover:opacity-100"
       }
     >
       {!isReadonly &&
-        /* oxlint-disable no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (isEditing /* oxlint-enable no-ternary */ ? (
+        (isEditing ? (
           <MessageAction
-            // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
             onClick={onCancelEdit}
             tooltip="Cancel edit"
           >
-            <PencilOff
-              // oxlint-disable-next-line react/forbid-component-props -- PencilOff accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="h-3.5 w-3.5"
-            />
+            <PencilOff className="h-3.5 w-3.5" />
           </MessageAction>
         ) : (
           <MessageAction
-            // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
             onClick={onStartEdit}
             tooltip="Edit message"
           >
-            <Pencil
-              // oxlint-disable-next-line react/forbid-component-props -- Pencil accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="h-3.5 w-3.5"
-            />
+            <Pencil className="h-3.5 w-3.5" />
           </MessageAction>
         ))}
       {siblings}
       <MessageAction
-        // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
         className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
         tooltip="Copy"
       >
@@ -99,16 +76,8 @@ const LegacyMessageActionsReference = ({
     </MessageActions>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): LegacyUserMessageReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): LegacyUserMessageReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): LegacyUserMessageReference keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): LegacyUserMessageReference uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-react-perf/jsx-no-new-function-as-prop (#557): LegacyUserMessageReference creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
-react/jsx-max-depth (#548): LegacyUserMessageReference keeps related fixture render states together; extraction changes component, state, and layout boundaries.
-react/no-multi-comp (#552): LegacyUserMessageReference keeps related fixture render states together; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): LegacyUserMessageReference intentionally keeps the existing falsy-value behavior of selection?.toString(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): LegacyUserMessageReference intentionally keeps the existing falsy-value behavior of selection?.toString(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 
 /** Frozen UserMessage layout with provider-backed dependencies adapted to props. */
 const LegacyUserMessageReference = ({
@@ -131,9 +100,7 @@ const LegacyUserMessageReference = ({
   const [mode, setMode] = useState<"view" | "edit">("view");
   return (
     <Message
-      // oxlint-disable-next-line react/forbid-component-props -- Message accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
-        // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
         "py-1"
       )}
@@ -150,7 +117,6 @@ const LegacyUserMessageReference = ({
         {mode === "view" && responses}
         {mode === "view" && isReadonly && (
           <MessageContent
-            // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
             className="group-[.is-user]:bg-card text-left"
             data-testid="legacy-message-content"
           >
@@ -169,7 +135,6 @@ const LegacyUserMessageReference = ({
             ) => {
               const selection = globalThis.getSelection();
               if (
-                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 selection?.toString() &&
                 event.currentTarget.contains(selection.anchorNode)
               ) {
@@ -180,7 +145,6 @@ const LegacyUserMessageReference = ({
             type="button"
           >
             <MessageContent
-              // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
               className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
               data-testid="legacy-message-content"
             >
@@ -196,8 +160,12 @@ const LegacyUserMessageReference = ({
             isEditing={mode === "edit"}
             isLoading={isLoading}
             isReadonly={isReadonly}
-            onCancelEdit={() => setMode("view")}
-            onStartEdit={() => setMode("edit")}
+            onCancelEdit={() => {
+              setMode("view");
+            }}
+            onStartEdit={() => {
+              setMode("edit");
+            }}
             siblings={siblings}
           />
         </div>
@@ -205,7 +173,5 @@ const LegacyUserMessageReference = ({
     </Message>
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (LegacyMessageActionsReference, LegacyUserMessageReference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 export { LegacyMessageActionsReference, LegacyUserMessageReference };
-/* oxlint-enable import/no-named-export */

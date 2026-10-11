@@ -1,14 +1,10 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { lstat } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
-// oxlint-disable-next-line sort-imports -- Preserve node:path before ./is-safe-target while their runtime initialization order is still under site review.
 import { isSafeTarget } from "./is-safe-target";
 
 const LAST_PART_OFFSET = 1;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve managedRootDirectory's awaited sequencing and rejected-Promise behavior. */
 const managedRootDirectory = async (cwd: string): Promise<string> => {
   const resolvedCwd = path.resolve(cwd);
   const root = await lstat(resolvedCwd);
@@ -17,15 +13,12 @@ const managedRootDirectory = async (cwd: string): Promise<string> => {
   }
   return resolvedCwd;
 };
-/* oxlint-enable oxc/no-async-await */
 const assertSafeTarget = (target: string, resolvedCwd: string): void => {
   if (!isSafeTarget(target, resolvedCwd)) {
     throw new Error(`Unsafe ChatJS target: ${target}`);
   }
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (preflight); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve preflight's awaited sequencing and rejected-Promise behavior. */
 /**
  * Protect ChatJS-managed outputs before generating integration files.
  * @param {string} cwd Project destination, resolved relative to the current directory.
@@ -64,5 +57,3 @@ export const preflight = async (
     }
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

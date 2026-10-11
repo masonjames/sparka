@@ -4,7 +4,6 @@ import {
 } from "./guest-message-admission";
 import { beforeEach, expect, it, vi } from "vitest";
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
-// oxlint-disable-next-line import/no-nodejs-modules -- Reservation fixtures use the same native UUID return type as the database reservation API.
 import { randomUUID } from "node:crypto";
 import type { reserveEveGuestMessage } from "@/lib/db/eve-guests";
 
@@ -18,13 +17,9 @@ vi.mock("../db/eve-guests", () => ({
   releaseEveGuestMessage: mocks.release,
   reserveEveGuestMessage: mocks.reserve,
 }));
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): vi.mock("./guest-admission") uses 64 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 vi.mock("./guest-admission", () => ({
   guestRequestIpHash: (): string => "a".repeat(64),
 }));
-/* oxlint-enable no-magic-numbers */
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: {
     AVAILABLE_MODELS: ["cheap"],
@@ -48,7 +43,6 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("requires an explicit operation and allowed model before charging", async () => {
   const missing = await admitGuestMessage(
     new Request(request.url),
@@ -60,18 +54,12 @@ it("requires an explicit operation and allowed model before charging", async () 
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(
     await admitGuestMessage(request, "owner", "native", {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       modelId: "premium",
     })
   ).toBeInstanceOf(Response);
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("permits dispatch only for the first reservation and never marks replays as unsent uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("permits dispatch only for the first reservation and never marks replays as unsent", async () => {
   expect(await admitGuestMessage(request, "owner", "native", input)).toEqual(
     admission
@@ -96,13 +84,7 @@ it("permits dispatch only for the first reservation and never marks replays as u
     });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("distinguishes content and destination in quota identity") uses 0, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("distinguishes content and destination in quota identity", async () => {
   const hashes: unknown[] = [];
   for (const [sessionId, message] of [
@@ -110,20 +92,13 @@ it("distinguishes content and destination in quota identity", async () => {
     ["two", "hello"],
     ["one", "changed"],
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop, oxc/no-rest-spread-properties -- Each case completes before the shared fixture or mock state is reused. Rest/spread: Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused. Rest/spread: Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- lastCall is absent before any invocation; the typed reserve mock records the exact guest reservation input tuple.
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }
   expect(new Set(hashes).size).toBe(3);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("retains quota on timeout/server failure and refunds only explicit native non-admi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("retains quota on timeout/server failure and refunds only explicit native non-admission", async () => {
   await settleGuestMessage(
     new Response(null, { status: 502 }),
@@ -157,5 +132,3 @@ it("retains quota on timeout/server failure and refunds only explicit native non
     admission.reservationId
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */

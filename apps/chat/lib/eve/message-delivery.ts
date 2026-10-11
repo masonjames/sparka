@@ -1,13 +1,9 @@
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "@/lib/ai/types";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
 
 import { draftAttachment } from "./draft";
 import { eveToolMetadata } from "./message-tool-selection";
@@ -50,9 +46,6 @@ type DeliveryStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 const storageKey = (sessionId: string): string =>
   `chatjs.eve.pending-message:${sessionId}`;
 
-/* oxlint-disable id-length --
- * id-length (#506): write uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 const write = <T extends PendingEveMessage>(
   storage: DeliveryStorage,
   sessionId: string,
@@ -61,11 +54,9 @@ const write = <T extends PendingEveMessage>(
   storage.setItem(storageKey(sessionId), JSON.stringify(value));
   return value;
 };
-/* oxlint-enable id-length */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): read intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): read preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const read = (
   storage: DeliveryStorage,
@@ -86,11 +77,9 @@ const read = (
   storage.removeItem(storageKey(sessionId));
   return null;
 };
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params, no-undefined, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
 const eveMessageDelivery = {
   acknowledge: (
@@ -102,14 +91,12 @@ const eveMessageDelivery = {
     if (
       event.type !== "message.received" ||
       !pending.operationId ||
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
         .operationId !== pending.operationId
     ) {
       return false;
     }
     const stored = read(storage, sessionId);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (stored?.operationId === pending.operationId) {
       storage.removeItem(storageKey(sessionId));
     }
@@ -121,7 +108,6 @@ const eveMessageDelivery = {
     input: ReadonlyNativeSurface<NewPendingEveMessage>
   ): ActivePendingEveMessage =>
     write(storage, sessionId, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
     }),
@@ -143,7 +129,6 @@ const eveMessageDelivery = {
     rejection: string,
     retryable = false
   ): PendingEveMessage & { rejection: string; retryable: boolean } =>
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing pending own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     write(storage, sessionId, { ...pending, rejection, retryable }),
   retry: (
     storage: DeliveryStorage,
@@ -153,7 +138,6 @@ const eveMessageDelivery = {
     const current = read(storage, sessionId);
     if (
       !pending.operationId ||
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading retryable from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !current?.retryable ||
       current.operationId !== pending.operationId
     ) {
@@ -161,7 +145,6 @@ const eveMessageDelivery = {
     }
     // oxlint-disable-next-line typescript/consistent-return -- #580: eveMessageDelivery has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return write(storage, sessionId, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...current,
       operationId: pending.operationId,
       rejection: undefined,
@@ -169,7 +152,7 @@ const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable max-params, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 /**
  * The proxy owns this metadata so caller input cannot forge an acknowledgement.
@@ -186,31 +169,22 @@ const eveMessageDeliveryMetadata = (
   };
 } => ({
   chatjs: {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing eveToolMetadata(selectedTool).chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...eveToolMetadata(selectedTool).chatjs,
     operationId: z.uuid().parse(operationId),
   },
 });
 
-/* oxlint-disable no-undefined -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const eveMessageOperationId = (event: DeliveryEvent): string | undefined => {
   if (event.type === "message.received") {
-    return (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
-    );
+    return deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
+      .operationId;
   }
   return undefined;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery, eveMessageDeliveryMetadata, eveMessageOperationId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-undefined */
 export {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDelivery,
   eveMessageDeliveryMetadata,
   eveMessageOperationId,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ActivePendingEveMessage, PendingEveMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ActivePendingEveMessage, PendingEveMessage };
-/* oxlint-enable import/no-named-export */

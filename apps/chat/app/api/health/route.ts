@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { checkDatabase } from "@/lib/db/health";
-/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
 const MINIMUM_WORKFLOW_ID_LENGTH = 1;
@@ -14,10 +12,7 @@ const eveHealth = z.object({
   status: z.literal("ready"),
   workflowId: z.string().min(MINIMUM_WORKFLOW_ID_LENGTH),
 });
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable init-declarations -- * init-declarations (#507): GET assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment. */
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
   // Both workers must be ready before the host sends traffic to this instance.
@@ -43,10 +38,9 @@ export const GET = async (): Promise<Response> => {
       ]),
       // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
       new Promise<never>((_resolve, reject) => {
-        timeout = setTimeout(
-          () => reject(new Error("Readiness timed out")),
-          READINESS_TIMEOUT_MS
-        );
+        timeout = setTimeout(() => {
+          reject(new Error("Readiness timed out"));
+        }, READINESS_TIMEOUT_MS);
       }),
     ]);
     return Response.json(
@@ -62,6 +56,3 @@ export const GET = async (): Promise<Response> => {
     clearTimeout(timeout);
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations */

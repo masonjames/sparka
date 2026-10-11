@@ -1,10 +1,6 @@
 import { defineConfig } from "@/lib/config-schema";
 
-/* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): isProd reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
 const isProd = process.env.NODE_ENV === "production";
-/* oxlint-enable node/no-process-env */
 const PRODUCTION_ANONYMOUS_CREDITS = 10;
 const DEVELOPMENT_ANONYMOUS_CREDITS = 1000;
 const PRODUCTION_REQUESTS_PER_MINUTE = 5;
@@ -179,8 +175,4 @@ const config = defineConfig({
     paymentProcessors: [],
   },
 });
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): lib/config.ts imports this user-editable configuration by its existing default export; changing that module contract requires a public template migration.
- */
 export default config;
-/* oxlint-enable import/no-default-export */

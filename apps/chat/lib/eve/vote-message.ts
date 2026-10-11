@@ -6,13 +6,6 @@ import { saveEveMessageVote } from "@/lib/db/queries";
 
 const VOTE_SNAPSHOT_TIMEOUT_MS = 15_000;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (voteEveMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve voteEveMessage's awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): Verify the bound conversation, replay its snapshot, and check assistant-message membership before saving the vote; the guards and reducer state belong to this authorization operation.
- * unicorn/no-null (#570): voteEveMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 export const voteEveMessage = async (
   ownerId: string,
   input: {
@@ -58,6 +51,3 @@ export const voteEveMessage = async (
     input.type === "up"
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, unicorn/no-null */

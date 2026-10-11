@@ -28,7 +28,6 @@ beforeEach(() => {
   mocks.env.FIRECRAWL_API_KEY = "test-key";
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["missing configuration", "invalid URL"])'s awaited sequencing and rejected-Promise behavior. */
 test.each([
   ["missing configuration", "https://example.com"],
   ["invalid URL", "file:///private"],
@@ -50,8 +49,6 @@ test.each([
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 
 test.each([false, true])(
   "provider completion keeps unknown cost explicit (failure=%s)",
@@ -74,4 +71,3 @@ test.each([false, true])(
     expect(mocks.scrape).toHaveBeenCalledOnce();
   }
 );
-/* oxlint-enable oxc/no-async-await */

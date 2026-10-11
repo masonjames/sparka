@@ -1,4 +1,3 @@
-/* oxlint-disable sort-imports -- Keep runtime, type and fixture CSS imports grouped by module as required by Oxfmt. */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
@@ -11,7 +10,6 @@ import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "@/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
 
 const primary = "openai/gpt-4.1";
 const secondary = "google/gemini-2.5-flash";
@@ -68,7 +66,6 @@ vi.mock("@/trpc/react", () => ({
         mutationOptions: (
           callbacks: Readonly<Record<string, unknown>>
         ): object => ({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Forward the actual table's lifecycle callbacks unchanged into the native React Query mutation options.
           ...callbacks,
           mutationFn: save,
         }),
@@ -77,8 +74,6 @@ vi.mock("@/trpc/react", () => ({
   }),
 }));
 
-/* oxlint-disable oxc/no-async-await -- Await native React commits, mutation settlement and browser capture in their actual order. */
-/* oxlint-disable max-statements, max-lines-per-function -- Verify the full ordering lifetime, search and rollback seam in one native mounted table and one capture. */
 test("table ordering survives toggles, rollback and search, then resets on remount", async () => {
   const firstRowIndex = 0;
   const pending = Promise.withResolvers<undefined>();
@@ -140,5 +135,3 @@ test("table ordering survives toggles, rollback and search, then resets on remou
     client.clear();
   }
 });
-/* oxlint-enable max-statements, max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */

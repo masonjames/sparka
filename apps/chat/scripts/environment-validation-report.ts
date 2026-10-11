@@ -1,4 +1,3 @@
-/* oxlint-disable no-console -- These CLI reporting operations emit ordered environment diagnostics, the gateway warning and validation success through console. */
 const EMPTY_DIAGNOSTIC_COUNT = 0;
 
 const formatGatewaySnapshotWarning = (
@@ -40,11 +39,8 @@ const reportEnvironmentSuccess = (snapshotWarning: string | null): void => {
 
   console.log("✅ Environment validation passed");
 };
-/* oxlint-enable no-console */
-/* oxlint-disable import/no-named-export -- The CLI imports these named reporting operations; app guidance and enabled import/no-default-export require named exports. */
 export {
   formatGatewaySnapshotWarning,
   reportEnvironmentFailure,
   reportEnvironmentSuccess,
 };
-/* oxlint-enable import/no-named-export */

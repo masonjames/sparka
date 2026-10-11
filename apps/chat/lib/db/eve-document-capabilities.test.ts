@@ -1,14 +1,10 @@
-/* oxlint-disable import/no-nodejs-modules -- The local database test applies the real checked-in SQL migrations. */
 import { readFile, readdir } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-/* oxlint-disable sort-imports -- Keep Vitest API evaluation after PGlite and Drizzle adapter imports, then schema evaluation: schema imports encrypted-text and env, whose module validates env; vi.mock supplies the local adapter before dynamic production imports. */
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { eveChat, eveConversation, user } from "./schema";
-/* oxlint-enable sort-imports */
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
@@ -21,7 +17,6 @@ const ABSENT_TURN_INDEX = 2;
 vi.mock("./client", (): { db: typeof database } => ({ db: database }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-/* oxlint-disable node/no-top-level-await -- Load production modules after installing the local test adapter. */
 const {
   captureEveDocumentCheckpoint,
   getEveDocumentRevision,
@@ -29,9 +24,7 @@ const {
 } = await import("./eve-documents");
 
 const { snapshotPublicEveCopyDocuments } = await import("./eve-copy-documents");
-/* oxlint-enable node/no-top-level-await */
 
-/* oxlint-disable oxc/no-async-await -- The tests exercise actual query order, transaction rollback and rejected promises. */
 beforeAll(async (): Promise<void> => {
   const migrationDirectory = new URL("migrations/", import.meta.url);
   const entries = await readdir(migrationDirectory);
@@ -83,7 +76,6 @@ const revisionInput = (
   content: "Original content",
   conversationId,
   documentId,
-  // oxlint-disable-next-line unicorn/no-null -- The first native revision explicitly has no parent.
   expectedRevisionId: null,
   fileIds: [],
   kind: "text",
@@ -165,4 +157,3 @@ it("snapshots native turn checkpoints and rejects absent published boundaries", 
     ])
   ).rejects.toThrow("Published document boundary is unavailable.");
 });
-/* oxlint-enable oxc/no-async-await */

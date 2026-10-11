@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash, createHmac, randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { createHash, createHmac, randomBytes } from "node:crypto";
 
 import { v5 as uuidv5 } from "uuid";
-/* oxlint-enable import/no-nodejs-modules */
 
 const CREDENTIAL_TOKEN_BYTES = 32;
 const HASH = /^[0-9a-f]{64}$/u;
@@ -41,6 +37,4 @@ const eveGuestIpHash = (address: string, secret: string): string => {
     .digest("hex");
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveGuestOwnerId, createEveGuestCredential, eveGuestIpHash); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { eveGuestOwnerId, createEveGuestCredential, eveGuestIpHash };
-/* oxlint-enable import/no-named-export */

@@ -1,9 +1,7 @@
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveBranchReference } from "./fork-source";
-/* oxlint-enable sort-imports */
 import { LogicalCommands } from "./logical-commands";
 
 type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
@@ -52,11 +50,7 @@ type LogicalChatSnapshot = {
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): logicalNativeId accepts message: EveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const logicalNativeId = (sessionId: string, message: EveMessage): string => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from message.metadata.custom; read custom from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const custom = message.metadata?.custom?.chatjs;
   if (
     message.role === "user" &&
@@ -69,36 +63,32 @@ const logicalNativeId = (sessionId: string, message: EveMessage): string => {
   }
   return JSON.stringify([sessionId, message.id]);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const aliasKey = (branchId: string, messageId: string): string =>
   JSON.stringify([branchId, messageId]);
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): busy accepts agent?: NativeChatAgent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const busy = (agent?: NativeChatAgent): boolean =>
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  agent?.status === "streaming" ||
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  agent?.status === "submitted" ||
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  agent?.status === "resuming";
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const busy = (agent?: NativeChatAgent): boolean => {
+  if (!agent) {
+    return false;
+  }
+  return (
+    agent.status === "streaming" ||
+    agent.status === "submitted" ||
+    agent.status === "resuming"
+  );
+};
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): latestMessageTime accepts agent: NativeChatAgent | undefined; createdAt: string | Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const latestMessageTime = (
   agent: NativeChatAgent | undefined,
   createdAt: string | Date
 ): number => {
   let time = new Date(createdAt).getTime();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading events from agent; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
-  for (const event of agent?.events ?? []) {
+  if (!agent) {
+    return time;
+  }
+  for (const event of agent.events ?? []) {
     if (
       (event.type === "message.received" || event.type === "step.started") &&
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from event.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       event.meta?.at
     ) {
       time = Math.max(time, new Date(event.meta.at).getTime());
@@ -106,13 +96,8 @@ const latestMessageTime = (
   }
   return time;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): sourcePrefix uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): sourcePrefix uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): sourcePrefix accepts branch: LogicalBranch; aliases: ReadonlyMap<string, string>; sourceAgent?: NativeChatAgent; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): sourcePrefix intentionally keeps the existing falsy-value behavior of branch.parentConversationId; branch.forkMessageId; boundaryId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const sourcePrefix = (
@@ -125,22 +110,18 @@ const sourcePrefix = (
     return { prefix: [], replaced: undefined };
   }
   const sourceId = branch.parentConversationId;
-  // oxlint-disable-next-line no-ternary -- Keep boundaryId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const boundaryId = branch.forkMessageId
     ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
     : aliases.get(
         aliasKey(
           sourceId,
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from sourceAgent.data.messages.find(...); read data from sourceAgent; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
           sourceAgent?.data.messages.find(
             (message) =>
               message.role === "user" &&
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               message.metadata?.turnId === branch.forkTurnId
           )?.id ?? ""
         )
       );
-  // oxlint-disable-next-line no-ternary -- Keep index as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const index = boundaryId ? source.indexOf(boundaryId) : -1;
   // Named idle checkpoints have no following user yet: the entire source is inherited.
   if (index < 0 && branch.forkKind === "comparison") {
@@ -153,16 +134,10 @@ const sourcePrefix = (
   }
   return { prefix: source.slice(0, index), replaced: boundaryId };
 };
-/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): projectBranch uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): projectBranch accepts branch: LogicalBranch; agent: NativeChatAgent; paths: ReadonlyMap<string, string[]>; nodes: Map<string, LogicalNode>; aliases: Map<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): projectBranch intentionally keeps the existing falsy-value behavior of replaced; branch.responseGroupId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): projectBranch preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 // oxlint-disable-next-line eslint/complexity -- Prefix aliases, regenerated users and new native nodes share a single ordered pass.
 const projectBranch = (
@@ -182,7 +157,6 @@ const projectBranch = (
   );
   const messages = agent.data.messages.filter(
     (message) =>
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !(message.metadata?.optimistic && message.metadata.status === "failed")
   );
   if (messages.length < prefix.length) {
@@ -244,19 +218,12 @@ const projectBranch = (
   }
   return { hasLocalMessage: messages.length > prefix.length, path };
 };
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable typescript/strict-boolean-expressions --
 moving it below executable initialization can obscure ordering and API ownership.
-init-declarations (#507): LogicalChat assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-max-lines-per-function (#510): LogicalChat keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): LogicalChat keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-continue (#515): LogicalChat skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
-no-magic-numbers (#517): LogicalChat uses 0, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): LogicalChat uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): LogicalChat accepts branches: readonly LogicalBranch[]; leftBranch; rightBranch; agent: NativeChatAgent; branch; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): LogicalChat intentionally keeps the existing falsy-value behavior of path?.length; last; id; branch.parentConversationId; agent?.data.messages.length; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): LogicalChat preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+ */
 /**
  * Chat identity and selection are independent of native session lifetime.
  * Durable branch intent plus native replay reconstructs this disposable index.
@@ -321,7 +288,6 @@ class LogicalChat {
   public observe(conversationId: string, agent: NativeChatAgent): void {
     const previous = this.agents.get(conversationId);
     if (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       previous?.data === agent.data &&
       previous.events === agent.events &&
       previous.status === agent.status &&
@@ -350,7 +316,6 @@ class LogicalChat {
     this.hydrateLatest = false;
     this.follow = true;
     const path = this.snapshot.paths.get(conversationId);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from path; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (path?.length && this.snapshot.readyBranches.has(conversationId)) {
       this.pendingSelection = undefined;
       this.selected = conversationId;
@@ -367,12 +332,10 @@ class LogicalChat {
     if (!node) {
       return;
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from this.snapshot.children.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    let last = this.snapshot.children.get(node.id)?.at(-1);
+    let last = (this.snapshot.children.get(node.id) ?? []).at(-1);
     while (last) {
       node = this.snapshot.nodes.get(last) ?? node;
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from this.snapshot.children.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      last = this.snapshot.children.get(node.id)?.at(-1);
+      last = (this.snapshot.children.get(node.id) ?? []).at(-1);
     }
     this.pendingSelection = undefined;
     this.selected = node.conversationId;
@@ -426,7 +389,6 @@ class LogicalChat {
           continue;
         }
         const agent = this.agents.get(id);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (!agent?.data.messages.length) {
           continue;
         }
@@ -453,7 +415,6 @@ class LogicalChat {
           }
         } catch (projectionError) {
           error =
-            // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             projectionError instanceof Error
               ? projectionError.message
               : "Unable to restore the chat tree.";
@@ -475,7 +436,6 @@ class LogicalChat {
       this.hydrateLatest &&
       paths.size === this.branches.length &&
       this.branches.every(
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from this.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         (branch) => this.agents.get(branch.id)?.status !== "resuming"
       )
     ) {
@@ -494,7 +454,6 @@ class LogicalChat {
     const pendingPath =
       this.pendingSelection && paths.get(this.pendingSelection);
     if (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from pendingPath; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       pendingPath?.length &&
       this.pendingSelection &&
       readyBranches.has(this.pendingSelection)
@@ -505,8 +464,7 @@ class LogicalChat {
     }
     const selectedPath = paths.get(this.selected);
     if (this.follow || !this.cursor) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from selectedPath; preserve one receiver evaluation, skipped accesses and the existing this.cursor fallback. The app guidance prefers optional chaining.
-      this.cursor = selectedPath?.at(-1) ?? this.cursor;
+      this.cursor = (selectedPath ?? []).at(-1) ?? this.cursor;
     }
     this.snapshot = {
       agents: new Map(this.agents),
@@ -526,17 +484,10 @@ class LogicalChat {
     }
   }
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): logicalChatBusy accepts snapshot: LogicalChatSnapshot; agent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>
   [...snapshot.agents.values()].some((agent) => busy(agent));
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (LogicalChat, logicalChatBusy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines -- #509: This logical-chat.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export { LogicalChat, logicalChatBusy };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (LogicalBranch, LogicalChatSnapshot, NativeChatAgent); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { LogicalBranch, LogicalChatSnapshot, NativeChatAgent };
-/* oxlint-enable import/no-named-export */

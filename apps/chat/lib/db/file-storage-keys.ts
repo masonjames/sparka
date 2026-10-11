@@ -5,7 +5,6 @@ import { eveStoredFile } from "./schema";
 
 const NO_STORAGE_KEYS = 0;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storageKeyForFile's awaited sequencing and rejected-Promise behavior. */
 /**
  * File references use the stable record key; only storage sees storageKey.
  * @param {string} fileId Registered application file identity to resolve.
@@ -22,8 +21,6 @@ const storageKeyForFile = async (fileId: string): Promise<string> => {
   }
   return file.storageKey;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fileIdsForStorageKeys's awaited sequencing and rejected-Promise behavior. */
 
 const fileIdsForStorageKeys = async (
   storageKeys: readonly string[]
@@ -37,8 +34,5 @@ const fileIdsForStorageKeys = async (
     .where(inArray(eveStoredFile.storageKey, storageKeys));
   return new Map(files.map((file) => [file.storageKey, file.fileId]));
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (storageKeyForFile, fileIdsForStorageKeys); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
 export { storageKeyForFile, fileIdsForStorageKeys };
-/* oxlint-enable import/no-named-export */

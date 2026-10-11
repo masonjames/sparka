@@ -1,14 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/search" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { HookContext, HookEvent } from "eve/hooks";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import search from "../../agent/hooks/search";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveSearchText } from "./search-text";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => {
   const state: EveSearchText[] = [];
@@ -23,9 +17,6 @@ const mocks = vi.hoisted(() => {
 vi.mock("eve/hooks", () => ({
   defineHook: <Value>(value: Value): Value => value,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/context")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("eve/context", () => ({
   defineState: (name: string) => {
     if (name === "chatjs.search-recovery") {
@@ -46,7 +37,6 @@ vi.mock("eve/context", () => ({
     };
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("./search-backfill", () => ({
   backfillEveSearchConversation: mocks.recover,
 }));
@@ -55,9 +45,6 @@ vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const context: HookContext = {
   agent: { name: "chatjs" },
   channel: {},
@@ -81,7 +68,6 @@ const context: HookContext = {
     turn: { id: "turn_1", sequence: 1 },
   },
 };
-/* oxlint-enable unicorn/no-null */
 const restored: HookEvent = {
   data: {
     messages: [
@@ -100,18 +86,14 @@ const started: HookEvent = {
   meta: restored.meta,
   type: "turn.started",
 };
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
- * typescript/explicit-function-return-type (#560): Keep dispatch's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): dispatch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 const dispatch = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original HookEvent to the registered EVE wildcard hook; recursively readonly input-request options are rejected by its native event contract.
   event: Readonly<HookEvent>,
   hookContext: Readonly<HookContext> = context
-) =>
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling search.events["*"]; read "*" from search.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-  search.events?.["*"]?.(event, hookContext);
-/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
+) => search.events?.["*"]?.(event, hookContext);
+/* oxlint-enable typescript/promise-function-async */
 beforeEach(() => {
   vi.resetAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {
@@ -124,10 +106,6 @@ beforeEach(() => {
     ownerId: "owner",
   });
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-console --
- * no-console (#514): it("defers inherited history until binding and retains it if indexing fails") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- */
 it("defers inherited history until binding and retains it if indexing fails", async () => {
   await dispatch(restored);
   expect(mocks.index).not.toHaveBeenCalled();
@@ -140,15 +118,10 @@ it("defers inherited history until binding and retains it if indexing fails", as
   ]);
   expect(mocks.state).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-console */
 it("never indexes subagent-private text into the parent chat", async () => {
   await dispatch(restored, {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...context,
     session: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context.session,
       parent: {
         callId: "call",
@@ -161,21 +134,16 @@ it("never indexes subagent-private text into the parent chat", async () => {
   expect(mocks.state).toEqual([]);
   expect(mocks.resolve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does no scope or database work on a turn with no pending text", async () => {
   await dispatch(started);
   expect(mocks.resolve).not.toHaveBeenCalled();
   expect(mocks.index).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("retains newly received text when scope resolution fails and retries it", async () => {
   mocks.resolve.mockRejectedValueOnce(new Error("mapping unavailable"));
   await expect(
     dispatch({
       data: { message: "new text", sequence: 1, turnId: "turn_1" },
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       meta: { ...restored.meta, id: "received" },
       type: "message.received",
     })
@@ -187,14 +155,6 @@ it("retains newly received text when scope resolution fails and retries it", asy
   ]);
   expect(mocks.state).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-console, no-magic-numbers, no-undefined --
- * max-statements (#512): it("bounds failed retries by entry count and records how omitted events can be recove keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): it("bounds failed retries by entry count and records how omitted events can be recove emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): it("bounds failed retries by entry count and records how omitted events can be recove uses 300, 1, 256 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): it("bounds failed retries by entry count and records how omitted events can be recove uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it("bounds failed retries by entry count and records how omitted events can be recovered", async () => {
   mocks.index.mockRejectedValue(new Error("offline"));
   mocks.recover.mockRejectedValue(new Error("offline"));
@@ -202,7 +162,6 @@ it("bounds failed retries by entry count and records how omitted events can be r
     // oxlint-disable-next-line eslint/no-await-in-loop -- Exercise successive events during an outage.
     await dispatch({
       data: { message: "retry text", sequence: index, turnId: "turn_1" },
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       meta: { ...restored.meta, id: String(index) },
       type: "message.received",
     });
@@ -213,23 +172,16 @@ it("bounds failed retries by entry count and records how omitted events can be r
     { omitted: 1, sessionId: "session" }
   );
   expect(mocks.recovery).toBe(true);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.recover.mockResolvedValue(undefined);
   await dispatch(started);
   expect(mocks.recover).toHaveBeenLastCalledWith("owner", "branch", "session");
   expect(mocks.state).toEqual([]);
   expect(mocks.recovery).toBe(false);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-console, no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-console, no-magic-numbers --
- * no-console (#514): it("bounds pending text size and deduplicates replayed history") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): it("bounds pending text size and deduplicates replayed history") uses 256_001, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("bounds pending text size and deduplicates replayed history", async () => {
   const oversized: HookEvent = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...restored,
     data: {
       messages: [
@@ -251,17 +203,9 @@ it("bounds pending text size and deduplicates replayed history", async () => {
   await dispatch(restored);
   expect(mocks.state).toHaveLength(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-console, no-magic-numbers */
 
-/* oxlint-disable id-length, no-magic-numbers --
- * id-length (#506): it("automatically recovers a large restored history and the next message on a healthy uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-magic-numbers (#517): it("automatically recovers a large restored history and the next message on a healthy uses 256 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("automatically recovers a large restored history and the next message on a healthy database", async () => {
   await dispatch({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...restored,
     data: {
       messages: Array.from({ length: 300 }, (_, index) => ({
@@ -279,7 +223,6 @@ it("automatically recovers a large restored history and the next message on a he
       sequence: 1,
       turnId: "turn_1",
     },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     meta: { ...restored.meta, id: "new-message" },
     type: "message.received",
   });
@@ -287,5 +230,3 @@ it("automatically recovers a large restored history and the next message on a he
   expect(mocks.state).toEqual([]);
   expect(mocks.recovery).toBe(false);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable id-length, no-magic-numbers */

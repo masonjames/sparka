@@ -4,11 +4,7 @@ import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { Sources } from "@/components/sources";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable unicorn/max-nested-calls -- webSearchOutput: unicorn/max-nested-calls: keep this existing parse, validation, or rendering composition explicit at the feature boundary. */
 
 /**
  * The selected registry renderer validates its full tool schema. This shared
@@ -25,10 +21,6 @@ const webSearchOutput = z.object({
     })
   ),
 });
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WebSearch); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- WebSearch renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop -- WebSearch: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract */
 
 export const WebSearch = ({
   part,
@@ -55,9 +47,7 @@ export const WebSearch = ({
           url: string;
         }>[];
       }>
-    ) =>
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      search.results.map((source) => ({ ...source, source: "web" as const }))
+    ) => search.results.map((source) => ({ ...source, source: "web" as const }))
   );
   const uniqueSources = [
     ...new Map(
@@ -81,6 +71,3 @@ export const WebSearch = ({
     </div>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop */

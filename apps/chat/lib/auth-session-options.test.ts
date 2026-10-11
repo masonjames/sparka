@@ -12,14 +12,12 @@ const local = {
 describe("development auth isolation", () => {
   it("isolates ports and databases while keeping restarts stable", () => {
     const first = authSessionOptions(local);
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of local rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     expect(authSessionOptions({ ...local })).toEqual(first);
     for (const change of [
       { baseUrl: "http://localhost:3010" },
       { databaseUrl: "postgres://dev:secret@localhost:5432/other" },
     ]) {
       expect(
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing local own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing change own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         authSessionOptions({ ...local, ...change }).advanced.cookiePrefix
       ).not.toBe(first.advanced.cookiePrefix);
     }
@@ -30,7 +28,6 @@ describe("development auth isolation", () => {
   it("does not log out a worktree when only its database password rotates", () => {
     expect(
       authSessionOptions({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing local own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...local,
         databaseUrl: local.databaseUrl.replace("secret", "rotated"),
       })
@@ -38,7 +35,6 @@ describe("development auth isolation", () => {
   });
 
   it("preserves production cookies and caching", () => {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing local own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(authSessionOptions({ ...local, development: false })).toEqual({
       advanced: { cookiePrefix: "better-auth" },
       session: { cookieCache: { enabled: true, maxAge: 300 } },
@@ -46,13 +42,9 @@ describe("development auth isolation", () => {
   });
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep makeApp's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 const makeApp = (baseUrl: string, databaseUrl: string) => {
   const data = { account: [], session: [], user: [], verification: [] };
   const auth = betterAuth({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing authSessionOptions({ baseUrl, databaseUrl, development: true }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...authSessionOptions({ baseUrl, databaseUrl, development: true }),
     baseURL: baseUrl,
     database: memoryAdapter(data),
@@ -62,12 +54,7 @@ const makeApp = (baseUrl: string, databaseUrl: string) => {
   });
   return { auth, data };
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve signup's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): signup uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 const signup = async (
   auth: Readonly<Pick<ReturnType<typeof makeApp>["auth"], "handler">>,
   origin: string,
@@ -90,13 +77,7 @@ const signup = async (
     .map((cookie) => cookie.split(";")[0])
     .join("; ");
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): it("two local apps sharing a browser cookie jar retain separate users") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("two local apps sharing a browser cookie jar retain separate users", async () => {
   const first = makeApp(local.baseUrl, local.databaseUrl);
   const secondUrl = "http://localhost:3010";
@@ -123,5 +104,3 @@ it("two local apps sharing a browser cookie jar retain separate users", async ()
     user: { name: "second" },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */

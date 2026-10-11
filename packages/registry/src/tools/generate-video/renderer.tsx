@@ -9,9 +9,6 @@ type GenerateVideoTool = ToolRendererProps<
   typeof generateVideoInput,
   typeof generateVideoResult
 >["tool"];
-/* oxlint-disable react/jsx-no-literals -- GenerateVideoView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 
 const GenerateVideoView = ({
   tool,
@@ -22,11 +19,7 @@ const GenerateVideoView = ({
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
           Generating video: &quot;
-          {
-            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from tool.input; preserve one receiver evaluation, skipped accesses and the existing "Preparing prompt…" fallback. */
-            tool.input?.prompt ?? "Preparing prompt…"
-            /* oxlint-enable oxc/no-optional-chaining */
-          }
+          {tool.input?.prompt ?? "Preparing prompt…"}
           &quot;
         </div>
       </div>
@@ -54,14 +47,9 @@ const GenerateVideoView = ({
     </div>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GenerateVideoRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable react/jsx-no-literals */
-
-/* oxlint-enable react/only-export-components */
 
 export const GenerateVideoRenderer = defineToolRenderer({
   inputSchema: generateVideoInput,
   outputSchema: generateVideoResult,
   render: GenerateVideoView,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -6,10 +6,6 @@ import {
   sortSocialAuthProvidersByLastUsed,
 } from "./social-auth";
 
-/* oxlint-disable no-undefined, unicorn/no-null --
- * no-undefined (#519): describe("isSocialAuthProvider") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): describe("isSocialAuthProvider") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 describe("isSocialAuthProvider", () => {
   it("accepts configured social auth providers", () => {
     expect(isSocialAuthProvider("google")).toBe(true);
@@ -20,10 +16,10 @@ describe("isSocialAuthProvider", () => {
   it("rejects unknown provider ids", () => {
     expect(isSocialAuthProvider("discord")).toBe(false);
     expect(isSocialAuthProvider(null)).toBe(false);
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Exercise undefined through the validator's required input argument.
     expect(isSocialAuthProvider(undefined)).toBe(false);
   });
 });
-/* oxlint-enable no-undefined, unicorn/no-null */
 
 describe("sortSocialAuthProvidersByLastUsed", () => {
   const providers = [

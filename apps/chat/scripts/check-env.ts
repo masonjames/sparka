@@ -1,8 +1,4 @@
 #!/usr/bin/env bun
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
- * import/max-dependencies (#524): This command explicitly inspects installed integrations and their environment requirements; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This server/tooling module uses Node fs and path APIs to read installed files and resolve the application root.
- */
 /**
  * Build-time config validation script.
  * Validates environment requirements for installed integrations.
@@ -33,7 +29,6 @@ import { config as loadEnvConfig } from "dotenv";
 import path from "node:path";
 import { resolveEveEnvironment } from "@/lib/eve/environment";
 import { z } from "zod";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
@@ -64,7 +59,6 @@ const toolEnvironmentSchema = z.object({
   envRequirements: z.array(toolEnvironmentRequirementSchema).default([]),
 });
 
-/* oxlint-disable unicorn/no-null -- Keep null as the explicit no-error result used by the caller's conditional spread. */
 const validateGatewayKey = (
   env: Readonly<NodeJS.ProcessEnv>
 ): ValidationError | null => {
@@ -106,7 +100,6 @@ const validateStorage = (
   }
   return null;
 };
-/* oxlint-enable unicorn/no-null */
 
 const validateAuthentication = (
   env: Readonly<NodeJS.ProcessEnv>
@@ -143,7 +136,6 @@ const validateAuthentication = (
 
   return errors;
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateInstalledItems's awaited sequencing and rejected-Promise behavior. */
 
 const validateInstalledItems = async (
   env: Readonly<NodeJS.ProcessEnv>,
@@ -185,7 +177,6 @@ const validateInstalledItems = async (
         }
         return [
           {
-            // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
             missing: [missing],
           },
@@ -196,9 +187,7 @@ const validateInstalledItems = async (
 
   return toolErrors.flat();
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable unicorn/no-null -- Keep null as the explicit no-error result used by the caller's conditional spread. */
 const validateBaseUrl = (
   env: Readonly<NodeJS.ProcessEnv>
 ): ValidationError | null => {
@@ -221,7 +210,6 @@ const checkGatewaySnapshot = (): string | null => {
   }
   return null;
 };
-/* oxlint-enable unicorn/no-null */
 
 const validateDatabaseEnvironment = (
   env: Readonly<NodeJS.ProcessEnv>
@@ -276,20 +264,15 @@ const validateConfiguredEnvironment = (
   return [
     ...eveErrors,
     ...databaseErrors,
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(baseUrlError ? [baseUrlError] : []),
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(gatewayError ? [gatewayError] : []),
-    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(storageError ? [storageError] : []),
   ];
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkEnv's awaited sequencing and rejected-Promise behavior. */
 const checkEnv = async (): Promise<void> => {
   const { env } = process;
   if (isPlaywrightTestEnvironment(env)) {
-    // oxlint-disable-next-line no-console -- This CLI reports its explicit Playwright validation bypass.
     console.log(
       "✅ Skipping optional environment validation in Playwright test mode"
     );
@@ -312,14 +295,10 @@ const checkEnv = async (): Promise<void> => {
   }
   reportEnvironmentSuccess(checkGatewaySnapshot());
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-console -- This CLI reports unexpected setup exceptions through console.error. */
 try {
-  // oxlint-disable-next-line node/no-top-level-await -- This setup executable awaits environment validation so its existing catch supplies the failure exit status.
   await checkEnv();
 } catch (error) {
   console.error(error);
   process.exit(VALIDATION_FAILURE_EXIT_STATUS);
 }
-/* oxlint-enable no-console */

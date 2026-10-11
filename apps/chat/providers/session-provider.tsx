@@ -21,24 +21,13 @@ interface SessionContextValue {
   isPending: boolean;
 }
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): SessionContext uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 const SessionContext = createContext<SessionContextValue | undefined>(
   undefined
 );
-/* oxlint-enable no-undefined */
-
-/* oxlint-disable unicorn/no-null -- deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): SessionSeedContext preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
 const SessionSeedContext = createContext<
   ((session: ReadonlyNativeSurface<Session | null>) => void) | null
 >(null);
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-disable no-undefined, unicorn/no-null -- no-undefined (#519): SessionProvider uses undefined for absent or optional values; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): SessionProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
 const SessionProvider = ({
   children,
@@ -57,7 +46,6 @@ const SessionProvider = ({
   const isSeeded = serverSession !== undefined;
 
   const value = useMemo<SessionContextValue>(() => {
-    // oxlint-disable-next-line no-ternary -- Keep seededSession as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const seededSession = isSeeded ? serverSession : null;
 
     // Unknown until the server tree seeds us or the client session settles.
@@ -72,7 +60,6 @@ const SessionProvider = ({
     // seed while the client fetch is still pending or failed (e.g. blocked
     // get-session / trustedOrigins mismatch).
     const effective =
-      // oxlint-disable-next-line no-ternary -- Keep effective as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       isClientPending || (clientError !== null && clientError !== undefined)
         ? (clientSession ?? seededSession)
         : clientSession;
@@ -92,10 +79,6 @@ const SessionProvider = ({
     </SessionSeedContext.Provider>
   );
 };
-/* oxlint-enable no-undefined, unicorn/no-null */
-
-/* oxlint-disable react/no-multi-comp, unicorn/no-null -- react/no-multi-comp (#552): SessionSeed keeps related render components together; extraction changes component, state, and layout boundaries.
-unicorn/no-null (#570): SessionSeed preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 
 const SessionSeed = ({
   session,
@@ -112,7 +95,6 @@ const SessionSeed = ({
 
   return null;
 };
-/* oxlint-enable react/no-multi-comp, unicorn/no-null */
 
 const useSession = (): SessionContextValue => {
   const ctx = useContext(SessionContext);
@@ -122,8 +104,4 @@ const useSession = (): SessionContextValue => {
   return ctx;
 };
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (SessionProvider, SessionSeed, useSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/only-export-components -- #620: Consumers import SessionProvider, SessionSeed, useSession from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { SessionProvider, SessionSeed, useSession };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/only-export-components */

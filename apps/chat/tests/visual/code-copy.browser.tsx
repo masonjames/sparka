@@ -1,4 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt's module grouping conflicts with sort-imports binding-syntax ordering. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
@@ -10,7 +9,6 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "@/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
 
 class CopyBoundary extends React.Component<
   { readonly children: React.ReactNode },
@@ -25,15 +23,12 @@ class CopyBoundary extends React.Component<
   }
   public override render(): React.ReactNode {
     if (this.state.failed) {
-      // oxlint-disable-next-line react/jsx-no-literals -- The boundary renders fixed accessible fixture copy without a translation API.
       return <p role="alert">Copy callback failed.</p>;
     }
     return this.props.children;
   }
 }
 
-/* oxlint-disable oxc/no-async-await -- Await clipboard completion, consumer callbacks, React commits and fixture cleanup. */
-/* oxlint-disable max-statements -- This scenario verifies the clipboard, asynchronous consumer rejection and copied-indicator timeout together. */
 test("async copy failures reach onError and still reset the copied indicator", async () => {
   const callbackError = new Error("Copy consumer failed");
   const onCopy = vi.fn<() => Promise<void>>().mockRejectedValue(callbackError);
@@ -56,7 +51,9 @@ test("async copy failures reach onError and still reset the copied indicator", a
     await act(async () => {
       await page.getByRole("button", { name: "Copy code" }).click();
     });
-    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(callbackError));
+    await vi.waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(callbackError);
+    });
     expect(clipboard).toHaveBeenCalledOnce();
     await expect
       .poll(() =>
@@ -73,9 +70,7 @@ test("async copy failures reach onError and still reset the copied indicator", a
     await unmount(fixture);
   }
 });
-/* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements -- One callback ownership scenario verifies API failure, deferred error completion and its React boundary. */
 test.each(["clipboard", "unavailable"])(
   "%s failures await onError and reach the React boundary if it rejects",
   async (mode) => {
@@ -93,7 +88,6 @@ test.each(["clipboard", "unavailable"])(
         new Proxy(originalNavigator, {
           get(target: ReadonlyNativeSurface<Navigator>, key): unknown {
             if (key === "clipboard") {
-              // oxlint-disable-next-line no-undefined -- Simulate an absent browser Clipboard API.
               return undefined;
             }
             return Reflect.get(target, key, target);
@@ -114,7 +108,9 @@ test.each(["clipboard", "unavailable"])(
       await act(async () => {
         await page.getByRole("button", { name: "Copy code" }).click();
       });
-      await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce());
+      await vi.waitFor(() => {
+        expect(onError).toHaveBeenCalledOnce();
+      });
       await act(async () => {
         callback.reject(new Error("Error consumer failed"));
         await Promise.resolve();
@@ -129,6 +125,3 @@ test.each(["clipboard", "unavailable"])(
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
-
-/* oxlint-enable max-statements */

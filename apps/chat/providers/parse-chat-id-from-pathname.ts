@@ -43,10 +43,6 @@ const PROJECT_ROUTE_PATTERN =
   /^\/project\/(?<projectId>[^/]+)(?:\/chat\/(?<chatId>[^/]+))?$/u;
 const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): parseChatIdFromPathname keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): parseChatIdFromPathname preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * Parses a Next.js pathname into its chat route shape.
  * Unknown paths remain passthrough routes and do not become draft chats.
@@ -56,7 +52,6 @@ const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 const parseChatIdFromPathname = (
   pathname: string | null
 ): ParsedChatIdFromPathname => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading shareId from pathname.match(...).groups; read groups from pathname.match(...); read match from pathname; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.shareId;
   if (typeof shareId === "string" && shareId !== "") {
     return {
@@ -67,9 +62,7 @@ const parseChatIdFromPathname = (
     };
   }
 
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from pathname.match(...); read match from pathname; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const projectGroups = pathname?.match(PROJECT_ROUTE_PATTERN)?.groups;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the original optional group lookup before the branch and its separate destructuring read inside it.
   const matchedProjectId = projectGroups?.projectId;
   if (
     projectGroups &&
@@ -83,7 +76,6 @@ const parseChatIdFromPathname = (
     return { id: null, projectId, source: "project", type: "projectHome" };
   }
 
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from pathname.match(...).groups; read groups from pathname.match(...); read match from pathname; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const chatId = pathname?.match(CHAT_ROUTE_PATTERN)?.groups?.chatId;
   if (typeof chatId === "string" && chatId !== "") {
     return { id: chatId, projectId: null, source: "chat", type: "chat" };
@@ -95,10 +87,5 @@ const parseChatIdFromPathname = (
 
   return { id: null, projectId: null, source: null, type: "passthrough" };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (parseChatIdFromPathname); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable max-statements, unicorn/no-null */
 export { parseChatIdFromPathname };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ChatRouteSource, ParsedChatIdFromPathname); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ChatRouteSource, ParsedChatIdFromPathname };
-/* oxlint-enable import/no-named-export */

@@ -47,11 +47,9 @@ type ReadonlyEveMessage = Readonly<Omit<EveMessage, "parts" | "metadata">> & {
   readonly metadata?: ReadonlyEveMessageMetadata;
 };
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ReadonlyEveMessageInput, ReadonlyEveMessagePart); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   ReadonlyEveMessage,
   ReadonlyEveMessageInput,
   ReadonlyEveMessageMetadata,
   ReadonlyEveMessagePart,
 };
-/* oxlint-enable import/no-named-export */

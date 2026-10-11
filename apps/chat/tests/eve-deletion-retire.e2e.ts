@@ -1,29 +1,15 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, max-lines --
- * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import { execFile } from "node:child_process";; import { promisify } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * max-lines (#511): The narrow read-only event and response reader annotations push this file’s comment-inclusive line count over the configured limit; keeping these focused scenarios together preserves their lifecycle evidence.
- */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
 import type { Response } from "@playwright/test";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
-/* oxlint-enable sort-imports */
 import postgres from "postgres";
 import { z } from "zod";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only readonly event boundary separate from runtime bindings without changing module evaluation order.
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
-/* oxlint-enable sort-imports */
 import { saveEveDocumentRevision } from "../lib/db/eve-documents";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChat,
   eveConversation,
@@ -32,45 +18,27 @@ import {
   eveDocumentRevision,
   userCredit,
 } from "../lib/db/schema";
-/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
-/* oxlint-enable sort-imports */
 import { purgeEveNativeSession } from "../lib/eve/lifecycle/postgres/eve-native-purge";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { prepareEveFamilyDeletion } from "../lib/eve/prepare-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
 } from "../lib/eve/retire-session";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Retirement acceptance requires local Postgres.");
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/max-nested-calls, unicorn/no-null --
- * max-lines-per-function (#510): test("internal retirement settles usage after access revocation and is retryable") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("internal retirement settles usage after access revocation and is retryable") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("internal retirement settles usage after access revocation and is retryable") uses 404, 1, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("internal retirement settles usage after access revocation and is retryable")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * typescript/promise-function-async (#606): test("internal retirement settles usage after access revocation and is retryable") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("internal retirement settles usage after access revocation and is retryable") intentionally keeps the existing falsy-value behavior of identity; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): test("internal retirement settles usage after access revocation and is retryable")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- * unicorn/max-nested-calls (#568): test("internal retirement settles usage after access revocation and is retryable") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("internal retirement settles usage after access revocation and is retryable") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto() on the original Page/locator receiver to change the live browser or route state.
 test("internal retirement settles usage after access revocation and is retryable", async ({
   page,
 }) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
@@ -122,9 +90,7 @@ test("internal retirement settles usage after access revocation and is retryable
     turnIndex: 0,
   });
   const family = await retireEveFamilyForDeletion(owner, binding.id);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.rootId).toBe(identity.chatId);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversations from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.conversations).toEqual([
     { id: binding.id, sessionId: binding.sessionId },
   ]);
@@ -152,7 +118,6 @@ test("internal retirement settles usage after access revocation and is retryable
     .where(eq(userCredit.userId, owner));
   expect(after.credits).toBe(before.credits);
   const prepared = await prepareEveFamilyDeletion(owner, binding.id);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading runIds from prepared; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(prepared?.runIds).toContain(binding.sessionId);
   expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
   const purgeResources = async () => {
@@ -237,7 +202,6 @@ test("internal retirement settles usage after access revocation and is retryable
     await native.end();
   }
   // Remove only this retired test binding; this is not a production purge assertion.
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.delete() to perform the native database transaction/write operation.
   await db.transaction(async (tx) => {
     await tx
       .delete(eveDocumentCheckpointEntry)
@@ -249,26 +213,16 @@ test("internal retirement settles usage after access revocation and is retryable
     await tx.delete(eveChat).where(eq(eveChat.id, identity.chatId));
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("sidebar deletion retires a fresh conversation and reports its durable tombstone keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("sidebar deletion retires a fresh conversation and reports its durable tombstone keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("sidebar deletion retires a fresh conversation and reports its durable tombstone uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/promise-function-async (#606): test("sidebar deletion retires a fresh conversation and reports its durable tombstone preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("sidebar deletion retires a fresh conversation and reports its durable tombstone intentionally keeps the existing falsy-value behavior of identity; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Page fixture calls page.route(), page.goto(), locator.click() on the original Page/locator receiver to change the live browser or route state.
 test("sidebar deletion retires a fresh conversation and reports its durable tombstone", async ({
   page,
 }) => {
-  await page.route(
-    "https://unpkg.com/react-scan/**",
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Playwright Route callback calls route.abort() to resolve the intercepted live request through the original native Route receiver.
-    (route) => route.abort()
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
@@ -364,5 +318,4 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     await native.end();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions */

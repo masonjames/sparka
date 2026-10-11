@@ -3,9 +3,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { readGuestCredential } from "@/lib/eve/disposable-guest";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { POST } from "./route";
-/* oxlint-enable sort-imports */
 
 const HTTP_STATUS = {
   badGateway: 502,
@@ -23,13 +21,13 @@ type ReadonlyFetchInit = Omit<ReadonlyNativeSurface<RequestInit>, "headers"> & {
 };
 
 const mocks = vi.hoisted(() => ({
-  fetch: vi.fn<
-    (
-      input: ReadonlyNativeSurface<RequestInfo | URL>,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native HeadersInit includes mutable tuple arrays accepted by new Headers; recursively readonly tuples fail the constructor type contract (three TS2345 controls). Preserve the captured native union without copying or casting.
-      init: ReadonlyFetchInit
-    ) => Response | Promise<Response>
-  >(),
+  fetch:
+    vi.fn<
+      (
+        input: ReadonlyNativeSurface<RequestInfo | URL>,
+        init: ReadonlyFetchInit
+      ) => Response | Promise<Response>
+    >(),
   model: vi.fn(),
 }));
 const settings = vi.hoisted(
@@ -76,7 +74,6 @@ const request = (body: unknown, origin = "https://chat.example"): Request =>
     headers: { origin },
     method: "POST",
   });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("creates a native session without application state, returning only its scoped credential", async () => {
   const response = await POST(request({ modelId: "guest-model" }));
@@ -96,13 +93,9 @@ test("creates a native session without application state, returning only its sco
       "Bearer ".length
     )
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from creation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(creation?.sessionId).toBeUndefined();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from creation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(creation?.ownerId).toBe(readGuestCredential(body.credential)?.ownerId);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("rejects cross-origin and unauthorized model creation before calling EVE", async () => {
   const crossOrigin = await POST(
@@ -117,10 +110,7 @@ test("rejects cross-origin and unauthorized model creation before calling EVE", 
   expect(arbitrarySession.status).toBe(HTTP_STATUS.badRequest);
   expect(mocks.fetch).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable unicorn/no-null -- Response(null) is the native empty-body contract used by the simulated worker failure. */
 test("failed native creation never issues a browser credential", async () => {
   mocks.fetch.mockResolvedValue(
     new Response(null, { status: HTTP_STATUS.internalServerError })
@@ -129,9 +119,6 @@ test("failed native creation never issues a browser credential", async () => {
   expect(response.status).toBe(HTTP_STATUS.badGateway);
   expect(await response.json()).not.toHaveProperty("credential");
 });
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("protected custom-domain bootstrap uses this deployment rather than a separate registered worker", async () => {
   settings.VERCEL_URL = "deployment.vercel.app";
@@ -144,8 +131,6 @@ test("protected custom-domain bootstrap uses this deployment rather than a separ
     "deployment-bypass-test"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("non-Vercel guest bootstrap stays on the application origin without leaking bypass credentials", async () => {
   await POST(request({ modelId: "guest-model" }));
   const [[url, init]] = mocks.fetch.mock.calls;
@@ -154,10 +139,7 @@ test("non-Vercel guest bootstrap stays on the application origin without leaking
     new Headers(init.headers).get("x-vercel-protection-bypass")
   ).toBeNull();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- Preserve the absent deployment URL used to verify host selection. */
 test("never sends a creation credential to a request-derived host", async () => {
   settings.APP_URL = undefined;
   const response = await POST(
@@ -170,5 +152,3 @@ test("never sends a creation credential to a request-derived host", async () => 
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(mocks.fetch).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined */
-/* oxlint-enable oxc/no-async-await */

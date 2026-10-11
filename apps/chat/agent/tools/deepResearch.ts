@@ -3,7 +3,6 @@ import { executeEveResearch } from "@/tools/chatjs/deep-research/workflow";
 import { researchInput } from "@/tools/chatjs/deep-research/schemas";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
 export default defineWorkflowTool({
   availableInSubagents: false,
   description:
@@ -12,4 +11,3 @@ export default defineWorkflowTool({
   inputSchema: researchInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable import/no-default-export */

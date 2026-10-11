@@ -11,12 +11,10 @@ import type {
 } from "./image-generation";
 import type { ToolUsage } from "@/lib/eve/tool-usage";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-// oxlint-disable-next-line sort-imports -- Keep generated-files database/environment initialization before tool-cost loads active-gateway/Pino; sorting createEveToolCost first reverses their validation and logger setup.
 import { createEveToolCost } from "@/lib/eve/tool-cost";
 import { createModuleLogger } from "@/lib/logger";
 import { eveToolImageContext } from "@/lib/eve/tool-image-context";
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
-// oxlint-disable-next-line sort-imports -- Keep generated-files/tool-cost initialization before image-generation loads AI/file dependencies and creates its logger; moving this multiple-binding import first changes host initialization order.
 import {
   runGenerateImageMultimodal,
   runGenerateImageTraditional,
@@ -49,7 +47,6 @@ const createImageRequest = (
 ): ImageRequest => {
   const costAccumulator = createEveToolCost(usage);
   const uploadFile = eveGeneratedFileUploader(context);
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeFile's awaited sequencing and rejected-Promise behavior. */
   // A provider generation followed by storage failure is an explicit domain result.
   const storeFile: ImageStoreFile = async (filename, body, mediaType) => {
     try {
@@ -58,18 +55,15 @@ const createImageRequest = (
       return usage.fail();
     }
   };
-  /* oxlint-enable oxc/no-async-await */
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const selected = context.session.auth.current?.attributes.modelId;
+  const { current } = context.session.auth;
+  const selected = current && current.attributes.modelId;
   const selectedModel =
-    // oxlint-disable-next-line no-ternary -- Keep selectedModel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof selected === "string" ? selected : ABSENT_DIAGNOSTIC_VALUE;
   const { attachments, lastGeneratedImage } = eveToolImageContext.get();
   const startMs = Date.now();
   const imageParts = attachments.filter(
     (part: Readonly<{ type: string; mediaType?: string }>): boolean =>
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from part.mediaType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      part.type === "file" && part.mediaType?.startsWith("image/") === true
+      part.type === "file" && (part.mediaType ?? "").startsWith("image/")
   );
   return {
     options: {
@@ -78,7 +72,6 @@ const createImageRequest = (
       imageParts,
       lastGeneratedImage,
       mode:
-        // oxlint-disable-next-line no-ternary -- Keep mode as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         imageParts.length > NO_IMAGE_ATTACHMENTS || lastGeneratedImage !== null
           ? "edit"
           : "generate",
@@ -90,7 +83,6 @@ const createImageRequest = (
     selectedModel,
   };
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeImageRequest's awaited sequencing and rejected-Promise behavior. */
 const executeImageRequest = async (
   request: Readonly<ImageRequest>
 ): Promise<GeneratedImageResult> => {
@@ -123,7 +115,6 @@ const executeImageRequest = async (
         mode: options.mode,
         ms: Date.now() - options.startMs,
         selectedModel,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getErrorDebugInfo(resolvedError) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...getErrorDebugInfo(resolvedError),
       },
       "generateImage: failure"
@@ -131,8 +122,6 @@ const executeImageRequest = async (
     throw resolvedError;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runImageRequest's awaited sequencing and rejected-Promise behavior. */
 const runImageRequest = async (
   prompt: string,
   context: Readonly<ImageRequestContext>
@@ -144,10 +133,5 @@ const runImageRequest = async (
     async (usage: Readonly<ToolUsage>) =>
       await executeImageRequest(createImageRequest(prompt, context, usage))
   );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (runImageRequest); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
 export { runImageRequest };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ImageRequestContext); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ImageRequestContext };
-/* oxlint-enable import/no-named-export */

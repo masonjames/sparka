@@ -19,7 +19,6 @@ vi.mock("../../tools/chatjs/code-executor", () => ({
     if (mocks.settings.installed) {
       return mocks.execute;
     }
-    // oxlint-disable-next-line no-undefined -- The simulated unavailable installed service must return the original absent result.
     return undefined;
   },
 }));
@@ -72,14 +71,9 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await -- Drain the native async generator before checking the saved revision, execution gate and usage receipt. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("executes owned saved source once, exposing only execution context and preservin uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
   const context = testToolContext();
   const results = await Array.fromAsync(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     executeEveCodeDocument({ ...input, code: "model replacement" }, context)
   );
   expect(mocks.read).toHaveBeenCalledWith(
@@ -98,14 +92,10 @@ test("executes owned saved source once, exposing only execution context and pres
   );
   expect(results).toHaveLength(1);
   expect(results[0]).toMatchObject({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...input, code: "print(42)", message: "42" },
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Drain the native async generator before checking the saved revision, execution gate and usage receipt. */
-/* oxlint-enable no-magic-numbers */
 
 test.each([
   "allowed",
@@ -118,13 +108,9 @@ test.each([
   await expect(Array.fromAsync(execution)).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Drain the native async generator before checking the saved revision, execution gate and usage receipt. */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): test("never executes a revision outside the resolved conversation") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("never executes a revision outside the resolved conversation", async () => {
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   mocks.read.mockResolvedValue(undefined);
   const execution = executeEveCodeDocument(input, testToolContext());
   await expect(Array.fromAsync(execution)).rejects.toThrow(
@@ -132,13 +118,7 @@ test("never executes a revision outside the resolved conversation", async () => 
   );
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Drain the native async generator before checking the saved revision, execution gate and usage receipt. */
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): test("cancellation prevents execution and an error receipt is forwarded once") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("cancellation prevents execution and an error receipt is forwarded once", async () => {
   const controller = new AbortController();
   controller.abort();
@@ -162,5 +142,3 @@ test("cancellation prevents execution and an error receipt is forwarded once", a
   );
   expect(results).toEqual([receipt]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */

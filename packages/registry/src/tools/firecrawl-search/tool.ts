@@ -2,10 +2,8 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { defineTool } from "eve/tools";
 import { env } from "@/lib/env";
-// oxlint-disable-next-line sort-imports -- Keep createEnv/gatewayEnv validation before logger.ts constructs its Pino singleton and captures process.env.NODE_ENV.
 import { createModuleLogger } from "@/lib/logger";
 import { executeWithResearchProgress } from "@/lib/eve/research-progress";
-// oxlint-disable-next-line sort-imports -- Keep EVE definition-source registry and env validation before search-presentation, which imports logger.ts and eagerly creates the Pino host logger; native Multiple-before-Single grouping would move it ahead of those initializers.
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
@@ -31,7 +29,6 @@ type ResearchExecution = Readonly<{
 }>;
 
 const FIRECRAWL_SEARCH_TIMEOUT_MS = 15_000;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchFirecrawl's awaited sequencing and rejected-Promise behavior. */
 const searchFirecrawl = async ({
   query,
   maxResults,
@@ -58,9 +55,6 @@ const searchFirecrawl = async ({
     })
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (webSearch); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve webSearch's awaited sequencing and rejected-Promise behavior. */
 export const webSearch = defineTool({
   description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
 
@@ -103,5 +97,3 @@ Avoid:
   inputSchema: webSearchInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

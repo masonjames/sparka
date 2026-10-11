@@ -13,9 +13,6 @@ const Caption = ({
   </div>
 );
 
-/* oxlint-disable react/no-multi-comp -- Pointer: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/id-length -- Pointer: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-
 const Pointer = ({
   x,
   y,
@@ -38,14 +35,6 @@ const Pointer = ({
   </svg>
 );
 
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- ClickPulse: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable eslint/id-length -- ClickPulse: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable eslint/no-magic-numbers -- ClickPulse: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-
-/* oxlint-disable unicorn/no-null -- ClickPulse: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const ClickPulse = ({
   age,
   x,
@@ -70,11 +59,5 @@ const ClickPulse = ({
   }
   return null;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Caption, ClickPulse, Pointer); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable react/no-multi-comp */
 export { Caption, ClickPulse, Pointer };
-/* oxlint-enable import/no-named-export */

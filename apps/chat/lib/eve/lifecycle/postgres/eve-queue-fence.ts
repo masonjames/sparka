@@ -57,8 +57,6 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
   on graphile_worker._private_jobs for each row execute function workflow.eve_guard_queue();
 `;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (installEvePostgresQueueFence); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installEvePostgresQueueFence's awaited sequencing and rejected-Promise behavior. */
 /**
  * Explicit provider migration after installEvePostgresResourceFence. Fences enqueues and replacements, leaving worker bookkeeping and existing job removal available.
  *
@@ -82,5 +80,3 @@ export const installEvePostgresQueueFence = async (
     }
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */

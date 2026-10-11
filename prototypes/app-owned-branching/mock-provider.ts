@@ -1,5 +1,4 @@
 import type { SnapshotProvider, SqlConnection, SqlQueries } from "./model";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (mockProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- Postgres returns an empty row array for missing records, while its RowList iterator declares nonnullable elements; preserve the missing-row guards and stopped-VM check. */
 /**
@@ -8,7 +7,6 @@ import type { SnapshotProvider, SqlConnection, SqlQueries } from "./model";
  * @returns {SnapshotProvider} A replay-safe snapshot provider for the branching prototype.
  */
 export const mockProvider = (sql: SqlConnection): SnapshotProvider => ({
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
   async capture(key, sandbox) {
     await sql.begin(async (tx: SqlQueries) => {
       const [vm] = await tx<
@@ -30,8 +28,6 @@ export const mockProvider = (sql: SqlConnection): SnapshotProvider => ({
       await tx`update provider_vm set stopped=true where id=${sandbox}`;
     });
   },
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restore's awaited sequencing and rejected-Promise behavior. */
   async restore(key, sandbox) {
     await sql.begin(async (tx: SqlQueries) => {
       const [snapshot] = await tx<
@@ -43,7 +39,5 @@ export const mockProvider = (sql: SqlConnection): SnapshotProvider => ({
       await tx`insert into provider_vm (id,files) values (${sandbox},${tx.json(snapshot.files)}) on conflict do nothing`;
     });
   },
-  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/strict-boolean-expressions */

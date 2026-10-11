@@ -119,22 +119,15 @@ const beats: readonly Readonly<{
   },
 ];
 
-/* oxlint-disable eslint/no-magic-numbers -- clamp: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const clamp = (value: number): number => Math.max(0, Math.min(1, value));
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- ease: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const ease = (value: number): number => {
   const clamped = clamp(value);
   return clamped * clamped * (3 - 2 * clamped);
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- textAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const textAt = (text: string, fraction: number): string =>
   text.slice(0, Math.floor(clamp(fraction) * text.length));
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- editTextAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   let prefixLength = 0;
   while (
@@ -151,9 +144,7 @@ const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   }
   return `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- noteAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const noteAt = (timeSeconds: number): string => {
   let note = "";
   if (timeSeconds >= 22) {
@@ -165,10 +156,7 @@ const noteAt = (timeSeconds: number): string => {
   }
   return note;
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- stateAt calculates the ordered branch, edit and follow-up timeline together and returns one StoryState; retain this local scene-state boundary. */
-/* oxlint-disable eslint/no-magic-numbers -- stateAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 const stateAt = (time: number, content: LaunchScript = script): StoryState => {
   let selected: PathId = "city";
   if (time >= 12.2 && time < 19) {
@@ -185,18 +173,14 @@ const stateAt = (time: number, content: LaunchScript = script): StoryState => {
   const following = time >= 24 && time < 41.5;
   const family = time >= 24 && time < 33;
   const budget = time >= 34;
-  // oxlint-disable-next-line no-ternary -- Keep followup as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const followup = family ? content.family : content.budget;
-  // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const progress = clamp((time - (family ? 24.6 : 34.6)) / 2.4);
   const texts: Readonly<Record<PathId, string>> = {
     city: textAt(content.city.text, (time - 3.5) / 3),
     food: textAt(content.food.text, (time - 12.2) / 10),
   };
   const states: Readonly<Record<PathId, ReplyState>> = {
-    // oxlint-disable-next-line no-ternary -- Keep city as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     city: time < 6.5 ? "streaming" : "complete",
-    // oxlint-disable-next-line no-ternary -- Keep food as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     food: time < 22.2 ? "streaming" : "complete",
   };
   return {
@@ -208,16 +192,13 @@ const stateAt = (time: number, content: LaunchScript = script): StoryState => {
     family,
     following: following && (family || budget),
     followup: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing followup own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...followup,
-      // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       state: progress < 1 ? ("streaming" as const) : ("complete" as const),
       text: textAt(followup.reply, progress),
     },
     foodVisible: time >= 12.2,
     note: noteAt(time),
     portoAnswer: textAt(content.porto.reply, (time - 45) / 2.5),
-    // oxlint-disable-next-line no-ternary -- Keep portoState as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     portoState: time < 47.5 ? ("streaming" as const) : ("complete" as const),
     reveal: ease((time - 11.5) / 0.3),
     selected,
@@ -225,8 +206,6 @@ const stateAt = (time: number, content: LaunchScript = script): StoryState => {
     texts,
   };
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
 const captionBeats: readonly CaptionBeat[] = [
   { end: 11.5, label: "Try another answer", start: 10 },
@@ -236,8 +215,6 @@ const captionBeats: readonly CaptionBeat[] = [
   { end: 41.5, label: "Edit any message. Keep both versions.", start: 40 },
 ] as const;
 
-/* oxlint-disable eslint/no-magic-numbers -- presentationAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable unicorn/no-null -- presentationAt returns null when there is no active caption; ThreadsLaunch uses that absence in its render condition. */
 const presentationAt = (
   wallTime: number
 ):
@@ -246,11 +223,8 @@ const presentationAt = (
   // Cut only completed-reply holds; keep action and streaming speed unchanged.
   const time =
     wallTime +
-    // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (wallTime >= 8 ? 2 : 0) +
-    // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (wallTime >= 26.5 ? 2 : 0) +
-    // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (wallTime >= 34.5 ? 1.5 : 0);
   const beat = captionBeats.find(
     (captionBeat): boolean =>
@@ -267,12 +241,7 @@ const presentationAt = (
     opacity: Math.min(ease(elapsed / 0.15), ease((duration - elapsed) / 0.15)),
   };
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- cursorAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable unicorn/no-null -- cursorAt returns null outside cursor-movement intervals; ThreadsLaunch uses that absence in its render condition. */
-/* oxlint-disable eslint/id-length -- cursorAt preserves the public x/y coordinate fields consumed by Pointer and the still-rendered scene. */
 const cursorAt = (timeSeconds: number): { x: number; y: number } | null => {
   const moves: readonly CursorMove[] = [
     [11.5, 12.5, 0.2, 600, 740, 178, 716],
@@ -294,10 +263,6 @@ const cursorAt = (timeSeconds: number): { x: number; y: number } | null => {
     y: startY + (endY - startY) * progress,
   };
 };
-/* oxlint-enable eslint/id-length */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (beats, captionBeats, clamp, cursorAt, DURATION, ease, FPS, presentationAt, script, stateAt); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
 export {
   beats,
   captionBeats,
@@ -310,7 +275,4 @@ export {
   script,
   stateAt,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (LaunchScript, PathId, ReplyState, StoryState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { LaunchScript, PathId, ReplyState, StoryState };
-/* oxlint-enable import/no-named-export */

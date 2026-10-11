@@ -6,16 +6,11 @@ import type {
 import type { McpOAuthSession } from "@/lib/db/schema";
 import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable import/no-nodejs-modules -- The server provider uses native UUID generation for persisted OAuth state. */
 import { randomUUID } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Zod initializes its global schema registry before guarded-fetch loads Undici and installs its global dispatcher; retain this runtime initialization order. */
 import { mcpFetch } from "@/lib/ai/mcp/mcp-fetch";
-/* oxlint-enable sort-imports */
 import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
-/* oxlint-disable sort-imports -- The lock module creates its PostgreSQL pool before the queries barrel loads database/schema/logger initialization; sorting this group reverses those effects. */
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -26,7 +21,6 @@ import {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
-/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");
@@ -57,7 +51,6 @@ const storedTokensSchema = refreshTokensSchema
   .extend(authorizationServerPinShape)
   .loose();
 const storedClientInformationSchema = z.looseObject({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing authorizationServerPinShape own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...authorizationServerPinShape,
   application_type: z.enum(["native", "web"]).optional(),
   client_id: z.string(),
@@ -82,7 +75,6 @@ const storedClientInformationSchema = z.looseObject({
   tos_uri: oauthUrlSchema.optional(),
 });
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpOAuthClientProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 /**
  * PostgreSQL-backed OAuth client provider for MCP.
  * Implements the OAuthClientProvider interface from the AI SDK.
@@ -92,11 +84,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private currentOAuthState = "";
   private cachedAuthData: McpOAuthSession | undefined;
   private initialized = false;
-  // oxlint-disable-next-line eslint/no-magic-numbers -- Zero means no persisted refreshes are awaiting SDK acknowledgement; use the local count rather than an unrelated numeric alias.
   private committedRefreshes = 0;
-  // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
   private saveCodeVerifierPromise: Promise<void> | null = null;
-  // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
   private cachedAuthorizationUrl: URL | null = null;
   private readonly config: {
     mcpConnectorId: string;
@@ -110,10 +99,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     // Optional: adopt existing state (for callback reconciliation)
     state?: string;
   };
-  // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
   private saveClientInformationPromise: Promise<void> | null = null;
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The same caller config is retained and state is later reset; the SDK getter forwards its mutable clientMetadata alias. A deep readonly metadata projection fails assignment at this.config (TS2322: readonly redirect_uris versus string[]).
   public constructor(config: {
     readonly mcpConnectorId: string;
     readonly oauthClientId?: string | null;
@@ -129,10 +116,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     this.config = config;
   }
 
-  // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
   private initializationPromise: Promise<void> | null = null;
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeOAuth's awaited sequencing and rejected-Promise behavior. */
   // Prevent concurrent initialization - return existing promise if in progress
 
   private async initializeOAuth(): Promise<void> {
@@ -149,15 +134,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     try {
       await this.initializationPromise;
     } finally {
-      // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
       this.initializationPromise = null;
     }
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve doInitializeOAuth's awaited sequencing and rejected-Promise behavior. */
   // If state was provided (e.g., from callback), adopt it
 
-  /* oxlint-disable eslint/max-statements -- This initialization coordinates supplied-state reconciliation, authenticated-session reuse and fresh-session persistence; keep state publication on the existing sides of its database awaits. */
   private async doInitializeOAuth(): Promise<void> {
     if (typeof this.config.state === "string" && this.config.state !== "") {
       const session = await getSessionByState({ state: this.config.state });
@@ -176,8 +157,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authenticated = await getAuthenticatedSession({
       mcpConnectorId: this.config.mcpConnectorId,
     });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthenticatedSession is a database lookup that can yield no authenticated session; no-row result must fall through to existing state initialization.
-    if (authenticated?.serverUrl === this.config.serverUrl) {
+    if (authenticated && authenticated.serverUrl === this.config.serverUrl) {
       this.currentOAuthState = authenticated.state ?? "";
       this.cachedAuthData = authenticated;
       this.initialized = true;
@@ -192,16 +172,12 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     });
     this.initialized = true;
   }
-  /* oxlint-enable eslint/max-statements */
-  /* oxlint-enable oxc/no-async-await */
   private static decodeStoredCredentials<Result>(
     schema: Readonly<Pick<z.ZodType<Result>, "safeParse">>,
     value: unknown,
     kind: "client information" | "tokens"
   ): Result | undefined {
-    // oxlint-disable-next-line eslint/no-undefined -- Stored database credentials may be null or absent; both decode to the SDK's missing-credentials result.
     if (value === null || value === undefined) {
-      // oxlint-disable-next-line eslint/no-undefined -- The SDK represents unavailable client information or tokens with undefined; no replacement credential object is returned.
       return undefined;
     }
     const result = schema.safeParse(value);
@@ -214,15 +190,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return result.data;
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAuthData's awaited sequencing and rejected-Promise behavior. */
   private async getAuthData(): Promise<McpOAuthSession | undefined> {
     await this.initializeOAuth();
     return this.cachedAuthData;
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateAuthData's awaited sequencing and rejected-Promise behavior. */
   private async updateAuthData(
-    // oxlint-disable-next-line eslint/no-magic-numbers -- Select the existing database writer's first parameter contract by its tuple index; no runtime numeric value is introduced.
     data: Parameters<typeof updateSessionByState>[0]["updates"]
   ): Promise<McpOAuthSession> {
     if (!this.currentOAuthState) {
@@ -236,9 +208,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     return this.cachedAuthData;
   }
-  /* oxlint-enable oxc/no-async-await */
   public get redirectUrl(): string {
-    // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
     return this.config.clientMetadata.redirect_uris[0];
   }
 
@@ -250,7 +220,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return this.currentOAuthState;
   }
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve clientInformation's awaited sequencing and rejected-Promise behavior. */
   public async clientInformation(): Promise<
     OAuthClientInformationFull | undefined
   > {
@@ -260,17 +229,14 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.config.oauthClientId !== ""
     ) {
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing this.clientMetadata own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...this.clientMetadata,
         client_id: this.config.oauthClientId,
-        // oxlint-disable-next-line eslint/no-undefined -- A null configured client secret becomes an omitted optional SDK secret, preserving public-client registration.
         client_secret: this.config.oauthClientSecret ?? undefined,
       };
     }
     const clientInfo = McpOAuthClientProvider.decodeStoredCredentials(
       storedClientInformationSchema,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can return no session row; credential decoder intentionally receives undefined and returns no client information.
-      authData?.clientInfo,
+      (authData ?? {}).clientInfo,
       "client information"
     );
     // Security: if redirect URI changed and no tokens yet, invalidate
@@ -278,13 +244,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       clientInfo &&
       authData &&
       !authData.tokens &&
-      // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
       clientInfo.redirect_uris[0] !== this.redirectUrl
     ) {
       log.warn(
         {
           currentRedirectUri: this.redirectUrl,
-          // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
           savedRedirectUri: clientInfo.redirect_uris[0],
           state: authData.state,
         },
@@ -297,23 +261,17 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     return clientInfo;
   }
-  /* oxlint-enable oxc/no-async-await */
   // Keep other in-flight sessions intact while resetting this registration in order.
   private resetRegistration(): void {
-    // oxlint-disable-next-line eslint/no-undefined -- Discard the cached session after invalidation or redirect reconciliation so a later read reloads or initializes it.
     this.cachedAuthData = undefined;
-    // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
     this.cachedAuthorizationUrl = null;
     this.initialized = false;
     this.currentOAuthState = "";
-    // oxlint-disable-next-line eslint/no-undefined -- Clear the same caller-owned optional state property before fresh OAuth initialization; null would not represent an absent optional state.
     this.config.state = undefined;
   }
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveClientInformation's awaited sequencing and rejected-Promise behavior. */
   public async saveClientInformation(
     clientCredentials: Parameters<
       typeof setOAuthClientInfoOnceByState
-      // oxlint-disable-next-line eslint/no-magic-numbers -- Select the database first-write function's first parameter contract by its tuple index; no runtime numeric value is introduced.
     >[0]["clientInfo"]
   ): Promise<void> {
     if (this.saveClientInformationPromise) {
@@ -323,8 +281,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // Some OAuth servers treat authorization codes as bound to client_id.
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- OAuth cache can be absent before registration; only a cached clientInfo record should suppress duplicate client registration.
-    if (this.cachedAuthData?.clientInfo) {
+    if ((this.cachedAuthData ?? {}).clientInfo) {
       return;
     }
     this.saveClientInformationPromise = (async (): Promise<void> => {
@@ -334,125 +291,106 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
           state: this.currentOAuthState,
         });
       } finally {
-        // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
         this.saveClientInformationPromise = null;
       }
     })();
     await this.saveClientInformationPromise;
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tokens's awaited sequencing and rejected-Promise behavior. */
   public async tokens(): Promise<OAuthTokens | undefined> {
     const authData = await this.getAuthData();
     return McpOAuthClientProvider.decodeStoredCredentials(
       storedTokensSchema,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can return no session row; token decoder intentionally receives undefined and returns no credentials.
-      authData?.tokens,
+      (authData ?? {}).tokens,
       "tokens"
     );
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
   /**
    * Send SDK transport requests and serialize refresh-token rotation under the connector lock.
    * @param {string | URL | Request} input - Native request source, passed unchanged to Request.
    * @param {RequestInit} [init] - Native request options, including headers, body and cancellation.
    * @returns {Promise<Response>} Transport response after any successful token rotation is persisted.
    */
-  public fetch =
-    /* oxlint-disable eslint/max-lines-per-function -- SDK transport and refresh requests share this entry point and connector-lock transaction; keep ordinary forwarding and refresh-token arbitration at this SDK entry point. */ async (
-      input: string | ReadonlyNativeSurface<URL | Request>,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward this RequestInit unchanged into Request; the native constructor rejects deep readonly HeadersInit tuples (TS2345: readonly [string, string][] versus mutable [string, string][]).
-      init?: RequestInit
-    ): Promise<Response> => {
-      const request = new Request(input, init);
-      if (
-        request.method !== "POST" ||
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Native Headers.get returns null when Content-Type is absent; such requests must use ordinary mcpFetch rather than the OAuth-refresh branch. Absent Content-Type and a false media-type match both use ordinary transport; preserve the native Headers.get null sentinel and boolean match.
-        request.headers
-          .get("content-type")
-          ?.includes("application/x-www-form-urlencoded") !== true
-      ) {
-        return await mcpFetch(request);
-      }
-      const params = new URLSearchParams(await request.clone().text());
-      if (params.get("grant_type") !== "refresh_token") {
-        return await mcpFetch(request);
-      }
-      // Compare the cached fingerprint only; validate the latest credentials under
-      // the lock so a stale malformed cache cannot prevent adopting a repaired row.
-      // oxlint-disable-next-line oxc/no-optional-chaining -- OAuth auth cache starts absent and may have no saved token record; fingerprint observation must remain undefined so repaired latest credentials can be adopted under the lock.
-      const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
-      return await withMcpOAuthRefreshLock(
-        this.config.mcpConnectorId,
-        /* oxlint-disable eslint/max-statements -- The refresh lock covers cancellation, latest-session validation, credential reuse, transport and atomic token persistence; these operations must stay inside the existing connector lock with its original callback lifetime. */
-        async () => {
-          request.signal.throwIfAborted();
-          const latest = await getSessionByState({
-            state: this.currentOAuthState,
-          });
-          const latestTokens = McpOAuthClientProvider.decodeStoredCredentials(
-            storedTokensSchema,
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Latest state database query can return no row after concurrent deletion; decoder/validation must reject absent credentials rather than dereference them.
-            latest?.tokens,
-            "tokens"
-          );
-          // oxlint-disable-next-line oxc/no-optional-chaining -- The decoded credentials may be absent; capture their optional refresh token once before rejecting missing or empty credentials.
-          const refreshToken = latestTokens?.refresh_token;
-          if (
-            !latestTokens ||
-            typeof refreshToken !== "string" ||
-            refreshToken === "" ||
-            !latest ||
-            latest.mcpConnectorId !== this.config.mcpConnectorId ||
-            latest.serverUrl !== this.config.serverUrl
-          ) {
-            throw new Error(
-              "MCP credentials changed; reconnect this connector."
-            );
-          }
-          if (
-            latestTokens.refresh_token !== params.get("refresh_token") ||
-            latestTokens.access_token !== observedAccessToken
-          ) {
-            // Another instance already rotated this credential. Return its result
-            // to the SDK instead of consuming the old single-use refresh token.
-            this.cachedAuthData = latest;
-            this.committedRefreshes += 1;
-            return Response.json(latestTokens);
-          }
-          const response = await mcpFetch(request, {
-            signal: AbortSignal.any([
-              request.signal,
-              // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth refresh transport has a 30-second cancellation deadline, expressed in native AbortSignal.timeout milliseconds.
-              AbortSignal.timeout(30_000),
-            ]),
-          });
-          if (!response.ok) {
-            return response;
-          }
-          const refreshed = refreshTokensSchema.parse(
-            await response.clone().json()
-          );
-          // A successful rotation must be committed even if the caller cancelled:
-          // the previous refresh token may already be invalid at the server.
-          // Preserve pinned metadata and the refresh token when it is not rotated.
-          this.cachedAuthData = await saveTokensAndCleanup({
-            mcpConnectorId: this.config.mcpConnectorId,
-            state: this.currentOAuthState,
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing latestTokens own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing refreshed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            tokens: { ...latestTokens, ...refreshed },
-          });
+  public fetch = async (
+    input: string | ReadonlyNativeSurface<URL | Request>,
+    init?: RequestInit
+  ): Promise<Response> => {
+    const request = new Request(input, init);
+    if (
+      request.method !== "POST" ||
+      !(request.headers.get("content-type") ?? "").includes(
+        "application/x-www-form-urlencoded"
+      )
+    ) {
+      return await mcpFetch(request);
+    }
+    const params = new URLSearchParams(await request.clone().text());
+    if (params.get("grant_type") !== "refresh_token") {
+      return await mcpFetch(request);
+    }
+    // Compare the cached fingerprint only; validate the latest credentials under
+    // the lock so a stale malformed cache cannot prevent adopting a repaired row.
+    const observedAccessToken = ((this.cachedAuthData ?? {}).tokens ?? {})
+      .access_token;
+    return await withMcpOAuthRefreshLock(
+      this.config.mcpConnectorId,
+      async () => {
+        request.signal.throwIfAborted();
+        const latest = await getSessionByState({
+          state: this.currentOAuthState,
+        });
+        const latestTokens = McpOAuthClientProvider.decodeStoredCredentials(
+          storedTokensSchema,
+          (latest ?? {}).tokens,
+          "tokens"
+        );
+        const refreshToken = (latestTokens ?? {}).refresh_token;
+        if (
+          !latestTokens ||
+          typeof refreshToken !== "string" ||
+          refreshToken === "" ||
+          !latest ||
+          latest.mcpConnectorId !== this.config.mcpConnectorId ||
+          latest.serverUrl !== this.config.serverUrl
+        ) {
+          throw new Error("MCP credentials changed; reconnect this connector.");
+        }
+        if (
+          latestTokens.refresh_token !== params.get("refresh_token") ||
+          latestTokens.access_token !== observedAccessToken
+        ) {
+          // Another instance already rotated this credential. Return its result
+          // to the SDK instead of consuming the old single-use refresh token.
+          this.cachedAuthData = latest;
           this.committedRefreshes += 1;
-          return Response.json(refreshed);
-        },
-        /* oxlint-enable eslint/max-statements */ request.signal
-      );
-    }; /* oxlint-enable eslint/max-lines-per-function */
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveTokens's awaited sequencing and rejected-Promise behavior. */
+          return Response.json(latestTokens);
+        }
+        const response = await mcpFetch(request, {
+          signal: AbortSignal.any([
+            request.signal,
+            AbortSignal.timeout(30_000),
+          ]),
+        });
+        if (!response.ok) {
+          return response;
+        }
+        const refreshed = refreshTokensSchema.parse(
+          await response.clone().json()
+        );
+        // A successful rotation must be committed even if the caller cancelled:
+        // the previous refresh token may already be invalid at the server.
+        // Preserve pinned metadata and the refresh token when it is not rotated.
+        this.cachedAuthData = await saveTokensAndCleanup({
+          mcpConnectorId: this.config.mcpConnectorId,
+          state: this.currentOAuthState,
+          tokens: { ...latestTokens, ...refreshed },
+        });
+        this.committedRefreshes += 1;
+        return Response.json(refreshed);
+      },
+      request.signal
+    );
+  };
   public async saveTokens(tokens: OAuthTokens): Promise<void> {
-    // oxlint-disable-next-line eslint/no-magic-numbers -- Zero means no persisted refreshes are awaiting SDK acknowledgement; use the local count rather than an unrelated numeric alias.
     if (this.committedRefreshes > 0) {
       // Refresh was saved while holding the cross-process lock. The SDK's
       // later save must not overwrite a newer rotation from another client.
@@ -468,8 +406,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       tokens,
     });
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve redirectToAuthorization's awaited sequencing and rejected-Promise behavior. */
   public async redirectToAuthorization(
     authorizationUrl: ReadonlyNativeSurface<URL>
   ): Promise<void> {
@@ -485,9 +421,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     await this.config.onRedirectToAuthorization(authorizationUrl);
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveCodeVerifier's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- The first-write PKCE operation combines cached-verifier reconciliation, optimistic cache state and a coalesced persistence promise; keep optimistic cache publication before the coalesced database promise and its finally reset. */
   public async saveCodeVerifier(pkceVerifier: string): Promise<void> {
     if (this.saveCodeVerifierPromise) {
       await this.saveCodeVerifierPromise;
@@ -496,8 +429,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // If we already have a verifier for this session, keep it.
     // but the code_challenge is generated from the FIRST verifier.
-    // oxlint-disable-next-line oxc/no-optional-chaining -- OAuth cache can lack a saved codeVerifier; missing verifier must allow the existing first-save path instead of throwing.
-    const existingVerifier = this.cachedAuthData?.codeVerifier;
+    const existingVerifier = (this.cachedAuthData ?? {}).codeVerifier;
 
     if (typeof existingVerifier === "string" && existingVerifier !== "") {
       log.info(
@@ -519,7 +451,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     );
     if (this.cachedAuthData) {
       this.cachedAuthData = {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing this.cachedAuthData own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...this.cachedAuthData,
         codeVerifier: pkceVerifier,
       };
@@ -532,34 +463,29 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
           state: this.currentOAuthState,
         });
       } finally {
-        // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
         this.saveCodeVerifierPromise = null;
       }
     })();
     await this.saveCodeVerifierPromise;
   }
-  /* oxlint-enable eslint/max-statements */
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve codeVerifier's awaited sequencing and rejected-Promise behavior. */
   public async codeVerifier(): Promise<string> {
     const authData = await this.getAuthData();
     log.info(
       {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can yield no session row/verifier. Both logging Boolean and explicit rejection guard preserve the missing-code-verifier error rather than throwing on property access.
-        hasCodeVerifier: Boolean(authData?.codeVerifier),
+        hasCodeVerifier: Boolean((authData ?? {}).codeVerifier),
         state: this.currentOAuthState,
       },
       "codeVerifier called"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining, typescript/strict-boolean-expressions -- getAuthData can yield no session row/verifier. Both logging Boolean and explicit rejection guard preserve the missing-code-verifier error rather than throwing on property access. Reject both absent and empty stored PKCE verifiers with the existing OAuth error; this row field is string or null.
-    if (!authData?.codeVerifier) {
+    if (
+      !authData ||
+      typeof authData.codeVerifier !== "string" ||
+      authData.codeVerifier === ""
+    ) {
       throw new Error("OAuth code verifier not found");
     }
     return authData.codeVerifier;
   }
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve adoptState's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- State adoption validates connector/server ownership before publishing the session and initialization flag; keep validation errors and logs before the original ordered cache publication. */
   /**
    * Adopt state from another instance (multi-instance support).
    * Used when the callback needs to reconcile with an existing session.
@@ -610,47 +536,31 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     this.cachedAuthData = session;
     this.initialized = true;
   }
-  /* oxlint-enable eslint/max-statements */
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve invalidateCredentials's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- Each SDK invalidation scope requires a distinct database operation followed by its matching cache/state reset; each branch preserves its database await and its distinct ordered cache reset. */
   public async invalidateCredentials(
     scope: "all" | "client" | "tokens" | "verifier"
   ): Promise<void> {
     if (scope === "all" || scope === "client") {
-      // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
       this.cachedAuthorizationUrl = null;
     }
     if (scope === "all") {
       await deleteSessionByState({ state: this.currentOAuthState });
-      // oxlint-disable-next-line eslint/no-undefined -- Discard the cached session after invalidation or redirect reconciliation so a later read reloads or initializes it.
       this.cachedAuthData = undefined;
       this.initialized = false;
       this.currentOAuthState = "";
     } else if (scope === "tokens") {
-      // oxlint-disable-next-line unicorn/no-null -- Explicit null clears this stored OAuth credential column; omission preserves the current value.
       await this.updateAuthData({ tokens: null });
       // Clear client credentials - this forces re-registration with the OAuth server
     } else if (scope === "client") {
       // Reset state since client info is foundational to the OAuth flow
-      // oxlint-disable-next-line unicorn/no-null -- Explicit null clears this stored OAuth credential column; omission preserves the current value.
       await this.updateAuthData({ clientInfo: null });
       this.initialized = false;
       this.currentOAuthState = "";
-      // oxlint-disable-next-line eslint/no-undefined -- Discard the cached session after invalidation or redirect reconciliation so a later read reloads or initializes it.
       this.cachedAuthData = undefined;
       // Clear the PKCE verifier - this invalidates any pending authorization
     } else if (scope === "verifier") {
       // Clear cached authorization URL since it's tied to the old verifier
-      // oxlint-disable-next-line unicorn/no-null -- Explicit null clears this stored OAuth credential column; omission preserves the current value.
       await this.updateAuthData({ codeVerifier: null });
-      // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
       this.cachedAuthorizationUrl = null;
     }
   }
-  /* oxlint-enable eslint/max-statements */
-  /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

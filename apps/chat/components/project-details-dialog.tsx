@@ -2,16 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping react and @/lib/project-icons; keep this adjacent import pair ordered. */
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
 } from "@/lib/project-icons";
-/* oxlint-enable sort-imports */
 
 import { ProjectIconPicker } from "@/components/project-icon-picker";
 
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/project-icon-picker and @/components/ui/dialog; keep this adjacent import pair ordered. */
 import {
   Dialog,
   DialogContent,
@@ -20,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-/* oxlint-enable sort-imports */
 
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
@@ -30,16 +26,11 @@ import { Input } from "@/components/ui/input";
 
 import type { JSX as ReactJSX } from "react";
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ProjectDetailsData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface ProjectDetailsData {
   readonly color: ProjectColorName;
   readonly icon: ProjectIconName;
   readonly name: string;
 }
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ProjectDetailsDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- ProjectDetailsDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ProjectDetailsDialog = ({
   open,
@@ -83,7 +74,6 @@ export const ProjectDetailsDialog = ({
   const finalIcon = icon ?? DEFAULT_PROJECT_ICON;
   const finalColor = color ?? DEFAULT_PROJECT_COLOR;
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submitChanges's awaited sequencing and rejected-Promise behavior. */
   const submitChanges = async (): Promise<void> => {
     const trimmedName = name.trim();
 
@@ -115,8 +105,6 @@ export const ProjectDetailsDialog = ({
       onOpenChange(false);
     }
   };
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleSubmit's awaited sequencing and rejected-Promise behavior. */
   const handleSubmit = async (): Promise<void> => {
     setSubmitError("");
     try {
@@ -125,7 +113,6 @@ export const ProjectDetailsDialog = ({
       setSubmitError("Could not save project. Try again.");
     }
   };
-  /* oxlint-enable oxc/no-async-await */
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
       setName(initialName ?? "");
@@ -143,14 +130,11 @@ export const ProjectDetailsDialog = ({
 
   const isDisabled = !hasName || isLoading || (mode === "edit" && isUnchanged);
 
-  // oxlint-disable-next-line no-ternary -- Keep title as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const title = mode === "create" ? "New Project" : "Edit Project";
   const description =
-    // oxlint-disable-next-line no-ternary -- Keep description as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     mode === "create"
       ? "Create a new project to organize your chats."
       : "Update project details.";
-  // oxlint-disable-next-line no-ternary -- Keep buttonText as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const buttonText = mode === "create" ? "Create" : "Save";
 
   return (
@@ -168,14 +152,14 @@ export const ProjectDetailsDialog = ({
             onIconChange={setIcon}
           />
           <Input
-            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the project editor intentionally starts keyboard entry in the project name field.
             autoFocus
-            // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
             className="flex-1"
             maxLength={255}
             onChange={(event: {
               readonly target: { readonly value: string };
-            }) => setName(event.target.value)}
+            }) => {
+              setName(event.target.value);
+            }}
             onKeyDown={(keyboardEvent: { readonly key: string }) => {
               if (keyboardEvent.key === "Enter" && !isDisabled) {
                 void handleSubmit();
@@ -189,7 +173,12 @@ export const ProjectDetailsDialog = ({
         </div>
         {submitError && <p role="alert">{submitError}</p>}
         <DialogFooter>
-          <Button onClick={() => handleOpenChange(false)} variant="outline">
+          <Button
+            onClick={() => {
+              handleOpenChange(false);
+            }}
+            variant="outline"
+          >
             Cancel
           </Button>
           <Button
@@ -206,6 +195,3 @@ export const ProjectDetailsDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, unicorn/no-null */

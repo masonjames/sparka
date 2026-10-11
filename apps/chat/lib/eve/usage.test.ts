@@ -1,21 +1,13 @@
 import type { MessageStreamEvent } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ingestEveUsage } from "./usage";
-/* oxlint-enable sort-imports */
 
 const record = vi.hoisted(() => vi.fn());
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => record.mockReset());
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("records each auxiliary model attempt with replay-stable independent identities") uses 0.001, 0.002, 2, 0, 3, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("records each auxiliary model attempt with replay-stable independent identities", async () => {
   record.mockResolvedValue(true);
   const event: MessageStreamEvent = {
@@ -46,12 +38,6 @@ it("records each auxiliary model attempt with replay-stable independent identiti
   expect(record.mock.calls[2]).toEqual(record.mock.calls[0]);
   expect(record.mock.calls[3]).toEqual(record.mock.calls[1]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("requires reconciliation for unpriced completed calls and preserves failed-attempt uses 2, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("requires reconciliation for unpriced completed calls and preserves failed-attempt evidence", async () => {
   record.mockResolvedValue(false);
   const event: MessageStreamEvent = {
@@ -66,9 +52,7 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
   expect(await ingestEveUsage("owner", "session", event)).toBe(false);
   expect(
     await ingestEveUsage("owner", "session", {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...event,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       data: { ...event.data, modelCalls: [{ failed: true, modelId: "model" }] },
     })
   ).toBe(true);
@@ -76,9 +60,6 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(record.mock.calls[1][0].costUsd).toBe(0);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 it("retains failed-step evidence without reporting an unpriced completed call", async () => {
   record.mockResolvedValue(false);
@@ -101,7 +82,6 @@ it("retains failed-step evidence without reporting an unpriced completed call", 
     })
   );
 });
-/* oxlint-enable oxc/no-async-await */
 const toolEvent = (
   output: unknown,
   id = "event-one",
@@ -127,11 +107,6 @@ const toolEvent = (
   type: "action.result",
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): it("ingests receipts from arbitrary installed names with the same ledger identity aft uses 0.02, 2, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): it("ingests receipts from arbitrary installed names with the same ledger identity aft keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("ingests receipts from arbitrary installed names with the same ledger identity after replay", async () => {
   const { executeWithToolUsage } = await import("./tool-usage");
   const output = await executeWithToolUsage(
@@ -166,9 +141,6 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
     turnId: "turn_1",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
 it("omits undefined receipt fields from persisted EVE action events", async () => {
   const { executeWithToolUsage } = await import("./tool-usage");
@@ -186,12 +158,7 @@ it("omits undefined receipt fields from persisted EVE action events", async () =
   expect(event).not.toHaveProperty("data.result.output.updates");
   expect(event).not.toHaveProperty("data.result.output.usage.costUsd");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve subsequent tests' awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it("retains unpriced and malformed external receipts for reconciliation") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it("retains unpriced and malformed external receipts for reconciliation", async () => {
   record.mockResolvedValue(false);
   for (const usage of [{}, { costUsd: -1 }]) {
@@ -217,9 +184,6 @@ it("retains unpriced and malformed external receipts for reconciliation", async 
     )
   ).toEqual([undefined, undefined]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
 it("does not infer billing from ordinary tool output", async () => {
   await ingestEveUsage(
@@ -229,11 +193,6 @@ it("does not infer billing from ordinary tool output", async () => {
   );
   expect(record).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("attributes child model events to the root turn without billing delegation summari uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("attributes child model events to the root turn without billing delegation summaries", async () => {
   const attribution = { sessionId: "root", turnId: "turn_7" };
   const event: MessageStreamEvent = {
@@ -265,5 +224,3 @@ it("attributes child model events to the root turn without billing delegation su
   });
   expect(record).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers */

@@ -17,6 +17,4 @@ interface ComposerControl {
     isAvailable?: (isMobile: boolean) => boolean;
   };
 }
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ComposerControl, ComposerControlProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ComposerControl, ComposerControlProps };
-/* oxlint-enable import/no-named-export */

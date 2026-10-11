@@ -1,8 +1,6 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalBranch, LogicalChatSnapshot } from "./logical-chat";
-/* oxlint-enable sort-imports */
 
 const LAST_ATTEMPT_INDEX = -1;
 interface SlotAttempt {
@@ -28,9 +26,6 @@ type LogicalResponseSlot = NonNullable<
   selected: boolean;
 };
 
-/* oxlint-disable max-statements --
- * max-statements (#512): belongsToSlot keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const belongsToSlot = (
   branch: ReadonlyNativeSurface<LogicalBranch>,
   candidateId: string,
@@ -51,7 +46,6 @@ const belongsToSlot = (
   }
   return false;
 };
-/* oxlint-enable max-statements */
 
 // This guard retains the existing truthiness gate while exposing its string narrowing.
 const hasSlotAnswer = (answer: string | undefined): answer is string =>
@@ -65,7 +59,6 @@ const slotReadAccess = (
   answerMatches: (nodeId, branchId, userId) => {
     const value = node(nodeId);
     return (
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from value; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       value?.conversationId === branchId &&
       value.parentId === userId &&
       value.message.role === "assistant"
@@ -114,16 +107,13 @@ const selectedSlotAttempt = (
   };
 };
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (logicalResponseSlots); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- * no-undefined (#519): logicalResponseSlots uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): logicalResponseSlots intentionally keeps the existing falsy-value behavior of snapshot.branches.find( (branch) => branch.responseGroupId && userId === `group:${br; branch.responseGroupId; groupBranch?.responseGroupId; answer; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): logicalResponseSlots intentionally keeps the existing falsy-value behavior of snapshot.branches.find( (branch) => branch.responseGroupId && userId === `group:${br; branch.responseGroupId; groupBranch?.responseGroupId; answer; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Retains admitted model-slot order while regeneration appends attempts to existing slots.
  * @param {LogicalChatSnapshot} snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
  * @param {string} userId Logical group user-message identity used to locate its admitted response group.
  * @returns {{ groupId: string; slots: LogicalResponseSlot[] } | undefined} Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
  */
-// oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
 export const logicalResponseSlots = (
   snapshot: ReadonlyNativeSurface<
     Readonly<
@@ -140,7 +130,6 @@ export const logicalResponseSlots = (
       branch.responseGroupId &&
       userId === `group:${branch.responseGroupId}:user`
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseGroupId from groupBranch; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!groupBranch?.responseGroupId) {
     return;
   }
@@ -169,7 +158,6 @@ export const logicalResponseSlots = (
     (branchId) => snapshot.paths.get(branchId),
     (nodeId) => snapshot.nodes.get(nodeId)
   );
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Derive UI slot metadata without mutating candidates retained by the lineage snapshot.
   const slots = candidates.map((candidate) => {
     const original = snapshot.branches.find(
       (branch: Readonly<Pick<LogicalBranch, "operationId">>) =>
@@ -181,7 +169,6 @@ export const logicalResponseSlots = (
       selectedPath
     );
     return {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...candidate,
       attempt,
       original,
@@ -191,5 +178,4 @@ export const logicalResponseSlots = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: logicalResponseSlots has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId, slots };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */

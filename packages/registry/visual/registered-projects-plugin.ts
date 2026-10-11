@@ -1,15 +1,10 @@
 import type { Plugin } from "vite";
-/* oxlint-disable import/no-nodejs-modules -- This Vite loader runs on the Node host and reads the actual component source using native filesystem and URL APIs. */
 import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This Vite loader runs on the Node host and reads the actual component source using native filesystem and URL APIs. */
 import { readFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
 import ts from "typescript";
 
 const virtualId = "@/tests/visual/registered-projects";
 const resolvedId = "\0registered-projects.tsx";
-/* oxlint-disable oxc/no-async-await -- The Vite host loader awaits native filesystem reads before compiling the current private server initializer. */
 const getRegisteredInitializer = async (): Promise<string> => {
   const file = fileURLToPath(
     new URL("../../../apps/chat/components/app-sidebar.tsx", import.meta.url)
@@ -36,8 +31,6 @@ const getRegisteredInitializer = async (): Promise<string> => {
   }
   throw new Error("Actual RegisteredEveProjects initializer absent");
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- The Vite host loader awaits native filesystem reads before compiling the current private server initializer. */
 const loadRegisteredProjects = async (): Promise<string> => {
   const initializer = await getRegisteredInitializer();
   const source = `import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
@@ -52,30 +45,19 @@ export const RegisteredEveProjects = ${initializer};`;
     },
   }).outputText;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- The Vite host loader awaits native filesystem reads before compiling the current private server initializer. */
 const registeredProjectsPlugin = (): Plugin => ({
   async load(id: string): Promise<string | undefined> {
     if (id === resolvedId) {
       return await loadRegisteredProjects();
     }
-    /* oxlint-disable eslint/no-undefined -- Vite resolve/load hooks use undefined for unhandled IDs; pinned consistent-return and no-useless-return reject bare returns, so retain the explicit native sentinel. */
     return undefined;
-    /* oxlint-enable eslint/no-undefined */
   },
   name: "registered-projects-server-fixture",
   resolveId(id: string): string | undefined {
     if (id === virtualId || id.endsWith("/tests/visual/registered-projects")) {
       return resolvedId;
     }
-    /* oxlint-disable eslint/no-undefined -- Vite resolve/load hooks use undefined for unhandled IDs; pinned consistent-return and no-useless-return reject bare returns, so retain the explicit native sentinel. */
     return undefined;
-    /* oxlint-enable eslint/no-undefined */
   },
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable import/no-named-export -- Keep the named fixture bindings (registeredProjectsPlugin); enabled import/no-default-export requires a named module API. */
-/* oxlint-disable import/prefer-default-export -- The visual config consumes this named plugin factory; enabled import/no-default-export rejects a default module API. */
 export { registeredProjectsPlugin };
-/* oxlint-enable import/prefer-default-export */
-/* oxlint-enable import/no-named-export */

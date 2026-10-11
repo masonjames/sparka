@@ -18,12 +18,7 @@ const COMMUNITY_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   },
   { href: "https://x.com/franmoretti_", label: "X / Twitter" },
 ];
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Footer); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- Footer renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
-/* oxlint-disable eslint/max-lines-per-function -- Footer: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-
-/* oxlint-disable react/jsx-max-depth -- Footer: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 export const Footer = (): React.JSX.Element => (
   <footer className="border-border/40 border-t">
     <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
@@ -31,7 +26,6 @@ export const Footer = (): React.JSX.Element => (
         {/* Brand */}
         <div>
           <Link
-            // oxlint-disable-next-line react/forbid-component-props -- Link accepts className in its styling contract; preserve this caller's layout and appearance.
             className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
             href="/"
           >
@@ -116,8 +110,3 @@ export const Footer = (): React.JSX.Element => (
     </div>
   </footer>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable eslint/max-lines-per-function */

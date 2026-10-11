@@ -2,19 +2,14 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { isFileStorageKey } from "@/lib/file-url";
 
-/* oxlint-disable sort-imports -- Keep pure file-key module evaluation before client import, which validates env and opens the Postgres pool at module load. */
 import { db } from "./client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep schema pgTable construction after client initialization; syntax sorting would load the schema ahead of the pool. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-enable sort-imports */
 
 const FIRST_ROW_INDEX = 0;
 const SINGLE_ROW_LIMIT = 1;
 const MAXIMUM_ATTACHMENT_REFERENCES = 16;
 
 // Native capabilities used by locked storage writes and reservations.
-// oxlint-disable-next-line no-magic-numbers -- Indexed callback type preserves the actual native transaction contract.
 type FileTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type FileLockTransaction = Readonly<
   Pick<FileTransaction, "execute" | "select">
@@ -23,8 +18,6 @@ type FileWriteTransaction = Readonly<
   Pick<FileTransaction, "execute" | "insert" | "select">
 >;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isEveFileUnavailable's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined -- no-undefined (#519): isEveFileUnavailable uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Legacy keys have no EVE row; only EVE deletion fences deny an existing URL.
  * @param {string} key - Storage key whose durable deletion fence is checked.
@@ -37,13 +30,7 @@ const isEveFileUnavailable = async (key: string): Promise<boolean> => {
     .where(eq(eveStoredFile.key, key));
   return file !== undefined && file.state !== "active";
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve canReadEveFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
-/* oxlint-disable unicorn/no-null -- no-magic-numbers (#517): canReadEveFile uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/no-null (#570): canReadEveFile preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
-*/
 /**
  * Recheck durable access on every download, including URLs disclosed by old shares.
  * @param {string} key - Storage key requested by the download.
@@ -85,9 +72,6 @@ const canReadEveFile = async (
     .limit(SINGLE_ROW_LIMIT);
   return { allowed: Boolean(reference), managed: true };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveUpload's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 
 /**
  * Reserve a fresh upload before storage I/O; never overwrite an existing key.
@@ -103,8 +87,6 @@ const reserveEveUpload = async (
   }
   await db.insert(eveStoredFile).values({ key, ownerId });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveUpload's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Serialize admitted storage writes with orphan cleanup and reference creation.
@@ -138,8 +120,6 @@ const writeEveUpload = async <Result>(
     }
     return await write();
   });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registerEveStoredFile's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Register server-created keys only; a caller-supplied URL is not ownership proof.
@@ -159,15 +139,10 @@ const registerEveStoredFile = async (
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
   const saved = savedRows.at(FIRST_ROW_INDEX);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from saved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (saved?.ownerId !== ownerId || saved.state !== "active") {
+  if (!saved || saved.ownerId !== ownerId || saved.state !== "active") {
     throw new Error("File ownership cannot be reassigned.");
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve referenceEveFiles's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, no-magic-numbers -- max-lines-per-function (#510): referenceEveFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): referenceEveFiles uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Claim before dispatch; failed/uncertain sends retain their references safely.
  * @param {string} ownerId - Owner of the conversation and every attachment.
@@ -232,11 +207,7 @@ const referenceEveFiles = async (
       .onConflictDoNothing();
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertEveFilesOwned's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): assertEveFilesOwned uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Preflight rejects invalid initial input before a creation reservation exists.
  * @param {string} ownerId - Owner required for every active attachment.
@@ -270,9 +241,6 @@ const assertEveFilesOwned = async (
     throw new Error("Attachment is not owned by this user.");
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGeneratedFile's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 /**
  * Persist the key before storage I/O so a failed upload remains discoverable.
@@ -310,11 +278,7 @@ const reserveEveGeneratedFile = async (
     await tx.insert(eveFileReference).values({ conversationId, key, ownerId });
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveGeneratedFile's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-params -- id-length (#506): writeEveGeneratedFile uses Result as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-max-params (#511): writeEveGeneratedFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Deletion cannot pass an admitted write; the committed reservation survives failures.
  * @param {string} ownerId - Owner whose family lock protects the generated write.
@@ -356,9 +320,6 @@ const writeEveGeneratedFile = async <Result>(
     }
     return await write();
   });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveFilesOwned, canReadEveFile, isEveFileUnavailable, referenceEveFiles, registerEveStoredFile, reserveEveGeneratedFile, reserveEveUpload, writeEveGeneratedFile, writeEveUpload); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 export {
   assertEveFilesOwned,
@@ -371,4 +332,3 @@ export {
   writeEveGeneratedFile,
   writeEveUpload,
 };
-/* oxlint-enable import/no-named-export */

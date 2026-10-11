@@ -1,13 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { readFile, readdir } from "node:fs/promises";
 import nodePath from "node:path";
 
 import { z } from "zod";
-/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): localEveSandboxOwnerSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const localEveSandboxOwnerSchema = z.strictObject({
   backendName: z.literal("microsandbox"),
   sessionId: z.string().min(1),
@@ -15,14 +10,7 @@ const localEveSandboxOwnerSchema = z.strictObject({
   version: z.literal(1),
   writeAheadResources: z.literal(true).optional(),
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalEveSandboxInventory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers --
-max-lines-per-function (#510): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-continue (#515): readLocalEveSandboxInventory skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
-no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
@@ -131,8 +119,4 @@ const readLocalEveSandboxInventory = async (
   }
   return { owned, unattributedDirectories };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (localEveSandboxOwnerSchema, readLocalEveSandboxInventory); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers */
 export { localEveSandboxOwnerSchema, readLocalEveSandboxInventory };
-/* oxlint-enable import/no-named-export */

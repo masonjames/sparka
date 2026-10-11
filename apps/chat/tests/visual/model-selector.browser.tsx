@@ -1,36 +1,25 @@
-/* oxlint-disable import/max-dependencies -- This integration fixture mounts the actual Next, query, tRPC, session and catalog providers and uses their native test and type APIs. */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient } from "@trpc/client";
-// oxlint-disable-next-line sort-imports -- Oxfmt places @tanstack before @trpc and retains this separate type declaration; that module grouping conflicts with local-binding name order.
 import type { OperationResultObserver, TRPCLink } from "@trpc/client";
 import { observable } from "@trpc/server/observable";
 import { takeSnapshot } from "@uiverify/vitest";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import React, { act, useState } from "react";
 import { expect, test, vi } from "vitest";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import { commands, page } from "vitest/browser";
 
 import { ModelSelector } from "@/components/model-selector";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import type { Session } from "@/lib/auth";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { SessionProvider } from "@/providers/session-provider";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 import { TRPCProvider } from "@/trpc/react";
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import type { AppRouter } from "@/trpc/routers/_app";
 
-// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import "@/tests/visual/sandbox.css";
 
-/* oxlint-enable import/max-dependencies */
 declare module "vitest/browser" {
   interface BrowserCommands {
     modelAssets: () => Promise<void>;
@@ -61,7 +50,6 @@ vi.mock("@/lib/auth-client", () => ({
           updatedAt: new Date("2026-09-25T10:00:00Z"),
         },
       },
-      // oxlint-disable-next-line unicorn/no-null -- Better Auth reports an absent error as null; keep the native settled-session result.
       error: null,
       isPending: false,
     }),
@@ -101,7 +89,6 @@ const models: AppModelDefinition[] = [
     type: "language",
   },
 ];
-/* oxlint-disable react/only-export-components -- This browser-test entrypoint mounts its local stateful controller; exporting a test-only component would create an unused API. */
 const Controller = ({
   initialSelection,
 }: {
@@ -120,7 +107,6 @@ const Controller = ({
     </section>
   );
 };
-/* oxlint-enable react/only-export-components */
 const scenarios: {
   readonly name: string;
   readonly initialSelection: SelectedModelValue;
@@ -190,7 +176,6 @@ const createPreferencesClient = (): {
 
   return { client, requests };
 };
-/* oxlint-disable oxc/no-async-await -- Await the native-provider mount before interactions use the portal and query state. */
 const mountSelector = async (
   initialSelection: Readonly<SelectedModelValue>
 ): Promise<{
@@ -202,7 +187,6 @@ const mountSelector = async (
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  /* oxlint-disable react/jsx-max-depth -- The actual Next router, QueryClient, tRPC, session and catalog providers must wrap this component in their native order. */
   const fixture = await mount(
     <AppRouterContext.Provider value={router}>
       <QueryClientProvider client={queryClient}>
@@ -216,11 +200,8 @@ const mountSelector = async (
       </QueryClientProvider>
     </AppRouterContext.Provider>
   );
-  /* oxlint-enable react/jsx-max-depth */
   return { fixture, queryClient, requests };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await actual portal visibility, capture and selection before checking the state contract. */
 const selectBeta = async (name: string): Promise<void> => {
   await expect.element(page.getByTestId("model-selector")).toBeVisible();
   await act(async () => {
@@ -235,8 +216,6 @@ const selectBeta = async (name: string): Promise<void> => {
     await page.getByRole("option", { name: /Fixture Beta/u }).click();
   });
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await the real selection result, state capture and guaranteed fixture cleanup. */
 for (const scenario of scenarios) {
   test(`native model selection ${scenario.name}`, async () => {
     await commands.modelAssets();
@@ -257,5 +236,3 @@ for (const scenario of scenarios) {
     }
   });
 }
-
-/* oxlint-enable oxc/no-async-await */

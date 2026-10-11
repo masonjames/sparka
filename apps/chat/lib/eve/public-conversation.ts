@@ -8,9 +8,6 @@ const PUBLIC_TRANSCRIPT_SNAPSHOT_TIMEOUT_MS = 15_000;
 const PUBLIC_TRANSCRIPT_TITLE_PREVIEW_MAX_LENGTH = 100;
 const TITLE_PREVIEW_START = 0;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getPublicEveTranscript); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getPublicEveTranscript's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null -- An unavailable public transcript has the established null result contract. */
 export const getPublicEveTranscript = async (
   id: string
 ): Promise<{
@@ -42,6 +39,3 @@ export const getPublicEveTranscript = async (
       ),
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */

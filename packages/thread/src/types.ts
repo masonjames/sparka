@@ -124,7 +124,6 @@ interface ThreadState<TMessage extends UIMessage = UIMessage> {
    */
   update: (
     updater: (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The exported updater permits synchronous mutation of its SDK message arrays and returns that same mutable snapshot; readonly collections reject existing updater operations.
       snapshot: ThreadStateSnapshot<TMessage>
     ) => ThreadStateSnapshot<TMessage>
   ) => void;
@@ -142,7 +141,6 @@ type ThreadInit<TMessage extends UIMessage = UIMessage> = Omit<
 } & ThreadInitialState<CanonicalMessage<TMessage>> &
   ThreadInitialState<TMessage>;
 
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (CanonicalMessage, MessageMetadata, MessageData, MessageTools, ThreadRun, ThreadRunHandle, TreeSendOptions, ThreadStartRunOptions, ThreadConcurrency, MessageTreeNode, MessageTreeSnapshot, ThreadStateSnapshot, ThreadState, ThreadInit); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type {
   CanonicalMessage,
   MessageMetadata,
@@ -159,4 +157,3 @@ export type {
   ThreadState,
   ThreadInit,
 };
-/* oxlint-enable import/no-named-export */

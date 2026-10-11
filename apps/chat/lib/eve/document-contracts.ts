@@ -74,7 +74,6 @@ const eveDocumentReadResult = eveDocumentResult.extend({
   content: z.string(),
   fileIds: z.array(z.string()),
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (documentFileIds, eveDocumentCreateInput, eveDocumentEditInput, eveDocumentOperations, eveDocumentReadInput, eveDocumentReadResult, eveDocumentResult, eveDocumentWriteResult, eveManualDocumentInput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   documentFileIds,
   eveDocumentCreateInput,
@@ -86,7 +85,4 @@ export {
   eveDocumentWriteResult,
   eveManualDocumentInput,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (DocumentAssistantRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { DocumentAssistantRequest };
-/* oxlint-enable import/no-named-export */

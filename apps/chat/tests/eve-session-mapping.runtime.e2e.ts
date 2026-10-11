@@ -1,45 +1,23 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This test harness requires import { setTimeout } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env"; "../lib/eve/create-conversation-operation" dependency within this package instead of introducing an alias or barrel API.
- */
 import { setTimeout } from "node:timers/promises";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq } from "drizzle-orm";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
-/* oxlint-enable eslint/sort-imports */
 import { eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Keep separate type declarations and runtime module order. */
 import type { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 const probe = vi.hoisted(() => ({ beforeResponse: false, dispatches: 0 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): vi.mock("../lib/eve/server") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): vi.mock("../lib/eve/server") uses 1, 25_000, 100 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 vi.mock("../lib/eve/server", async (importOriginal) => {
   const actual = await importOriginal<{ eveRequest: typeof eveRequest }>();
   return {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actual own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...actual,
     eveRequest: async (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original mutable RequestInit tuple to actual.eveRequest and the native fetch receiver; its HeadersInit declaration requires mutable tuple arrays.
       ...args: Parameters<typeof actual.eveRequest>
     ): Promise<Response> => {
       const response = await actual.eveRequest(...args);
@@ -59,7 +37,6 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
           .from(eveConversation)
           // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
           .where(eq(eveConversation.sessionId, session.sessionId));
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (row?.state === "bound") {
           probe.beforeResponse = true;
           break;
@@ -71,8 +48,6 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
     },
   };
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers */
 
 assertEveTestDatabase(env.DATABASE_URL);
 if (!new URL(env.DATABASE_URL).pathname.includes("identity_test")) {
@@ -81,12 +56,6 @@ if (!new URL(env.DATABASE_URL).pathname.includes("identity_test")) {
   );
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
- * max-statements (#512): test("real native hook binds before a lost response, and retry keeps the accepted ses keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("real native hook binds before a lost response, and retry keeps the accepted ses uses 409, 200, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/no-null (#570): test("real native hook binds before a lost response, and retry keeps the accepted ses preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("real native hook binds before a lost response, and retry keeps the accepted session", async () => {
   const owner = crypto.randomUUID();
   await db.insert(user).values({
@@ -104,26 +73,17 @@ test("real native hook binds before a lost response, and retry keeps the accepte
   expect(probe.beforeResponse).toBe(true);
   const row = await getEveCreation(owner, command.operationId);
   expect(row).toMatchObject({ initialRequest: null, state: "bound" });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.id).not.toBe(command.operationId);
   const retry = await createEveConversationOperation(owner, command);
   expect(retry.status).toBe(200);
   expect(await retry.json()).toEqual({
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     id: row?.id,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     sessionId: row?.sessionId,
   });
   expect(probe.dispatches).toBe(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("native acceptance deduplicates concurrent callers and rejects foreign or forged keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native acceptance deduplicates concurrent callers and rejects foreign or forged keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native acceptance deduplicates concurrent callers and rejects foreign or forged uses 401, 403, 0, 1, 202, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("native acceptance deduplicates concurrent callers and rejects foreign or forged preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("native acceptance deduplicates concurrent callers and rejects foreign or forged identity", async () => {
@@ -156,7 +116,6 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       );
       expect(foreign.status).toBe(401);
       const forged = await actual.eveRequest(owner, "/eve/chat/v1/session", {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing init own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...init,
         body: JSON.stringify({
           forwardedPrincipal: { current: { principalId: "foreign" } },
@@ -209,5 +168,4 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
     state: "bound",
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

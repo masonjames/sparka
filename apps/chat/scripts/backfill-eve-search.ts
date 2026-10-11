@@ -39,7 +39,6 @@ const createDelay = (
   };
 };
 
-/* oxlint-disable oxc/no-async-await -- Await keeps synchronous throws and rejected database shutdowns inside this catch. */
 const endDatabaseClient = async (): Promise<DatabaseShutdownOutcome> => {
   try {
     await db.$client.end({ timeout: DATABASE_SHUTDOWN_TIMEOUT_SECONDS });
@@ -48,14 +47,12 @@ const endDatabaseClient = async (): Promise<DatabaseShutdownOutcome> => {
     return { error, kind: "failure" };
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
 type BackfillConversation = Pick<
   typeof eveConversation.$inferSelect,
   "id" | "ownerId" | "sessionId"
 >;
 
-/* oxlint-disable oxc/no-async-await -- Awaited batch selection and transaction updates preserve query ordering and propagate database failures. */
 const selectNextBatch = async (
   cursor: string | undefined
 ): Promise<BackfillConversation[]> => {
@@ -79,12 +76,8 @@ const selectNextBatch = async (
     .orderBy(asc(eveConversation.id))
     .limit(BACKFILL_BATCH_SIZE);
 };
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/no-await-in-loop -- Fetch each snapshot and index each conversation in order to bound database load and make retries predictable. */
-/* oxlint-disable oxc/no-async-await -- Await each conversation update before advancing the cursor so failed records remain retryable. */
-/* oxlint-disable no-console -- The backfill loop reports progress and per-record failures through this CLI's stdout/stderr. */
-/* oxlint-disable max-statements -- main coordinates configuration, batch selection, per-record failures, progress, and the final exit status in their required order. */
 const main = async (): Promise<number> => {
   assertEveConfigured();
   let cursor = INITIAL_BACKFILL_CURSOR;
@@ -122,16 +115,16 @@ const main = async (): Promise<number> => {
   return SUCCESS_EXIT_STATUS;
 };
 /* oxlint-enable eslint/no-await-in-loop */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */
-/* oxlint-enable no-console */
 
-/* oxlint-disable oxc/no-async-await -- Await both stream callbacks or the deadline before the caller forces process exit. */
 const flushOutputBeforeForcedExit = async (): Promise<void> => {
   const stdoutFlushed = Promise.withResolvers<boolean>();
   const stderrFlushed = Promise.withResolvers<boolean>();
-  process.stdout.write("", () => stdoutFlushed.resolve(true));
-  process.stderr.write("", () => stderrFlushed.resolve(true));
+  process.stdout.write("", () => {
+    stdoutFlushed.resolve(true);
+  });
+  process.stderr.write("", () => {
+    stderrFlushed.resolve(true);
+  });
   const flushDeadline = createDelay(SHUTDOWN_OUTPUT_FLUSH_TIMEOUT_MILLISECONDS);
   await Promise.race([
     Promise.all([stdoutFlushed.promise, stderrFlushed.promise]),
@@ -139,11 +132,7 @@ const flushOutputBeforeForcedExit = async (): Promise<void> => {
   ]);
   flushDeadline.cancel();
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable max-statements -- shutdownDatabase owns the timeout race, grace period, safe logging, forced exit, and normal cancellation sequence. */
-/* oxlint-disable oxc/no-async-await -- Await the shutdown and grace deadlines in order so each timeout path retains its existing outcome. */
-/* oxlint-disable no-console -- Report each database shutdown failure or timeout before returning the CLI status. */
 const shutdownDatabase = async (exitStatus: number): Promise<number> => {
   const deadline = createDelay(DATABASE_SHUTDOWN_TIMEOUT_MILLISECONDS);
   const shutdown = endDatabaseClient();
@@ -169,7 +158,6 @@ const shutdownDatabase = async (exitStatus: number): Promise<number> => {
       "Search backfill database shutdown timed out; forcing process exit."
     );
     await flushOutputBeforeForcedExit();
-    // oxlint-disable-next-line unicorn/no-process-exit -- postgres@3.4.9 end({ timeout }) can resolve after its deadline while a half-open peer keeps the socket active; this CLI must exit after a bounded output-flush window.
     process.exit(FAILURE_EXIT_STATUS);
   }
   deadline.cancel();
@@ -182,12 +170,6 @@ const shutdownDatabase = async (exitStatus: number): Promise<number> => {
   }
   return exitStatus;
 };
-/* oxlint-enable no-console */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */
-/* oxlint-disable no-console -- This entrypoint emits startup errors through console.error and sets process.exitCode after shutdown completes. */
-/* oxlint-disable oxc/no-async-await -- Await main and shutdownDatabase so the catch/finally sequence settles before setting process.exitCode. */
-// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
 void (async (): Promise<void> => {
   let exitStatus = SUCCESS_EXIT_STATUS;
   try {
@@ -203,5 +185,3 @@ void (async (): Promise<void> => {
   }
   process.exitCode = exitStatus;
 })();
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console */

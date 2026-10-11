@@ -45,7 +45,5 @@ const demoInstallation = installationSelectionSchema.parse({
     "deep-research",
   ],
 });
-// oxlint-disable-next-line import/no-named-export -- Keep the existing named module bindings (demoInstallation, installationSelectionSchema); the enabled import/no-default-export convention rejects the default-export alternative.
 export { demoInstallation, installationSelectionSchema };
-// oxlint-disable-next-line import/no-named-export -- Keep the named type bindings (InstallationSelection); the enabled import/no-default-export convention rejects the default-export alternative.
 export type { InstallationSelection };

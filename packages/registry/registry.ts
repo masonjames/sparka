@@ -17,7 +17,6 @@ import { observabilityItems } from "./src/features/observability";
 import registryPackage from "./package.json";
 import { registrySchema } from "shadcn/schema";
 import { researchItem } from "./src/tools/research";
-// oxlint-disable-next-line import/max-dependencies -- This is the 11th required registry assembly dependency; the configured maximum is 10.
 import { toolDefinitionSchema } from "./metadata";
 
 const toolItems = (
@@ -90,7 +89,6 @@ const toolItems = (
   ({
     description,
     dependencies,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding definition excludes description, dependencies from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...definition
   }: Readonly<{
     dependencies: readonly string[];
@@ -106,7 +104,6 @@ const toolItems = (
         "tool.ts",
         "renderer.tsx",
         "schemas.ts",
-        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(definition.id === "generate-image"
           ? [
               "image-model.ts",
@@ -124,7 +121,6 @@ const toolItems = (
       meta: {
         chatjs: toolDefinitionSchema.parse({
           contractVersion: 1,
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...definition,
           kind: "tool",
         }),
@@ -211,9 +207,5 @@ const registry = registrySchema.parse({
   ],
   name: "chatjs",
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecutionItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { codeExecutionItem } from "./code-execution";
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (registry, searchToolItems, toolItems); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { registry, searchToolItems, toolItems };
-/* oxlint-enable import/no-named-export */

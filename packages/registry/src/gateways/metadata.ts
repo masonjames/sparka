@@ -1,4 +1,3 @@
-// oxlint-disable-next-line import/no-named-export, sort-keys -- Preserve the published metadata binding and CLI provider menu order (Vercel first, LiteLLM last); the pinned no-default-export rule rejects the default export.
 export const gatewayMetadata = {
   vercel: {
     dependency: "@ai-sdk/gateway",
@@ -33,5 +32,4 @@ export const gatewayMetadata = {
   },
 } as const;
 
-// oxlint-disable-next-line import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative.
 export type GatewayType = keyof typeof gatewayMetadata;

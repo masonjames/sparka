@@ -3,7 +3,6 @@ import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
-/* oxlint-disable sort-imports -- Keep db's env validation and postgres(connection) initialization before schema's pgTable construction; the response-group import also consumes that schema. */
 import {
   eveChat,
   eveChatProject,
@@ -24,7 +23,6 @@ import {
   eveSubagentSession,
   eveVote,
 } from "./schema";
-/* oxlint-enable sort-imports */
 
 const SINGLE_MATCH_LIMIT = 1;
 const EMPTY_FAMILY_SIZE = 0;
@@ -138,7 +136,6 @@ const readOwnedEveDeletionIdentity = (
 const readEveFamilyApplicationContent = (
   query: Readonly<Pick<typeof db, "select">>,
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The original Drizzle table feeds from/select generic receivers; deep readonly projection loses protected column configuration at native receivers (TS2345).
   table: Readonly<
     | typeof eveFileReference
     | typeof eveImportedDocumentCheckpointEntry
@@ -226,8 +223,6 @@ const readOwnedEveDeletionMemberState = (
     )
     .limit(SINGLE_MATCH_LIMIT);
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
-
 /**
  * Final application stage. The internal coordinator must confirm native payload,
  * sandbox and file removal before calling this; this is not a deletion endpoint.
@@ -236,114 +231,97 @@ const readOwnedEveDeletionMemberState = (
  * @param {string} routeId - Root chat ID or member conversation ID resolving the family to tombstone.
  * @returns {Promise<void>} Resolves after the application tombstone transaction commits; rejects for a missing identity, a family outside deletion, or remaining sandbox/application content.
  */
-// oxlint-disable-next-line max-lines-per-function -- Keep the finalization transaction visible through owner locking, family preconditions, surviving-content checks and identity tombstone updates; a phase extraction needs separate sequencing verification.
 const completeEveConversationDeletion = async (
   ownerId: string,
   routeId: string
 ): Promise<void> => {
-  await db.transaction(
-    // oxlint-disable-next-line max-lines-per-function, max-statements -- Preserve the ordered owner lock, family precondition, response-group tombstones, sandbox/content checks, provenance deletion and identity tombstones within the same transaction; extracting awaited phases needs separate suspension/trace verification.
-    async (tx: DeletionTransaction) => {
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-      );
-      const [queriedIdentity] = await readOwnedEveDeletionIdentity(
-        tx,
-        ownerId,
-        routeId
-      );
-      const identity = requireEveDeletionIdentity(queriedIdentity);
-      const condition = and(
-        eq(eveConversation.ownerId, ownerId),
-        eq(eveConversation.chatId, identity.chatId)
-      );
-      const family = await tx.select().from(eveConversation).where(condition);
-      assertEveFamilyPendingDeletion(family);
-      await tombstoneEveResponseGroups(tx, ownerId, family);
-      const ids = family.map(
-        (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) =>
-          row.id
-      );
-      const [sandbox] = await findUnresolvedEveFamilySandbox(tx, ids);
-      if (sandbox) {
-        throw new Error("Code sandbox cleanup is incomplete.");
-      }
-      for (const table of [
-        eveFileReference,
-        eveImportedDocumentCheckpointEntry,
-        eveImportedDocumentCheckpoint,
-        eveNamedDocumentCheckpointEntry,
-        eveNamedDocumentCheckpoint,
-        eveDocumentCheckpointEntry,
-        eveDocumentCheckpoint,
-        eveDocumentHead,
-        eveDocumentRevision,
-      ]) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Read the nine dependency tables in declared order on this transaction, stopping at the first surviving row; parallel probes would dispatch later queries before that failure.
-        const [remaining] = await readEveFamilyApplicationContent(
-          tx,
-          table,
-          ids
-        );
-        if (remaining) {
-          throw new Error("Application content cleanup is incomplete.");
-        }
-      }
-      // Transcript preparation and provenance must not survive a completed family deletion.
-      await tx
-        .delete(eveConversationCopyFile)
-        .where(inArray(eveConversationCopyFile.conversationId, ids));
-      await tx
-        .delete(eveConversationCopy)
-        .where(inArray(eveConversationCopy.conversationId, ids));
-      await tx
-        .delete(eveChatProject)
-        .where(eq(eveChatProject.chatId, identity.chatId));
-      await tx
-        .delete(eveSearchText)
-        .where(inArray(eveSearchText.conversationId, ids));
-      await tx
-        .delete(eveSubagentSession)
-        .where(inArray(eveSubagentSession.conversationId, ids));
-      await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
-      await tx
-        .update(eveConversation)
-        .set({
-          firstMessage: "",
-          // oxlint-disable-next-line unicorn/no-null -- Clear the persisted nullable initialContentHash column during identity tombstoning; undefined would omit the update.
-          initialContentHash: null,
-          // oxlint-disable-next-line unicorn/no-null -- Clear the persisted nullable initialModelId column during identity tombstoning; undefined would omit the update.
-          initialModelId: null,
-          // oxlint-disable-next-line unicorn/no-null -- Clear the persisted nullable initialProjectId column during identity tombstoning; undefined would omit the update.
-          initialProjectId: null,
-          // oxlint-disable-next-line unicorn/no-null -- Clear the persisted nullable initialRequest column during identity tombstoning; undefined would omit the update.
-          initialRequest: null,
-          state: "deleted",
-          visibility: "private",
-        })
-        .where(condition);
-      await tx
-        .update(eveChat)
-        .set({
-          // oxlint-disable-next-line unicorn/no-null -- Clear the persisted nullable activeConversationId column during identity tombstoning; undefined would omit the update.
-          activeConversationId: null,
-          isPinned: false,
-          title: "",
-          titleStatus: "fallback",
-        })
-        .where(
-          and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
-        );
+  await db.transaction(async (tx: DeletionTransaction) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const [queriedIdentity] = await readOwnedEveDeletionIdentity(
+      tx,
+      ownerId,
+      routeId
+    );
+    const identity = requireEveDeletionIdentity(queriedIdentity);
+    const condition = and(
+      eq(eveConversation.ownerId, ownerId),
+      eq(eveConversation.chatId, identity.chatId)
+    );
+    const family = await tx.select().from(eveConversation).where(condition);
+    assertEveFamilyPendingDeletion(family);
+    await tombstoneEveResponseGroups(tx, ownerId, family);
+    const ids = family.map(
+      (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) => row.id
+    );
+    const [sandbox] = await findUnresolvedEveFamilySandbox(tx, ids);
+    if (sandbox) {
+      throw new Error("Code sandbox cleanup is incomplete.");
     }
-  );
+    for (const table of [
+      eveFileReference,
+      eveImportedDocumentCheckpointEntry,
+      eveImportedDocumentCheckpoint,
+      eveNamedDocumentCheckpointEntry,
+      eveNamedDocumentCheckpoint,
+      eveDocumentCheckpointEntry,
+      eveDocumentCheckpoint,
+      eveDocumentHead,
+      eveDocumentRevision,
+    ]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Read the nine dependency tables in declared order on this transaction, stopping at the first surviving row; parallel probes would dispatch later queries before that failure.
+      const [remaining] = await readEveFamilyApplicationContent(tx, table, ids);
+      if (remaining) {
+        throw new Error("Application content cleanup is incomplete.");
+      }
+    }
+    // Transcript preparation and provenance must not survive a completed family deletion.
+    await tx
+      .delete(eveConversationCopyFile)
+      .where(inArray(eveConversationCopyFile.conversationId, ids));
+    await tx
+      .delete(eveConversationCopy)
+      .where(inArray(eveConversationCopy.conversationId, ids));
+    await tx
+      .delete(eveChatProject)
+      .where(eq(eveChatProject.chatId, identity.chatId));
+    await tx
+      .delete(eveSearchText)
+      .where(inArray(eveSearchText.conversationId, ids));
+    await tx
+      .delete(eveSubagentSession)
+      .where(inArray(eveSubagentSession.conversationId, ids));
+    await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
+    await tx
+      .update(eveConversation)
+      .set({
+        firstMessage: "",
+        initialContentHash: null,
+        initialModelId: null,
+        initialProjectId: null,
+        initialRequest: null,
+        state: "deleted",
+        visibility: "private",
+      })
+      .where(condition);
+    await tx
+      .update(eveChat)
+      .set({
+        activeConversationId: null,
+        isPinned: false,
+        title: "",
+        titleStatus: "fallback",
+      })
+      .where(
+        and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
+      );
+  });
 };
-/* oxlint-enable oxc/no-async-await */
 interface EveDeletionState {
   rootId: typeof eveChat.$inferSelect.id;
   state: typeof eveConversation.$inferSelect.state;
 }
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDeletionState's awaited sequencing and rejected-Promise behavior. */
 
 /** Read the owner-visible root and native deletion state, including identity tombstones.
  * @param {string} ownerId - Owner required by both identity and member queries.
@@ -356,7 +334,6 @@ const getEveDeletionState = async (
 ): Promise<EveDeletionState | undefined> => {
   const [row] = await readOwnedEveDeletionReceipt(db, ownerId, conversationId);
   if (!row) {
-    // oxlint-disable-next-line no-undefined -- Missing owner-visible identity has no deletion-state receipt.
     return undefined;
   }
   if (row.state) {
@@ -364,12 +341,8 @@ const getEveDeletionState = async (
   }
   const [member] = await readOwnedEveDeletionMemberState(db, ownerId, row);
   if (!member) {
-    // oxlint-disable-next-line no-undefined -- An identity without an owner-visible member has no deletion-state receipt.
     return undefined;
   }
   return { rootId: row.chatId, state: member.state };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeEveConversationDeletion, getEveDeletionState); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 export { completeEveConversationDeletion, getEveDeletionState };
-/* oxlint-enable import/no-named-export */

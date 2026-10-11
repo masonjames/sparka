@@ -1,7 +1,6 @@
 import type { GatewaySelection } from "#cli/registry/gateways";
 
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path"; // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import path from "node:path";
 import { readFile } from "node:fs/promises";
 
 import ts from "typescript";
@@ -35,7 +34,6 @@ const unwrap = (expression: ReadonlyNative<ts.Expression>): ts.Expression => {
 };
 
 // Read generated data without importing or executing application code.
-// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
 const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   const value = unwrap(input);
   if (ts.isStringLiteralLike(value)) {
@@ -76,7 +74,6 @@ const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   );
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readProviderLiteral's awaited sequencing and rejected-Promise behavior. */
 const readProviderLiteral = async (
   cwd: string,
   file: string,
@@ -106,8 +103,6 @@ const readProviderLiteral = async (
   }
   return literalValue(declaration.initializer);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 // Object properties apply in order. A later spread or computed key can override
 // a named property; only a subsequent explicit assignment makes it safe again.
 const activeProperty = (
@@ -135,10 +130,7 @@ const activeProperty = (
   }
   return selected;
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readProviderId's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- File absence, provider-specific discriminator selection and literal AST validation determine one installed-provider lookup result. */
 const readProviderId = async (
   cwd: string,
   kind: "gateway" | "storage"
@@ -190,12 +182,7 @@ const readProviderId = async (
   // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return value.text;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve gatewayConfigEdit's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The gateway edit resolves one const/export chain against a shared declaration list and cycle/reference tracking before replacing only the verified discriminator span. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Change the discriminator; preserve editable model/parameter selections.
  * @param {string} cwd Project directory containing chat.config.ts.
@@ -306,9 +293,4 @@ const gatewayConfigEdit = async (
     source.slice(gateway.initializer.end)
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (gatewayConfigEdit, readProviderId, readProviderLiteral); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
 export { gatewayConfigEdit, readProviderId, readProviderLiteral };
-/* oxlint-enable import/no-named-export */

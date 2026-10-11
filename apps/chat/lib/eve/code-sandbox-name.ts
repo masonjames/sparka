@@ -1,13 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { createHash } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
 
 const DIGEST_PREFIX_START = 0;
 const SANDBOX_DIGEST_LENGTH = 48;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveCodeSandboxName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Stable provider identity without exposing account IDs in resource names.
  * @param {{ readonly ownerId: string | undefined; readonly sessionId: string | undefined; readonly callId: string; readonly provider: { readonly teamId: string; readonly projectId: string; }; }} options Native tool call and provider identity used to isolate a code-execution sandbox.
@@ -34,10 +29,8 @@ export const eveCodeSandboxName = ({
   };
 }): string => {
   if (
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Public ownerId is explicitly string | undefined; missing authenticated owner must reach the existing rejection rather than throw while trimming. The app guidance prefers optional chaining.
-    (ownerId?.trim() ?? "") === "" ||
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Public sessionId is explicitly string | undefined; absent session must reach the existing rejection rather than throw while trimming. The app guidance prefers optional chaining.
-    (sessionId?.trim() ?? "") === "" ||
+    (ownerId ?? "").trim() === "" ||
+    (sessionId ?? "").trim() === "" ||
     callId.trim() === "" ||
     provider.teamId.trim() === "" ||
     provider.projectId.trim() === ""
@@ -60,4 +53,3 @@ export const eveCodeSandboxName = ({
     .digest("hex");
   return `chatjs-code-${digest.slice(DIGEST_PREFIX_START, SANDBOX_DIGEST_LENGTH)}`;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

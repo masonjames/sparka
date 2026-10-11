@@ -43,7 +43,6 @@ type InstrumentationRegistration = (context: {
   readonly appPrefix: string;
   readonly runtime: string | undefined;
 }) => void | Promise<void>;
-/* oxlint-disable import/no-named-export -- Keep the existing installation composition bindings (AttachmentUploadBehavior, AttachmentUploadInput, AttachmentUploadIntegration, InstalledLayoutComponent, InstalledRouters, InstrumentationRegistration); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   AttachmentUploadBehavior,
   AttachmentUploadInput,
@@ -52,4 +51,3 @@ export type {
   InstalledRouters,
   InstrumentationRegistration,
 };
-/* oxlint-enable import/no-named-export */

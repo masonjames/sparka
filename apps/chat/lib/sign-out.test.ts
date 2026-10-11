@@ -1,9 +1,7 @@
-/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 import { describe, expect, it, vi } from "vitest";
 
 import { signOutAndNavigate } from "./sign-out";
 
-/* oxlint-disable max-statements -- Keep sign-out, failed refresh, diagnostics and navigation ordering assertions in the same completion scenario. */
 const firstInvocation = 0;
 describe("sign-out completion", () => {
   it("navigates after native sign-out even if session refresh fails", async () => {
@@ -53,7 +51,3 @@ describe("sign-out completion", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 });
-
-/* oxlint-enable oxc/no-async-await */
-
-/* oxlint-enable max-statements */

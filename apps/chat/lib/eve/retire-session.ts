@@ -1,12 +1,10 @@
 import { Client } from "eve/client";
 import type { SessionSnapshot } from "eve/client";
 
-/* oxlint-disable sort-imports -- Keep Eve's compiled Zod initialization before the DB/env graph loads external Zod; the documented global registry uses different constructor/prototype identities depending on which package initializes it first. */
 import {
   beginEveConversationDeletion,
   getDeletingEveConversationForSession,
 } from "@/lib/db/eve-queries";
-/* oxlint-enable sort-imports */
 
 import { assertEveConfigured } from "./server";
 import { getEveConnectionOptions } from "./connection-options";
@@ -17,9 +15,7 @@ import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
 const SESSION_RETIRE_TIMEOUT_MS = 30_000;
 const RETIRED_SNAPSHOT_TIMEOUT_MS = 15_000;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveSessionForDeletion's awaited sequencing and rejected-Promise behavior. */
 const readRetiredSessionSnapshot = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original full native Client; recursive readonly mapping exceeds the SDK type instantiation limit.
   client: Readonly<Client>,
   sessionId: string
 ): Promise<SessionSnapshot> => {
@@ -45,7 +41,6 @@ const readRetiredSessionSnapshot = async (
 const reconcileRetiredSessionUsage = async (
   ownerId: string,
   sessionId: string,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward original native events to ingestEveUsage; recursively projecting the full SDK event union exceeds TypeScript instantiation depth.
   events: Readonly<SessionSnapshot["events"]>
 ): Promise<void> => {
   let unresolved = false;
@@ -82,17 +77,13 @@ const retireEveSessionForDeletion = async (
   }
   const connection = getEveConnectionOptions(ownerId);
   const client = new Client({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...connection,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     headers: { ...connection.headers, "x-chatjs-deletion": "1" },
   });
   const snapshot = await readRetiredSessionSnapshot(client, sessionId);
   await reconcileRetiredSessionUsage(ownerId, sessionId, snapshot.events);
   return snapshot;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveFamilyForDeletion's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Revokes family access and settles every bound session before resource erasure starts.
@@ -127,7 +118,4 @@ const retireEveFamilyForDeletion = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (retireEveFamilyForDeletion, retireEveSessionForDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 export { retireEveFamilyForDeletion, retireEveSessionForDeletion };
-/* oxlint-enable import/no-named-export */

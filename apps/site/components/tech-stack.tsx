@@ -14,7 +14,6 @@ const TECHS: readonly Tech[] = [
     icon: (
       <Image
         alt="Next.js"
-        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="rounded-full"
         height={28}
         sizes="28px"
@@ -38,7 +37,6 @@ const TECHS: readonly Tech[] = [
     icon: (
       <Image
         alt="AI SDK"
-        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="rounded-full"
         height={28}
         sizes="28px"
@@ -145,7 +143,6 @@ const TECHS: readonly Tech[] = [
     icon: (
       <Image
         alt="Zustand"
-        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="brightness-0 dark:brightness-100"
         height={28}
         sizes="28px"
@@ -184,8 +181,6 @@ const TECHS: readonly Tech[] = [
   },
 ];
 
-/* oxlint-disable eslint/no-magic-numbers -- TechCard: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-
 const TechCard = ({
   tech,
   index,
@@ -218,14 +213,7 @@ const TechCard = ({
     </div>
   );
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (TechStack); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/jsx-no-literals -- TechStack renders authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-disable react/no-multi-comp -- TechStack: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-
-/* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 export const TechStack = (): React.JSX.Element => (
   <section className="bg-secondary relative overflow-hidden py-24 sm:py-32">
     {/* Seamless edge blending — tall gradients for a smooth transition */}
@@ -275,8 +263,3 @@ export const TechStack = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth */
-
-/* oxlint-enable react/no-multi-comp */

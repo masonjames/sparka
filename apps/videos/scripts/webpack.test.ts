@@ -1,18 +1,12 @@
 import { expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- Native file URLs need platform-aware path conversion.
 import { fileURLToPath, pathToFileURL } from "node:url";
-// oxlint-disable-next-line import/no-nodejs-modules -- The URL portability regression creates, reads and removes a temporary filesystem fixture.
 import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- Native Webpack resolution tests use repository paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The URL portability fixture uses the operating system's temporary directory.
 import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line sort-imports -- Keep Bun test and Node builtin initialization before BundlerInternals, which eagerly loads esbuild and Webpack; moving this runtime import needs a loader-effects control.
 import { BundlerInternals, webpack } from "@remotion/bundler";
 import type { WebpackConfiguration } from "@remotion/bundler";
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- Exercise the same override imported by the still-rendering script.
 import { webpackOverride } from "../webpack";
 
 const resolvePath = (specifier: string): string =>
@@ -62,16 +56,12 @@ const aliasCases: { alias: Alias; name: string }[] = [
 ];
 
 // Webpack's native resolver validates configuration and executes its installed enhanced-resolve plugins.
-const resolveWith = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Webpack consumes mutable nested alias arrays; this test adapter passes them unchanged to that receiver.
-  alias: Alias
-) => {
+const resolveWith = (alias: Alias) => {
   const compiler = webpack({ mode: "development", resolve: { alias } });
   const resolver = compiler.resolverFactory.get("normal", {
     useSyncFileSystemCalls: true,
   });
   return (request: string): string | false =>
-    // oxlint-disable-next-line node/no-sync -- Exercise native resolution synchronously without starting compilation or rendering.
     resolver.resolveSync({}, sourceDirectory, request);
 };
 
@@ -80,9 +70,7 @@ const remotionOptions = {
   entry: indexFile,
   environment: "development",
   extraPlugins: [],
-  // oxlint-disable-next-line unicorn/no-null -- Remotion's native config-generation API requires null for an absent output directory.
   outDir: null,
-  // oxlint-disable-next-line unicorn/no-null -- Remotion's native config-generation API requires null when polling is disabled.
   poll: null,
   remotionRoot: path.resolve(import.meta.dir, ".."),
   userDefinedComponent: indexFile,
@@ -91,9 +79,6 @@ const remotionOptions = {
   "bundlerOverride" | "webpackOverride"
 >;
 
-/* oxlint-disable oxc/no-async-await -- Await native filesystem and Remotion promises so test failures reach Bun's runner; prefer-await-to-then rejects replacing the awaits with promise chains. */
-/* oxlint-disable oxc/no-optional-chaining -- Inspect optional native Webpack resolve/alias results with their nullish guards. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Build native Remotion input/expected configuration by own-key composition; prefer-object-spread rejects Object.assign. */
 it("resolves an encoded file URL to its native path", async () => {
   const prefix = path.join(tmpdir(), "webpack-url-");
   const directory = await realpath(await mkdtemp(prefix));
@@ -112,12 +97,7 @@ it("resolves an encoded file URL to its native path", async () => {
 
 it.each(aliasCases)(
   "preserves native resolution for $name aliases",
-  async (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- These native alias fixtures retain mutable nested arrays for the Webpack configuration receiver.
-    {
-      alias,
-    }: Readonly<{ alias: Alias }>
-  ) => {
+  async ({ alias }: Readonly<{ alias: Alias }>) => {
     const original = JSON.stringify(alias);
     const config = await webpackOverride({ resolve: { alias } });
     expect(JSON.stringify(alias)).toBe(original);
@@ -174,13 +154,10 @@ const exactPeerCases: {
 ];
 it.each(exactPeerCases)(
   "preserves precedence for $name",
-  async (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native alias fixtures are passed unchanged to the mutable nested Webpack configuration receiver.
-    {
-      alias,
-      expectedReact,
-    }: Readonly<{ alias: Alias; expectedReact: string | false }>
-  ) => {
+  async ({
+    alias,
+    expectedReact,
+  }: Readonly<{ alias: Alias; expectedReact: string | false }>) => {
     const original = JSON.stringify(alias);
     const config = await webpackOverride({ resolve: { alias } });
     const resolve = resolveWith(config.resolve?.alias ?? {});
@@ -205,10 +182,7 @@ it("preserves the installed Remotion alias map and other configuration fields", 
   await BundlerInternals.webpackConfig({
     ...remotionOptions,
     bundlerOverride: (config) => config,
-    webpackOverride: async (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Remotion callbacks return native configuration including nested mutable arrays; a deep-readonly reader fails that return contract.
-      config: Readonly<WebpackConfiguration>
-    ) => {
+    webpackOverride: async (config: Readonly<WebpackConfiguration>) => {
       const actual = await webpackOverride(config);
       const alias = config.resolve?.alias;
       if (Array.isArray(alias)) {
@@ -239,10 +213,7 @@ it("receives a valid array from a preceding native Remotion bundler override", a
   await BundlerInternals.webpackConfig({
     ...remotionOptions,
     bundlerOverride: (config) => ({ ...config, resolve: { alias } }),
-    webpackOverride: async (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Remotion callbacks return native configuration including nested mutable arrays; a deep-readonly reader fails that return contract.
-      config: Readonly<WebpackConfiguration>
-    ) => {
+    webpackOverride: async (config: Readonly<WebpackConfiguration>) => {
       expect(config.resolve?.alias).toBe(alias);
       const actual = await webpackOverride(config);
       expect(resolveWith(actual.resolve?.alias ?? {})("duplicate")).toBe(
@@ -252,7 +223,3 @@ it("receives a valid array from a preceding native Remotion bundler override", a
     },
   });
 });
-
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */

@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { mkdir, mkdtemp, readFile, rm, utimes, writeFile, } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { expect, test } from "vitest";
 import {
   mkdir,
@@ -15,14 +12,6 @@ import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 import nodePath from "node:path";
 import { tmpdir } from "node:os";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-nodejs-modules */
-
-/* oxlint-disable max-statements, no-magic-numbers, unicorn/max-nested-calls --
- * max-statements (#512): test("fences every member before checking pending operations and never expires unreso keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("fences every member before checking pending operations and never expires unreso uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * unicorn/max-nested-calls (#568): test("fences every member before checking pending operations and never expires unreso keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("fences every member before checking pending operations and never expires unresolved work", async () => {
   const appRoot = await mkdtemp(nodePath.join(tmpdir(), "eve-family-fence-"));
   const scope = (id: string): string =>
@@ -59,5 +48,3 @@ test("fences every member before checking pending operations and never expires u
     await rm(appRoot, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers, unicorn/max-nested-calls */

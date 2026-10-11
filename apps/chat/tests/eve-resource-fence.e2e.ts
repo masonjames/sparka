@@ -1,12 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "@/lib/eve/lifecycle/postgres/eve-session-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import {
   fenceEvePostgresResources,
@@ -14,10 +9,7 @@ import {
 } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
 import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
 
-/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Resource fence acceptance requires local Postgres.");
@@ -26,12 +18,7 @@ const query = postgres(env.DATABASE_URL, { max: 4 });
 const rejectedWriteCode = /^(?<code>40001|55000)$/u;
 const runIds: string[] = [];
 const streamIds: string[] = [];
-// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs the resource fence before registering its concurrency scenarios.
 await installEvePostgresResourceFence(query);
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 afterAll(async () => {
   if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
@@ -47,9 +34,6 @@ afterAll(async () => {
   }
   await query.end();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 async function run(status = "completed"): Promise<string> {
   const id = crypto.randomUUID();
@@ -58,8 +42,6 @@ async function run(status = "completed"): Promise<string> {
     values (${id}, 'fence-fixture', 'fence-fixture', ${status})`;
   return id;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stream's awaited sequencing and rejected-Promise behavior. */
 async function stream(
   runId: string | null,
   id = crypto.randomUUID()
@@ -69,12 +51,6 @@ async function stream(
     values (${crypto.randomUUID()}, ${id}, ${runId}, ${Buffer.from("payload")}, false)`;
   return id;
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, unicorn/no-null --
- * max-statements (#512): test("fence survives payload deletion and blocks replay, descendants, and every provi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): test("fence survives payload deletion and blocks replay, descendants, and every provi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("fence survives payload deletion and blocks replay, descendants, and every provider payload table", async () => {
   const id = await run();
   const streamId = await stream(id);
@@ -123,9 +99,6 @@ test("fence survives payload deletion and blocks replay, descendants, and every 
     await query`select id from workflow.workflow_runs where id = ${id}`
   ).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, unicorn/no-null */
 
 test("active runs and ambiguous streams roll back the entire fence", async () => {
   const active = await run("running");
@@ -144,19 +117,13 @@ test("active runs and ambiguous streams roll back the entire fence", async () =>
   ).rejects.toThrow("Stream ownership");
   await stream(terminal, shared);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements, no-undefined --
- * max-statements (#512): test("fencing waits for admitted writers to commit before rejecting later writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("fencing waits for admitted writers to commit before rejecting later writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("fencing waits for admitted writers to commit before rejecting later writes", async () => {
   const id = await run();
   const entered = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native PostgreSQL transaction executes the admitted UPDATE whose commit the fence waits for.
   const writer = query.begin(async (tx) => {
     await tx`update workflow.workflow_runs set output = '{"admitted":true}'::jsonb where id = ${id}`;
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     entered.resolve(undefined);
     await release.promise;
   });
@@ -179,6 +146,7 @@ test("fencing waits for admitted writers to commit before rejecting later writes
       })
       .toBe(true);
   } finally {
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     release.resolve(undefined);
     await writer;
     await fencing;
@@ -189,23 +157,16 @@ test("fencing waits for admitted writers to commit before rejecting later writes
     await query`select output from workflow.workflow_runs where id = ${id}`;
   expect(row.output).toEqual({ admitted: true });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined */
 
-/* oxlint-disable max-statements, no-undefined --
- * max-statements (#512): test("a repeatable-read snapshot from before the fence cannot restore payloads") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("a repeatable-read snapshot from before the fence cannot restore payloads") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("a repeatable-read snapshot from before the fence cannot restore payloads", async () => {
   const id = await run();
   const streamId = crypto.randomUUID();
   streamIds.push(streamId);
   const entered = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This native PostgreSQL transaction reads the pre-fence snapshot and later issues the INSERT that the installed fence rejects.
   const writer = query.begin("isolation level repeatable read", async (tx) => {
     await tx`select resource from workflow.eve_resource_fences where resource = ${`run:${id}`}`;
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     entered.resolve(undefined);
     await release.promise;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
@@ -219,6 +180,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
     await entered.promise;
     await fenceEvePostgresResources(query, { runIds: [id], streamIds: [] });
   } finally {
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     release.resolve(undefined);
     await rejected;
   }
@@ -226,13 +188,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
     await query`select id from workflow.workflow_stream_chunks where stream_id = ${streamId}`
   ).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined */
 
-/* oxlint-disable max-statements --
- * max-statements (#512): test("session fencing rolls back for an active child and succeeds after retirement") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("session fencing rolls back for an active child and succeeds after retirement", async () => {
   const root = await run();
   const child = await run("running");
@@ -248,14 +204,7 @@ test("session fencing rolls back for an active child and succeeds after retireme
   expect(await fenceEvePostgresSession(query, root)).toEqual(result);
   await expect(stream(child)).rejects.toMatchObject({ code: "55000" });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements, no-undefined --
- * max-statements (#512): test("session fencing re-inventories a collector child committed while its fence wait keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): test("session fencing re-inventories a collector child committed while its fence wait uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("session fencing re-inventories a collector child committed while its fence waits", async () => {
   const collector = await run();
   const root = await run();
@@ -266,12 +215,12 @@ test("session fencing re-inventories a collector child committed while its fence
   streamIds.push(childStream);
   const entered = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.json() to perform the native database transaction/write operation.
   const writer = query.begin(async (tx) => {
     await tx`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'admitted-child', 'fixture', 'completed', ${tx.json({ $parentRunId: collector })})`;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${childStream}, ${child}, ${Buffer.from("admitted")}, false)`;
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     entered.resolve(undefined);
     await release.promise;
   });
@@ -292,6 +241,7 @@ test("session fencing re-inventories a collector child committed while its fence
         })
         .toBe(true);
     } finally {
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
       release.resolve(undefined);
       await writer;
     }
@@ -306,5 +256,3 @@ test("session fencing re-inventories a collector child committed while its fence
     await fencer.end();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-undefined */

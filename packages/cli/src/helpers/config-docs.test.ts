@@ -1,7 +1,5 @@
 import { expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
 
 import ts from "typescript";
@@ -9,10 +7,8 @@ import ts from "typescript";
 const minimumDocumentationSnippetCount = 0;
 const documentationTypecheckTimeoutMs = 30_000;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test(
   "public configuration snippets typecheck against the installed application contract",
-  // oxlint-disable-next-line eslint/max-statements -- This contract test reads, resolves, compiles and validates each documentation snippet in one ordered flow, preserving diagnostics and source ownership.
   async () => {
     const app = path.resolve(import.meta.dir, "../../../../apps/chat");
     const pages = ["core/configuration", "reference/config"];
@@ -28,10 +24,10 @@ test(
       ];
       expect(snippets.length).toBeGreaterThan(minimumDocumentationSnippetCount);
       for (const [index, match] of snippets.entries()) {
+        const { source = "" } = match.groups ?? {};
         sources.set(
           path.join(app, `docs-${page.replaceAll("/", "-")}-${index}.ts`),
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from match.groups; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-          match.groups?.source ?? ""
+          source
         );
       }
     }
@@ -39,7 +35,6 @@ test(
       ts.sys.readFile(file)
     );
     const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, app);
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing parsed.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const options = { ...parsed.options, incremental: false };
     const host = ts.createCompilerHost(options);
     const read = host.readFile.bind(host);
@@ -50,11 +45,9 @@ test(
       .getPreEmitDiagnostics(program)
       .filter(
         (diagnostic: { readonly file?: { readonly fileName: string } }) =>
-          Boolean(diagnostic.file) &&
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the nullish file guard so absent diagnostics remain excluded while preserving the empty-string fallback.
-          sources.has(diagnostic.file?.fileName ?? "")
+          diagnostic.file !== globalThis.undefined &&
+          sources.has(diagnostic.file.fileName)
       )
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript exposes DiagnosticMessageChain as a recursive mutable SDK shape accepted by flattenDiagnosticMessageText.
       .map((diagnostic) =>
         ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
       );
@@ -62,4 +55,3 @@ test(
   },
   documentationTypecheckTimeoutMs
 );
-/* oxlint-enable oxc/no-async-await */

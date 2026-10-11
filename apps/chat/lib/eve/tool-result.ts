@@ -78,19 +78,15 @@ const createToolResult = <Output extends ToolOutput>(
   };
 };
 
-/* oxlint-disable unicorn/no-null -- Error receipts serialize null output in the existing discriminated wire schema. */
 const createToolError = (
   costUsd: number | undefined,
   updates?: readonly ToolOutput[]
 ): ToolResult<never> => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing createToolResult(null, costUsd, updates) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...createToolResult(null, costUsd, updates),
   error: "The tool did not complete.",
   output: null,
   status: "error",
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolError, createToolResult, hasEveToolReceipt, toolOutputSchema, toolResultSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable unicorn/no-null */
 export {
   createToolError,
   createToolResult,
@@ -98,7 +94,4 @@ export {
   toolOutputSchema,
   toolResultSchema,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (ToolOutput, ToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ToolOutput, ToolResult };
-/* oxlint-enable import/no-named-export */

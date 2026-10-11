@@ -1,18 +1,12 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { expect, test } from "bun:test";
 import {
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 } from "./scaffold-content";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; each case awaits fixture creation, copying, assertions, and cleanup. */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test.each([
   {
@@ -95,7 +89,4 @@ test.each([
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

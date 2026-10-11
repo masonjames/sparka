@@ -5,18 +5,11 @@ import type {
 
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable react/react-in-jsx-scope -- Input uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-
-const Input = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
-  {
-    className,
-    type,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, type from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-    ...props
-  }: ReactComponentProps<"input">
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
-): ReactJSX.Element => (
+const Input = ({
+  className,
+  type,
+  ...props
+}: ReactComponentProps<"input">): ReactJSX.Element => (
   <input
     className={cn(
       "border-input selection:bg-primary selection:text-primary-foreground file:text-foreground placeholder:text-muted-foreground dark:bg-input/30 flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
@@ -26,12 +19,8 @@ const Input = (
     )}
     data-slot="input"
     type={type}
-    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Input's native input attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Input); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/react-in-jsx-scope */
 
 export { Input };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

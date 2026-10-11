@@ -15,8 +15,7 @@ interface ProjectRenameSnapshot {
   detail?: Project | null;
 }
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useRenameProject); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function, no-undefined, typescript/promise-function-async -- useRenameProject: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable typescript/promise-function-async -- useRenameProject: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 export const useRenameProject = (): UseMutationResult<
   inferRouterOutputs<AppRouter>["project"]["update"],
@@ -27,24 +26,19 @@ export const useRenameProject = (): UseMutationResult<
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return useMutation(
     trpc.project.update.mutationOptions<ProjectRenameSnapshot>({
       onError: (
         _error: unknown,
         _variables,
-        /* oxlint-disable typescript/prefer-readonly-parameter-types -- Rollback passes the original cached array to the typed React Query updater; readonly nested arrays are rejected by that native cache receiving contract. */
         context: Readonly<ProjectRenameSnapshot> | undefined
-        /* oxlint-enable typescript/prefer-readonly-parameter-types */
       ) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading previous from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (context?.previous) {
           queryClient.setQueryData(
             trpc.project.list.queryKey(),
             context.previous
           );
         }
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading detail from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (context?.detail) {
           queryClient.setQueryData(
             trpc.project.getById.queryKey({ id: _variables.id }),
@@ -63,23 +57,19 @@ export const useRenameProject = (): UseMutationResult<
         const detail = queryClient.getQueryData<Project | null>(detailKey);
         const previous = queryClient.getQueryData<Project[]>(listKey);
         const nextName =
-          // oxlint-disable-next-line no-ternary -- Keep nextName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof variables.updates.name === "string"
             ? variables.updates.name
             : undefined;
         if (typeof nextName === "string" && nextName !== "") {
           queryClient.setQueryData<Project | null>(detailKey, (old) => {
             if (old) {
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               return { ...old, name: nextName };
             }
             return old;
           });
           queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from old; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             old?.map((project: ReadonlyNativeSurface<Project>) => {
               if (project.id === variables.id) {
-                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing project own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 return { ...project, name: nextName };
               }
               return project;
@@ -93,7 +83,5 @@ export const useRenameProject = (): UseMutationResult<
       onSuccess: () => toast.success("Project renamed"),
     })
   );
-  /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-lines-per-function, no-undefined, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */

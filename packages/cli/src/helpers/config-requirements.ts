@@ -1,7 +1,6 @@
 import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "#cli/types";
 import type { ReadonlyInput } from "./readonly-input";
 import { builtInGateways } from "#cli/registry/gateways";
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { mcpDefinition } from "../../../registry/src/features/mcp";
 
 type EnvVarName = string;
@@ -17,7 +16,6 @@ const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
       (item: ReadonlyInput<(typeof builtInGateways)[number]>) => [
         item.meta.chatjs.id,
         item.meta.chatjs.envRequirements.map((requirement) => ({
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...requirement,
           description:
             requirement.description ??
@@ -32,14 +30,12 @@ const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
 const coreFeatureEnvRequirements: Partial<
   Record<CoreFeatureKey, EnvRequirement[]>
 > = {
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Customize CLI descriptions without modifying the registry definition shared by other consumers.
   mcp: (mcpDefinition.envRequirements ?? []).map(
     (
       requirement: ReadonlyInput<
         NonNullable<typeof mcpDefinition.envRequirements>[number]
       >
     ) => ({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...requirement,
       description:
         requirement.description ??
@@ -48,7 +44,6 @@ const coreFeatureEnvRequirements: Partial<
   ),
 };
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const builtInToolEnvRequirements: Record<
   BuiltInToolKey,
   EnvRequirement | undefined
@@ -66,7 +61,6 @@ const builtInToolEnvRequirements: Record<
     options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
   },
 };
-/* oxlint-enable eslint/no-undefined */
 
 const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   github: {
@@ -107,7 +101,6 @@ const envVarDescriptions: Record<string, string> = {
   VERCEL_TEAM_ID: "Vercel team id for sandbox execution",
   VERCEL_TOKEN: "Vercel token for sandbox execution",
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (authEnvRequirements, builtInToolEnvRequirements, coreFeatureEnvRequirements, envVarDescriptions, gatewayEnvRequirements); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   authEnvRequirements,
   builtInToolEnvRequirements,
@@ -115,7 +108,4 @@ export {
   envVarDescriptions,
   gatewayEnvRequirements,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (EnvRequirement); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { EnvRequirement };
-/* oxlint-enable import/no-named-export */

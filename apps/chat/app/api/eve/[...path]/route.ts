@@ -1,6 +1,3 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
 import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
@@ -11,19 +8,15 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { UiToolName } from "@/lib/ai/types";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { frontendToolsSchema } from "@/lib/ai/types";
-// oxlint-disable-next-line sort-imports -- Keep frontend schema initialization before the database/env client graph; graph audit records a changed first-evaluation effect sequence for the sorted alternative.
 import { canSpend } from "@/lib/db/credits";
 import { env } from "@/lib/env";
 import { referenceEveFiles } from "@/lib/db/eve-files";
-// oxlint-disable-next-line sort-imports -- Keep file-row/schema initialization before session query schemas; the sorted alternative changes first-evaluation order in the pinned graph audit.
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
-// oxlint-disable-next-line sort-imports -- Keep rejection transport before guest-admission config/database initialization; the sorted alternative reverses these effect nodes in the pinned graph audit.
 import {
   admitGuestMessage,
   settleGuestMessage,
 } from "@/lib/eve/guest-message-admission";
-// oxlint-disable-next-line sort-imports -- Keep guest admission before message-delivery schema initialization; swapping reverses config and draft/schema effect nodes in the pinned graph audit.
 import {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDeliveryMetadata,
@@ -31,9 +24,7 @@ import {
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
-// oxlint-disable-next-line sort-imports -- Keep auth/principal initialization before reconciliation/workflow initialization; the pinned graph audit records the reversed effect sequence.
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
-// oxlint-disable-next-line sort-imports -- Keep reconciliation before request-policy schema initialization; the sorted alternative changes their first evaluation sequence in the pinned graph audit.
 import {
   parseSessionRequest,
   safeStreamQuery,
@@ -42,7 +33,7 @@ import {
 import { eveRequest } from "@/lib/eve/server";
 import { relayResponse } from "./relay-response";
 import { z } from "zod";
-/* oxlint-enable import/max-dependencies */
+
 const HTTP_BAD_REQUEST = 400;
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
@@ -62,8 +53,6 @@ const rejectRequest = (
     }
     return Response.json({ error: message }, { status });
   };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkTurnAdmission's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined -- checkTurnAdmission uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const checkTurnAdmission = async (
   request: ReadonlyNativeSurface<Request>,
   {
@@ -94,8 +83,6 @@ const checkTurnAdmission = async (
     return rejectEveCommand("Insufficient credits", HTTP_PAYMENT_REQUIRED);
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined */
 const selectionsConflict = (
   header: string | null,
   body: string | undefined
@@ -110,11 +97,6 @@ const parseToolSelection = (
       () => header === null || typeof body !== "string" || header === body
     )
     .safeParse(header ?? body);
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCommand's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, unicorn/no-null -- init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-max-lines-per-function (#510): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-unicorn/no-null (#570): readCommand preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const readCommand = async (
   request: {
     readonly method: string;
@@ -202,7 +184,6 @@ const readCommand = async (
         });
       } catch (error) {
         return rejectEveCommand(
-          // oxlint-disable-next-line no-ternary -- Keep rejectEveCommand argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           error instanceof Error ? error.message : "Unable to read attachment.",
           HTTP_BAD_REQUEST
         );
@@ -214,12 +195,6 @@ const readCommand = async (
   }
   return { body, isNewMessage, message, modelId, selectedTool };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handle's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, unicorn/no-null */
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined -- max-lines-per-function (#510): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): handle uses undefined for absent or optional values; context: { params: Promise<{ path: string[]; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const handle = async (
   request: ReadonlyNativeSurface<Request>,
   context: {
@@ -244,7 +219,6 @@ const handle = async (
   const { path } = await context.params;
   const upstreamPath = `/eve/${path.join("/")}`;
   const policy = parseSessionRequest(upstreamPath, request.method);
-  // oxlint-disable-next-line no-ternary -- Keep conversation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const conversation = policy
     ? await getBoundEveConversationForSession(
         principal.ownerId,
@@ -282,7 +256,6 @@ const handle = async (
     }
     const result = await eveRequest(
       principal.ownerId,
-      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `/eve/chat/${path.join("/")}${query.size > NO_QUERY_PARAMETERS ? `?${query}` : ""}`,
       {
         body,
@@ -290,7 +263,6 @@ const handle = async (
         // Closing the reader must not cancel a validated command before Eve
         // can durably accept it. Streaming reads still follow browser lifetime.
         signal:
-          // oxlint-disable-next-line no-ternary -- Keep signal as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           request.method === "GET"
             ? request.signal
             : AbortSignal.timeout(COMMAND_TIMEOUT_MS),
@@ -315,10 +287,6 @@ const handle = async (
     );
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined */
 const GET = handle;
 const POST = handle;
-/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (GET, POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { GET, POST };
-/* oxlint-enable import/no-named-export */

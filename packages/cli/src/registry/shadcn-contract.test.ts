@@ -1,13 +1,8 @@
 import { expect, test } from "bun:test";
 import { installItems, listTools, readItem, registryConfig } from "./shadcn";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createConfigFixture's awaited sequencing and rejected-Promise behavior. */
 
 const createConfigFixture = async (registry: unknown): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-metadata-"));
@@ -17,14 +12,12 @@ const createConfigFixture = async (registry: unknown): Promise<string> => {
   );
   return root;
 };
-/* oxlint-enable oxc/no-async-await */
 const configuredRegistry = {
   headers: { "X-Registry-Contract": "preserved" },
   params: { version: "fixture" },
   url: "https://example.com/r/{name}.json",
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("registry config preserves the SDK object URL, parameters and headers contract", async () => {
   const root = await createConfigFixture(configuredRegistry);
   try {
@@ -38,7 +31,6 @@ test("registry config preserves the SDK object URL, parameters and headers contr
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
 const metadataVariants: readonly unknown[] = [
   {},
   JSON.parse('{"chatjs":null}'),
@@ -77,7 +69,6 @@ const registryServer = (): Bun.Server<undefined> =>
     port: 0,
   });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("tool listing narrows only the ChatJS kind and retains arbitrary metadata", async () => {
   const server = registryServer();
   const root = await createConfigFixture(
@@ -90,8 +81,6 @@ test("tool listing narrows only the ChatJS kind and retains arbitrary metadata",
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("item parsing returns the SDK schema data without stripping third-party metadata", async () => {
   const server = Bun.serve({
     fetch: () => Response.json(selectedItem),
@@ -108,7 +97,6 @@ test("item parsing returns the SDK schema data without stripping third-party met
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
 const installableItem = {
   files: [
     {
@@ -122,7 +110,6 @@ const installableItem = {
   type: "registry:item",
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("installing an immutable source selection leaves caller ownership intact", async () => {
   const server = Bun.serve({
     fetch: () => Response.json(installableItem),
@@ -143,9 +130,7 @@ test("installing an immutable source selection leaves caller ownership intact", 
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
 const CHILD_EXIT_SUCCESS = 0;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registryConfigInProcess's awaited sequencing and rejected-Promise behavior. */
 const registryConfigInProcess = async (
   root: string,
   registryUrl: string
@@ -168,8 +153,6 @@ const registryConfigInProcess = async (
   });
   return JSON.parse(stdout);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("the process registry override remains the fallback and configured registry objects take priority", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-registry-process-"));
   const processUrl = "https://example.com/process/{name}.json";
@@ -188,4 +171,3 @@ test("the process registry override remains the fallback and configured registry
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */

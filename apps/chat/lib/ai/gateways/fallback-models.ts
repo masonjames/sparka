@@ -7,7 +7,6 @@ import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("ai/gateways/fallback");
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getFallbackModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Returns fallback models only if the snapshot was generated for the
  * requested gateway. When there's a mismatch the snapshot contains model
@@ -28,4 +27,3 @@ export const getFallbackModels = (
   }
   return fallbackModels;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

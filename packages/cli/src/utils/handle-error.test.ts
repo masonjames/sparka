@@ -18,7 +18,6 @@ const cases = [
 ] as const;
 
 for (const scenario of cases) {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`handleError reports ${scenario.name} and stops the command`, async () => {
     const result = Bun.spawn(
       [
@@ -46,5 +45,4 @@ console.log("command continued");`,
     expect(stdout).toBe(scenario.output);
     expect(stderr).toBe("");
   });
-  /* oxlint-enable oxc/no-async-await */
 }

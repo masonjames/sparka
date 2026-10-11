@@ -3,9 +3,7 @@
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 
 import { ModelSelector } from "@/components/model-selector";
-/* oxlint-disable sort-imports -- The combined development and production module-effect trace rejects swapping @/components/model-selector and @/providers/chat-models-provider; keep this adjacent import pair ordered. */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
-/* oxlint-enable sort-imports */
 
 import React from "react";
 
@@ -87,10 +85,6 @@ const fixtureModels = [
       models.findIndex(({ id }) => id === model.id) === index
   ),
 ];
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelToolbarVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable react/jsx-no-literals -- ModelToolbarVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-
-/* oxlint-disable react/jsx-max-depth -- ModelToolbarVisualFixture: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 const ignoreModelSelectionChange = (): void => {
   // This fixture has no selection-change subscription to clean up.
@@ -117,6 +111,3 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
     </main>
   </ChatModelsProvider>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable react/jsx-max-depth */

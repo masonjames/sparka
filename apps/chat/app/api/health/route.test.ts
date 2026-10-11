@@ -23,10 +23,9 @@ afterEach(() => {
   vi.useRealTimers();
   vi.resetAllMocks();
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- Keep the mock's undefined result as the absent-database signal exercised by this route test. */
 test("requires a genuine Eve health response, not a login page", async () => {
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   database.mockResolvedValue(undefined);
   vi.stubGlobal(
     "fetch",
@@ -35,12 +34,9 @@ test("requires a genuine Eve health response, not a login page", async () => {
   const resolvedResult1 = await GET();
   expect(resolvedResult1.status).toBe(HTTP_STATUS.serviceUnavailable);
 });
-/* oxlint-enable no-undefined */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-undefined -- Keep the mocked missing database value distinct from null while testing readiness. */
 test("reports ready only with database and Eve available", async () => {
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest's mock API requires the explicit absent result for this scenario.
   database.mockResolvedValue(undefined);
   vi.stubGlobal(
     "fetch",
@@ -56,9 +52,6 @@ test("reports ready only with database and Eve available", async () => {
   const resolvedResult3 = await GET();
   expect(resolvedResult3.status).toBe(HTTP_STATUS.serviceUnavailable);
 });
-/* oxlint-enable no-undefined */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("bounds a stalled database check", async () => {
   vi.useFakeTimers();
@@ -81,10 +74,8 @@ test("bounds a stalled database check", async () => {
   const resolvedResult4 = await response;
   expect(resolvedResult4.status).toBe(HTTP_STATUS.serviceUnavailable);
 });
-/* oxlint-enable oxc/no-async-await */
 
 const unavailableStatus = 503;
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a failed guest worker makes the production instance unavailable", async () => {
   vi.stubGlobal(
     "fetch",
@@ -99,4 +90,3 @@ test("a failed guest worker makes the production instance unavailable", async ()
   expect(response.status).toBe(unavailableStatus);
   expect(await response.json()).toEqual({ status: "unavailable" });
 });
-/* oxlint-enable oxc/no-async-await */

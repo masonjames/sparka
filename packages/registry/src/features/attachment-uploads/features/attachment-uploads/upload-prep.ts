@@ -15,10 +15,6 @@ const imageExtension = (mimeType: string): string => {
   return extension ?? "jpg";
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve compressImageIfNeeded's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const compressImageIfNeeded = async (
   file: Readonly<File>,
   {
@@ -56,7 +52,6 @@ const compressImageIfNeeded = async (
   try {
     const maybeResult = await imageCompression(file, options);
     const resultBlob =
-      // oxlint-disable-next-line no-ternary -- Keep resultBlob as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       maybeResult instanceof File
         ? maybeResult
         : new File([maybeResult], file.name, {
@@ -76,14 +71,7 @@ const compressImageIfNeeded = async (
     return file;
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (processFilesForUpload); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve processFilesForUpload's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 export const processFilesForUpload = async (
   files: readonly Readonly<File>[],
   options: Readonly<{
@@ -125,6 +113,3 @@ export const processFilesForUpload = async (
 
   return { files: prepared, stillOversized, unsupportedFiles };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-statements */

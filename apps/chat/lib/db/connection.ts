@@ -6,7 +6,6 @@ import { z } from "zod";
  */
 const normalizeEmptyEnvironmentValue = (value: unknown): unknown => {
   if (value === "") {
-    // oxlint-disable-next-line no-undefined -- Normalize an empty environment string to the absent value expected by Zod optional/default handling.
     return undefined;
   }
   return value;
@@ -47,7 +46,6 @@ const databaseConnection = (
   purpose: "runtime" | "migration" = "runtime"
 ): { options: { prepare: boolean; max?: number | undefined }; url: string } => {
   const url =
-    // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     purpose === "migration"
       ? // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty migration URL means unset and must fall back to DATABASE_URL; preserve the short-circuit single migration-URL getter read.
         environment.DATABASE_MIGRATION_URL || environment.DATABASE_URL
@@ -58,16 +56,13 @@ const databaseConnection = (
     );
   }
   const max =
-    // oxlint-disable-next-line no-ternary -- Keep max as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     purpose === "migration"
       ? MIGRATION_MAX_CONNECTIONS
       : environment.DATABASE_MAX_CONNECTIONS;
   return {
     options: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-undefined, no-ternary -- An absent max omits the pool-size key rather than passing undefined to the driver. Conditional spread (max === undefined ? {} : { max }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(max === undefined ? {} : { max }),
       prepare:
-        // oxlint-disable-next-line no-ternary -- Keep prepare as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         purpose === "migration"
           ? false
           : (environment.DATABASE_PREPARE ?? true),
@@ -75,6 +70,4 @@ const databaseConnection = (
     url,
   };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (databaseConnection, databaseEnvOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { databaseConnection, databaseEnvOptions };
-/* oxlint-enable import/no-named-export */

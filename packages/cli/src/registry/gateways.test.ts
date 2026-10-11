@@ -1,13 +1,8 @@
 import { builtInGateways, resolveGateway } from "./gateways";
 import { expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 const FIRST_GATEWAY_INDEX = 0;
 const EPHEMERAL_PORT = 0;
@@ -25,11 +20,9 @@ it("validates gateway integration metadata with the standard registry schema", a
     await writeFile(
       source,
       JSON.stringify({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...builtInGateways[FIRST_GATEWAY_INDEX],
         meta: {
           chatjs: {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0].meta.chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...builtInGateways[FIRST_GATEWAY_INDEX].meta.chatjs,
             contractVersion: 999,
           },
@@ -41,8 +34,6 @@ it("validates gateway integration metadata with the standard registry schema", a
     await rm(cwd, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   const server = Bun.serve({
     fetch: (request: Readonly<Pick<Request, "url">>) => {
@@ -65,4 +56,3 @@ it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
     await server.stop(true);
   }
 });
-/* oxlint-enable oxc/no-async-await */

@@ -2,25 +2,12 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { Favicon } from "@/components/favicon";
 import { MessageAttachment } from "@/components/ai-elements/message";
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- MessageAttachment loads streamdown/styles.css before GenerateImageRenderer loads ImageModal and Sonner's injected stylesheet; preserve that style insertion order. */
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 import { ImageModal } from "@/components/image-modal";
 import { createRoot } from "react-dom/client";
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- MessageAttachment imports streamdown/styles.css before this fixture stylesheet; preserve the native browser style insertion order. */
 import "../../../apps/chat/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 test("image tool loading, success, and unavailable states", async () => {
   const container = document.createElement("main");
   container.style.cssText =
@@ -46,7 +33,7 @@ test("image tool loading, success, and unavailable states", async () => {
   const imageBlob = await response.blob();
   const blobUrl = URL.createObjectURL(imageBlob);
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
-  await act(() =>
+  await act(() => {
     root.render(
       <>
         <GenerateImageRenderer
@@ -99,14 +86,13 @@ test("image tool loading, success, and unavailable states", async () => {
         />
         <Favicon url={imageUrl} srcSet={`${imageUrl} 2x`} width="100%" />
       </>
-    )
-  );
+    );
+  });
   try {
     await expect
       .poll(() => container.textContent)
       .toContain("Generated image unavailable");
     await expect
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading complete from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       .poll(() => container.querySelector("img")?.complete)
       .toBe(true);
     const button = container.querySelector<HTMLButtonElement>("button");
@@ -161,14 +147,7 @@ test("image tool loading, success, and unavailable states", async () => {
     style.remove();
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable oxc/no-async-await -- Await native image loading and Radix exit cleanup before checking the console and final DOM. */
-/* oxlint-disable max-statements, max-lines-per-function -- Exercise the exported modal's ordered empty/open/close/reopen transitions together to preserve one console-error observation window. */
 const waitForAnimations = async (): Promise<void> => {
   await act(async () => {
     const completions: Promise<Animation>[] = [];
@@ -199,7 +178,7 @@ test("image modal empty source and close transition stay console-error free", as
   const handleClose = vi.fn<() => void>();
   const renderModal = async (isOpen: boolean, url: string): Promise<void> => {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush this controlled React prop transition before inspecting Radix presence.
-    await act(() =>
+    await act(() => {
       root.render(
         <ImageModal
           imageName="Empty URL fixture"
@@ -208,8 +187,8 @@ test("image modal empty source and close transition stay console-error free", as
           onClose={handleClose}
           showActions={false}
         />
-      )
-    );
+      );
+    });
   };
   try {
     await renderModal(true, imageUrl);
@@ -245,5 +224,3 @@ test("image modal empty source and close transition stay console-error free", as
     container.remove();
   }
 });
-/* oxlint-enable max-statements, max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */

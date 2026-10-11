@@ -8,7 +8,6 @@ import { RefreshCcw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetryButtonView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const RetryButtonView = ({
   onRetry,
   disabled = false,
@@ -19,7 +18,6 @@ export const RetryButtonView = ({
   readonly className?: string;
 }): React.JSX.Element => (
   <Action
-    // oxlint-disable-next-line react/forbid-component-props -- Action accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0",
       className
@@ -28,10 +26,6 @@ export const RetryButtonView = ({
     onClick={onRetry}
     tooltip="Retry"
   >
-    <RefreshCcw
-      // oxlint-disable-next-line react/forbid-component-props -- RefreshCcw accepts className in its styling contract; preserve this caller's layout and appearance.
-      className="h-3.5 w-3.5"
-    />
+    <RefreshCcw className="h-3.5 w-3.5" />
   </Action>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -63,8 +63,6 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-
 test("keeps a terminal creation response ambiguous when its refund is refused", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
@@ -87,8 +85,6 @@ test("keeps a terminal creation response ambiguous when its refund is refused", 
     "reservation"
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("preserves authoritative deletion when its committed quota cannot be refunded", async () => {
   mocks.create.mockResolvedValue(
@@ -111,8 +107,6 @@ test("preserves authoritative deletion when its committed quota cannot be refund
     creationRejected: true,
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("defers root title generation until after the creation response", async () => {
   mocks.create.mockResolvedValue(
@@ -135,4 +129,3 @@ test("defers root title generation until after the creation response", async () 
     ownerId: "guest",
   });
 });
-/* oxlint-enable oxc/no-async-await */

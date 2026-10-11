@@ -10,9 +10,7 @@ import type {
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { defaultMessageReducer } from "eve/client";
-/* oxlint-disable sort-imports -- Keep eve/client installing the shared Zod postprocessor before the application tool schemas are constructed. */
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
-/* oxlint-enable sort-imports */
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
 import { responseModelReferences } from "./response-model";
 
@@ -37,19 +35,13 @@ const sharedModelId = (
   if (message.role !== "assistant") {
     return "";
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
   const turnId = message.metadata?.turnId ?? "";
   if (turnId === "") {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
     return message.metadata?.modelId ?? "";
   }
   return models.get(turnId) ?? "";
 };
 
-/* oxlint-disable max-lines-per-function, max-statements --
- * max-lines-per-function (#510): sharedTool audits each native tool state in one privacy projection: it strips owner approval/runtime fields and validates platform result receipts before exposing display content.
- * max-statements (#512): sharedTool audits each native tool state in one privacy projection: it strips owner approval/runtime fields and validates platform result receipts before exposing display content.
- */
 /**
  * Keep visible tool content, never the owner's approval or runtime identities.
  * @param {ReadonlyNativeSurface<EveDynamicToolPart>} part Native tool state whose display content may be shared.
@@ -67,21 +59,17 @@ const sharedTool = (
     };
   switch (part.state) {
     case "input-streaming": {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, inputText: part.inputText, state: part.state };
     }
     case "input-available": {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, state: part.state };
     }
     // The read-only UI union requires an ID; this placeholder is not an approval receipt.
     case "approval-requested": {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, approval: { id: "public" }, state: part.state };
     }
     case "approval-responded": {
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         approval: {
           approved: part.approval.approved,
@@ -93,7 +81,6 @@ const sharedTool = (
     }
     case "output-denied": {
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         approval: {
           approved: false,
@@ -104,7 +91,6 @@ const sharedTool = (
       };
     }
     case "output-error": {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, errorText: part.errorText, state: part.state };
     }
     case "output-available": {
@@ -112,7 +98,6 @@ const sharedTool = (
       if (hasEveToolReceipt(part.output)) {
         if (!result.success) {
           return {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...base,
             errorText:
               "This tool result is unavailable in the shared conversation.",
@@ -120,7 +105,6 @@ const sharedTool = (
           };
         }
         return {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...base,
           output: result.data,
           partial: part.partial,
@@ -128,10 +112,8 @@ const sharedTool = (
         };
       }
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         output: part.output,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(part.outputType ? { outputType: part.outputType } : {}),
         partial: part.partial,
         state: part.state,
@@ -139,7 +121,6 @@ const sharedTool = (
     }
     default: {
       return {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         errorText: "This tool state is unavailable in the shared conversation.",
         state: "output-error",
@@ -147,9 +128,7 @@ const sharedTool = (
     }
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements */
 
-/* oxlint-disable max-statements -- max-statements (#512): sharedEvePart whitelists public part fields, strips authorization challenges and appends display-only request/answer text; keep these privacy decisions visible under one projection. */
 const sharedEvePart = (
   part: ReadonlyNativeSurface<ReadonlyEveMessagePart>
 ): EveMessagePart[] => {
@@ -169,13 +148,10 @@ const sharedEvePart = (
   }
   if (part.type === "dynamic-tool") {
     const parts: EveMessagePart[] = [sharedTool(part)];
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Dynamic-tool display metadata is optional and may lack the EVE input request/response namespace; shared transcript must still project the tool part without prompting/answer text. The app guidance prefers optional chaining.
     const request = part.toolMetadata?.eve?.inputRequest;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Dynamic-tool display metadata is optional and may lack the EVE input request/response namespace; shared transcript must still project the tool part without prompting/answer text. The app guidance prefers optional chaining.
     const response = part.toolMetadata?.eve?.inputResponse;
     if (request) {
       parts.push({ text: request.prompt, type: "text" });
-      // oxlint-disable-next-line no-magic-numbers -- Only a nonempty options list contributes its display labels to the shared transcript.
       if (request.options && request.options.length > 0) {
         parts.push({
           text: request.options.map((option) => option.label).join(" · "),
@@ -184,9 +160,7 @@ const sharedEvePart = (
       }
     }
     const answer =
-      // oxlint-disable-next-line oxc/no-optional-chaining -- An input response can be absent while an input request exists; response text and optionId lookups must not throw when sharing a pending request. The app guidance prefers optional chaining.
       response?.text ??
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Request/options can be absent and Array.find can return undefined for an unmatched optionId; preserve omission of nonexistent answer text. The app guidance prefers optional chaining. An input response can be absent while an input request exists; response text and optionId lookups must not throw when sharing a pending request. The app guidance prefers optional chaining.
       request?.options?.find((option) => option.id === response?.optionId)
         ?.label;
     if (typeof answer === "string" && answer !== "") {
@@ -200,10 +174,8 @@ const sharedEvePart = (
   // Connection challenges can contain owner-only authorization URLs and codes.
   return [{ text: "An account connection was requested.", type: "text" }];
 };
-/* oxlint-enable max-statements */
 
 const sharedEveMessages = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward each original MessageStreamEvent to reducer.reduce; the native input-request event requires mutable data.requests[].options arrays, so a deeply readonly event is not assignable (also through history.restored).
   events: readonly MessageStreamEvent[]
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
@@ -213,18 +185,14 @@ const sharedEveMessages = (
     state = reduceEvent(state, event);
   }
   const models = responseModelReferences(events);
-  // oxlint-disable-next-line oxc/no-map-spread -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order.
   return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
     const modelId = sharedModelId(message, models);
     const selectedTool =
-      // oxlint-disable-next-line no-ternary -- Keep selectedTool as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       message.role === "user" ? (eveMessageTool(message) ?? "") : "";
     return {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool === ""         ? {}         : { metadata: { custom: eveToolMetadata(selectedTool) } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(selectedTool === ""
         ? {}
         : { metadata: { custom: eveToolMetadata(selectedTool) } }),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (modelId === "" ? {} : { metadata: { modelId } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(modelId === "" ? {} : { metadata: { modelId } }),
       id: message.id,
       parts: message.parts.flatMap(sharedEvePart),
@@ -232,6 +200,4 @@ const sharedEveMessages = (
     };
   });
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (sharedEveMessages, sharedEvePart); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { sharedEveMessages, sharedEvePart };
-/* oxlint-enable import/no-named-export */

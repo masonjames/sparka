@@ -2,10 +2,8 @@ import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capab
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
 import { getVercelOidcTokenSync } from "@vercel/oidc";
-// oxlint-disable-next-line sort-imports -- Keep OIDC's eager os.hostname() read before Sandbox loads Undici and installs its global dispatcher; sorting this multiple-binding import first reverses that observable initialization order.
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { env } from "@/lib/env";
-// oxlint-disable-next-line sort-imports -- Keep createEnv validation before logger constructs Pino and reads host/process state; sorting createModuleLogger first initializes the logger before invalid-environment rejection.
 import { createModuleLogger } from "@/lib/logger";
 
 const JWT_PART_COUNT = 3;
@@ -22,8 +20,6 @@ interface SandboxAuth {
   token: string;
 }
 
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/max-statements -- JWT scope validation checks the decoded shape and both required nonempty identifiers before returning credentials. */
 const tokenClaims = (
   token: string
 ): { projectId: string; teamId: string } | undefined => {
@@ -60,8 +56,6 @@ const tokenClaims = (
   // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return { projectId: payload.project_id, teamId: payload.owner_id };
 };
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-statements */
 
 const getTokenAuth = (): Partial<SandboxAuth> => {
   const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
@@ -82,10 +76,6 @@ const getTokenAuth = (): Partial<SandboxAuth> => {
   return {};
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Resolve the exact provider scope before a durable allocation is reserved.
  * @returns {SandboxAuth} Provider credentials bound to one project and team.
@@ -123,18 +113,12 @@ const resolveSandboxAuth = (): SandboxAuth => {
   } catch {
     throw new Error("Sandbox provider identity is unavailable.");
   }
-  // oxlint-disable-next-line no-ternary -- Keep identity as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const identity = token ? tokenClaims(token) : undefined;
   if (!(identity && token)) {
     throw new Error("Sandbox provider identity is unavailable.");
   }
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...identity, token };
 };
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-statements */
 
 const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
   if (language === "javascript") {
@@ -148,7 +132,6 @@ const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
   );
 };
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const createSandbox = (
   runtime: string,
@@ -164,12 +147,9 @@ const createSandbox = (
     runtime,
     signal,
     timeout: SANDBOX_TIMEOUT_MS,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (auth ?? getTokenAuth()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...(auth ?? getTokenAuth()),
   });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupSandbox's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/max-params */
 
 const cleanupSandbox = async (
   sandbox: Pick<Sandbox, "delete" | "stop"> | undefined,
@@ -194,8 +174,6 @@ const cleanupSandbox = async (
     throw closeError;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findSandboxForCleanup's awaited sequencing and rejected-Promise behavior. */
 
 const findSandboxForCleanup = async (
   name: string,
@@ -206,7 +184,6 @@ const findSandboxForCleanup = async (
       name,
       resume: false,
       signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auth own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...auth,
     });
   } catch (error) {
@@ -220,14 +197,12 @@ const findSandboxForCleanup = async (
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
 const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
   createCleanupSession: () => {
     const auth = resolveSandboxAuth();
     const log = createModuleLogger("eve-code-sandbox-cleanup");
     return {
-      /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteAndConfirmAbsent's awaited sequencing and rejected-Promise behavior. */
       async deleteAndConfirmAbsent(name): Promise<void> {
         const sandbox = await findSandboxForCleanup(name, auth);
         if (sandbox) {
@@ -242,7 +217,6 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
           }
         }
       },
-      /* oxlint-enable oxc/no-async-await */
       provider: auth,
     };
   },
@@ -254,7 +228,6 @@ const getErrorMessage = (err: unknown): string => {
   }
   return "Unknown error";
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (cleanupSandbox, codeSandboxCleanupCapability, createSandbox, getErrorMessage, getSandboxRuntime, getTokenAuth, resolveSandboxAuth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -264,7 +237,4 @@ export {
   getTokenAuth,
   resolveSandboxAuth,
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (SandboxAuth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { SandboxAuth };
-/* oxlint-enable import/no-named-export */

@@ -5,9 +5,7 @@ import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { db } from "./client";
-/* oxlint-disable sort-imports -- Keep the native client pool initialized before schema table/custom-type construction; schema loads env-backed encryption definitions and executes pgTable builders. */
 import { eveConversation, eveSearchText } from "./schema";
-/* oxlint-enable sort-imports */
 
 const SEARCH_CHUNK_LENGTH = 8000;
 const SEARCH_WRITE_BATCH_SIZE = 100;
@@ -40,11 +38,6 @@ const splitSearchChunks = (
     return result;
   });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveSearchText's awaited sequencing and rejected-Promise behavior. */
-
-/* oxlint-disable max-params --
-max-params (#511): writeEveSearchText keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-*/
 /**
  * Writes search chunks only while the owner’s conversation binding is active.
  * The binding lock serializes the write with deletion, and existing keys are
@@ -88,9 +81,7 @@ const writeEveSearchText = async (
       .values(
         chunks
           .slice(index, index + SEARCH_WRITE_BATCH_SIZE)
-          // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Preserve persisted entry keys and overrides; explicit fields would drop extra enumerable source properties.
           .map((entry: EveSearchText) => ({
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Persist the existing source chunk fields before the conversation and owner overrides; Object.assign conflicts with prefer-object-spread.
             ...entry,
             conversationId,
             ownerId,
@@ -103,9 +94,6 @@ const writeEveSearchText = async (
       });
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve indexEveSearchText's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params */
 
 /* oxlint-disable typescript/promise-function-async --
 
@@ -121,7 +109,6 @@ const indexEveSearchText = async (
     );
   }
 };
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
@@ -150,10 +137,7 @@ const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
 const escapedQueryCharacter = /\\(?<character>.)/gu;
 const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
 
-/* oxlint-disable max-statements, no-continue, typescript/strict-boolean-expressions --
- * max-statements (#512): highlightSearchExcerpt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): highlightSearchExcerpt skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- *
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): highlightSearchExcerpt intentionally keeps the existing falsy-value behavior of token.groups?.term; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const highlightSearchExcerpt = (
@@ -174,7 +158,6 @@ const highlightSearchExcerpt = (
       groups.push(negated);
     } else if (token[FIRST_INDEX] === ")") {
       groups.pop();
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading term from token.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     } else if (!negated && token.groups?.term) {
       terms.push({
         prefix: Boolean(token.groups.prefix),
@@ -207,13 +190,8 @@ const highlightSearchExcerpt = (
     return marked;
   });
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-continue, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, unicorn/no-null --
-max-lines-per-function (#510): searchEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-
-unicorn/no-null (#570): searchEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Searches an owner’s bound conversations and returns one ranked result per chat.
  * The cursor continues after a result using rank, update time, and chat ID.
@@ -279,7 +257,6 @@ const searchEveConversations = async (
         'StartSel=⟦, StopSel=⟧, MaxWords=32, MinWords=12, MaxFragments=1') end as excerpt
     from best cross join query
     where ${
-      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       cursor
         ? sql`
       "chatRank" < ${cursor.rank}::double precision
@@ -301,15 +278,12 @@ const searchEveConversations = async (
   `);
   const page = items
     .slice(FIRST_INDEX, SEARCH_PAGE_SIZE)
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Preserve the result own-key snapshot after excluding highlight fields.
     .map(
       ({
         highlightQuery,
         highlightWords,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Preserve the original own-key exclusion of highlight fields when forwarding the search result.
         ...item
       }: ReadonlyNativeSurface<EveSearchResult>) => ({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...item,
         excerpt: highlightSearchExcerpt(
           item.excerpt,
@@ -322,14 +296,9 @@ const searchEveConversations = async (
   return {
     items: page,
     nextCursor:
-      // oxlint-disable-next-line no-ternary -- Keep nextCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       items.length > SEARCH_PAGE_SIZE && last
         ? { id: last.id, rank: last.rank, updatedAt: last.updatedAt }
         : null,
   };
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (indexEveSearchText, searchEveConversations, writeEveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };
-/* oxlint-enable import/no-named-export */

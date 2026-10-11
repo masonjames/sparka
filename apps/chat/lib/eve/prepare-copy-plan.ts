@@ -1,14 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { parseSessionTranscriptSeed } from "eve/transcript";
-/* oxlint-disable sort-imports -- eve/transcript installs the global Zod postprocessor; copy-documents constructs document schemas. Keep EVE initialization before those app schemas. */
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
 } from "./copy-documents";
-/* oxlint-enable sort-imports */
 import {
   eveCopyInlineAttachments,
   materializeEveCopyTranscript,
@@ -20,12 +14,6 @@ import { createHash } from "node:crypto";
 import type { prepareEveCopyTranscript } from "./copy-transcript";
 import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveCopyPlan); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveCopyPlan's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable max-lines-per-function, max-params, max-statements -- * max-lines-per-function (#510): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Allocate destination identities and rewrite an authorized public projection and ancestry.
  * Inputs must come from server authorization, never browser-supplied content.
@@ -36,7 +24,6 @@ import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents
  * @returns {Promise<EveCopyPlan>} Copy plan with allocated identities, source descriptors, and remapped document boundaries; no destination files are written here.
  */
 export const prepareEveCopyPlan = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EveChannelInput.resolveSeed returns SessionTranscriptSeed with mutable messages and parts arrays (eve execution/session-transcript-seed.d.ts). materializeEveCopyTranscript accepts and returns that Seed; deep readonly arrays are not assignable at this boundary.
   projection: Readonly<
     Pick<ReturnType<typeof prepareEveCopyTranscript>, "resources" | "seed">
   >,
@@ -157,6 +144,3 @@ export const prepareEveCopyPlan = async (
     ),
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements */

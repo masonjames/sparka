@@ -15,7 +15,6 @@ interface NativePurgeInventory {
   streamIds: string[];
 }
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withRetiredNativeSession's awaited sequencing and rejected-Promise behavior. */
 const retireNativeSessionOnce = async (
   query: PostgresLifecycleQuery,
   sessionId: string,
@@ -56,8 +55,6 @@ const withRetiredNativeSession = async <Result>(
     }
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withNativeSession's awaited sequencing and rejected-Promise behavior. */
 
 const withNativeSession = async <Result>(
   databaseUrl: string,
@@ -82,8 +79,6 @@ const withNativeSession = async <Result>(
     await connection.end();
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareNativeSession's awaited sequencing and rejected-Promise behavior. */
 
 // Queued envelopes are inventory seeds; repeat fencing until no detached run remains.
 const stabilizeNativeQueueInventory = async (
@@ -97,7 +92,6 @@ const stabilizeNativeQueueInventory = async (
     }
     // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
     const queued = await purgeEvePostgresQueue(connection, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...scope,
       runIds: resources.runIds,
     });
@@ -132,8 +126,6 @@ const prepareNativeSession = async (
   }
   return await stabilizeNativeQueueInventory(connection, scope);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveNativeSession's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Internal provider stage. Caller authorizes a deleting binding; retirement must settle usage.
@@ -157,8 +149,6 @@ const purgeEveNativeSession = async (
     },
     retire,
   });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveNativeSessionPurge's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Fence native work and clear its queued deliveries while retaining transcript payloads for resource inventory.
@@ -180,8 +170,6 @@ const prepareEveNativeSessionPurge = async (
     afterRetirement: (connection) => prepareNativeSession(connection, scope),
     retire,
   });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveNativeSessions's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Retire and settle every authorized member without erasing any native payloads.
@@ -209,11 +197,8 @@ const retireEveNativeSessions = async (
     await connection.end();
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (prepareEveNativeSessionPurge, purgeEveNativeSession, retireEveNativeSessions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 export {
   prepareEveNativeSessionPurge,
   purgeEveNativeSession,
   retireEveNativeSessions,
 };
-/* oxlint-enable import/no-named-export */

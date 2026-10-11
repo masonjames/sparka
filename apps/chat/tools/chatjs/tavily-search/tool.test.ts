@@ -12,7 +12,6 @@ vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collect's awaited sequencing and rejected-Promise behavior. */
 const collect = async <SearchValue>(
   value:
     | Readonly<SearchValue>
@@ -29,12 +28,7 @@ const collect = async <SearchValue>(
   }
   return await Array.fromAsync(result);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): this query fixture asserts maxResults 3 and days 7, receipt cost 0.05, the final stream item via at(-1), and more than one yielded item.
- */
 test("native search streams sources and seals a final cost receipt", async () => {
   search.mockResolvedValue({
     results: [
@@ -81,12 +75,6 @@ test("native search streams sources and seals a final cost receipt", async () =>
   );
   expect(results.length).toBeGreaterThan(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): test("strict fields remain required while explicit nulls apply defaults") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("strict fields remain required while explicit nulls apply defaults", async () => {
   search.mockResolvedValue({ results: [] });
   const json = z.toJSONSchema(webSearchInput);
@@ -123,5 +111,3 @@ test("strict fields remain required while explicit nulls apply defaults", async 
     })
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */

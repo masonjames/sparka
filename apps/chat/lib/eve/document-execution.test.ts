@@ -1,11 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/saved-code-execution/execute" dependency within this package instead of introducing an alias or barrel API.
- */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
   code: true,
@@ -44,9 +40,6 @@ const revision = {
   kind: "code",
   title: "saved.py",
 };
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 const context = testToolContext({
   abortSignal: new AbortController().signal,
   callId: "run-code",
@@ -64,7 +57,6 @@ const context = testToolContext({
     turn: { id: "turn", sequence: 1 },
   },
 });
-/* oxlint-enable unicorn/no-null */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -84,10 +76,8 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("executes only the owned saved revision and preserves its billing receipt", async () => {
   const result = await executeEveCodeDocument(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, code: "malicious replacement", ownerId: "other" },
     context
   ).next();
@@ -111,21 +101,13 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     }
   );
   expect(result.value).toMatchObject({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...input, code: "print(42)", message: "42" },
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   { ...revision, kind: "text" },   { ...revision, title: "unsupported.ts" }, 's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined --
- * no-undefined (#519): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 it.each([
   undefined,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...revision, kind: "text" },
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...revision, title: "unsupported.ts" },
 ])(
   "rejects unavailable or unsupported revisions before sandbox execution",
@@ -148,9 +130,6 @@ it.each([
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
 it("does not execute when cancelled during revision lookup", async () => {
   const cancellation = new AbortController();
@@ -160,15 +139,12 @@ it("does not execute when cancelled during revision lookup", async () => {
   });
   await expect(
     executeEveCodeDocument(input, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
       abortSignal: cancellation.signal,
     }).next()
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
   mocks.execute.mockResolvedValue({
     kind: "chatjs.tool-result",
@@ -180,7 +156,6 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
   const result = await executeEveCodeDocument(input, context).next();
   expect(result.value).toMatchObject({
     output: {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       chart: "",
       message: "Execution finished, but its output has an unsupported format.",
@@ -188,8 +163,6 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["code", "execution"])'s awaited sequencing and rejected-Promise behavior. */
 it.each(["code", "execution"])(
   "enforces the %s installation requirement before accessing documents",
   async (gate) => {
@@ -206,4 +179,3 @@ it.each(["code", "execution"])(
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */

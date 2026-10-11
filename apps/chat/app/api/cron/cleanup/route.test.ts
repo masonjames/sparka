@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
 
 import { GET } from "./route";
 
@@ -57,9 +55,6 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-undefined -- These parameterized cases represent missing credentials. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "", "   "])'s awaited sequencing and rejected-Promise behavior. */
-
 test.each([undefined, "", "   "])(
   "unconfigured cleanup rejects a matching interpolated credential: %j",
   async (secret) => {
@@ -75,9 +70,6 @@ test.each([undefined, "", "   "])(
     expect(mocks.cleanupGuests).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("cleanup uses EVE ownership", async () => {
   const response = await GET(
@@ -101,8 +93,6 @@ test("cleanup uses EVE ownership", async () => {
     Date.now() - GUEST_CLEANUP_RETENTION_WINDOW_MS
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("cleanup still requires cron authorization", async () => {
   const response = await GET(
@@ -110,8 +100,6 @@ test("cleanup still requires cron authorization", async () => {
   );
   expect(response.status).toBe(HTTP_STATUS.unauthorized);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("storage failure does not prevent expired guest cleanup and reports retry", async () => {
   mocks.cleanupEve.mockRejectedValueOnce(new Error("storage unavailable"));
@@ -127,8 +115,6 @@ test("storage failure does not prevent expired guest cleanup and reports retry",
     success: false,
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("pending guest deletion is retryable failure after attachment cleanup runs", async () => {
   mocks.cleanupGuests.mockResolvedValueOnce({
@@ -145,8 +131,6 @@ test("pending guest deletion is retryable failure after attachment cleanup runs"
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
   expect(await response.json()).toMatchObject({ success: false });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 test("unsupported guest cleanup never reports cron success or an empty backlog", async () => {
   const unsupported = {
@@ -169,8 +153,6 @@ test("unsupported guest cleanup never reports cron success or an empty backlog",
   });
   expect(result).not.toHaveProperty("results.expiredGuests.pendingCount");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a skipped cleanup cannot become successful through a zero pending count", async () => {
   mocks.cleanupGuests.mockResolvedValueOnce({
     deletedCount: 0,
@@ -185,8 +167,6 @@ test("a skipped cleanup cannot become successful through a zero pending count", 
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(await response.json()).toMatchObject({ success: false });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("guest inventory failure reports retry while attachment cleanup still runs", async () => {
   mocks.cleanupGuests.mockRejectedValueOnce(
     new Error("private database details")
@@ -206,4 +186,3 @@ test("guest inventory failure reports retry while attachment cleanup still runs"
     success: false,
   });
 });
-/* oxlint-enable oxc/no-async-await */

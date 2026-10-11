@@ -1,20 +1,14 @@
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return --
- * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * max-statements (#512): default export keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): default export uses 5000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/strict-boolean-expressions, typescript/strict-void-return --
  * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of lastUserMessage?.startsWith("slow"); lastUserMessage?.startsWith("confirm"); distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): default export's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 export default defineAgent({
   experimental: { workflow: { world: "@workflow/world-postgres" } },
   model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("slow")) {
       await new Promise((resolve) => {
         setTimeout(resolve, 5000);
@@ -36,7 +30,6 @@ export default defineAgent({
         ],
       };
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("confirm")) {
       if (toolResults.length > 0) {
         return "Approval handled.";
@@ -45,9 +38,7 @@ export default defineAgent({
       return {
         toolCalls: [
           {
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from tool; preserve one receiver evaluation, skipped accesses and the existing "run_tool" fallback. The app guidance prefers optional chaining.
             name: tool?.name ?? "run_tool",
-            // oxlint-disable-next-line no-ternary -- Keep input as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             input: tool
               ? { note: "Review release" }
               : { name: "confirm_note", input: { note: "Review release" } },
@@ -59,5 +50,4 @@ export default defineAgent({
   }),
   modelContextWindowTokens: 128_000,
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable typescript/strict-boolean-expressions, typescript/strict-void-return */

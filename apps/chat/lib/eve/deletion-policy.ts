@@ -4,8 +4,6 @@ const deletionSessionPath =
 const SESSION_ID_GROUP_INDEX = 1;
 const OPERATION_GROUP_INDEX = 2;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (parseDeletionSessionRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): parseDeletionSessionRequest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Internal deletion may retire and inspect; it must never start new work.
  * @param {string} path Native session endpoint requested under deletion authorization.
@@ -29,5 +27,3 @@ export const parseDeletionSessionRequest = (
   }
   return null;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable unicorn/no-null */

@@ -50,7 +50,6 @@ const assertCompleteSandboxInventory = (
   }
 };
 
-/* oxlint-disable oxc/no-async-await -- Verify the native run inventory and writer fences in the caller's transaction before sandbox ownership callbacks. */
 const readFencedSandboxCoverage = async (
   query: PostgresLifecycleQuery,
   scope: { readonly sessionId: string },
@@ -77,7 +76,6 @@ const readFencedSandboxCoverage = async (
   }
   return sessionIds;
 };
-/* oxlint-enable oxc/no-async-await */
 
 const readMatchingSavedCoverage = (
   raw: unknown,
@@ -95,8 +93,6 @@ const readMatchingSavedCoverage = (
   }
   return saved.sessionIds;
 };
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyEveSandboxCoverage's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Internal: caller authorizes the deleting family and canonical worker root.
@@ -142,8 +138,6 @@ const verifyEveSandboxCoverage = async (
     }
   );
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isFencedEveDescendant's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Only call after authorizing the owner of rootSessionId's deleting binding.
@@ -190,8 +184,5 @@ const isFencedEveDescendant = async (
     await connection.end();
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isFencedEveDescendant, verifyEveSandboxCoverage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
 export { isFencedEveDescendant, verifyEveSandboxCoverage };
-/* oxlint-enable import/no-named-export */

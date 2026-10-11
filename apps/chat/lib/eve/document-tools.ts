@@ -1,4 +1,3 @@
-/* oxlint-disable import/no-nodejs-modules -- Deterministic UUIDv8 requires the server Node crypto SHA-256 implementation. */
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
@@ -14,7 +13,6 @@ import type { ToolContext } from "eve/tools";
 import { createHash } from "node:crypto";
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 import { resolveEveConversationScope } from "./conversation-scope";
-/* oxlint-enable import/no-nodejs-modules */
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
@@ -53,8 +51,6 @@ const documentIdForCall = (sessionId: string, callId: string): string => {
   const hex = bytes.toString("hex");
   return `${hex.slice(UUID_START_OFFSET, UUID_FIRST_GROUP_HEX_END)}-${hex.slice(UUID_FIRST_GROUP_HEX_END, UUID_SECOND_GROUP_HEX_END)}-${hex.slice(UUID_SECOND_GROUP_HEX_END, UUID_THIRD_GROUP_HEX_END)}-${hex.slice(UUID_THIRD_GROUP_HEX_END, UUID_FOURTH_GROUP_HEX_END)}-${hex.slice(UUID_FOURTH_GROUP_HEX_END)}`;
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveDocumentTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveDocumentTool's awaited sequencing and rejected-Promise behavior. */
 
 const readEveDocumentTool = async (
   value: unknown,
@@ -62,7 +58,6 @@ const readEveDocumentTool = async (
 ): ReturnType<typeof executeEveDocumentTool> => {
   const input = eveDocumentReadInput.parse(value);
   const scope = await resolveEveConversationScope(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     context.session.auth.initiator?.principalId,
     context.session.id,
     context.abortSignal
@@ -87,8 +82,6 @@ const readEveDocumentTool = async (
   };
 };
 
-/* oxlint-disable no-undefined, unicorn/no-null -- * no-undefined (#519): executeEveDocumentTool uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): executeEveDocumentTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 type DocumentToolResult =
   | {
       content: string;
@@ -118,18 +111,15 @@ const writeEveDocumentTool = async (
   value: unknown,
   context: ReadonlyNativeSurface<DocumentContext>
 ): Promise<DocumentToolResult> => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const operation = Object.entries(eveDocumentOperations).find(
     ([key]: readonly [string, ...unknown[]]) => key === name
   )?.[DOCUMENT_OPERATION_VALUE_INDEX];
   if (!(operation && installedDocumentKinds.has(operation.kind))) {
     throw new Error("Document tool is unavailable.");
   }
-  // oxlint-disable-next-line no-ternary -- Keep edit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
   const input = edit ?? eveDocumentCreateInput.parse(value);
   const scope = await resolveEveConversationScope(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     context.session.auth.initiator?.principalId,
     context.session.id,
     context.abortSignal
@@ -137,14 +127,11 @@ const writeEveDocumentTool = async (
   context.abortSignal.throwIfAborted();
   const revision = await saveEveDocumentRevision(
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...scope,
       content: input.content,
       documentId:
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentId from edit; preserve one receiver evaluation, skipped accesses and the existing documentIdForCall(context.session.id, context.callId) fallback. The app guidance prefers optional chaining.
         edit?.documentId ??
         documentIdForCall(context.session.id, context.callId),
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading expectedRevisionId from edit; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
       expectedRevisionId: edit?.expectedRevisionId ?? null,
       fileIds: input.fileIds,
       kind: operation.kind,
@@ -177,6 +164,3 @@ export const executeEveDocumentTool = async (
   }
   return await writeEveDocumentTool(name, value, context);
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined, unicorn/no-null */

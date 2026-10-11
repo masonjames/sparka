@@ -23,7 +23,6 @@ const validateReadyCheckpoint = (
   const ready = z
     .object({
       beforeTurnId: z.literal(expected.beforeTurnId),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- The conditional shape omits unnamed checkpoints; pinned prefer-object-spread and prefer-ternary require this expression form.
       ...(typeof expected.checkpointId === "string" &&
       expected.checkpointId !== ""
         ? { checkpointId: z.literal(expected.checkpointId) }
@@ -66,8 +65,6 @@ const classifyCheckpointFailure = (
   throw new Error("Source checkpoint lookup is unavailable.");
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params -- The exported positional checkpoint API has existing callers outside this module; changing it requires an API migration. */
 /**
  * A missing checkpoint is pending; every other lookup failure stays unresolved.
  * @param {string} ownerId Authenticated owner sent to the native checkpoint endpoint.
@@ -86,7 +83,6 @@ const readEveCheckpoint = async (
     CHECKPOINT_TIMEOUT_MS
   )
 ): Promise<boolean> => {
-  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const path = `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint${typeof checkpointId === "string" && checkpointId !== "" ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
   const result = await eveRequest(ownerId, path, { signal });
   const body: unknown = await result.json();
@@ -96,11 +92,7 @@ const readEveCheckpoint = async (
   }
   return classifyCheckpointFailure(result, body, checkpointId);
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-params */
 
-/* oxlint-disable max-params -- The exported positional checkpoint-wait API has existing callers outside this module; changing it requires an API migration. */
 /**
  * Check before allocating a native child: a bound source may not have checkpointed yet.
  * @param {string} ownerId Authenticated owner of the source session.
@@ -144,8 +136,4 @@ const waitForEveCheckpoint = async (
     "Source checkpoint is not ready. Retry the same operation shortly."
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEveCheckpoint, waitForEveCheckpoint); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params */
 export { readEveCheckpoint, waitForEveCheckpoint };
-/* oxlint-enable import/no-named-export */

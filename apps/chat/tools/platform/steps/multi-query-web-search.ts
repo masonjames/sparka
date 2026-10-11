@@ -44,7 +44,6 @@ const writeSearchStatus = ({
   readonly toolCallId: string;
   readonly updateId: string;
 }): void => {
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Skip query getters and payload construction when no writer is installed, using the app's preferred nullish guard.
   dataStream?.write({
     data: {
       queries: queries.map((query) => query.query),
@@ -62,7 +61,6 @@ const createSearchTasks = (
   queries: readonly SearchQuery[],
   search: SearchProvider
 ): Promise<MultiQuerySearchResult>[] =>
-  // oxlint-disable-next-line oxc/no-async-await -- Each provider result is normalized after its own await; Promise.all in the caller retains concurrent launch and ordered aggregation.
   queries.map(async (query, index) => {
     const results = await search(query, index);
     return {
@@ -93,11 +91,9 @@ const writeSearchResults = ({
   const allResults = deduplicateByDomainAndUrl(
     searchResults.flatMap((searchResult) => searchResult.results)
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve unconditional cross-query deduplication above and skip only the final payload when the writer is absent.
   dataStream?.write({
     data: {
       queries: queries.map((query) => query.query),
-      // oxlint-disable-next-line sort-keys -- Preserve the original serialized progress-result order, with source following content/title/url.
       results: allResults.map((result) => ({
         content: result.content,
         title: result.title,
@@ -114,7 +110,6 @@ const writeSearchResults = ({
   });
 };
 
-// oxlint-disable-next-line oxc/no-async-await -- The shared catch owns provider and progress-writer failures after awaited concurrent aggregation.
 const multiQueryWebSearchStep = async ({
   queries,
   search,
@@ -147,7 +142,6 @@ const multiQueryWebSearchStep = async ({
     return { searches: searchResults };
   } catch (error: unknown) {
     const errorMessage =
-      // oxlint-disable-next-line no-ternary -- Preserve the lazy Error.message/fallback selection; the pinned prefer-ternary rule rejects equivalent if/else assignments.
       error instanceof Error ? error.message : "Unknown error occurred";
     writeSearchStatus({
       dataStream,
@@ -159,9 +153,5 @@ const multiQueryWebSearchStep = async ({
     return { error: errorMessage, searches: [] };
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (multiQueryWebSearchStep); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { multiQueryWebSearchStep };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };
-/* oxlint-enable import/no-named-export */

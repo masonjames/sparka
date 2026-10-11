@@ -20,13 +20,10 @@ abstract class AbstractThread<
   declare protected readonly messageSpecialization?: TMessage;
 
   protected constructor(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original SDK schemas and live state controller; recursive readonly schema arrays are incompatible with the SDK constructor.
     options: ThreadCoreOptions<CanonicalMessage<TMessage>>
   ) {
     super(options);
   }
 }
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AbstractThread); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { AbstractThread };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

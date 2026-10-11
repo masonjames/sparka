@@ -3,12 +3,6 @@ import { retryEveAdmission } from "./admission-retry";
 const RECONCILIATION_TIMEOUT_MS = 15_000;
 const RECONCILIATION_RETRY_DELAY_MS = 250;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (sendCommand); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendCommand's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, max-statements --
- * max-params (#511): sendCommand exposes five existing arguments for send/resume callbacks, cancellation state, error lookup and optional acceptance lookup; keep existing caller argument order and default acceptance behavior.
- * max-statements (#512): sendCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 /**
  * Send with admission retries, then reconnect past a preceding cancellation when needed.
  * Eve may report errors through onError even when the command promise resolves.
@@ -57,6 +51,3 @@ export const sendCommand = async (
     throw replayError;
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, max-statements */

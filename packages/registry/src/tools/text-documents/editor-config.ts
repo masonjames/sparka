@@ -25,7 +25,6 @@ const createEditorConfig = (): DocumentEditorConfig => ({
   namespace: "DocumentEditor",
   nodes: [...DOCUMENT_NODE_CLASSES],
   onError: (error: Readonly<Error>): void => {
-    // oxlint-disable-next-line eslint/no-console -- Preserve Lexical's configured error-reporting boundary: every editor error is reported with its native Error object.
     console.error("Lexical error:", error);
   },
 });
@@ -51,6 +50,4 @@ const handleEditorChange = ({
 
   onSaveContent(updatedContent, shouldDebounce);
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createEditorConfig, handleEditorChange); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createEditorConfig, handleEditorChange };
-/* oxlint-enable import/no-named-export */

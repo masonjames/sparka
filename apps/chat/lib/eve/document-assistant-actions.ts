@@ -14,7 +14,6 @@ const sheetDocumentAssistantActions = (): DocumentAssistantAction[] => [
     label: "Format and clean data",
     modelId: config.ai.tools.sheet.format,
   },
-  // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   ...(installedDocumentKinds.has("code")
     ? [
         {
@@ -76,6 +75,4 @@ const documentAssistantRequest = (
   modelId: action.modelId,
 });
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (documentAssistantActions, documentAssistantRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { documentAssistantActions, documentAssistantRequest };
-/* oxlint-enable import/no-named-export */

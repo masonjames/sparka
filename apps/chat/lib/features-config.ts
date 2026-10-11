@@ -85,6 +85,4 @@ const getEnabledFeatures = (): FeatureConfig[] =>
       (left: { readonly order: number }, right: { readonly order: number }) =>
         left.order - right.order
     );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AVAILABLE_FEATURES, getEnabledFeatures); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { AVAILABLE_FEATURES, getEnabledFeatures };
-/* oxlint-enable import/no-named-export */

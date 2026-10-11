@@ -22,8 +22,6 @@ const SettingsPage = ({
   </div>
 );
 
-/* oxlint-disable react/no-multi-comp -- SettingsPageHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
-
 const SettingsPageHeader = ({
   children,
   className,
@@ -33,9 +31,6 @@ const SettingsPageHeader = ({
 }): React.JSX.Element => (
   <div className={cn("shrink-0", className)}>{children}</div>
 );
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- SettingsPageContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const SettingsPageContent = ({
   children,
@@ -50,9 +45,6 @@ const SettingsPageContent = ({
     {children}
   </div>
 );
-/* oxlint-enable react/no-multi-comp */
-
-/* oxlint-disable react/no-multi-comp -- SettingsPageScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const SettingsPageScrollArea = ({
   children,
@@ -61,19 +53,11 @@ const SettingsPageScrollArea = ({
   readonly children: ReadonlyReactNode;
   readonly className?: string;
 }): React.JSX.Element => (
-  <ScrollArea
-    // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
-    className={className}
-  >
-    {children}
-  </ScrollArea>
+  <ScrollArea className={className}>{children}</ScrollArea>
 );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (SettingsPage, SettingsPageContent, SettingsPageHeader, SettingsPageScrollArea); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp */
 export {
   SettingsPage,
   SettingsPageContent,
   SettingsPageHeader,
   SettingsPageScrollArea,
 };
-/* oxlint-enable import/no-named-export */

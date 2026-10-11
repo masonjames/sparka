@@ -1,10 +1,7 @@
 import { afterEach, expect, it } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { create } from "./create";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 const tempDirs: string[] = [];
@@ -20,7 +17,6 @@ const makeTempDir = (name: string): string => {
   return dir;
 };
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
@@ -29,17 +25,11 @@ afterEach(async () => {
       .map((dir) => rm(dir, { force: true, recursive: true }))
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it.each([false, true])(
   "preserves cloned source without registry access (ChatJS: %s)",
   async (chatjs) => {
-    // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
     const { writeFile } = await import("node:fs/promises");
     const source = makeTempDir("plain-source");
     const destination = makeTempDir("plain-clone");
@@ -102,10 +92,6 @@ it.each([false, true])(
     }
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 it("rejects retired installer flags explicitly", () => {
   create.exitOverride();

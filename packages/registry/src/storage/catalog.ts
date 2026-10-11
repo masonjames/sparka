@@ -1,11 +1,7 @@
 import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
 import { getStorageEnvironmentRequirements } from "./environment";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { readFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { storageDefinitionSchema } from "../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 import { z } from "zod";
 
 const sdkPackageSchema = z.object({
@@ -16,7 +12,6 @@ const sdkPackagePath = new URL(
   "../package.json",
   import.meta.resolve("files-sdk")
 );
-// oxlint-disable-next-line node/no-sync -- The catalog initializes its synchronous named export from the installed SDK manifest before registry construction.
 const sdkPackageContents = readFileSync(sdkPackagePath, "utf-8");
 const sdkPackage = sdkPackageSchema.parse(JSON.parse(sdkPackageContents));
 
@@ -34,7 +29,6 @@ type StorageEnvironmentRequirementReader = Readonly<{
   description: string;
   options: readonly (readonly Readonly<{ key: string }>[])[];
 }>;
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (builtInStorage); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
 ).map((id) => {
@@ -83,4 +77,3 @@ export const builtInStorage = PROVIDER_NAMES.filter(
     type: "registry:item" as const,
   };
 });
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

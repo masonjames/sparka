@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config as appConfig } from "@/lib/config";
-/* oxlint-enable sort-imports */
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
@@ -48,7 +46,6 @@ const getSafeReturnTo = (
   url: Readonly<{ searchParams: Readonly<{ get: URLSearchParams["get"] }> }>
 ): string => {
   const returnTo = url.searchParams.get("returnTo");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from returnTo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (returnTo?.startsWith("/") !== true || returnTo.startsWith("//")) {
     return "/";
   }
@@ -84,10 +81,7 @@ const resolvePageResponse = ({
     return NextResponse.redirect(new URL("/login", url));
   }
 };
-/* oxlint-disable import/no-named-export -- Next discovers the named proxy entrypoint; app guidance and import/no-default-export also require named exports. */
-/* oxlint-disable oxc/no-async-await -- Await the native session lookup before resolving page access or producing its response. */
 
-// oxlint-disable-next-line import/group-exports -- #711: Next.js 16.3 needs inline config for matcher extraction, so this named entrypoint remains a separate export; one-var rejects a combined declaration.
 export const proxy = async (
   req: Readonly<{
     headers: Readonly<Headers>;
@@ -107,7 +101,6 @@ export const proxy = async (
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- The session may be absent; retain one guarded user access after the native session lookup.
   const isLoggedIn = Boolean(session?.user);
   const isDeviceLoginRoute = isDeviceLoginPage(pathname);
   const returnTo = getSafeReturnTo(url);
@@ -121,11 +114,7 @@ export const proxy = async (
     url,
   });
 };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (config); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 
-// oxlint-disable-next-line import/group-exports -- #711: Next.js 16.3 extractExportedConstValue reads inline export const config; a grouped clause drops the matcher. one-var rejects combining it with proxy.
 export const config = {
   matcher: [
     /*
@@ -143,4 +132,3 @@ export const config = {
     "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };
-/* oxlint-enable import/no-named-export */

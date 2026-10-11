@@ -1,20 +1,12 @@
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveRequest } from "./server";
-/* oxlint-enable sort-imports */
 
 const SEED_LOOKUP_TIMEOUT_MS = 15_000;
 const SEED_CREATION_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createNativeEveCopy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createNativeEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements --
-
- * max-statements (#512): createNativeEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-  */
 /**
  * Resolves or creates the native seed session for the same durable copy operation.
  * @param {string} ownerId Owner authorized to look up and create the native session.
@@ -65,6 +57,3 @@ export const createNativeEveCopy = async (
   }
   return session.parse(await result.json()).sessionId;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */

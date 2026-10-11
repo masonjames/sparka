@@ -1,18 +1,10 @@
 import { expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- The generator contract test creates isolated files for the installed native linter.
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- Pinned Oxfmt 0.67.0 restores this declaration order after a native sort-imports-clean reorder: Oxfmt places node:os (tmpdir) before node:path (path); sort-imports requires the reverse.
 import path from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Node/Bun generator contract test uses the host temporary directory.
 import { tmpdir } from "node:os";
 
-// oxlint-disable-next-line sort-imports -- Preserve node:os before ./generated-registration-source while their runtime initialization order is still under site review.
 import { generatedRegistrationSource } from "./generated-registration-source";
 
-const registrationReason =
-  "Generated registrations expose separate named contracts";
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("groups registration values without changing literal data or initializer order", async () => {
   const literal = 'export const fake = "use step";\nundefined;';
   const generated = generatedRegistrationSource(
@@ -37,8 +29,7 @@ test("groups registration values without changing literal data or initializer or
   expect(generated.startsWith('"use client";')).toBe(true);
   expect(generated).not.toContain("import/group-exports");
 });
-/* oxlint-enable oxc/no-async-await */
-test("keeps type exports separate and preserves optional capability exceptions", () => {
+test("keeps type exports separate without obsolete capability exceptions", () => {
   const generated = generatedRegistrationSource(
     "export type WorkflowTools = { tool: string };\nexport const composerTools: Readonly<Record<string, { icon: string } | undefined>> = {};\nexport const DocumentRun: (() => void) | undefined = InstalledDocumentRun;\nexport const codeExecutor: (() => void) | undefined = undefined;\n"
   );
@@ -47,25 +38,21 @@ test("keeps type exports separate and preserves optional capability exceptions",
     "export { composerTools, DocumentRun, codeExecutor };"
   );
   expect(generated).toContain("typescript/consistent-type-definitions");
-  expect(generated).not.toContain(
-    "// oxlint-disable-next-line no-undefined -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.\nconst composerTools:"
-  );
-  expect(generated).not.toContain(
-    "// oxlint-disable-next-line no-undefined -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.\nconst DocumentRun:"
-  );
+  expect(generated).not.toContain("no-undefined");
+  expect(generated).not.toContain("import/no-named-export");
+  expect(generated).not.toContain("import/prefer-default-export");
   expect(generated).toContain(
-    "// oxlint-disable-next-line no-undefined -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.\nconst codeExecutor: (() => void) | undefined = undefined;"
+    "const codeExecutor: (() => void) | undefined = undefined;"
   );
-  expect(generated).toContain(registrationReason);
   expect(generated).not.toContain("import/group-exports");
 });
 
-test("keeps the no-undefined exception for a multiline empty capability", () => {
+test("preserves a multiline empty capability without a suppression", () => {
   const generated = generatedRegistrationSource(
     "export const capability: string | undefined =\n  undefined;\n"
   );
   expect(generated).toContain(
-    "export const capability: string | undefined =\n// oxlint-disable-next-line no-undefined -- No installed provider implements this optional capability.\n  undefined;"
+    "export const capability: string | undefined =\n  undefined;"
   );
 });
 
@@ -88,7 +75,6 @@ test("rejects unsupported mixed exports rather than narrowing their public API",
   ).toThrow("Unsupported generated registration export");
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("preserves trailing dollar signs in public registration bindings", async () => {
   const generated = generatedRegistrationSource(
     'export const item$ = "first";\nexport const second = "second";\n'
@@ -111,7 +97,6 @@ test("preserves trailing dollar signs in public registration bindings", async ()
   expect(loaded.second).toBe("second");
   expect(Object.keys(loaded).toSorted()).toEqual(["item$", "second"]);
 });
-/* oxlint-enable oxc/no-async-await */
 
 const exportPolicyFixtures: Readonly<Record<string, string>> = {
   capability: "export const capability: string | undefined =\n  undefined;\n",
@@ -134,14 +119,10 @@ const exportPolicyFixtures: Readonly<Record<string, string>> = {
 };
 
 const generatedExportRules: readonly string[] = [
-  "import/no-named-export",
-  "import/prefer-default-export",
-  "no-undefined",
   "typescript/consistent-type-definitions",
 ];
 
-/* oxlint-disable oxc/no-async-await -- Await isolated fixture writes and cleanup before the generator contract test completes. */
-test("generated named contracts satisfy native export rules without unused exceptions", async (): Promise<void> => {
+test("generated named contracts satisfy enabled native rules without unused exceptions", async (): Promise<void> => {
   const directory = await mkdtemp(
     path.join(tmpdir(), "chatjs-registration-exports-")
   );
@@ -181,10 +162,8 @@ test("generated named contracts satisfy native export rules without unused excep
       new Response(result.stderr).text(),
     ]);
     const diagnosticOutput = `Native export validation failed:\n${stdout}\n${stderr}`;
-    // oxlint-disable-next-line no-magic-numbers -- Exit status zero confirms all generated export scopes pass native lint and unused-directive validation.
     expect(exitCode, diagnosticOutput).toBe(0);
   } finally {
     await rm(directory, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */

@@ -23,7 +23,6 @@ class MissingCredentialsError extends Error {
   }
 }
 
-/* oxlint-disable unicorn/no-null -- Return the original mutable requirement for an unsatisfied leaf and null for satisfied leaves; callers expose those same objects through MissingCredentialsError. */
 const missingRequirement = (
   requirement: EnvRequirement,
   env: Readonly<NodeJS.ProcessEnv>
@@ -36,9 +35,7 @@ const missingRequirement = (
       }
       return [];
     });
-    // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
     if (allOf.length > 0) {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...requirement, allOf };
     }
     return null;
@@ -48,7 +45,6 @@ const missingRequirement = (
   }
   return requirement;
 };
-/* oxlint-enable unicorn/no-null */
 
 const requireCredentials = (
   integration: string,
@@ -62,12 +58,9 @@ const requireCredentials = (
     }
     return [];
   });
-  // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
   if (missing.length > 0) {
     throw new MissingCredentialsError(integration, missing);
   }
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (MissingCredentialsError, requireCredentials); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 export { MissingCredentialsError, requireCredentials };
-/* oxlint-enable import/no-named-export */

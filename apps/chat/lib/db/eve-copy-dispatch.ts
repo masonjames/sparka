@@ -2,19 +2,11 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { eveSeedSearchText } from "@/lib/eve/search-text";
 
-/* oxlint-disable sort-imports -- Keep search-text module evaluation before client env validation and Postgres pool creation. */
 import { db } from "./client";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep journal evaluation after direct client initialization; journal imports client, schema, eve-queries and copy-transcript. */
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
-/* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
 import { writeEveSearchText } from "./eve-search";
-/* oxlint-disable sort-imports -- Keep direct schema pgTable construction after client, journal, eve-queries and eve-search module traversal. */
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveAcceptedEveCopySeed's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Used only by the authenticated native seed resolver; accepted copies no longer depend on their source.
@@ -38,13 +30,6 @@ const resolveAcceptedEveCopySeed = async (
   }
   return copy.seed;
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve dispatchEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-
-unicorn/no-null (#570): dispatchEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * The callback must use the seed operation namespace with this destination reservation ID.
  * @param {string} ownerId Owner whose accepted copy is dispatched under the creation lock.
@@ -69,7 +54,6 @@ const dispatchEveCopy = async (
         }>(
           sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
         );
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading locked from lock; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (!lock?.locked) {
           throw new CreationConflictError(
             "Copy creation is still in progress. Retry the same operation."
@@ -144,14 +128,7 @@ const dispatchEveCopy = async (
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null --
-
-unicorn/no-null (#570): rejectUnacceptedEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 /**
  * Rejected preparations are provably never dispatched; the cleanup coordinator can omit native retirement.
  * @param {string} ownerId Owner whose copy family lock fences rejection.
@@ -192,8 +169,4 @@ const rejectUnacceptedEveCopy = async (
       return { id: conversationId, neverDispatched: true };
     }
   );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/no-null */
 export { dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed };
-/* oxlint-enable import/no-named-export */

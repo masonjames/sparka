@@ -2,14 +2,11 @@
 
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve the existing runtime import sequence and native named bindings; the enabled comparator also orders type declarations among these imports. */
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UserMessageView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions -- UserMessageView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: editor is rendered ReactNode content; its established truthiness controls editing chrome and preserves the original false, null, undefined, empty string or zero child. A non-null presence predicate changes those branches. */
+/* oxlint-disable typescript/strict-boolean-expressions -- UserMessageView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/strict-boolean-expressions: editor is rendered ReactNode content; its established truthiness controls editing chrome and preserves the original false, null, undefined, empty string or zero child. A non-null presence predicate changes those branches. */
 
 /**
  * Inline editing and message chrome for EVE messages.
@@ -44,7 +41,6 @@ export const UserMessageView = ({
   readonly messageId?: string;
 }): React.JSX.Element => (
   <Message
-    // oxlint-disable-next-line react/forbid-component-props, no-ternary -- Message accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     className={cn(editor ? "max-w-full [&>div]:max-w-full" : undefined, "py-1")}
     data-message-id={messageId}
     from="user"
@@ -52,7 +48,7 @@ export const UserMessageView = ({
     <div className={cn("flex w-full flex-col gap-2", !editor && "items-end")}>
       {!editor && responses}
       {!editor &&
-        /* oxlint-disable no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (onEdit /* oxlint-enable no-ternary */ ? (
+        (onEdit ? (
           <button
             aria-disabled={editDisabled}
             className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
@@ -78,7 +74,6 @@ export const UserMessageView = ({
             type="button"
           >
             <MessageContent
-              // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
               className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
               data-testid="message-content"
             >
@@ -88,7 +83,6 @@ export const UserMessageView = ({
           </button>
         ) : (
           <MessageContent
-            // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
             className="group-[.is-user]:bg-card text-left"
             data-testid="message-content"
           >
@@ -103,5 +97,4 @@ export const UserMessageView = ({
     </div>
   </Message>
 );
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */

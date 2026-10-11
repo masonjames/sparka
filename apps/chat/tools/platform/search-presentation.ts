@@ -39,7 +39,6 @@ const writeSearchLifecycle = (options: {
   if (!options.enabled) {
     return;
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- The app's preferred nullish guard skips timestamps and payload construction without a writer.
   options.dataStream?.write({
     data: {
       timestamp: Date.now(),
@@ -84,14 +83,12 @@ const completeSearch = <Searches extends readonly unknown[]>(
     "executeMultiQuerySearch complete"
   );
   if (hasError) {
-    // oxlint-disable-next-line sort-keys -- Preserve the serialized result order: searches precedes the optional error field.
     return { searches, error };
   }
   return { searches };
 };
 
 // Common search execution logic
-// oxlint-disable-next-line oxc/no-async-await -- Complete progress and response shaping only after the single awaited search, preserving rejected-Promise behavior.
 const executeMultiQuerySearch = async ({
   search_queries,
   search,
@@ -139,6 +136,4 @@ const executeMultiQuerySearch = async ({
     response
   );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema };
-/* oxlint-enable import/no-named-export */

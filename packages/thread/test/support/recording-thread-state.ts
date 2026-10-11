@@ -5,12 +5,10 @@ import type { UIMessage } from "ai";
 
 const ZERO_COUNT = 0;
 const COUNT_INCREMENT = 1;
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RecordingThreadState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class RecordingThreadState implements ThreadState {
   readonly #state: MemoryThreadState;
   public updateCount = ZERO_COUNT;
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MemoryThreadState receives canonical SDK messages; readonly nested parts cannot satisfy its native message array, while the containing array and messages are readonly.
   public constructor(messages: readonly Readonly<UIMessage>[]) {
     this.#state = new MemoryThreadState({ messages });
   }
@@ -25,4 +23,3 @@ export class RecordingThreadState implements ThreadState {
     this.#state.update(updater);
   };
 }
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

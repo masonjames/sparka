@@ -1,5 +1,4 @@
 /// <reference types="@vitest/browser-playwright" />
-/* oxlint-disable sort-imports -- Oxfmt groups React and browser fixture imports by module; the enabled binding-order rule requires a conflicting grouping. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
@@ -14,7 +13,6 @@ import {
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
 import "@/tests/visual/sandbox.css";
-/* oxlint-enable sort-imports */
 
 vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: (): string => "openai/gpt-4.1",
@@ -41,7 +39,6 @@ afterEach((): void => {
   sessionStorage.clear();
 });
 
-/* oxlint-disable max-statements, max-lines-per-function, oxc/no-async-await -- Keep the deferred native request, duplicate-click guard, durable retry and visible recovery in one browser lifecycle; await React commits and browser assertions. */
 test("copy locks duplicate clicks and retries the same durable request", async (): Promise<void> => {
   const pending = Promise.withResolvers<Response>();
   const request = vi
@@ -116,9 +113,7 @@ test("copy locks duplicate clicks and retries the same durable request", async (
     await unmount(fixture);
   }
 });
-/* oxlint-enable max-statements, max-lines-per-function, oxc/no-async-await */
 
-/* oxlint-disable max-statements, oxc/no-async-await -- Verify authoritative rejection, storage failure tolerance and rendered recovery together; await browser commits and cleanup. */
 test("rejected recovery remains authoritative when storage cleanup fails", async (): Promise<void> => {
   const recovery = preparePendingEveCopy(
     sessionStorage,
@@ -157,9 +152,7 @@ test("rejected recovery remains authoritative when storage cleanup fails", async
     await unmount(fixture);
   }
 });
-/* oxlint-enable max-statements, oxc/no-async-await */
 
-/* oxlint-disable max-statements, max-lines-per-function, oxc/no-async-await -- Exercise the deferred DELETE, status check and callback rejection in the real dialog controller; await native browser lifecycle completion. */
 test("deletion keeps pending state and closes after confirmed status despite refresh failure", async (): Promise<void> => {
   const pending = Promise.withResolvers<Response>();
   const request = vi
@@ -216,4 +209,3 @@ test("deletion keeps pending state and closes after confirmed status despite ref
     await unmount(fixture);
   }
 });
-/* oxlint-enable max-statements, max-lines-per-function, oxc/no-async-await */

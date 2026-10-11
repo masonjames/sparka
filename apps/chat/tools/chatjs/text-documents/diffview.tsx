@@ -19,19 +19,13 @@ const DiffType = {
 
 // Define diff types
 type DiffTypeValue = (typeof DiffType)[keyof typeof DiffType];
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 type SerializedDiffTextNode = SerializedTextNode & {
   diffType?: DiffTypeValue;
   type: "diff-text";
   version: 1;
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // Custom diff text node that supports styling
-/* oxlint-disable eslint/no-underscore-dangle -- This Lexical node's clone and serialization contract uses Lexical 0.32.1's double-underscore base and custom backing fields. */
 class DiffTextNode extends TextNode {
   public __diffType?: DiffTypeValue;
 
@@ -60,7 +54,6 @@ class DiffTextNode extends TextNode {
 
   public exportJSON(): SerializedDiffTextNode {
     return {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing super.exportJSON() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...super.exportJSON(),
       diffType: this.__diffType,
       type: "diff-text",
@@ -77,12 +70,7 @@ class DiffTextNode extends TextNode {
     return this.__diffType;
   }
 
-  public createDOM(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TextNode.createDOM receives and caches theme class-name arrays on the original EditorConfig; recursive readonly arrays fail that actual Lexical receiver (TS2345).
-    config: EditorConfig,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Pass the original LexicalEditor to TextNode.createDOM; recursive readonly projections drop its nominal members and fail that actual Lexical receiver (TS2345).
-    editor?: LexicalEditor
-  ): HTMLElement {
+  public createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
     const element = super.createDOM(config, editor);
     const diffType = this.getDiffType();
 
@@ -116,9 +104,7 @@ class DiffTextNode extends TextNode {
 
   public updateDOM(
     prevNode: this,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TextNode.updateDOM mutates this original DOM subtree; deeply readonly DOM children/styles fail its native HTMLElement receiver (TS2345).
     dom: HTMLElement,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TextNode.updateDOM caches class-name arrays on the original EditorConfig; recursively readonly theme data fails that actual Lexical receiver (TS2345).
     config: EditorConfig
   ): boolean {
     const prevDiffType = prevNode.getDiffType();
@@ -133,12 +119,7 @@ class DiffTextNode extends TextNode {
     return super.updateDOM(prevNode, dom, config);
   }
 }
-/* oxlint-enable eslint/no-underscore-dangle */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 // Proper diff computation using the diff library
 const computeProperDiff = (
   oldText: string,
@@ -162,10 +143,7 @@ const computeProperDiff = (
     };
   });
 };
-/* oxlint-enable eslint/init-declarations */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const DiffContentPlugin = ({
   oldContent,
   newContent,
@@ -203,27 +181,17 @@ const DiffContentPlugin = ({
 
   return null;
 };
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 
 interface DiffEditorProps {
   newContent: string;
   oldContent: string;
 }
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DiffView); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
-/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 export const DiffView = ({
   oldContent,
   newContent,
 }: ReadonlyNativeSurface<DiffEditorProps>): React.JSX.Element => {
   const initialConfig = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing createEditorConfig() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...createEditorConfig(),
     editable: false,
     nodes: [DiffTextNode],
@@ -234,10 +202,7 @@ export const DiffView = ({
       <LexicalComposer initialConfig={initialConfig}>
         <RichTextPlugin
           contentEditable={
-            <ContentEditable
-              // oxlint-disable-next-line react/forbid-component-props -- ContentEditable accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="lexical-editor text-left outline-hidden"
-            />
+            <ContentEditable className="lexical-editor text-left outline-hidden" />
           }
           ErrorBoundary={LexicalErrorBoundary}
           placeholder={null}
@@ -247,10 +212,3 @@ export const DiffView = ({
     </div>
   );
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable unicorn/no-null */
-
-/* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/no-multi-comp */

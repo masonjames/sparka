@@ -1,26 +1,13 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/max-dependencies (#524): import from "node:assert/strict" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-documents"; "../lib/db/eve-file-purge"; "../lib/db/eve-files" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import assert from "node:assert/strict";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, sql } from "drizzle-orm";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test } from "vitest";
-/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   captureEveDocumentCheckpoint,
   captureEveNamedDocumentCheckpoint,
@@ -32,17 +19,12 @@ import {
   removeEveDocumentFromConversation,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
-/* oxlint-enable sort-imports */
 import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { referenceEveFiles, registerEveStoredFile } from "../lib/db/eve-files";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -58,23 +40,17 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { documentHistoryTurns } from "../lib/eve/document-history";
-/* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
-// oxlint-disable-next-line typescript/promise-function-async -- Keep the rejection lazy for the native create callback while oxc/no-async-await forbids async functions in this fixture.
-const rejectLostNativeReply = (): Promise<never> =>
-  Promise.reject(new Error("Lost native reply"));
-// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates the owner and stranger before registering document-access scenarios.
+const rejectLostNativeReply = async (): Promise<never> => {
+  throw new Error("Lost native reply");
+};
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -82,10 +58,6 @@ await db.insert(user).values(
     name: "Artifact fixture",
   }))
 );
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements --
- * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 afterAll(async () => {
   await db
     .delete(eveImportedDocumentCheckpointEntry)
@@ -117,13 +89,7 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, owner));
   await db.delete(user).where(eq(user.id, stranger));
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve conversation's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 async function conversation() {
   return await createEveConversation(
     owner,
@@ -132,13 +98,7 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep draft's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): draft preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 function draft(conversationId: string) {
   return {
     content: "Original",
@@ -153,14 +113,7 @@ function draft(conversationId: string) {
     turnIndex: 0,
   };
 }
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("document purge requires the owned family fence, erases inherited revisions, and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("document purge requires the owned family fence, erases inherited revisions, and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("document purge requires the owned family fence, erases inherited revisions, and uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("document purge requires the owned family fence, erases inherited revisions, and is retryable", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -174,7 +127,6 @@ test("document purge requires the owned family fence, erases inherited revisions
     { fork: { beforeTurnId: "turn_1", conversationId: root.id } }
   );
   await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Child revision",
     conversationId: child.id,
@@ -223,20 +175,12 @@ test("document purge requires the owned family fence, erases inherited revisions
   ]);
   await expect(
     saveEveDocumentRevision({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
     })
   ).rejects.toThrow();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("an external document reference rolls back every purge step") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("an external document reference rolls back every purge step") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("an external document reference rolls back every purge step", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -272,16 +216,7 @@ test("an external document reference rolls back every purge step", async () => {
       .where(eq(eveDocumentHead.conversationId, external.id))
   ).toHaveLength(1);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-lines-per-function (#510): test("manual edits backfill inherited boundaries in old forks before adding manual an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("manual edits backfill inherited boundaries in old forks before adding manual an uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("manual edits backfill inherited boundaries in old forks before adding manual an uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test("manual edits backfill inherited boundaries in old forks before adding manual an preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("manual edits backfill inherited boundaries in old forks before adding manual ancestry", async () => {
   const source = await conversation();
   const input = draft(source.id);
@@ -315,7 +250,6 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
   ]);
   await saveEveDocumentRevision(
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Manual on old fork",
       conversationId: child.id,
@@ -338,26 +272,14 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     earlier.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from earlierBranchRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(earlierBranchRevision?.id).toBe(original.id);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-lines-per-function (#510): test("manual edits backfill old native boundaries and stay isolated across nested for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("manual edits backfill old native boundaries and stay isolated across nested for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("manual edits backfill old native boundaries and stay isolated across nested for uses 0, 1, 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("manual edits backfill old native boundaries and stay isolated across nested for uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test("manual edits backfill old native boundaries and stay isolated across nested for preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("manual edits backfill old native boundaries and stay isolated across nested forks", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const original = await saveEveDocumentRevision(input);
   const manualInput = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Manual content",
     expectedRevisionId: original.id,
@@ -368,7 +290,6 @@ test("manual edits backfill old native boundaries and stay isolated across neste
   expect(manual.turnIndex).toBeNull();
   await captureEveDocumentCheckpoint(owner, chat.id, 2);
   const generated = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Generated later",
     expectedRevisionId: manual.id,
@@ -386,7 +307,6 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     chat.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chatRevisionAfterManualEdit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(chatRevisionAfterManualEdit?.id).toBe(generated.id);
   const child = await createEveConversation(
     owner,
@@ -400,7 +320,6 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     child.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from childRevisionAfterManualEdit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(childRevisionAfterManualEdit?.content).toBe("Manual content");
   const earlier = await createEveConversation(
     owner,
@@ -414,12 +333,10 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     earlier.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from earlierNestedBranchRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(earlierNestedBranchRevision?.id).toBe(original.id);
   await expect(
     saveEveDocumentRevision(
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing manualInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...manualInput,
         expectedRevisionId: generated.id,
         operationId: crypto.randomUUID(),
@@ -433,25 +350,17 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     chat.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chatHeadAfterRejectedReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(chatHeadAfterRejectedReplay?.id).toBe(generated.id);
   await expect(
     saveEveDocumentRevision({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing manualInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...manualInput,
       expectedRevisionId: generated.id,
       operationId: crypto.randomUUID(),
     })
   ).rejects.toThrow("native history");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
- * max-lines-per-function (#510): test("turn checkpoints restore exact heads, including empty state, and never change o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("turn checkpoints restore exact heads, including empty state, and never change o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("turn checkpoints restore exact heads, including empty state, and never change o uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("turn checkpoints restore exact heads, including empty state, and never change o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
@@ -465,7 +374,6 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     )
   );
   await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Later content",
     expectedRevisionId: first.id,
@@ -495,14 +403,12 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     laterBranch.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from laterBranchRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(laterBranchRevision?.content).toBe("Later content");
   const earlierBranchRevisionAtFork = await getEveDocumentRevision(
     owner,
     earlierBranch.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from earlierBranchRevisionAtFork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(earlierBranchRevisionAtFork?.id).toBe(first.id);
   for (const beforeTurnId of ["turn_0", "turn_1"]) {
     const child = await createEveConversation(
@@ -520,9 +426,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     if (beforeTurnId === "turn_0") {
       expect(document).toBeUndefined();
     } else {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from document; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(document?.id).toBe(first.id);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from document; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(document?.content).toBe("Original");
     }
   }
@@ -530,16 +434,8 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     captureEveDocumentCheckpoint(stranger, chat.id, 2)
   ).rejects.toThrow("not found");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-statements (#512): test("a document save cancelled while waiting for its lock never writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("a document save cancelled while waiting for its lock never writes") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("a document save cancelled while waiting for its lock never writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("a document save cancelled while waiting for its lock never writes") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("a document save cancelled while waiting for its lock never writes", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -551,6 +447,7 @@ test("a document save cancelled while waiting for its lock never writes", async 
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`
     );
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     held.resolve(undefined);
     await release.promise;
   });
@@ -570,6 +467,7 @@ test("a document save cancelled while waiting for its lock never writes", async 
     controller.abort();
   } finally {
     controller.abort();
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- The Promise<undefined> resolver requires its explicit completion value.
     release.resolve(undefined);
     await locker;
     await saving;
@@ -580,22 +478,12 @@ test("a document save cancelled while waiting for its lock never writes", async 
     []
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
- * max-lines-per-function (#510): test("document viewing respects visibility, revocation and fork ancestry without expo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("document viewing respects visibility, revocation and fork ancestry without expo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("document viewing respects visibility, revocation and fork ancestry without expo uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("document viewing respects visibility, revocation and fork ancestry without expo uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 test("document viewing respects visibility, revocation and fork ancestry without exposing storage metadata", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   const later = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Private later version",
     expectedRevisionId: first.id,
@@ -634,11 +522,8 @@ test("document viewing respects visibility, revocation and fork ancestry without
     canEdit: false,
     revision: { content: "Original", id: first.id },
   });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revision from visible; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(visible?.revision).not.toHaveProperty("ownerId");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revision from visible; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(visible?.revision).not.toHaveProperty("operationId");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading history from visible; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(visible?.history).toHaveLength(1);
   expect(
     await getAccessibleEveDocument(
@@ -656,15 +541,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     await getAccessibleEveDocument(undefined, child.id, input.documentId)
   ).toBeUndefined();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("native document calls replay safely and reject stale edits and cross-conversati keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("native document calls replay safely and reject stale edits and cross-conversati keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("native document calls replay safely and reject stale edits and cross-conversati uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("native document calls replay safely and reject stale edits and cross-conversation reads", async () => {
   const chat = await conversation();
   const principal = {
@@ -698,13 +575,11 @@ test("native document calls replay safely and reject stale edits and cross-conve
   const edited = await executeEveDocumentTool(
     "editTextDocument",
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Updated",
       documentId: created.documentId,
       expectedRevisionId: created.revisionId,
     },
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, callId: crypto.randomUUID() }
   );
   expect(
@@ -721,12 +596,10 @@ test("native document calls replay safely and reject stale edits and cross-conve
     executeEveDocumentTool(
       "editTextDocument",
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         documentId: created.documentId,
         expectedRevisionId: created.revisionId,
       },
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...context, callId: crypto.randomUUID() }
     )
   ).rejects.toThrow("changed");
@@ -736,9 +609,7 @@ test("native document calls replay safely and reject stale edits and cross-conve
       "readDocument",
       { documentId: created.documentId },
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...context,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         session: { ...context.session, id: other.sessionId },
       }
     )
@@ -746,7 +617,6 @@ test("native document calls replay safely and reject stale edits and cross-conve
   const cancelled = AbortSignal.abort();
   await expect(
     executeEveDocumentTool("createTextDocument", input, {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
       abortSignal: cancelled,
     })
@@ -755,13 +625,8 @@ test("native document calls replay safely and reject stale edits and cross-conve
     await getEveDocumentHistory(owner, chat.id, created.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("concurrent replays create one revision and old replays never rewind the head") uses 1, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent replays create one revision and old replays never rewind the head") accepts revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("concurrent replays create one revision and old replays never rewind the head") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("concurrent replays create one revision and old replays never rewind the head", async () => {
@@ -772,7 +637,6 @@ test("concurrent replays create one revision and old replays never rewind the he
   );
   expect(new Set(revisions.map((revision) => revision.id)).size).toBe(1);
   const second = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Updated",
     expectedRevisionId: revisions[0].id,
@@ -786,20 +650,14 @@ test("concurrent replays create one revision and old replays never rewind the he
     chat.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from latestDocumentHistory.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(latestDocumentHistory.at(-1)?.id).toBe(second.id);
   await expect(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * no-magic-numbers (#517): test("two distinct saves from the same revision cannot overwrite each other") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("two distinct saves from the same revision cannot overwrite each other") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("two distinct saves from the same revision cannot overwrite each other") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("two distinct saves from the same revision cannot overwrite each other", async () => {
@@ -809,7 +667,6 @@ test("two distinct saves from the same revision cannot overwrite each other", as
   const outcomes = await Promise.allSettled(
     ["A", "B"].map((content) =>
       saveEveDocumentRevision({
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         content,
         expectedRevisionId: first.id,
@@ -827,9 +684,7 @@ test("two distinct saves from the same revision cannot overwrite each other", as
     await getEveDocumentHistory(owner, chat.id, input.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 test("artifact reads and updates are scoped to owner and conversation", async () => {
   const chat = await conversation();
@@ -844,7 +699,6 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
   ).toEqual([]);
   await expect(
     saveEveDocumentRevision({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       expectedRevisionId: first.id,
       operationId: crypto.randomUUID(),
@@ -853,7 +707,6 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
   ).rejects.toThrow("not found");
   await expect(
     saveEveDocumentRevision({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       conversationId: other.id,
       expectedRevisionId: first.id,
@@ -869,21 +722,11 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
     })
   ).rejects.toThrow();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * max-lines-per-function (#510): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("forks select the pre-turn revision and parent and child edits stay independent" uses -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("forks select the pre-turn revision and parent and child edits stay independent" accepts revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * unicorn/max-nested-calls (#568): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 test("forks select the pre-turn revision and parent and child edits stay independent", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   const parentLater = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Parent after fork point",
     expectedRevisionId: first.id,
@@ -904,7 +747,6 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
   );
   expect(childHistoryAtFork.map((revision) => revision.id)).toEqual([first.id]);
   const childEdit = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Child",
     conversationId: child.id,
@@ -913,7 +755,6 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     turnIndex: 1,
   });
   await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Parent newest",
     expectedRevisionId: parentLater.id,
@@ -926,14 +767,12 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     child.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from childHistoryAfterEdit.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(childHistoryAfterEdit.at(-1)?.id).toBe(childEdit.id);
   const parentRevisionHistory = await getEveDocumentRevision(
     owner,
     chat.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from parentRevisionHistory; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(parentRevisionHistory?.content).toBe("Parent newest");
   const nested = await createEveConversation(
     owner,
@@ -962,15 +801,8 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
       )
   ).toHaveLength(4);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): test("history beyond 1000 revisions remains readable and forkable without loading all keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("history beyond 1000 revisions remains readable and forkable without loading all keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("history beyond 1000 revisions remains readable and forkable without loading all uses 0, 1, -1, 1002, 498 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("history beyond 1000 revisions remains readable and forkable without loading all accepts version; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): test("history beyond 1000 revisions remains readable and forkable without loading all intentionally keeps the existing falsy-value behavior of tail; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 test("history beyond 1000 revisions remains readable and forkable without loading all contents", async () => {
@@ -987,7 +819,6 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
       kind: input.kind,
       operationId: id,
       ownerId: owner,
-      // oxlint-disable-next-line no-ternary -- Keep parentRevisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       parentRevisionId: index === 0 ? first.id : ids[index - 1],
       title: "Long history",
       turnIndex: index + 1,
@@ -1007,7 +838,6 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
       )
     );
   const newest = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Newest",
     expectedRevisionId: tail,
@@ -1016,7 +846,6 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   });
   const history = await getEveDocumentHistory(owner, chat.id, input.documentId);
   expect(history).toHaveLength(1002);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from history.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(history.at(-1)?.id).toBe(newest.id);
   expect(history.every((version) => !("content" in version))).toBe(true);
   const child = await createEveConversation(
@@ -1031,20 +860,13 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     child.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from longChildHistory.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(longChildHistory.at(-1)?.id).toBe(ids[498]);
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
   ).toBeUndefined();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("document references protect owned files across families and revision history") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("document references protect owned files across families and revision history") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("document references protect owned files across families and revision history", async () => {
   const prefix = "/api/files/";
   const source = await conversation();
@@ -1055,19 +877,16 @@ test("document references protect owned files across families and revision histo
   await registerEveStoredFile(stranger, foreignKey);
   await referenceEveFiles(owner, source.id, [key]);
   const input = {
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft(destination.id) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...draft(destination.id),
     content: `![image](${prefix}${key})\nForeign URL: ${prefix}${foreignKey}`,
     fileIds: [key],
   };
   await expect(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     saveEveDocumentRevision({ ...input, fileIds: [foreignKey] })
   ).rejects.toThrow("unowned file");
   const revision = await saveEveDocumentRevision(input);
   expect(revision.fileIds).toEqual([key]);
   await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fileIds: [],
     content: "Image removed from latest revision",
@@ -1091,20 +910,9 @@ test("document references protect owned files across families and revision histo
     input.documentId,
     revision.id
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from copiedDocumentRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copiedDocumentRevision?.content).toBe(input.content);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * max-lines-per-function (#510): test("named idle snapshots preserve manual edits across retries without changing turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("named idle snapshots preserve manual edits across retries without changing turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("named idle snapshots preserve manual edits across retries without changing turn uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test("named idle snapshots preserve manual edits across retries without changing turn uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test("named idle snapshots preserve manual edits across retries without changing turn preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 test("named idle snapshots preserve manual edits across retries without changing turn checkpoints", async () => {
   const chat = await conversation();
   const input = draft(chat.id);
@@ -1112,7 +920,6 @@ test("named idle snapshots preserve manual edits across retries without changing
   await captureEveDocumentCheckpoint(owner, chat.id, 1);
   const manual = await saveEveDocumentRevision(
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Idle edit",
       expectedRevisionId: original.id,
@@ -1129,7 +936,6 @@ test("named idle snapshots preserve manual edits across retries without changing
   ]);
   await saveEveDocumentRevision(
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Later edit",
       expectedRevisionId: manual.id,
@@ -1158,7 +964,6 @@ test("named idle snapshots preserve manual edits across retries without changing
     child.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from namedChildRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(namedChildRevision?.id).toBe(manual.id);
   const ordinary = await createEveConversation(
     owner,
@@ -1172,7 +977,6 @@ test("named idle snapshots preserve manual edits across retries without changing
     ordinary.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ordinaryChildRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(ordinaryChildRevision?.id).toBe(original.id);
   await captureEveDocumentCheckpoint(owner, child.id, 1);
   const grandchild = await createEveConversation(
@@ -1187,7 +991,6 @@ test("named idle snapshots preserve manual edits across retries without changing
     grandchild.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from grandchildRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(grandchildRevision?.id).toBe(manual.id);
   await expect(
     createEveConversation(
@@ -1195,19 +998,11 @@ test("named idle snapshots preserve manual edits across retries without changing
       operationId,
       "Named fork",
       async () => crypto.randomUUID(),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { fork: { ...fork, checkpointId: crypto.randomUUID() } }
     )
   ).rejects.toThrow("different");
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("named checkpoints reject foreign owners, changed boundaries and deletion, and preserve empty manifests", async () => {
   const chat = await conversation();
   const checkpointId = crypto.randomUUID();
@@ -1254,12 +1049,8 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
     ).toEqual([]);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
- * no-magic-numbers (#517): test("missing or mismatched named document boundaries stop native allocation") uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("missing or mismatched named document boundaries stop native allocation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("missing or mismatched named document boundaries stop native allocation", async () => {
@@ -1296,14 +1087,9 @@ test("missing or mismatched named document boundaries stop native allocation", a
   ).rejects.toThrow("Named document checkpoint");
   expect(allocations).toBe(0);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
- * max-statements (#512): test.each([false, true])("native descendants retain imported document boundaries, inc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each([false, true])("native descendants retain imported document boundaries, inc uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test.each([false, true])("native descendants retain imported document boundaries, inc uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): test.each([false, true])("native descendants retain imported document boundaries, inc intentionally keeps the existing falsy-value behavior of checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 test.each([false, true])(
@@ -1324,7 +1110,6 @@ test.each([false, true])(
       revisionId: original.id,
     });
     await captureEveDocumentCheckpoint(owner, root.id, 1);
-    // oxlint-disable-next-line no-ternary -- Keep checkpointId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const checkpointId = named ? crypto.randomUUID() : undefined;
     if (checkpointId) {
       await captureEveNamedDocumentCheckpoint(owner, root.id, checkpointId, 1);
@@ -1360,21 +1145,13 @@ test.each([false, true])(
     ]);
   }
 );
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("imported forks restore the selected document boundary and exclude the later pre keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("imported forks restore the selected document boundary and exclude the later pre keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("imported forks restore the selected document boundary and exclude the later pre uses 0, 2, 4, 6 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("imported forks restore the selected document boundary and exclude the later prefix", async () => {
   const root = await conversation();
   const input = draft(root.id);
   const original = await saveEveDocumentRevision(input);
   const later = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Later edit",
     expectedRevisionId: original.id,
@@ -1428,27 +1205,17 @@ test("imported forks restore the selected document boundary and exclude the late
       .select({ revisionId: eveDocumentHead.revisionId })
       .from(eveDocumentHead)
       .where(eq(eveDocumentHead.conversationId, child.id));
-    // oxlint-disable-next-line no-ternary -- Keep expect(heads).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
     const headers = await db
       .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
       .from(eveImportedDocumentCheckpoint)
       .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
-    // oxlint-disable-next-line no-ternary -- Keep expect(headers).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
   }
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves sessionId for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
- * max-lines-per-function (#510): test("imported fork reservations retain their boundary across uncertain creation and  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("imported fork reservations retain their boundary across uncertain creation and  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("imported fork reservations retain their boundary across uncertain creation and  uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/explicit-function-return-type (#560): Keep test("imported fork reservations retain their boundary across uncertain creation and 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("imported fork reservations retain their boundary across uncertain creation and  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): test("imported fork reservations retain their boundary across uncertain creation and  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("imported fork reservations retain their boundary across uncertain creation and reject changed retries", async () => {
   const root = await conversation();
@@ -1512,15 +1279,8 @@ test("imported fork reservations retain their boundary across uncertain creation
     )
   ).toEqual(bound);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("approved deletion is scoped, revision-checked, retryable, and preserves fork snapshots", async () => {
   const root = await conversation();
   const input = draft(root.id);
@@ -1545,21 +1305,18 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await expect(
     removeEveDocumentFromConversation(
       deletion,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...scope, ownerId: stranger },
       signal
     )
   ).rejects.toThrow("Conversation not found");
   await expect(
     removeEveDocumentFromConversation(
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing deletion own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...deletion, title: "Misleading title" },
       scope,
       signal
     )
   ).rejects.toThrow("Document changed");
   const edited = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     expectedRevisionId: original.id,
     operationId: crypto.randomUUID(),
@@ -1569,7 +1326,6 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await expect(
     removeEveDocumentFromConversation(deletion, scope, signal)
   ).rejects.toThrow("Document changed");
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing deletion own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const currentDeletion = { ...deletion, expectedRevisionId: edited.id };
   await removeEveDocumentFromConversation(currentDeletion, scope, signal);
   await removeEveDocumentFromConversation(currentDeletion, scope, signal);
@@ -1581,7 +1337,6 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     child.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from childRevisionAfterDeletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(childRevisionAfterDeletion?.id).toBe(original.id);
   await captureEveDocumentCheckpoint(owner, root.id, 2);
   const later = await createEveConversation(
@@ -1597,7 +1352,6 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     await getEveDocumentRevision(owner, later.id, input.documentId)
   ).toBeUndefined();
   const replacement = await saveEveDocumentRevision({
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     operationId: crypto.randomUUID(),
     content: "Replacement",
@@ -1611,10 +1365,5 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     root.id,
     input.documentId
   );
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from rootRevisionAfterDeletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(rootRevisionAfterDeletion?.id).toBe(replacement.id);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
-
-/* oxlint-disable max-lines -- #509: This eve-documents.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

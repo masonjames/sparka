@@ -13,7 +13,6 @@ import { readEvePostgresRunInventory } from "./eve-run-inventory";
 
 const taskIdentifier = "workflow_flows";
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
 const createCompatibilityCheck =
   (databaseUrl: string): (() => Promise<void>) =>
   async (): Promise<void> => {
@@ -24,9 +23,7 @@ const createCompatibilityCheck =
       await connection.end();
     }
   };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Inventory reads complete before the original connection is closed in finally. */
 const createInventoryReader =
   (databaseUrl: string): ((sessionId: string) => Promise<LifecycleInventory>) =>
   async (sessionId: string): Promise<LifecycleInventory> => {
@@ -48,14 +45,11 @@ const createInventoryReader =
       await connection.end();
     }
   };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createPostgresLifecycle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const createPostgresLifecycle = (
   databaseUrl: string
 ): SupportedLifecycleProvider => {
   const check = createCompatibilityCheck(databaseUrl);
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     capabilities: {
       durableRetirement: true,
@@ -94,6 +88,4 @@ export const createPostgresLifecycle = (
     supported: true,
     world: "@workflow/world-postgres",
   };
-  /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */

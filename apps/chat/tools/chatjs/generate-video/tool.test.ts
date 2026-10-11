@@ -10,13 +10,10 @@ const mocks = vi.hoisted(() => ({
   model: vi.fn(),
   upload: vi.fn(),
 }));
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock(import("ai"), async (original) => ({
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...(await original()),
   experimental_generateVideo: mocks.generate,
 }));
-/* oxlint-enable oxc/no-async-await */
 vi.mock("@/lib/eve/tool-models", () => ({
   eveToolModelProvider: {
     createVideoModel: (id: string): MockVideoModelV4 => {
@@ -49,7 +46,6 @@ beforeEach(() => {
     url: "/api/files/generated",
   });
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("uses the native selected model, provider options, authorized storage and cost receipt", async () => {
   mocks.definition.mockResolvedValue({
     apiModelId: "selected",
@@ -63,12 +59,9 @@ it("uses the native selected model, provider options, authorized storage and cos
     principalType: "user",
   };
   const result = await generateVideoTool.execute(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, aspectRatio: "9:16", durationSeconds: 3 },
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       session: { ...context.session, auth: { current, initiator: current } },
     }
   );
@@ -92,8 +85,6 @@ it("uses the native selected model, provider options, authorized storage and cos
     usage: { costUsd: 0.5 },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("uses configured defaults", async () => {
   await generateVideoTool.execute(input, testToolContext());
   expect(mocks.model).toHaveBeenCalledWith("default-video");
@@ -101,11 +92,6 @@ it("uses configured defaults", async () => {
     expect.objectContaining({ aspectRatio: "16:9", duration: 5 })
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): it("does not invent a charge when no video is returned") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 it("does not invent a charge when no video is returned", async () => {
   mocks.generate.mockResolvedValue({ video: null });
   await expect(
@@ -113,16 +99,12 @@ it("does not invent a charge when no video is returned", async () => {
   ).rejects.toThrow("No video generated");
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable unicorn/no-null */
 it("retains provider cost when storage fails", async () => {
   mocks.upload.mockRejectedValue(new Error("Storage unavailable"));
   expect(
     await generateVideoTool.execute(input, testToolContext())
   ).toMatchObject({ status: "error", usage: { costUsd: 0.5 } });
 });
-/* oxlint-enable oxc/no-async-await */
 it("accepts saved results without file IDs", () => {
   const saved = {
     prompt: "Example",

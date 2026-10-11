@@ -43,7 +43,6 @@ interface TreeHelpersShape<TMessage extends UIMessage> {
   setActiveRun: (runId: string) => void;
   setCursor: (messageId: string | null) => void;
   setCursorToParentOf: (messageId: string) => void;
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public start helper accepts canonical SDK input parts and metadata; deeply readonly messages cannot satisfy the supplied controller startRun receiver.
   startRun: (options?: StartRunReader<TMessage>) => Promise<ThreadRunHandle>;
   status: ReturnType<AbstractThread<TMessage>["getSnapshot"]>["treeStatus"];
   stopAll: () => Promise<void>;
@@ -60,7 +59,6 @@ type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = UseChatHelpers<
   CanonicalMessage<TMessage>
 > & {
   sendMessage: (
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The public send helper retains the installed SDK input union, including mutable message parts and FileList; a deeply readonly input breaks the native sendMessage assignment.
     message?: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["sendMessage"]
     >[typeof FIRST_PARAMETER_INDEX],
@@ -109,7 +107,6 @@ type HelperControllerReader<TMessage extends UIMessage> =
       >
     >;
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Public tree helpers expose the original mutable SDK message/run arrays and index children arrays; deep readonly snapshots fail those declared result fields, and cloning would change the shared snapshot references.
 const createTreeHelpers = <TMessage extends UIMessage>({
   thread,
   snapshot,
@@ -146,11 +143,16 @@ const createTreeHelpers = <TMessage extends UIMessage>({
     thread.resumeRun(runId, requestOptions),
   rootIds: snapshot.rootIds,
   runs: snapshot.runs,
-  setActiveRun: (runId): void => thread.setActiveRun(runId),
-  setCursor: (messageId): void => thread.setCursor(messageId),
-  setCursorToParentOf: (messageId): void =>
-    thread.setCursorToParentOf(messageId),
-  // oxlint-disable-next-line typescript/promise-function-async, typescript/prefer-readonly-parameter-types -- Forward the supplied controller startRun override directly to retain its shared promise and synchronous failure; its native SDK input requires canonical metadata/parts, while request and outer options are readonly.
+  setActiveRun: (runId): void => {
+    thread.setActiveRun(runId);
+  },
+  setCursor: (messageId): void => {
+    thread.setCursor(messageId);
+  },
+  setCursorToParentOf: (messageId): void => {
+    thread.setCursorToParentOf(messageId);
+  },
+  // oxlint-disable-next-line typescript/promise-function-async -- Forward the supplied controller startRun override directly to retain its shared promise and synchronous failure; its native SDK input requires canonical metadata/parts, while request and outer options are readonly.
   startRun: (runOptions): Promise<ThreadRunHandle> =>
     thread.startRun(runOptions),
   status: treeStatus,
@@ -163,7 +165,6 @@ const createTreeHelpers = <TMessage extends UIMessage>({
     thread.stopRunForMessage(messageId),
 });
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK hook result exposes the original mutable canonical messages array; deep readonly snapshots fail that native result field, while the controller and outer payload are readers.
 const createThreadHelpers = <TMessage extends UIMessage>({
   thread,
   setMessages,
@@ -196,9 +197,5 @@ const createThreadHelpers = <TMessage extends UIMessage>({
   tree: createTreeHelpers({ snapshot, status: treeStatus, thread }),
 });
 
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createThreadHelpers };
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (TreeHelpers, UseThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { TreeHelpers, UseThreadHelpers };
-/* oxlint-enable import/no-named-export */

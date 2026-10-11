@@ -9,10 +9,6 @@ const metadata: Metadata = {
   title: "Create an account",
 };
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth --
- * react-perf/jsx-no-jsx-as-prop (#555): Suspense requires the AuthCardSkeleton React node as its fallback prop.
- * react/jsx-max-depth (#548): native control found two depth-3 sites (limit 2) in the centered two-column registration layout.
- */
 const RegisterPage = (): React.JSX.Element => (
   <div className="container m-auto flex h-dvh w-screen flex-col items-center justify-center px-4">
     <div className="mx-auto w-full sm:w-[480px]">
@@ -29,13 +25,6 @@ const RegisterPage = (): React.JSX.Element => (
     </div>
   </div>
 );
-/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth */
 
-/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable react/only-export-components */
-/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RegisterPage;
-/* oxlint-enable import/no-default-export */

@@ -1,13 +1,8 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
 import { expect, it } from "vitest";
 import { createConversationInput } from "./contracts";
 import { createHash } from "node:crypto";
 import { eveMcpResult } from "./mcp-result";
 import { eveResponseGroupInput } from "./response-group-input";
-
-/* oxlint-enable import/no-nodejs-modules */
 
 // These wire bytes predate the Oxfmt/Oxlint migration. Reordering a schema
 // changes a persisted admission hash and rejects a valid retry after restart.

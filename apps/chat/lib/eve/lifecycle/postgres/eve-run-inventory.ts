@@ -15,7 +15,6 @@ const runRow = z.object({
 const inventoryLimit = 10_000;
 const overflowRowCount = 1;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresRunInventoryInTransaction's awaited sequencing and rejected-Promise behavior. */
 const readFamilyRuns = async (
   query: PostgresLifecycleQuery,
   seeds: readonly string[]
@@ -140,8 +139,6 @@ const readEvePostgresRunInventoryInTransaction = async (
     streamIds: streams.map((stream) => stream.id),
   };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresRunInventory's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Read-only adapter for @workflow/world-postgres 5.0.0-beta.40.
@@ -162,10 +159,7 @@ const readEvePostgresRunInventory = async (
     async (query: PostgresLifecycleQuery) =>
       await readEvePostgresRunInventoryInTransaction(query, sessionId)
   );
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEvePostgresRunInventory, readEvePostgresRunInventoryInTransaction); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
 export {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
 };
-/* oxlint-enable import/no-named-export */

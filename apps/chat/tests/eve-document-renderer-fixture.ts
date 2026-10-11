@@ -1,17 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-document-tool"; "../hooks/use-artifact" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ArtifactProvider } from "../hooks/use-artifact";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   {
@@ -70,10 +62,6 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     })
   ),
 ];
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
- * unicorn/max-nested-calls (#568): process.stdout.write keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): process.stdout.write preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
 process.stdout.write(
   renderToStaticMarkup(
     createElement(
@@ -97,4 +85,3 @@ process.stdout.write(
     )
   )
 );
-/* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
