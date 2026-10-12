@@ -1,7 +1,40 @@
 import { expect, it } from "bun:test";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { runMaintainerBuild } from "./vercel-preview-build";
+
+it("loads build orchestration before workspace dependencies are installed", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "preview-build-import-"));
+  try {
+    await Promise.all(
+      ["vercel-preview-build.ts", "vercel-preview-environment.ts"].map(
+        async (file) => {
+          await copyFile(
+            new URL(file, import.meta.url),
+            path.join(directory, file)
+          );
+        }
+      )
+    );
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        "--no-install",
+        "--eval",
+        'const { runMaintainerBuild } = await import("./vercel-preview-build.ts"); if (typeof runMaintainerBuild !== "function") throw new Error("Missing build operation");',
+      ],
+      { cwd: directory, stderr: "pipe", stdout: "pipe" }
+    );
+    const error = await new Response(child.stderr).text();
+    expect(error).toBe("");
+    expect(await child.exited).toBe(0);
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
+});
 
 const preview = {
   CHATJS_PREVIEW_NEON_PROJECT_ID: "test",
@@ -52,7 +85,6 @@ interface HarnessOptions {
   readonly code?: string;
   readonly lockWait?: Readonly<Promise<void>>;
 }
-/* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const harness = ({
   failAt,
   cleanupFails = false,
@@ -77,10 +109,12 @@ const harness = ({
         expect(url).toBe(preview.DATABASE_URL_UNPOOLED);
         step("open");
         return {
+          // oxlint-disable-next-line typescript/promise-function-async -- Failure cases below exercise a driver throwing synchronously during close; runMaintainerBuild must still retain the original migration failure.
           close: (): Promise<void> => {
             step("close");
             return Promise.resolve();
           },
+          // oxlint-disable-next-line typescript/promise-function-async -- failAt injects synchronous driver failures at SELECT/lock steps, which the phase-redaction tests exercise.
           execute: (query: string): Promise<void> => {
             step(query);
 
@@ -91,6 +125,7 @@ const harness = ({
           },
         };
       },
+      // oxlint-disable-next-line typescript/promise-function-async -- The migration/build failure cases exercise synchronous subprocess-launch failures as well as async driver work.
       run: (
         command: "db:migrate" | "build",
         env: Readonly<NodeJS.ProcessEnv>
@@ -102,7 +137,6 @@ const harness = ({
     },
   };
 };
-/* oxlint-enable typescript/promise-function-async */
 
 it("locks before migration, releases before build, and passes direct credentials to both commands", async (): Promise<void> => {
   const test = harness();

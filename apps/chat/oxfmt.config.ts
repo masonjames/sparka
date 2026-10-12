@@ -7,6 +7,13 @@ export default defineConfig({
   // Reformatting their bodies invalidates the guard against overwriting user edits.
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
+    "**/components/{ai-elements,ui}/**",
+    "!**/components/{ai-elements,ui}/**/",
+    "!**/components/{ai-elements,ui}/extra/**",
+    "!**/components/{ai-elements,ui}/**/*.{test,spec}.*",
+    "!**/components/{ai-elements,ui}/**/__tests__/**",
+    "**/features/{installed,installed-routers,installed-uploads,installed-layout,installed-instrumentation}.ts",
+    "**/lib/db/migrations/meta/**",
     ".eve/**",
     "tests/eve-results/**",
     // The model catalog is generator-owned; avoid unrelated snapshot churn.
