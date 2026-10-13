@@ -1055,9 +1055,35 @@ const initializeEveForkDocuments = async (
       }
       return;
     }
-    // Conversations created before checkpoint capture contain only native turn-indexed writes.
+    // Summarize legacy chains in PostgreSQL so only one selected head per document
+    // crosses the connection. UNION terminates cycles; only a complete chain has a root.
     const heads = await tx
-      .select()
+      .select({
+        documentId: eveDocumentHead.documentId,
+        history: sql<unknown>`(
+          with recursive ancestry as (
+            select "id", "parentRevisionId", "turnIndex",
+              case when "turnIndex" < ${beforeTurn} then "id" end as selected_id
+            from "EveDocumentRevision"
+            where "id" = ${eveDocumentHead.revisionId}
+              and "ownerId" = ${ownerId}
+              and "documentId" = ${eveDocumentHead.documentId}
+            union
+            select revision."id", revision."parentRevisionId", revision."turnIndex",
+              coalesce(ancestry.selected_id,
+                case when revision."turnIndex" < ${beforeTurn} then revision."id" end)
+            from "EveDocumentRevision" revision
+            join ancestry on revision."id" = ancestry."parentRevisionId"
+            where revision."ownerId" = ${ownerId}
+              and revision."documentId" = ${eveDocumentHead.documentId}
+          )
+          select json_build_object(
+            'hasManual', coalesce(bool_or("turnIndex" is null), false),
+            'valid', coalesce(bool_or("parentRevisionId" is null), false),
+            'selectedRevisionId', max(selected_id::text)
+          ) from ancestry
+        )`,
+      })
       .from(eveDocumentHead)
       .where(
         and(
@@ -1067,34 +1093,25 @@ const initializeEveForkDocuments = async (
       );
     const inheritedHeads: (typeof eveDocumentHead.$inferInsert)[] = [];
     for (const head of heads) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Legacy fork inference reads only one document's ancestry at a time; loading all document histories together would increase peak memory before selecting the pre-turn heads.
-      const ancestors = await tx
-        .select({
-          id: eveDocumentRevision.id,
-          parentRevisionId: eveDocumentRevision.parentRevisionId,
-          turnIndex: eveDocumentRevision.turnIndex,
+      const history = z
+        .object({
+          hasManual: z.boolean(),
+          valid: z.boolean(),
+          selectedRevisionId: z.uuid().nullable(),
         })
-        .from(eveDocumentRevision)
-        .where(
-          inArray(
-            eveDocumentRevision.id,
-            ancestorIds(ownerId, head.documentId, head.revisionId)
-          )
-        );
-      const revision = orderRevisionHistory(ancestors, head.revisionId);
-      if (revision.some((version) => version.turnIndex === null)) {
+        .parse(head.history);
+      if (!history.valid) {
+        throw new Error("Document history could not be loaded.");
+      }
+      if (history.hasManual) {
         throw new Error("Document checkpoint is not ready. Retry this fork.");
       }
-      const selectedRevision = revision.findLast(
-        (version) =>
-          version.turnIndex !== null && version.turnIndex < beforeTurn
-      );
-      if (selectedRevision) {
+      if (history.selectedRevisionId !== null) {
         inheritedHeads.push({
           conversationId,
           documentId: head.documentId,
           ownerId,
-          revisionId: selectedRevision.id,
+          revisionId: history.selectedRevisionId,
         });
       }
     }
@@ -1243,13 +1260,13 @@ const captureEveNamedDocumentCheckpoint = async (
  * @param {string} ownerId - Owner recorded on the authorized revision.
  * @param {string} documentId - Document identity expected by the ancestry lookup.
  * @param {string} revisionId - Selected revision whose content the caller is authorized to read.
- * @returns {Promise<typeof eveDocumentRevision.$inferSelect | undefined>} Persisted revision row, or no row when that exact owned revision is absent.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect | null>} Persisted revision row, or no row when that exact owned revision is absent.
  */
 const readDocumentRevision = async (
   ownerId: string,
   documentId: string,
   revisionId: string
-): Promise<typeof eveDocumentRevision.$inferSelect | undefined> => {
+): Promise<typeof eveDocumentRevision.$inferSelect | null> => {
   const revisions = await db
     .select()
     .from(eveDocumentRevision)
@@ -1260,7 +1277,7 @@ const readDocumentRevision = async (
         eq(eveDocumentRevision.documentId, documentId)
       )
     );
-  return revisions.at(FIRST_ROW_INDEX);
+  return revisions.at(FIRST_ROW_INDEX) ?? null;
 };
 /**
  * Content is loaded only for the selected, accessible revision.
@@ -1268,14 +1285,14 @@ const readDocumentRevision = async (
  * @param {string} conversationId - Conversation whose current head scopes the history lookup.
  * @param {string} documentId - Document identity within that conversation.
  * @param {string | undefined} revisionId - Requested ancestor revision; omission or empty text selects the latest.
- * @returns {Promise<typeof eveDocumentRevision.$inferSelect | undefined>} Persisted revision content, or no revision when the selected ancestry is unavailable.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect | null>} Persisted revision content, or no revision when the selected ancestry is unavailable.
  */
 const getEveDocumentRevision = async (
   ownerId: string,
   conversationId: string,
   documentId: string,
   revisionId?: string
-): Promise<typeof eveDocumentRevision.$inferSelect | undefined> => {
+): Promise<typeof eveDocumentRevision.$inferSelect | null> => {
   const history = await getEveDocumentHistory(
     ownerId,
     conversationId,
@@ -1289,7 +1306,7 @@ const getEveDocumentRevision = async (
             revision.id === revisionId
         );
   if (!selected) {
-    return undefined;
+    return null;
   }
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };

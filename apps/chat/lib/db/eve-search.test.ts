@@ -10,6 +10,10 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
+const mocks = vi.hoisted(() => ({
+  execute:
+    vi.fn<(query: ReadonlyNativeSurface<SQL>) => Promise<readonly unknown[]>>(),
+}));
 vi.mock(
   "./client",
   (): {
@@ -21,12 +25,13 @@ vi.mock(
     };
   } => {
     const database = drizzle(postgres);
+    mocks.execute.mockImplementation(async (query) => {
+      const result = await database.execute(query);
+      return result.rows;
+    });
     return {
       db: {
-        execute: async (query: ReadonlyNativeSurface<SQL>) => {
-          const result = await database.execute(query);
-          return result.rows;
-        },
+        execute: mocks.execute,
         transaction: database.transaction.bind(database),
       },
     };
@@ -46,7 +51,7 @@ const otherChat = "00000000-0000-4000-8000-000000000005";
 const otherBranch = "00000000-0000-4000-8000-000000000006";
 
 beforeAll(async () => {
-  for (const filename of [
+  const filenames = [
     "0000_eve_baseline.sql",
     "0001_brainy_the_stranger.sql",
     "0002_nappy_caretaker.sql",
@@ -55,15 +60,19 @@ beforeAll(async () => {
     "0005_managed_workflow_safeguards.sql",
     "0006_unpriced_usage_index.sql",
     "0007_kind_charles_xavier.sql",
-  ]) {
+  ];
+  const migrations = await Promise.all(
+    filenames.map(
+      async (filename) =>
+        await readFile(
+          new URL(`migrations/${filename}`, import.meta.url),
+          "utf-8"
+        )
+    )
+  );
+  for (const migration of migrations) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
-    await postgres.exec(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Apply ordered schema/history migrations and create each chat before its conversation foreign-key row; preview repair depends on the exact retained migration journal.
-      await readFile(
-        new URL(`migrations/${filename}`, import.meta.url),
-        "utf-8"
-      )
-    );
+    await postgres.exec(migration);
   }
   await postgres.exec(
     `insert into "user" (id, name, email) values ('alice', 'Alice', 'alice@example.test'), ('bob', 'Bob', 'bob@example.test')`
@@ -79,6 +88,24 @@ beforeAll(async () => {
 }, DATABASE_SETUP_TIMEOUT_MS);
 afterAll(async () => {
   await postgres.close();
+});
+
+it("rejects malformed database rows before returning search results or cursors", async () => {
+  mocks.execute.mockResolvedValueOnce([
+    {
+      conversationId: branch,
+      excerpt: "Try saffron in the rice.",
+      highlightQuery: "'saffron'",
+      highlightWords: {},
+      id: chat,
+      rank: "invalid",
+      title: "Weekend notes",
+      updatedAt: "2026-10-13T00:00:00.000000Z",
+    },
+  ]);
+  await expect(
+    searchEveConversations("alice", { search: "saffron" })
+  ).rejects.toThrow("rank");
 });
 
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {

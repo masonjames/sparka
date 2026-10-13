@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
+import type { readEveGuestOwner } from "../db/eve-guests";
 import type { eveRequest } from "./server";
 import type { createEveConversation } from "../db/eve-queries";
 
@@ -11,7 +12,9 @@ import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
 const mocks = vi.hoisted(() => ({
   canSpend: vi.fn(),
+  prepareMessage: vi.fn<() => Promise<string>>(),
   creation: vi.fn(),
+  guest: vi.fn<typeof readEveGuestOwner>(),
   readiness: vi.fn<() => Promise<void>>(),
   reconcile: vi.fn(),
   request: vi.fn<typeof eveRequest>(),
@@ -38,9 +41,7 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getEveCreation: mocks.creation,
 }));
 vi.mock("@/lib/db/eve-guests", () => ({
-  readEveGuestOwner: async (): Promise<void> => {
-    // This test exercises non-guest conversation creation.
-  },
+  readEveGuestOwner: mocks.guest,
 }));
 vi.mock("@/lib/db/credits", () => ({
   canSpend: mocks.canSpend,
@@ -48,9 +49,7 @@ vi.mock("@/lib/db/credits", () => ({
 vi.mock("@/lib/db/eve-files", () => ({ assertEveFilesOwned: vi.fn() }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: vi.fn() }));
 vi.mock("./prepare-message", () => ({
-  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-  prepareEveMessage: (message: string): Promise<string> =>
-    Promise.resolve(message),
+  prepareEveMessage: mocks.prepareMessage,
 }));
 vi.mock("./reconcile-usage", () => ({
   reconcileEveOwnerUsage: mocks.reconcile,
@@ -71,13 +70,15 @@ const input = {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.canSpend.mockResolvedValue(true);
+  mocks.prepareMessage.mockResolvedValue("prepared comparison");
+  mocks.guest.mockResolvedValue(null);
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
   mocks.reserve.mockImplementation(
     async (_owner, operationId, _title, dispatch) => ({
       sessionId: await dispatch(operationId),
     })
   );
-  // oxlint-disable-next-line typescript/promise-function-async -- The response varies by route; the fixture resolves locally without I/O to await.
+  // oxlint-disable-next-line typescript/promise-function-async -- The Promise-only request fixture returns fresh consumable bodies for lookup and dispatch routes; a static Response loses routing or body freshness, and eslint/require-await rejects an immediate async factory.
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
       path.startsWith("/eve/chat/v1/operation/")
@@ -101,6 +102,15 @@ it("does not allocate a native child before the initial checkpoint is ready", as
   mocks.readiness.mockResolvedValue();
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
+  expect(mocks.prepareMessage).toHaveBeenLastCalledWith(
+    input.message,
+    input.modelId
+  );
+  expect(
+    JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
+  ).toMatchObject({
+    message: "prepared comparison",
+  });
   expect(mocks.request.mock.calls.at(-1)?.[2]?.body).toContain(
     input.operationId
   );
@@ -142,8 +152,7 @@ it("recovers an already allocated native operation without needing its checkpoin
   expect(mocks.request).toHaveBeenCalledOnce();
 });
 it("refuses a foreign or deleted source before reservation or checkpoint access", async () => {
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.source.mockResolvedValue(undefined);
+  mocks.source.mockResolvedValue(null);
   const resolvedResult2 = await createEveConversationOperation(
     "stranger",
     input
@@ -274,8 +283,6 @@ it("recovers an accepted fork after the source was deleted", async () => {
     creationKind: "message",
     state: "uncertain",
   });
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.source.mockResolvedValue(undefined);
   mocks.request.mockResolvedValue(
     Response.json({ sessionId: "accepted-child" })
   );

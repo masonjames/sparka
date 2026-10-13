@@ -129,7 +129,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   expect(remove).not.toHaveBeenCalled();
   await writeFile(child.path, JSON.stringify(child.record));
   let childRemoved = false;
-  // oxlint-disable-next-line typescript/promise-function-async -- Fixture validation throws synchronously before returning its promise; retain that ordering and direct settlement.
+  // oxlint-disable-next-line typescript/promise-function-async -- This provider fixture enforces completed VM deletion and child-before-parent snapshot deletion on each call; its Promise-only success has no work to await under eslint/require-await.
   remove.mockImplementation((name: string) => {
     if (mocks.destroySandbox.mock.calls.length !== 2) {
       throw new Error("All family VMs must be removed first");
@@ -213,12 +213,12 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
   await writeFile(ownerPath, JSON.stringify(owner));
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each adversarial case rewrites the same ownership record or retries the same provider state; await failure/idempotency assertions before mutating that fixture again.
-    expect(await purgeLocalEveSandboxes([input])).toEqual([
-      { sandboxNames: [], snapshotNames: [] },
-    ]);
-  }
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    { sandboxNames: [], snapshotNames: [] },
+  ]);
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    { sandboxNames: [], snapshotNames: [] },
+  ]);
   expect(JSON.parse(await readFile(ownerPath, "utf-8"))).toEqual(owner);
   await writeFile(
     ownerPath,

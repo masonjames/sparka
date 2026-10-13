@@ -942,6 +942,8 @@ assert.equal(await files.exists("test.txt"), false);
 import { getActiveGateway } from "./lib/ai/active-gateway";
 // Live provider catalogs may expose IDs newer than the SDK literal suggestions.
 getActiveGateway().createLanguageModel("new/model-from-live-catalog");
+getActiveGateway().createImageModel?.("new/image-from-live-catalog");
+getActiveGateway().createVideoModel?.("new/video-from-live-catalog");
 // @ts-expect-error An uninstalled gateway must not typecheck.
 defineConfig({ ai: { gateway: "${other}" } });
 ${
@@ -987,6 +989,8 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
       `import { Gateway } from "./lib/ai/gateway";
 import assert from "node:assert/strict";
 assert.equal(new Gateway().type, "${gateway}");
+assert.equal(new Gateway().createVideoModel === null, ${gateway !== "vercel"});
+assert.equal(new Gateway().createImageModel === null, ${gateway === "openrouter"});
 `
     );
     await run(cwd, ["bunx", "--no-install", "tsx", "probe.ts"]);
@@ -1023,11 +1027,14 @@ assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, workflows: { ...applyDefaults(config).ai.workflows, chat: "" } }).success, false);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { default: "" } } }).success, false);
 ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);`
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { default: "unsupported" } } }).success, false);`
 }
 
 `
@@ -1509,6 +1516,27 @@ it(
       )
     ).toContain("daytona-code-execution/tool");
     await run(cwd, ["bun", "run", "test:types"]);
+    // Existing apps retain core files when a provider is installed or replaced.
+    const corePath = nodePath.join(cwd, "lib/eve/code-executor.ts");
+    const currentCore = await readFile(corePath, "utf-8");
+    const olderCore = `import type { ToolContext } from "eve/tools";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolOutput, ToolResult } from "./tool-result";
+type CodeExecutionInput = Readonly<{code: string; language: "python" | "javascript"; title: string}>;
+type CodeExecutionContext = Pick<ToolContext, "abortSignal" | "callId" | "session">;
+type CodeExecutionOutput = {chart: ToolOutput; message: string};
+export type CodeExecutor = (input: CodeExecutionInput, context: ReadonlyNativeSurface<CodeExecutionContext>) => Promise<ToolResult<CodeExecutionOutput>>;
+export type {CodeExecutionInput, CodeExecutionContext, CodeExecutionOutput};
+`;
+    await writeFile(corePath, olderCore);
+    const envSchemaPath = nodePath.join(cwd, "lib/env-schema.ts");
+    const currentEnvSchema = await readFile(envSchemaPath, "utf-8");
+    const olderEnvSchema = currentEnvSchema.replaceAll(
+      "VERCEL_SANDBOX_IMAGE_",
+      "VERCEL_SANDBOX_RUNTIME_"
+    );
+    await writeFile(envSchemaPath, olderEnvSchema);
+
     await run(cwd, [
       "node",
       cliEntry,
@@ -1528,6 +1556,7 @@ it(
         "utf-8"
       )
     ).toContain("vercel-code-execution/tool");
+    await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, [
       "node",
       cliEntry,
@@ -1545,6 +1574,10 @@ it(
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
     ).toContain("DAYTONA_API_KEY");
+    expect(await readFile(corePath, "utf-8")).toBe(olderCore);
+    expect(await readFile(envSchemaPath, "utf-8")).toBe(olderEnvSchema);
+    await run(cwd, ["bun", "run", "test:types"]);
+    await writeFile(corePath, currentCore);
     await run(cwd, ["bun", "run", "format"]);
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "lint"]);

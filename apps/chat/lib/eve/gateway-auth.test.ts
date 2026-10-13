@@ -38,10 +38,8 @@ const reservationId = "01912345-1234-7123-8123-123456789abc";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.child.mockResolvedValue(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.guest.mockResolvedValue(undefined);
+  mocks.child.mockResolvedValue(null);
+  mocks.guest.mockResolvedValue(null);
   mocks.mapping.mockResolvedValue({
     id: reservationId,
     ownerId: "owner",
@@ -76,8 +74,7 @@ it.each([
       principalId: "owner",
     });
     expect(mocks.deleting).toHaveBeenCalledWith("owner", "session");
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-    mocks.deleting.mockResolvedValue(undefined);
+    mocks.deleting.mockResolvedValue(null);
     expect(await authenticateEveGateway(request(path, method))).toBeNull();
   }
 );
@@ -189,8 +186,7 @@ it("only allows fenced descendants of an owner-matched deleting root", async () 
     "root",
     "child"
   );
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.deleting.mockResolvedValue(undefined);
+  mocks.deleting.mockResolvedValue(null);
   expect(await authenticateEveGateway(read)).toBeNull();
 });
 it("root proof headers cannot authorize descendant mutations or transcript reads", async () => {
@@ -256,14 +252,14 @@ it("stamps the reservation from the body, ignoring forged identity headers and m
   expect(mocks.mapping).toHaveBeenCalledWith({ reservationId });
 });
 it.each([
-  undefined,
+  null,
   { id: reservationId, ownerId: "foreign", state: "creating" },
   { id: reservationId, ownerId: "owner", state: "deleting" },
   { id: reservationId, ownerId: "owner", state: "deleted" },
 ])(
   "rejects an unavailable creation identity: %j",
   async (
-    row: Readonly<{ id: string; ownerId: string; state: string } | undefined>
+    row: Readonly<{ id: string; ownerId: string; state: string } | null>
   ) => {
     mocks.mapping.mockResolvedValue(row);
     const command = request("/eve/v1/session", "POST");
@@ -292,13 +288,7 @@ it("does not let a seed reservation use the message operation namespace", async 
   });
 });
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
-  // oxlint-disable-next-line typescript/promise-function-async -- This settled fixture has no asynchronous operation to await; keep its direct promise result without a fake await.
-  mocks.child.mockImplementation((owner, session) => {
-    if (owner === "owner" && session === "child") {
-      return Promise.resolve({ rootSessionId: "root" });
-    }
-    return Promise.resolve();
-  });
+  mocks.child.mockResolvedValueOnce({ rootSessionId: "root" });
   const read = new Request("http://localhost/eve/v1/session/child/stream", {
     headers: {
       authorization: "Bearer fixture-secret",
@@ -320,9 +310,11 @@ it("authorizes owned child streams without granting child mutation or cross-owne
       ).toBeNull();
     })
   );
+  expect(mocks.child).toHaveBeenCalledExactlyOnceWith("owner", "child");
   const foreign = new Headers(read.headers);
   foreign.set("x-chatjs-owner", "other");
   expect(
     await authenticateEveGateway(new Request(read.url, { headers: foreign }))
   ).toBeNull();
+  expect(mocks.child).toHaveBeenLastCalledWith("other", "child");
 });

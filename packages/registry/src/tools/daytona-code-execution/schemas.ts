@@ -15,11 +15,11 @@ const codeExecutionInput = z.object({
 });
 
 const codeExecutionResult = z.object({
+  message: z.string(),
   chart: z.union([
     z.string(),
     z.object({ base64: z.string(), format: z.string() }),
     z.record(z.string(), z.json()),
   ]),
-  message: z.string(),
 });
 export { codeExecutionInput, codeExecutionResult };

@@ -15,7 +15,7 @@ import { createToolResult, hasEveToolReceipt } from "./tool-result";
 const mocks = vi.hoisted(() => ({
   close: vi.fn<() => Promise<void>>(),
   configure: vi.fn(),
-  connect: vi.fn(),
+  connect: vi.fn<() => Promise<void>>(),
   enabled: { enabled: true },
   get: vi.fn(),
   list: vi.fn(),
@@ -111,8 +111,7 @@ beforeEach(() => {
   mocks.requireCredentials.mockReset();
   mocks.list.mockResolvedValue([connector]);
   mocks.get.mockResolvedValue(connector);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.connect.mockResolvedValue(undefined);
+  mocks.connect.mockResolvedValue();
   mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({ echo: definition });
   execute.mockResolvedValue("Echo output");
@@ -130,6 +129,71 @@ it("returns serializable namespaced discovery without credentials or live connec
   ]);
   expect(JSON.stringify(tools)).not.toContain("secret");
   expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("bounds live discovery scopes and folds descriptions in connector order", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second", nameId: "second" },
+    { ...connector, id: "third", nameId: "third" },
+  ]);
+  const first = Promise.withResolvers<Record<string, typeof definition>>();
+  const second = Promise.withResolvers<Record<string, typeof definition>>();
+  mocks.tools
+    .mockReturnValueOnce(first.promise)
+    .mockReturnValueOnce(second.promise)
+    .mockResolvedValueOnce({ echo: definition });
+  const discovery = discoverEveMcpTools("owner", context.abortSignal);
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  second.resolve({ echo: definition });
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledOnce();
+  });
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  first.resolve({ echo: definition });
+  const descriptions = await discovery;
+  expect(descriptions.map((item) => item.connectorId)).toEqual([
+    "connector",
+    "second",
+    "third",
+  ]);
+  expect(mocks.close).toHaveBeenCalledTimes(3);
+});
+
+it("drains every admitted connector close on cancellation without opening later scopes", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second" },
+    { ...connector, id: "third" },
+  ]);
+  mocks.tools.mockReturnValue(
+    Promise.withResolvers<Record<string, typeof definition>>().promise
+  );
+  const closing = Promise.withResolvers<null>();
+  mocks.close.mockImplementation(async () => {
+    await closing.promise;
+  });
+  const controller = new AbortController();
+  const discovery = discoverEveMcpTools("owner", controller.signal);
+  const rejected = expect(discovery).rejects.toThrow("cancel discovery");
+  let settled = false;
+  void discovery.catch(() => {
+    settled = true;
+  });
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  controller.abort(new Error("cancel discovery"));
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledTimes(2);
+  });
+  expect(settled).toBe(false);
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  closing.resolve(null);
+  await rejected;
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
 });
 
 it.each([{ userId: "stranger" }, { enabled: false }])(
@@ -151,8 +215,7 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
 
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- This mock represents a value-producing lookup or status API; explicit undefined configures its missing-result branch, not a void completion.
-  mocks.get.mockResolvedValue(undefined);
+  mocks.get.mockResolvedValue(null);
   await expect(
     executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).rejects.toThrow("unavailable");

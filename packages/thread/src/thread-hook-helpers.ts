@@ -55,8 +55,9 @@ type TreeHelpers<TMessage extends UIMessage = UIMessage> = Pick<
   keyof TreeHelpersShape<TMessage>
 >;
 
-type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = UseChatHelpers<
-  CanonicalMessage<TMessage>
+type UseThreadHelpers<TMessage extends UIMessage = UIMessage> = Omit<
+  UseChatHelpers<CanonicalMessage<TMessage>>,
+  "addToolResult"
 > & {
   sendMessage: (
     message?: Parameters<
@@ -98,7 +99,6 @@ type HelperControllerReader<TMessage extends UIMessage> =
         | "id"
         | "addToolApprovalResponse"
         | "addToolOutput"
-        | "addToolResult"
         | "clearError"
         | "regenerate"
         | "resumeStream"
@@ -138,9 +138,9 @@ const createTreeHelpers = <TMessage extends UIMessage>({
     thread.getTreeSnapshot(),
   messagesById: snapshot.messagesById,
   parentById: snapshot.parentById,
-  // oxlint-disable-next-line typescript/promise-function-async -- A supplied controller may override public resumeRun with a shared promise or synchronous failure; this exposed hook helper forwards that observable contract.
-  resumeRun: (runId, requestOptions): Promise<void> =>
-    thread.resumeRun(runId, requestOptions),
+  resumeRun: async (runId, requestOptions): Promise<void> => {
+    await thread.resumeRun(runId, requestOptions);
+  },
   rootIds: snapshot.rootIds,
   runs: snapshot.runs,
   setActiveRun: (runId): void => {
@@ -152,17 +152,18 @@ const createTreeHelpers = <TMessage extends UIMessage>({
   setCursorToParentOf: (messageId): void => {
     thread.setCursorToParentOf(messageId);
   },
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the supplied controller startRun override directly to retain its shared promise and synchronous failure; its native SDK input requires canonical metadata/parts, while request and outer options are readonly.
-  startRun: (runOptions): Promise<ThreadRunHandle> =>
-    thread.startRun(runOptions),
+  startRun: async (runOptions): Promise<ThreadRunHandle> =>
+    await thread.startRun(runOptions),
   status: treeStatus,
-  // oxlint-disable-next-line typescript/promise-function-async -- Preserve a supplied controller stopAll override result and synchronous failure when exposing the hook helper.
-  stopAll: (): Promise<void> => thread.stopAll(),
-  // oxlint-disable-next-line typescript/promise-function-async -- The addressed-run helper forwards the supplied controller public stopRun override promise and synchronous failure.
-  stopRun: (runId): Promise<void> => thread.stopRun(runId),
-  // oxlint-disable-next-line typescript/promise-function-async -- The per-message helper forwards the supplied controller override promise and synchronous failure without async adoption.
-  stopRunForMessage: (messageId): Promise<void> =>
-    thread.stopRunForMessage(messageId),
+  stopAll: async (): Promise<void> => {
+    await thread.stopAll();
+  },
+  stopRun: async (runId): Promise<void> => {
+    await thread.stopRun(runId);
+  },
+  stopRunForMessage: async (messageId): Promise<void> => {
+    await thread.stopRunForMessage(messageId);
+  },
 });
 
 const createThreadHelpers = <TMessage extends UIMessage>({
@@ -182,8 +183,6 @@ const createThreadHelpers = <TMessage extends UIMessage>({
 }>): UseThreadHelpers<TMessage> => ({
   addToolApprovalResponse: thread.addToolApprovalResponse,
   addToolOutput: thread.addToolOutput,
-  // oxlint-disable-next-line typescript/no-deprecated -- Forward the public legacy helper itself: callers can override addToolResult independently of addToolOutput, so redirecting this property would change that compatibility contract.
-  addToolResult: thread.addToolResult,
   clearError: thread.clearError,
   error,
   id: thread.id,

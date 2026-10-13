@@ -1,6 +1,7 @@
-import { and, eq, inArray, lt, notExists, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, notExists } from "drizzle-orm";
 
 import { db } from "./client";
+import { lockEveCopyOwners } from "./eve-copy-journal";
 import { eveFileReference, eveStoredFile } from "./schema";
 
 const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
@@ -32,42 +33,33 @@ export const prepareEveOrphanedFilePurge = async (
     .where(
       and(inArray(eveStoredFile.key, keys), lt(eveStoredFile.createdAt, cutoff))
     );
-  const files: {
-    key: string;
-    ownerId: string;
-  }[] = [];
-  for (const ownerId of [
-    ...new Set(candidates.map((file) => file.ownerId)),
-  ].toSorted()) {
-    files.push(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish each owner's family lock and committed file fence before processing the next owner; failed owners must not enqueue later fencing transactions.
-      ...(await db.transaction(async (tx: OrphanPurgeTransaction) => {
-        await tx.execute(
-          sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-        );
-        const references = tx
-          .select({ key: eveFileReference.key })
-          .from(eveFileReference)
-          .where(eq(eveFileReference.key, eveStoredFile.key));
-        // Include tombstones: a provider can finish an uncertain write after an
-        // earlier deletion. A later inventory pass must remove that object again.
-        return await tx
-          .update(eveStoredFile)
-          .set({ state: "deleting" })
-          .where(
-            and(
-              eq(eveStoredFile.ownerId, ownerId),
-              inArray(eveStoredFile.key, keys),
-              lt(eveStoredFile.createdAt, cutoff),
-              notExists(references)
-            )
-          )
-          .returning({
-            key: eveStoredFile.key,
-            ownerId: eveStoredFile.ownerId,
-          });
-      }))
-    );
+  const owners = [...new Set(candidates.map((file) => file.ownerId))];
+  if (owners.length === EMPTY_RESULT_COUNT) {
+    return [];
   }
-  return files;
+  return await db.transaction(async (tx: OrphanPurgeTransaction) => {
+    // Copy and cleanup must acquire every family lock in the same owner order.
+    await lockEveCopyOwners(tx, owners);
+    const references = tx
+      .select({ key: eveFileReference.key })
+      .from(eveFileReference)
+      .where(eq(eveFileReference.key, eveStoredFile.key));
+    // Include tombstones: a provider can finish an uncertain write after an
+    // earlier deletion. A later inventory pass must remove that object again.
+    return await tx
+      .update(eveStoredFile)
+      .set({ state: "deleting" })
+      .where(
+        and(
+          inArray(eveStoredFile.ownerId, owners),
+          inArray(eveStoredFile.key, keys),
+          lt(eveStoredFile.createdAt, cutoff),
+          notExists(references)
+        )
+      )
+      .returning({
+        key: eveStoredFile.key,
+        ownerId: eveStoredFile.ownerId,
+      });
+  });
 };

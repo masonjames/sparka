@@ -17,32 +17,27 @@ import { useRouter } from "next/navigation";
 const PRIMARY_MOUSE_BUTTON = 0;
 const AUXILIARY_MOUSE_BUTTON = 1;
 
-type InternalLinkProps = Omit<ReactComponentProps<typeof Link>, "href"> & {
-  href: string | Exclude<ReactComponentProps<typeof Link>["href"], string>;
+type InternalLinkProps<T extends string> = Omit<
+  ReactComponentProps<typeof Link>,
+  "href" | "as"
+> & {
+  href: Route<T>;
   onNavigate?: () => void;
 };
 
-export const InternalLink = ({
+export const InternalLink = <T extends string>({
   onAuxClick,
   onClick,
   onNavigate,
   href,
   ...props
-}: InternalLinkProps): React.JSX.Element => {
+}: InternalLinkProps<T>): React.JSX.Element => {
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
-  const navigate = (
-    event: Readonly<{
-      currentTarget: Readonly<Pick<HTMLAnchorElement, "getAttribute">>;
-    }>
-  ): void => {
+  const navigate = (): void => {
     onNavigate?.();
-    const targetHref = event.currentTarget.getAttribute("href");
-    if (typeof targetHref === "string" && targetHref !== "") {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Electron modified/auxiliary clicks route the actual rendered anchor href; the public string/URL contract includes runtime paths absent from generated Route literals.
-      router.push(targetHref as Route);
-    }
+    router.push(href);
   };
 
   const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
@@ -54,7 +49,7 @@ export const InternalLink = ({
 
     if (isElectron && (event.metaKey || event.ctrlKey || event.shiftKey)) {
       event.preventDefault();
-      navigate(event);
+      navigate();
       return;
     }
 
@@ -77,15 +72,13 @@ export const InternalLink = ({
     }
 
     event.preventDefault();
-    navigate(event);
+    navigate();
   };
 
   return (
     <Link
       {...props}
-
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing dynamic string/URL public Link contract; generated Route literals cannot enumerate caller-provided runtime URLs.
-      href={href as Route}
+      href={href}
       onAuxClick={handleAuxClick}
       onClick={handleClick}
     />

@@ -4,6 +4,7 @@ import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-exe
 import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { env } from "@/lib/env";
+import { z } from "zod";
 import { createModuleLogger } from "@/lib/logger";
 
 const JWT_PART_COUNT = 3;
@@ -119,20 +120,23 @@ const resolveSandboxAuth = (): SandboxAuth => {
   return { ...identity, token };
 };
 
-const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
+// Installed providers must work without rewriting an existing app's env schema.
+const sandboxImageEnvironment = z.object({
+  VERCEL_SANDBOX_IMAGE_JAVASCRIPT: z.string().nonempty().optional(),
+  VERCEL_SANDBOX_IMAGE_PYTHON: z.string().nonempty().optional(),
+});
+
+const getSandboxImage = (language: SupportedExecutionLanguage): string => {
+  const images = sandboxImageEnvironment.parse(process.env);
   if (language === "javascript") {
-    return env.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT ?? "node22";
+    return images.VERCEL_SANDBOX_IMAGE_JAVASCRIPT ?? "vercel/sandbox/node:22";
   }
 
-  return (
-    env.VERCEL_SANDBOX_RUNTIME_PYTHON ??
-    env.VERCEL_SANDBOX_RUNTIME ??
-    "python3.13"
-  );
+  return images.VERCEL_SANDBOX_IMAGE_PYTHON ?? "vercel/sandbox/python:3.14";
 };
 
 const createSandbox = async (
-  runtime: string,
+  image: string,
   signal?: ReadonlyNativeSurface<AbortSignal>,
   name?: string,
   auth?: Readonly<SandboxAuth>
@@ -141,8 +145,7 @@ const createSandbox = async (
     name,
     persistent: false,
     resources: { vcpus: SANDBOX_VCPUS },
-    // oxlint-disable-next-line typescript/no-deprecated -- Existing deployments configure runtime IDs (node22/python3.13); the replacement image option requires a VCR image and cannot preserve those runtime/environment contracts by renaming this field.
-    runtime,
+    image,
     signal,
     timeout: SANDBOX_TIMEOUT_MS,
     ...(auth ?? getTokenAuth()),
@@ -229,7 +232,7 @@ export {
   codeSandboxCleanupCapability,
   createSandbox,
   getErrorMessage,
-  getSandboxRuntime,
+  getSandboxImage,
   getTokenAuth,
   resolveSandboxAuth,
 };

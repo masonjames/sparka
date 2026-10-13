@@ -53,7 +53,7 @@ const main = async (): Promise<void> => {
   );
   await Promise.all(
     `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts
-agent/subagents/researcher/tools/webSearch.ts tools/chatjs/deep-research/workflow.ts
+agent/subagents/researcher/tools/webSearch.ts
  tools/chatjs/deep-research/schemas.ts tools/chatjs/deep-research/search-updates.ts
  tools/platform/research-updates-schema.ts lib/eve/tool-result.ts lib/eve/document-contracts.ts
  lib/file-url.ts lib/eve/tool-model-output.ts tools/chatjs/deep-research/prompts.ts`
@@ -97,7 +97,7 @@ export async function recordEveUsage(row) {
 const directory = ${JSON.stringify(path.join(fixture, "children"))};
 export async function getEveSubagent(owner, session) {
   try { return JSON.parse(await readFile(directory + "/" + session + ".json", "utf8")); }
-  catch (error) { if (error.code === "ENOENT") return; throw error; }
+  catch (error) { if (error.code === "ENOENT") return null; throw error; }
 }
 export async function registerEveSubagent(owner, parent, session, turn) {
   const ancestor = await getEveSubagent(owner, parent);
@@ -147,9 +147,8 @@ export async function prepareResearch() {
 export async function saveResearchReport(ctx, report) {
   "use step";
   ctx.abortSignal.throwIfAborted();
-  return { ...report, documentId: ctx.callId, revisionId: "revision", date: "2026-09-28", kind: "text", status: "success", result: "Saved" };
+  return { document: { ...report, documentId: ctx.callId, revisionId: "revision", date: "2026-09-28", kind: "text", status: "success", result: "Saved" }, completedAt: 1 };
 }
-export async function researchCompletionTime() { "use step"; return 1; }
 `
   );
   await write(

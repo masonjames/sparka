@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import type { MessageStreamEvent } from "eve/client";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, expect, expectTypeOf, it, vi } from "vitest";
 import { z } from "zod";
 
 const postgres = new PGlite();
@@ -30,15 +30,18 @@ beforeAll(async () => {
         )
       )
     );
-  for (const entry of journal.entries) {
+  const migrations = await Promise.all(
+    journal.entries.map(
+      async (entry) =>
+        await readFile(
+          new URL(`migrations/${entry.tag}.sql`, import.meta.url),
+          "utf-8"
+        )
+    )
+  );
+  for (const migration of migrations) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-    await postgres.exec(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
-      await readFile(
-        new URL(`migrations/${entry.tag}.sql`, import.meta.url),
-        "utf-8"
-      )
-    );
+    await postgres.exec(migration);
   }
   await postgres.exec(
     `insert into "user" (id,name,email) values ('owner','owner','owner'), ('other','other','other')`
@@ -58,6 +61,9 @@ afterAll(async () => {
 
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
   const child = await registerEveSubagent("owner", "root", "child", "turn_1");
+  const missing = await getEveSubagent("owner", "unknown");
+  expectTypeOf(missing).toEqualTypeOf<typeof child | null>();
+  expect(missing).toBeNull();
   expect(child).toMatchObject({
     conversationId,
     rootSessionId: "root",
@@ -75,7 +81,7 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
   await expect(
     registerEveSubagent("other", "foreign-root", "child", "turn_1")
   ).rejects.toThrow("ownership changed");
-  expect(await getEveSubagent("other", "child")).toBeUndefined();
+  expect(await getEveSubagent("other", "child")).toBeNull();
   await expect(
     registerEveSubagent("owner", "root", "child", "turn_2")
   ).rejects.toThrow("fresh child");
@@ -96,7 +102,7 @@ it("advances child cursors monotonically and revokes stream access when the root
   await postgres.exec(
     "update \"EveConversation\" set state='deleted' where \"sessionId\"='root'"
   );
-  expect(await getEveSubagent("owner", "cursor-child")).toBeUndefined();
+  expect(await getEveSubagent("owner", "cursor-child")).toBeNull();
   await postgres.exec(
     "update \"EveConversation\" set state='bound' where \"sessionId\"='root'"
   );
