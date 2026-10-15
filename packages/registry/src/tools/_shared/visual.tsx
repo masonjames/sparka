@@ -17,12 +17,6 @@ import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 // and the snapshot drifts from the real chat.
 import "./visual.css";
 
-declare module "vitest/browser" {
-  interface BrowserCommands {
-    faviconAssets: () => Promise<void>;
-  }
-}
-
 // Read a served asset and inline it as a base64 `data:` URI. The archive replays
 // on the UI Verify server long after this vitest run — and its dev server — has
 // exited, so a `url(http://localhost:<port>/…)` reference resolves to nothing
@@ -93,7 +87,7 @@ const loadFonts = async (): Promise<void> => {
   }
 };
 
-const ensureFonts = async (): Promise<void> => {
+export const ensureFonts = async (): Promise<void> => {
   fontsReady ??= loadFonts();
   await fontsReady;
 };
@@ -117,6 +111,11 @@ export const makeCanvasDataUri = (
   draw(ctx, width, height);
   return canvas.toDataURL(type);
 };
+
+// Freeze CSS keyframe animations and transitions so infinite loaders (pulse
+// skeletons, spinners) and in-flight transitions capture at a deterministic frame.
+export const FREEZE_MOTION_CSS =
+  "*,*::before,*::after{animation:none!important;transition:none!important;}";
 
 const isLooping = (a: Animation): boolean =>
   a.effect?.getComputedTiming().iterations === Number.POSITIVE_INFINITY;
@@ -287,13 +286,9 @@ export const captureChatStory = async (
   MotionGlobalConfig.skipAnimations = skipMotion;
   document.body.style.margin = "0";
   document.body.className = "bg-background text-foreground font-sans";
-  // Freeze CSS keyframe animations and transitions so infinite loaders (pulse
-  // skeletons, spinners) and in-flight transitions capture at a deterministic
-  // frame instead of a random one — and so `settleAnimations` never awaits an
-  // infinite `.finished`.
+  // Also keeps `settleAnimations` from awaiting an infinite `.finished`.
   const freeze = document.createElement("style");
-  freeze.textContent =
-    "*,*::before,*::after{animation:none!important;transition:none!important;}";
+  freeze.textContent = FREEZE_MOTION_CSS;
   document.head.append(freeze);
 
   const column = document.createElement("main");

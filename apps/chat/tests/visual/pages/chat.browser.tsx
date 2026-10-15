@@ -1,0 +1,189 @@
+import { expect, test } from "vitest";
+import { page } from "vitest/browser";
+
+import ChatPage from "@/app/(chat)/chat/[id]/page";
+import ChatLayout from "@/app/(chat)/layout";
+import SharePage from "@/app/(chat)/share/[id]/page";
+
+import { prepareCreation } from "@/lib/eve/pending-create";
+
+import {
+  history,
+  invoicesConversation,
+  invoicesShared,
+  invoicesTranscripts,
+  invoicesTrpc,
+  launchProject,
+  session,
+  signedIn,
+} from "./fixtures";
+import { renderRoute } from "./render";
+
+const conversation = (
+  <ChatLayout>
+    <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+  </ChatLayout>
+);
+const request = {
+  ...signedIn,
+  path: `/chat/${invoicesConversation.chatId}`,
+  server: { conversation: invoicesConversation, conversations: history },
+  transcripts: invoicesTranscripts,
+  trpc: invoicesTrpc,
+};
+
+test("conversation", async () => {
+  await renderRoute(conversation, request);
+  await expect
+    .element(page.getByText("invoices_account_status_due_idx"))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message" }))
+    .toBeVisible();
+});
+
+test("conversation whose creation was never confirmed", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    server: {
+      conversation: {
+        ...invoicesConversation,
+        sessionId: null,
+        state: "uncertain",
+      },
+      conversations: history,
+    },
+  });
+  await expect
+    .element(
+      page.getByText("This browser does not have the original request.", {
+        exact: false,
+      })
+    )
+    .toBeVisible();
+});
+
+test("conversation inside a project", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    trpc: {
+      ...invoicesTrpc,
+      "eve.get": { ...invoicesTrpc["eve.get"], projectId: launchProject.id },
+      "project.getById": launchProject,
+    },
+  });
+  await expect
+    .element(page.getByRole("link", { name: launchProject.name }))
+    .toBeVisible();
+});
+
+test("conversation whose last reply failed", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentError: "The model provider is unavailable. Try again in a moment.",
+  });
+  await expect
+    .element(
+      page
+        .getByRole("alert")
+        .getByText("The model provider is unavailable. Try again in a moment.")
+    )
+    .toBeVisible();
+});
+
+const unconfirmed = {
+  ...invoicesConversation,
+  sessionId: null,
+  state: "uncertain" as const,
+};
+
+test("conversation whose creation is unconfirmed, with the request saved here", async () => {
+  const saved = prepareCreation(
+    sessionStorage,
+    session.user.id,
+    invoicesConversation.firstMessage,
+    invoicesConversation.initialModelId ?? undefined
+  );
+  await renderRoute(conversation, {
+    ...request,
+    server: {
+      conversation: { ...unconfirmed, operationId: saved.operationId },
+      conversations: history,
+    },
+  });
+  await expect
+    .element(
+      page.getByText(
+        "Conversation creation is unconfirmed. Retry the saved request to recover it."
+      )
+    )
+    .toBeVisible();
+});
+
+test("saved copy of a shared conversation that was not confirmed", async () => {
+  const copy = { ...unconfirmed, creationKind: "copy" as const };
+  await renderRoute(conversation, {
+    ...request,
+    server: {
+      conversation: copy,
+      conversations: history,
+      copyOperation: {
+        conversation: { ...copy, guestCleanupAttemptedAt: null },
+        copy: {
+          acceptedAt: null,
+          conversationId: copy.id,
+          documentsReady: false,
+          ownerId: session.user.id,
+          phase: "preparing",
+          plan: null,
+          planHash: "",
+          projectionHash: "",
+          seed: null,
+          sourceConversationId: "f1e2d3c4-b5a6-4978-8a6b-5c4d3e2f1a0b",
+          sourceOwnerId: "user_priya",
+          sourceSessionId: "ses_shared",
+        },
+      },
+    },
+  });
+  await expect
+    .element(
+      page.getByText("Saving is unconfirmed. Retry to finish the saved copy.")
+    )
+    .toBeVisible();
+});
+
+const shared = (
+  <ChatLayout>
+    <SharePage params={Promise.resolve({ id: invoicesConversation.id })} />
+  </ChatLayout>
+);
+
+test("shared conversation", async () => {
+  await renderRoute(shared, {
+    path: `/share/${invoicesConversation.id}`,
+    server: { transcript: invoicesShared },
+  });
+  await expect
+    .element(page.getByText("invoices_account_status_due_idx"))
+    .toBeVisible();
+  await expect
+    .element(
+      page.getByRole("link", { name: "Sign in to save this conversation" })
+    )
+    .toBeVisible();
+});
+
+test("shared conversation, signed in", async () => {
+  await renderRoute(shared, {
+    ...signedIn,
+    path: `/share/${invoicesConversation.id}`,
+    server: { conversations: history, transcript: invoicesShared },
+  });
+  await expect
+    .element(page.getByText("invoices_account_status_due_idx"))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("region", { name: "Save shared conversation" }))
+    .toBeVisible();
+});

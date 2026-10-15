@@ -16,6 +16,8 @@
     "src/**/*.tsx",
     "../../apps/chat/types/**/*.d.ts",
     "../../apps/chat/electron.d.ts",
+    "../../apps/chat/tests/visual/assets.d.ts",
+    "../../apps/chat/tests/visual/browser-commands.d.ts",
     "visual/**/*.ts",
     "visual/**/*.tsx",
     "test/**/*.test.ts"

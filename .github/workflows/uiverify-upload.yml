@@ -1,13 +1,13 @@
 name: UI Verify Upload
 
 # Uploads the capture of a fork's pull request, which gets no secrets. Runs from
-# main with secrets after "UI Verify Docs" or "UI Verify Registry" finishes on a
-# fork's pull request, and never runs code from the pull request: no checkout
+# main with secrets after "UI Verify Docs", "UI Verify Registry" or "UI Verify
+# Chat" finishes on a fork's pull request, and never runs code from the pull request: no checkout
 # of its files, no install, no npx inside its tree. Values the pull request
 # controls reach the shell only through env.
 on:
   workflow_run:
-    workflows: [UI Verify Docs, UI Verify Registry]
+    workflows: [UI Verify Docs, UI Verify Registry, UI Verify Chat]
     types: [completed]
 
 permissions:
@@ -73,7 +73,7 @@ jobs:
       - name: Upload to UI Verify
         if: steps.meta.outputs.pr != ''
         env:
-          UIVERIFY_API_KEY: ${{ github.event.workflow_run.name == 'UI Verify Docs' && secrets.UIVERIFY_DOCS_API_KEY || secrets.UIVERIFY_REGISTRY_API_KEY }}
+          UIVERIFY_API_KEY: ${{ github.event.workflow_run.name == 'UI Verify Docs' && secrets.UIVERIFY_DOCS_API_KEY || github.event.workflow_run.name == 'UI Verify Chat' && secrets.UIVERIFY_CHAT_API_KEY || secrets.UIVERIFY_REGISTRY_API_KEY }}
           ONLY_CHANGED: ${{ github.event.workflow_run.name != 'UI Verify Docs' && '--only-changed' || '' }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
           BRANCH: ${{ steps.meta.outputs.branch }}
