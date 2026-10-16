@@ -151,19 +151,30 @@ const idle = () => Promise.resolve();
 // agent must keep its identity across renders, as the real hook's does, or each render republishes it to the runtime.
 vi.mock("eve/react", () => {
   let agents = new WeakMap<readonly EveMessage[], object>();
-  // Shared, so a page with no transcript keeps one agent across renders too.
-  const noTranscript: readonly EveMessage[] = [];
+  // One empty list per session, so a session with no transcript keeps its own agent across renders.
+  let noTranscripts = new Map<string, readonly EveMessage[]>();
   beforeEach(() => {
     agents = new WeakMap();
+    noTranscripts = new Map();
   });
+  const emptyTranscript = (sessionId: string): readonly EveMessage[] => {
+    const existing = noTranscripts.get(sessionId);
+    if (existing) {
+      return existing;
+    }
+    const created: readonly EveMessage[] = [];
+    noTranscripts.set(sessionId, created);
+    return created;
+  };
   return {
     useEveAgent: ({
       initialSession,
     }: {
       initialSession?: { sessionId: string };
     }) => {
+      const sessionId = initialSession?.sessionId ?? "";
       const messages =
-        route.transcripts[initialSession?.sessionId ?? ""] ?? noTranscript;
+        route.transcripts[sessionId] ?? emptyTranscript(sessionId);
       const agent = agents.get(messages) ?? {
         cancel: idle,
         data: { messages },
