@@ -56,6 +56,7 @@ export const renderRoute = async (
     agentError: null,
     cookies: {},
     lastLoginMethod: null,
+    missingFixtures: new Set(),
     path: "/",
     search: "",
     server: {},

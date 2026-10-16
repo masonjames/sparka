@@ -45,7 +45,8 @@ test("model settings list every available model", async () => {
   await expect
     .element(page.getByRole("link", { name: "Models Registry" }))
     .toBeVisible();
-  await expect.element(page.getByText(/^\d+ models$/u)).toBeVisible();
+  await expect.element(page.getByText(/^[1-9]\d* models$/u)).toBeVisible();
+  await expect.element(page.getByText("GPT-5 mini").first()).toBeVisible();
 });
 
 test("model settings filtered by a search", async () => {

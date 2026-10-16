@@ -16,9 +16,12 @@ test("login offers every configured provider", async () => {
     path: "/login",
   });
   await expect.element(page.getByText("Welcome back")).toBeVisible();
-  await expect
-    .element(page.getByRole("button", { name: /GitHub/u }))
-    .toBeVisible();
+  for (const provider of ["Google", "GitHub", "Vercel"]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- One assertion per provider, each reporting its own name on failure.
+    await expect
+      .element(page.getByRole("button", { name: `Continue with ${provider}` }))
+      .toBeVisible();
+  }
 });
 
 test("login from the desktop app hands over the signed-in account", async () => {

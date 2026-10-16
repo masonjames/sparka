@@ -26,6 +26,10 @@ await ensureFonts();
 // Favicons load from Google; serve the fixed icon the registry stories use.
 await commands.faviconAssets();
 await commands.appIcon();
+// Model logos load from models.dev; serve the fixed one the registry's model tests use.
+await commands.modelAssets();
+// The root layout's <body> class, which renderRoute mounts inside of.
+document.body.classList.add("antialiased");
 
 // Shortcut labels follow the platform ("Cmd" on a Mac, "Ctrl" elsewhere). Report the one CI
 // captures on, so a capture made on a laptop matches the baseline.
@@ -272,6 +276,9 @@ const inputAt = (batch: unknown, index: number): unknown => {
 const answer = (path: string, input: unknown) => {
   const fixture = route.trpc[path];
   const data = isResolver(fixture) ? fixture(input) : fixture;
+  if (!Object.hasOwn(route.trpc, path)) {
+    route.missingFixtures.add(path);
+  }
   if (!Object.hasOwn(route.trpc, path) || data instanceof TrpcFixtureError) {
     const error =
       data instanceof TrpcFixtureError
@@ -316,5 +323,11 @@ beforeEach(() => {
 afterEach(async ({ task }) => {
   if (task.result?.state !== "fail") {
     await captureVariants();
+  }
+  // Checked after the captures, which re-render the page and can call more procedures.
+  if (route.missingFixtures.size > 0) {
+    throw new Error(
+      `No visual fixture for ${[...route.missingFixtures].join(", ")}`
+    );
   }
 });

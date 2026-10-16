@@ -26,6 +26,8 @@ export const route: {
   cookies: Record<string, string>;
   /** The sign-in method this browser remembers using last. */
   lastLoginMethod: string | null;
+  /** Procedures the page called that have no fixture; the test fails on any. */
+  missingFixtures: Set<string>;
   path: string;
   queryClients: Set<QueryClient>;
   search: string;
@@ -39,6 +41,7 @@ export const route: {
   agentError: null,
   cookies: {},
   lastLoginMethod: null,
+  missingFixtures: new Set(),
   path: "/",
   queryClients: new Set(),
   search: "",

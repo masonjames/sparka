@@ -73,15 +73,30 @@ jobs:
       - name: Upload to UI Verify
         if: steps.meta.outputs.pr != ''
         env:
-          UIVERIFY_API_KEY: ${{ github.event.workflow_run.name == 'UI Verify Docs' && secrets.UIVERIFY_DOCS_API_KEY || github.event.workflow_run.name == 'UI Verify Chat' && secrets.UIVERIFY_CHAT_API_KEY || secrets.UIVERIFY_REGISTRY_API_KEY }}
-          ONLY_CHANGED: ${{ github.event.workflow_run.name != 'UI Verify Docs' && '--only-changed' || '' }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          DOCS_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY }}
+          REGISTRY_KEY: ${{ secrets.UIVERIFY_REGISTRY_API_KEY }}
+          CHAT_KEY: ${{ secrets.UIVERIFY_CHAT_API_KEY }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
           BRANCH: ${{ steps.meta.outputs.branch }}
           PR_NUMBER: ${{ steps.meta.outputs.pr }}
+        # Each suite has exactly one project: a missing key fails here rather than
+        # uploading to another suite's project.
         run: |
           set -euo pipefail
+          case "$WORKFLOW" in
+            "UI Verify Docs") key="$DOCS_KEY"; only_changed="" ;;
+            "UI Verify Registry") key="$REGISTRY_KEY"; only_changed="--only-changed" ;;
+            "UI Verify Chat") key="$CHAT_KEY"; only_changed="--only-changed" ;;
+            *) echo "No UI Verify project for workflow: $WORKFLOW" >&2; exit 1 ;;
+          esac
+          if [ -z "$key" ]; then
+            echo "The UI Verify key secret for $WORKFLOW is not set" >&2
+            exit 1
+          fi
+          export UIVERIFY_API_KEY="$key"
           mkdir -p "$RUNNER_TEMP/clean" && cd "$RUNNER_TEMP/clean"
           npx -y uiverify@1.7.0 upload \
             --static-dir "$RUNNER_TEMP/archive" \
             --working-directory "$RUNNER_TEMP/repo" \
-            $ONLY_CHANGED --auto-accept-changes
+            $only_changed --auto-accept-changes

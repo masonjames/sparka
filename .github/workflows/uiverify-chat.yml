@@ -10,6 +10,7 @@ on:
     paths:
       - "apps/chat/**"
       - "packages/gateways/**"
+      - "packages/registry/package.json"
       - "packages/registry/visual/**"
       - "packages/registry/src/tools/_shared/**"
       - "bun.lock"
@@ -19,6 +20,7 @@ on:
     paths:
       - "apps/chat/**"
       - "packages/gateways/**"
+      - "packages/registry/package.json"
       - "packages/registry/visual/**"
       - "packages/registry/src/tools/_shared/**"
       - "bun.lock"
