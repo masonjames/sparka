@@ -94,7 +94,15 @@ const layout = () =>
 
 // The sidebar's credits and projects load independently of what a test asserts on,
 // and the conversation's stick-to-bottom scroll keeps moving after its content shows.
-const settled = async () => {
+const settled = async (theme: (typeof THEMES)[number], width: number) => {
+  // The theme class and the resize land after render() and page.viewport() return.
+  await expect
+    .poll(
+      () =>
+        document.documentElement.classList.contains(theme) &&
+        window.innerWidth === width
+    )
+    .toBe(true);
   await expect
     .poll(() =>
       [...route.queryClients].every(
@@ -130,7 +138,7 @@ export const captureVariants = async () => {
     await page.viewport(size.width, size.height);
     for (const theme of THEMES) {
       root.render(tree(ui, theme));
-      await settled();
+      await settled(theme, size.width);
       await takeSnapshot(`${viewport}-${theme}`);
     }
   }
