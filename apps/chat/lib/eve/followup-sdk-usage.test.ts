@@ -1,9 +1,11 @@
-import { MockLanguageModelV3 } from "ai/test";
-import { expect, it, vi } from "vitest";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+import type { ModelCallScope } from "./model-ledger";
+import { MockLanguageModelV4 } from "ai/test";
+import { beforeEach, expect, it, vi } from "vitest";
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
-const model = new MockLanguageModelV3({
+const model = new MockLanguageModelV4({
   doGenerate: vi.fn().mockResolvedValue({
     content: [{ text: "This is not valid JSON", type: "text" }],
     finishReason: { raw: "stop", unified: "stop" },
@@ -17,12 +19,42 @@ const model = new MockLanguageModelV3({
     warnings: [],
   }),
 });
-const mocks = vi.hoisted(() => ({ resolveEveModel: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  resolveEveModel: vi.fn(),
+  authorize: vi.fn(),
+  begin: vi.fn(),
+  finish: vi.fn(),
+  logError: vi.fn(),
+}));
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: mocks.logError }),
+}));
+vi.mock("./model-accounting", async () => {
+  const { wrapEveModel } = await import("./model-ledger");
+  return {
+    accountEveModel: (
+      resolved: { model: LanguageModelV4 },
+      scope: ModelCallScope
+    ) => ({
+      ...resolved,
+      model: wrapEveModel(resolved.model, scope, {
+        authorize: mocks.authorize,
+        begin: mocks.begin,
+        finish: mocks.finish,
+      }),
+    }),
+  };
+});
 vi.mock("./model-selection", () => ({
   resolveEveModel: mocks.resolveEveModel,
 }));
 // vi.mock factories are hoisted, but the resolved model is configured after this module initializes it.
-mocks.resolveEveModel.mockResolvedValue({ model, modelOptions: {} });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.resolveEveModel.mockResolvedValue({ model, modelOptions: {} });
+  mocks.begin.mockReset();
+  mocks.finish.mockReset();
+});
 vi.mock("../config", () => ({
   config: {
     ai: {
@@ -37,22 +69,84 @@ vi.mock("../config", () => ({
 }));
 
 it("the real AI SDK delivers usage before rejecting invalid structured suggestions", async () => {
-  const result = await generateEveFollowupSuggestions({
-    assistant: "Because.",
-    user: "Why?",
-  });
-  if (!result || !result.modelCalls) {
-    throw new Error("Expected recorded model usage");
-  }
-  expect(result.responseMetadata).toBeUndefined();
-  expect(result.modelCalls).toHaveLength(1);
-  expect(result.modelCalls[0]).toMatchObject({
-    modelId: "google/gemini-2.5-flash-lite",
-    providerMetadata: {
-      gateway: { cost: "0.00001", generationId: "paid-invalid-output" },
-    },
-    usage: { inputTokens: 20, outputTokens: 10 },
-  });
-  expect(result.modelCalls[0].failed).toBeUndefined();
+  const result = await generateEveFollowupSuggestions(
+    { assistant: "Because.", user: "Why?" },
+    { ownerId: "owner", sessionId: "session", turnId: "turn" }
+  );
+  expect(result).toBeUndefined();
+  expect(mocks.begin).toHaveBeenCalledOnce();
+  expect(mocks.finish).toHaveBeenCalledWith(
+    expect.objectContaining({
+      ownerId: "owner",
+      sessionId: "session",
+      turnId: "turn",
+    }),
+    expect.objectContaining({
+      providerMetadata: {
+        gateway: { cost: "0.00001", generationId: "paid-invalid-output" },
+      },
+    })
+  );
   expect(model.doGenerateCalls).toHaveLength(1);
+});
+
+it("leaves a rejected provider attempt unpriced without retrying or inventing a receipt", async () => {
+  const failedModel = new MockLanguageModelV4({
+    doGenerate: vi.fn().mockRejectedValue(new Error("provider unavailable")),
+  });
+  mocks.resolveEveModel.mockResolvedValue({
+    model: failedModel,
+    modelOptions: {},
+  });
+  expect(
+    await generateEveFollowupSuggestions(
+      { assistant: "Because.", user: "Why?" },
+      { ownerId: "owner", sessionId: "session", turnId: "turn" }
+    )
+  ).toBeUndefined();
+  expect(mocks.begin).toHaveBeenCalledOnce();
+  expect(mocks.finish).not.toHaveBeenCalled();
+  expect(failedModel.doGenerateCalls).toHaveLength(1);
+});
+
+it("returns valid suggestions despite a failed receipt write", async () => {
+  mocks.finish.mockRejectedValue(new Error("receipt storage unavailable"));
+  const suggestions = [
+    "What comes next?",
+    "Why does that happen?",
+    "Can you explain more?",
+  ];
+  const successfulModel = new MockLanguageModelV4({
+    doGenerate: vi.fn().mockResolvedValue({
+      content: [{ text: JSON.stringify({ suggestions }), type: "text" }],
+      finishReason: { raw: "stop", unified: "stop" },
+      providerMetadata: { gateway: { cost: "0.001" } },
+      usage: {
+        inputTokens: { total: 1, noCache: 1 },
+        outputTokens: { total: 1, text: 1 },
+      },
+      warnings: [],
+    }),
+  });
+  mocks.resolveEveModel.mockResolvedValue({
+    model: successfulModel,
+    modelOptions: {},
+  });
+  expect(
+    await generateEveFollowupSuggestions(
+      { assistant: "Because.", user: "Why?" },
+      { ownerId: "owner", sessionId: "session", turnId: "turn" }
+    )
+  ).toEqual({ responseMetadata: { suggestions } });
+  expect(successfulModel.doGenerateCalls).toHaveLength(1);
+  expect(mocks.finish).toHaveBeenCalledOnce();
+  expect(mocks.logError).toHaveBeenCalledWith(
+    expect.objectContaining({
+      errorType: "error",
+      stage: "receipt",
+      sessionId: "session",
+      turnId: "turn",
+    }),
+    "Eve accounting requires review"
+  );
 });

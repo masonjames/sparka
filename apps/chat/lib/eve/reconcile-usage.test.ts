@@ -229,7 +229,7 @@ it("does not bypass managed reconciliation failures", async () => {
     "Unpriced usage"
   );
 });
-it("replays historical unpriced evidence even when its stream cursor already advanced", async () => {
+it("rate-limits unpriced history, then replays it when the managed sweep is due", async () => {
   mocks.env.VERCEL = "1";
   mocks.bindings.mockResolvedValue([
     { sessionId: "failed-attempt", state: "bound", usageStreamIndex: 20 },
@@ -237,6 +237,11 @@ it("replays historical unpriced evidence even when its stream cursor already adv
   mocks.cursor.mockResolvedValue(20);
   mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
     await reconcile(false, new Set(["failed-attempt"]));
+  });
+  await reconcileEveOwnerUsage("owner", "failed-attempt");
+  expect(mocks.read).not.toHaveBeenCalled();
+  mocks.managed.mockImplementationOnce(async (_owner, reconcile) => {
+    await reconcile(true, new Set(["failed-attempt"]));
   });
   await reconcileEveOwnerUsage("owner", "failed-attempt");
   expect(mocks.streamOptions).toHaveBeenCalledWith(
@@ -284,7 +289,7 @@ it("reconciles child tails even when the root cursor is unchanged and preserves 
   expect(mocks.advanceChild).toHaveBeenCalledWith("owner", "child", 3);
 });
 
-it("blocks admission without advancing child progress when a completed child charge remains unknown", async () => {
+it("admits work without advancing child progress when a completed child charge remains unknown", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 0 },
   ]);
@@ -299,18 +304,29 @@ it("blocks admission without advancing child progress when a completed child cha
   mocks.events.set("child", [
     {
       data: {
-        hookId: "auxiliary",
-        modelCalls: [{ modelId: "model" }],
+        result: {
+          kind: "tool-result",
+          callId: "unpriced-tool",
+          toolName: "paid-tool",
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: null,
+            usage: {},
+          },
+        },
+        status: "completed",
+        sequence: 0,
+        stepIndex: 0,
         turnId: "turn_0",
       },
       meta: { at: "2026-09-28T00:00:00Z", id: "unpriced" },
-      type: "hook.result",
+      type: "action.result",
     },
   ]);
   mocks.ingest.mockResolvedValue(false);
-  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
-    "Completed usage needs provider cost reconciliation"
-  );
+  await expect(reconcileEveOwnerUsage("owner")).resolves.toBeUndefined();
   expect(mocks.advanceChild).not.toHaveBeenCalled();
 });
 it("settles newly discovered descendants before admitting the next turn", async () => {
