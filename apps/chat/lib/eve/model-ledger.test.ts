@@ -474,10 +474,12 @@ it.each(["finish", "error", "abort"] as const)(
     } else {
       expect(store.finish).not.toHaveBeenCalled();
       expect(kinds).toContain(outcome);
-      expect(logError).toHaveBeenCalledWith(
-        expect.objectContaining({ ...scope, stage: "missing-receipt" }),
-        "Eve accounting requires review"
-      );
+      await vi.waitFor(() => {
+        expect(logError).toHaveBeenCalledWith(
+          expect.objectContaining({ ...scope, stage: "missing-receipt" }),
+          "Eve accounting requires review"
+        );
+      });
     }
   }
 );
