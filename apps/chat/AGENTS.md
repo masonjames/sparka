@@ -16,15 +16,6 @@ These instructions apply to this application directory.
 - Run `bun lint` after TypeScript, React, JSON, or CSS changes.
 - For authenticated browser testing, visit `/api/dev-login` on the discovered local app URL before testing.
 
-## Visual coverage
-
-- Every page and every state of a page (empty, error, signed in or out, an open dialog) has a UI Verify capture in `tests/visual/pages/*.browser.tsx`. A new page or a new state gets its capture in the same change.
-- The tests render the real route files, layouts included, through `renderRoute` in `tests/visual/pages/render.tsx`, and each page is captured at desktop and mobile in light and dark once it settles, as the registry's tool stories are. Pass `viewports: ["desktop"]` only for a state that looks the same as another one on a phone.
-- `tests/visual/pages/setup.tsx` uses the registry's visual harness (`packages/registry/src/tools/_shared/visual.tsx`: global CSS, Geist, the motion freeze) and doubles the `next/*` modules, auth, the route files' server reads (`route.server`), tRPC answered from per-test fixtures (`route.trpc`), and replayed EVE transcripts (`route.transcripts`) against a frozen clock. Add data to `tests/visual/pages/fixtures.ts`; a procedure without a fixture fails loudly.
-- Assert the content that makes the state distinct before the test ends; a heading the loading skeleton also shows proves nothing.
-- Run `bun test:visual:chat`, then `bun uiverify:upload:chat` with `UIVERIFY_API_KEY` set to the chat project's key. CI does both in `.github/workflows/uiverify-chat.yml`, reading the key from the `UIVERIFY_CHAT_API_KEY` secret.
-- `tests/visual/pages/coverage.test.ts` runs with the unit tests and fails when a route file has no visual test. It checks files, not states.
-
 ## Database changes
 
 1. Change `lib/db/schema.ts`.

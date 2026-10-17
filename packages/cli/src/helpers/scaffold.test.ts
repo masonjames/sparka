@@ -258,6 +258,8 @@ describe("scaffoldFromTemplate", (): void => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
     for (const file of [
+      "tests/visual",
+      "uiverify-archive",
       "tests/ui-primitives.visual.e2e.ts",
       "tests/layout-primitives.visual.e2e.ts",
       "tests/model-toolbar.visual.e2e.ts",
@@ -314,6 +316,13 @@ describe("scaffoldFromTemplate", (): void => {
     expect(playwright).toContain('name: "chat"');
     expect(playwright).toContain('name: "reasoning"');
     expect(playwright).toContain('name: "artifacts"');
+    const instructions = await readFile(
+      pathModule.join(destination, "AGENTS.md"),
+      "utf-8"
+    );
+    expect(instructions).not.toContain("test:visual:chat");
+    expect(instructions).not.toContain("tests/visual/pages");
+    expect(instructions).not.toContain("packages/chat-visual-tests");
     const tsconfig = await readFile(
       pathModule.join(destination, "tsconfig.json"),
       "utf-8"

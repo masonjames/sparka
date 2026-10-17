@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { expect, test } from "vitest";
 
-const appRoot = path.resolve(import.meta.dirname, "../../..");
+const appRoot = path.resolve(import.meta.dirname, "../../../apps/chat");
 const appDir = path.join(appRoot, "app");
 const ROUTE_FILE =
   /^(?:page|layout|loading|error|not-found|global-error)\.tsx$/u;
