@@ -1,3 +1,6 @@
+// oxlint-disable-next-line typescript/triple-slash-reference -- Ambient font modules must follow this harness into each consuming TypeScript project without a runtime import of a declaration file.
+/// <reference path="./visual-assets.d.ts" />
+
 import { takeSnapshot } from "@uiverify/vitest";
 import geistMonoUrl from "geist-mono.woff2";
 import geistSansUrl from "geist-sans.woff2";
@@ -93,7 +96,7 @@ const loadFonts = async (): Promise<void> => {
   }
 };
 
-const ensureFonts = async (): Promise<void> => {
+export const ensureFonts = async (): Promise<void> => {
   fontsReady ??= loadFonts();
   await fontsReady;
 };
@@ -117,6 +120,11 @@ export const makeCanvasDataUri = (
   draw(ctx, width, height);
   return canvas.toDataURL(type);
 };
+
+// Freeze CSS keyframe animations and transitions so infinite loaders (pulse
+// skeletons, spinners) and in-flight transitions capture at a deterministic frame.
+export const FREEZE_MOTION_CSS =
+  "*,*::before,*::after{animation:none!important;transition:none!important;}";
 
 const isLooping = (a: Animation): boolean =>
   a.effect?.getComputedTiming().iterations === Number.POSITIVE_INFINITY;
@@ -287,13 +295,9 @@ export const captureChatStory = async (
   MotionGlobalConfig.skipAnimations = skipMotion;
   document.body.style.margin = "0";
   document.body.className = "bg-background text-foreground font-sans";
-  // Freeze CSS keyframe animations and transitions so infinite loaders (pulse
-  // skeletons, spinners) and in-flight transitions capture at a deterministic
-  // frame instead of a random one — and so `settleAnimations` never awaits an
-  // infinite `.finished`.
+  // Also keeps `settleAnimations` from awaiting an infinite `.finished`.
   const freeze = document.createElement("style");
-  freeze.textContent =
-    "*,*::before,*::after{animation:none!important;transition:none!important;}";
+  freeze.textContent = FREEZE_MOTION_CSS;
   document.head.append(freeze);
 
   const column = document.createElement("main");

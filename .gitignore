@@ -88,3 +88,7 @@ apps/chat/tests/eve-fixture/.output/
 apps/chat/tests/eve-results/
 # Generated shadcn source manifest
 packages/registry/registry.json
+
+packages/chat-visual-tests/uiverify-archive/
+packages/chat-visual-tests/**/__screenshots__/
+apps/chat/tests/visual/**/__screenshots__/

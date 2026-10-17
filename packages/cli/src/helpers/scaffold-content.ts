@@ -106,6 +106,7 @@ const EXCLUDED_SEGMENTS = new Set([
   "playwright",
   "playwright-report",
   "test-results",
+  "uiverify-archive",
   "blob-report",
   "dist",
   "build",

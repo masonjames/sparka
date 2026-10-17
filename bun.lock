@@ -247,6 +247,32 @@
         "typescript": "6.0.2",
       },
     },
+    "packages/chat-visual-tests": {
+      "name": "@chat-js/chat-visual-tests",
+      "devDependencies": {
+        "@chat-js/registry": "workspace:*",
+        "@chatjs/chat": "workspace:*",
+        "@tanstack/react-query": "^5.104.1",
+        "@trpc/client": "^11.1.2",
+        "@trpc/server": "^11.1.2",
+        "@trpc/tanstack-react-query": "^11.1.2",
+        "@types/node": "22.13.10",
+        "@types/react": "19.2.7",
+        "@types/react-dom": "19.2.3",
+        "@uiverify/vitest": "^1.5.0",
+        "eve": "npm:@chat-js/eve@0.61.0-chatjs.0",
+        "motion": "^12.23.24",
+        "next": "16.3.0",
+        "nuqs": "^2.8.5",
+        "playwright": "^1.59.1",
+        "react": "19.2.3",
+        "react-dom": "19.2.3",
+        "sonner": "^2.0.7",
+        "superjson": "^2.2.2",
+        "typescript": "6.0.2",
+        "vitest": "^4.1.11"
+      }
+    },
     "packages/cli": {
       "name": "@chat-js/cli",
       "version": "0.8.0",
@@ -692,6 +718,8 @@
     "@changesets/types": ["@changesets/types@6.1.0", "", {}, "sha512-rKQcJ+o1nKNgeoYRHKOS07tAMNd3YSN0uHaJOZYjBAgxfV7TUE7JE+z4BzZdQwb5hKaYbayKN5KrYV7ODb2rAA=="],
 
     "@changesets/write": ["@changesets/write@0.4.0", "", { "dependencies": { "@changesets/types": "^6.1.0", "fs-extra": "^7.0.1", "human-id": "^4.1.1", "prettier": "^2.7.1" } }, "sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q=="],
+
+    "@chat-js/chat-visual-tests": ["@chat-js/chat-visual-tests@workspace:packages/chat-visual-tests"],
 
     "@chat-js/cli": ["@chat-js/cli@workspace:packages/cli"],
 
