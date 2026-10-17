@@ -16,6 +16,11 @@ export default defineConfig({
   ...registry,
   // Pages load their data after mount; tests wait for content instead of wrapping in act().
   define: { ...registry.define, IS_REACT_ACT_ENVIRONMENT: "false" },
+  resolve: {
+    ...registry.resolve,
+    // The app and this workspace must share the testing adapter's context.
+    dedupe: [...(registry.resolve?.dedupe ?? []), "nuqs"],
+  },
   plugins: [
     registeredProjectsPlugin(),
     uiverifyPlugin({
