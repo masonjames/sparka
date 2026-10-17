@@ -27,11 +27,13 @@ Single quotes keep `${UIVERIFY_API_KEY}` a reference that Claude Code expands ea
   "mcpServers": {
     "uiverify": {
       "url": "https://uiverify.ai/api/mcp",
-      "headers": { "Authorization": "Bearer YOUR_uv_proj_KEY" }
+      "headers": { "Authorization": "Bearer ${env:UIVERIFY_API_KEY}" }
     }
   }
 }
 ```
+
+Set `UIVERIFY_API_KEY` in the environment inherited by Cursor when it starts. Keep the `${env:UIVERIFY_API_KEY}` reference in the JSON; Cursor expands it at runtime, so the key itself stays out of both project and global configuration files.
 
 Any other MCP client (Codex, Copilot, Gemini): point it at the same Streamable-HTTP URL with the `Authorization: Bearer` header. If a client can only reach it over HTTP by hand, prefer the `get_diff` tool (it returns downloadable image **URLs**) over `render_diff_image` (inline pixels) — see the tool table below.
 
