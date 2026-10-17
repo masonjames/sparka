@@ -79,5 +79,7 @@ jobs:
         with:
           name: uiverify-archive
           path: apps/chat/uiverify-archive/
+          # Test paths outside the registry root produce dot-prefixed snapshots.
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

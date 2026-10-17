@@ -73,7 +73,11 @@ test("conversation inside a project", async () => {
     },
   });
   await expect
-    .element(page.getByRole("link", { name: launchProject.name }))
+    .element(
+      page
+        .getByRole("navigation", { name: "breadcrumb" })
+        .getByRole("link", { name: launchProject.name })
+    )
     .toBeVisible();
 });
 
