@@ -1,6 +1,6 @@
 # Historical MCP SSE OAuth refresh reproduction
 
-**Status:** resolved upstream in `@ai-sdk/mcp@2.0.53` (commit `4b5cb49`). ChatJS now uses that release; this document retains the original reproduction, not an open patch requirement.
+**Status:** resolved upstream in `@ai-sdk/mcp@2.0.53` (commit `4b5cb49`). ChatJS now uses `2.0.73`, which retains the fix; this document retains the original reproduction, not an open patch requirement.
 
 ## Problem
 

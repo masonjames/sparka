@@ -6,8 +6,8 @@ This record describes the maintained runtime boundary for ChatJS 1.0 issue #652.
 
 | Dependency | Maintained contract | Upgrade evidence |
 | --- | --- | --- |
-| `@ai-sdk/mcp@2.0.53` | Upstream SSE single-flight authorization and reuse of a newer token after a stale 401 | Existing simultaneous/after-save transport regressions and app cross-client OAuth rotation tests remain unchanged |
-| `ai@7.0.106`, `@ai-sdk/gateway@4.0.86`, `@ai-sdk/react@4.0.109`, `@ai-sdk/otel@1.0.106` | Matching `@ai-sdk/provider-utils@5.0.44` type identity | Workspace type checks; upgrading MCP alone causes incompatible nominal Schema symbols |
+| `@ai-sdk/mcp@2.0.73` | Upstream SSE single-flight authorization and reuse of a newer token after a stale 401 | Existing simultaneous/after-save transport regressions and app cross-client OAuth rotation tests remain unchanged |
+| `ai@7.0.137`, `@ai-sdk/gateway@4.0.110`, `@ai-sdk/react@4.0.140`, `@ai-sdk/otel@1.0.137` | Matching `@ai-sdk/provider-utils@5.0.58` type identity | Workspace type checks; upgrading MCP alone causes incompatible nominal Schema symbols |
 | `files-sdk@2.5.0` with `@vercel/blob@2.4.0` | Native private GET signing, configured five-minute default, token or OIDC/store credentials | Contract tests execute the published adapter and mock only Blob network methods; verify operation/path scope, both credential modes, expiry and abort propagation |
 | `eve` alias to `@chat-js/eve@0.61.0-chatjs.0` | Owned published EVE fork; persisted workflow identity stays unchanged | Existing native tool input/output inference tests remain required; approval typing compensation is still present |
 | `@workflow/world-postgres@5.0.0-beta.40` with Graphile `0.16.6` | Compiled queue/stream patch plus provider-owned lifecycle SQL | Cancellation/deduplication, resume, inventory, fencing, locked-worker refusal and retry-receipt acceptance |
@@ -18,7 +18,13 @@ Generated apps use normal published MCP and Files SDK dependencies. Only the Pos
 
 ## Dependency verification
 
-The final dependency selection passed `bun lint`, all seven `bun test:types` tasks, and 936 app unit tests in 157 files. The unchanged MCP regressions are included in that app run. The real Files SDK adapter tests replace the former mocked-adapter extension test.
+The AI SDK alignment in PR #847 selects MCP `2.0.73`, AI `7.0.137`, gateway `4.0.110`, React `4.0.140`, OTEL `1.0.137`, provider `4.0.26`, and Zod `4.5.4`. The React bindings depend on this exact AI core release. Streaming accounting tests exercise completion, provider failure, and cancellation through the real SDK. Production EVE and PostgreSQL world pins remain unchanged; this is prerequisite alignment, not acceptance of EVE `0.80.1`.
+
+The aligned selection passed `bun lint`, all seven `bun test:types` tasks, and the full `bun test:unit` command (nine workspace tasks), including 1,134 app tests, 229 CLI tests, 75 thread tests and 20 gateway tests. Frozen lockfile installation passed with lifecycle scripts disabled, using Node 24 for verification. Native/Electron module installation and full compatibility with upstream EVE are not established by these local checks.
+
+### Historical acceptance for issue #652
+
+The earlier MCP `2.0.53` / AI `7.0.106` dependency selection passed `bun lint`, all seven `bun test:types` tasks, and 936 app unit tests in 157 files. The unchanged MCP regressions are included in that app run. The real Files SDK adapter tests replace the former mocked-adapter extension test.
 
 Packaging verification passed 61 scaffold/vendor/catalog tests and 95 registry source tests. `bun run --cwd packages/cli test:gateways` passed all nine fresh-app scenarios (238 assertions): the five built-in gateways, an external gateway, native external tools, and MCP omitted/installed flows. Those fixtures install source-built CLI and gateway archives, type-check the generated apps and exercise their adapters. This is generated/typechecked evidence for the candidate sources, not evidence that a release has been published. The full Bun/npm/pnpm/Yarn plus Electron matrix remains the separate required CLI Scaffold CI job.
 
