@@ -708,7 +708,7 @@ describe("scaffoldFromTemplate", (): void => {
       expect(packageJson.dependencies.eve).toBe(
         "npm:@chat-js/eve@0.61.0-chatjs.0"
       );
-      expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.53");
+      expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
       expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
         "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
       );

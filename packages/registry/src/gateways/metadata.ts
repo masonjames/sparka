@@ -3,7 +3,7 @@ export const gatewayMetadata = {
     dependency: "@ai-sdk/gateway",
     exportName: "VercelGateway",
     supportsVideo: true,
-    version: "4.0.86",
+    version: "4.0.110",
   },
   openai: {
     dependency: "@ai-sdk/openai",

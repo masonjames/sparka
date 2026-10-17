@@ -4,7 +4,7 @@ import type {
   LanguageModelV4StreamPart,
 } from "@ai-sdk/provider";
 import { APICallError } from "@ai-sdk/provider";
-import { generateText, Output } from "ai";
+import { generateText, Output, streamText } from "ai";
 import { expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -401,5 +401,85 @@ it.each([false, true])(
     });
     const end = await reader.read();
     expect(end.done).toBe(true);
+  }
+);
+
+it.each(["finish", "error", "abort"] as const)(
+  "preserves accounting through the SDK streamText %s path",
+  async (outcome) => {
+    logError.mockClear();
+    const store = ledger();
+    const abort = new AbortController();
+    const failure = new Error("provider stream failed");
+    const provider: LanguageModelV4 = {
+      ...model(),
+      doStream: async ({ abortSignal }) =>
+        await Promise.resolve({
+          stream: new ReadableStream<LanguageModelV4StreamPart>({
+            start(controller) {
+              controller.enqueue({ type: "stream-start", warnings: [] });
+              controller.enqueue({ type: "text-start", id: "text" });
+              controller.enqueue({
+                type: "text-delta",
+                id: "text",
+                delta: "hello",
+              });
+              if (outcome === "abort") {
+                abortSignal?.addEventListener(
+                  "abort",
+                  () => {
+                    controller.error(abortSignal.reason);
+                  },
+                  { once: true }
+                );
+                return;
+              }
+              controller.enqueue({ type: "text-end", id: "text" });
+              if (outcome === "error") {
+                controller.enqueue({ type: "error", error: failure });
+              } else {
+                controller.enqueue({
+                  type: "finish",
+                  finishReason: result.finishReason,
+                  usage: result.usage,
+                  providerMetadata: result.providerMetadata,
+                });
+              }
+              controller.close();
+            },
+          }),
+        }),
+    };
+    const streamed = streamText({
+      model: wrapEveModel(provider, scope, store),
+      prompt: "mock",
+      maxRetries: 0,
+      abortSignal: abort.signal,
+      onError: () => {},
+    });
+    const kinds: string[] = [];
+    for await (const part of streamed.stream) {
+      kinds.push(part.type);
+      if (outcome === "abort" && part.type === "text-delta") {
+        abort.abort(new Error("user cancelled"));
+      }
+    }
+    expect(store.authorize).toHaveBeenCalledOnce();
+    expect(store.begin).toHaveBeenCalledOnce();
+    expect(kinds).toContain("text-delta");
+    if (outcome === "finish") {
+      expect(store.finish).toHaveBeenCalledOnce();
+      expect(kinds).toContain("finish");
+      expect(logError).not.toHaveBeenCalled();
+    } else {
+      expect(store.finish).not.toHaveBeenCalled();
+      expect(kinds).toContain(outcome);
+      await vi.waitFor(() => {
+        expect(logError).toHaveBeenCalledWith(
+          expect.objectContaining({ ...scope, stage: "missing-receipt" }),
+          "Eve accounting requires review"
+        );
+      });
+    }
   }
 );
