@@ -2,16 +2,16 @@ import type { Page } from "playwright";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
-import registry from "./vitest.config";
-import { registeredProjectsPlugin } from "./registered-projects-plugin";
+import registry from "../registry/visual/vitest.config";
+import { registeredProjectsPlugin } from "../registry/visual/registered-projects-plugin";
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const appIcon = fileURLToPath(
-  new URL("../../../apps/chat/app/icon.svg", import.meta.url)
+  new URL("../../apps/chat/app/icon.svg", import.meta.url)
 );
 
 // The chat app's pages, on the registry's browser setup (aliases, fonts, CSS),
-// captured into the app's own archive and UI Verify project.
+// captured into this repository-only package's archive and UI Verify project.
 export default defineConfig({
   ...registry,
   // Pages load their data after mount; tests wait for content instead of wrapping in act().
@@ -19,9 +19,7 @@ export default defineConfig({
   plugins: [
     registeredProjectsPlugin(),
     uiverifyPlugin({
-      outDir: fileURLToPath(
-        new URL("../../../apps/chat/uiverify-archive", import.meta.url)
-      ),
+      outDir: fileURLToPath(new URL("uiverify-archive", import.meta.url)),
     }),
   ],
   test: {
@@ -39,9 +37,9 @@ export default defineConfig({
         },
       },
     },
-    include: ["../../apps/chat/tests/visual/pages/*.browser.tsx"],
+    include: ["pages/*.browser.tsx"],
     restoreMocks: true,
-    setupFiles: ["../../apps/chat/tests/visual/pages/setup.tsx"],
+    setupFiles: ["pages/setup.tsx"],
     unstubGlobals: true,
   },
 });

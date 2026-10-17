@@ -1,3 +1,6 @@
+// oxlint-disable-next-line typescript/triple-slash-reference -- Ambient font modules must follow this harness into each consuming TypeScript project without a runtime import of a declaration file.
+/// <reference path="./visual-assets.d.ts" />
+
 import { takeSnapshot } from "@uiverify/vitest";
 import geistMonoUrl from "geist-mono.woff2";
 import geistSansUrl from "geist-sans.woff2";
@@ -16,6 +19,12 @@ import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 // utility the rendered components use — otherwise app-only classes are dropped
 // and the snapshot drifts from the real chat.
 import "./visual.css";
+
+declare module "vitest/browser" {
+  interface BrowserCommands {
+    faviconAssets: () => Promise<void>;
+  }
+}
 
 // Read a served asset and inline it as a base64 `data:` URI. The archive replays
 // on the UI Verify server long after this vitest run — and its dev server — has

@@ -35,7 +35,6 @@
     "test:types": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json",
     "test:unit": "bun test src",
     "test:visual": "vitest run --config visual/vitest.config.ts",
-    "test:visual:chat": "vitest run --config visual/vitest.chat.config.ts",
     "check": "bun run test:types && bun run test:unit && bun run test:visual",
     "lint": "oxlint . && oxfmt --check .",
     "format": "oxfmt --write .",

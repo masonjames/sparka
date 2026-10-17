@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "apps/chat/**"
+      - "packages/chat-visual-tests/**"
       - "packages/gateways/**"
       - "packages/registry/package.json"
       - "packages/registry/visual/**"
@@ -19,6 +20,7 @@ on:
   pull_request:
     paths:
       - "apps/chat/**"
+      - "packages/chat-visual-tests/**"
       - "packages/gateways/**"
       - "packages/registry/package.json"
       - "packages/registry/visual/**"
@@ -61,7 +63,6 @@ jobs:
       # Capture every page so the archive carries the full dependency graph for
       # `--only-changed`, as the registry job does.
       - name: Capture chat pages
-        working-directory: packages/registry
         run: bun run test:visual:chat
       # Pushes and pull requests from this repo's branches upload here, with the
       # key. A fork's pull request gets no secrets, so it saves the capture and
@@ -78,8 +79,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: uiverify-archive
-          path: apps/chat/uiverify-archive/
-          # Test paths outside the registry root produce dot-prefixed snapshots.
+          path: packages/chat-visual-tests/uiverify-archive/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

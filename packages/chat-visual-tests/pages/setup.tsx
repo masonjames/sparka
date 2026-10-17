@@ -12,7 +12,7 @@ import type * as QueryClientModule from "@/trpc/query-client";
 import {
   ensureFonts,
   FREEZE_MOTION_CSS,
-} from "../../../../../packages/registry/src/tools/_shared/visual";
+} from "../../registry/src/tools/_shared/visual";
 import { chatsIn } from "./fixtures";
 import { captureVariants } from "./render";
 import { TrpcFixtureError, route } from "./route";
