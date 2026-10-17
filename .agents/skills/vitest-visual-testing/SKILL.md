@@ -46,7 +46,7 @@ test: { setupFiles: ['./vitest.setup.ts'], browser: { /* … */ } }
 
 Import fonts from an npm package or a same-origin asset (not a CDN `<link>`), so Vite serves the bytes and the archive stays self-contained. A font CDN or a third-party image (avatar generators, favicon services) is archived too, but it is downloaded again at every capture, so an outage or a rate limit becomes a missing font or image in that build. The test output then shows a `[uiverify] … could not archive …` warning naming it. Serve fixtures a local copy or a `data:` URI to keep the archive independent of those services.
 
-The capturer then waits for these fonts like any other — but it can only wait for fonts the test actually loads; it can't declare one you never imported (`document.fonts.check('16px "bootstrap-icons"')` is `false` until the CSS is imported, which is the whole "icons render as boxes" bug).
+The capturer then waits for these fonts like any other — but it can only wait for fonts the test actually loads; it can't declare one you never imported. To diagnose missing icon fonts, verify that the expected font family is registered in `document.fonts` and that its `FontFace.status` is `"loaded"`. `document.fonts.check()` alone cannot confirm this: it also returns `true` for an undeclared font family.
 
 **Tailwind v4 in a monorepo.** Tailwind generates only the classes it finds in the files it scans, starting from where Vitest runs. When the visual tests run from another package than the app, add `@source` lines for the app's folders (`app/`, `components/`, `lib/`) to the CSS your setup imports; otherwise classes used only in those folders are missing and the capture differs from the real app with no error.
 
