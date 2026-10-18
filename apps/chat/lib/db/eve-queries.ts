@@ -1,3 +1,4 @@
+import { markEveCreationFailure } from "./eve-creation-failure";
 import { dispatchEveOnce } from "./eve-dispatch";
 import {
   and,
@@ -627,6 +628,7 @@ const reserveEveConversation = async (
         chatId,
         forkKind: value.forkKind,
         parentConversationId: fork?.conversationId,
+        forkMessageId: fork?.beforeMessageId,
         rootConversationId:
           source === undefined
             ? undefined
@@ -772,7 +774,8 @@ const matchesEveFork = (
   forkKind: typeof eveConversation.$inferSelect.forkKind
 ): boolean =>
   existing.parentConversationId === (fork?.conversationId ?? null) &&
-  existing.forkKind === forkKind;
+  existing.forkKind === forkKind &&
+  existing.forkMessageId === (fork?.beforeMessageId ?? null);
 
 type CreationTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
@@ -1036,15 +1039,7 @@ const createEveConversation = async (
     if (error instanceof CreationConflictError) {
       throw error;
     }
-    await db
-      .update(eveConversation)
-      .set({ state: "uncertain" })
-      .where(
-        and(
-          eq(eveConversation.id, reservation.id),
-          eq(eveConversation.state, "creating")
-        )
-      );
+    await markEveCreationFailure(reservation.id, error);
     throw error;
   }
 };

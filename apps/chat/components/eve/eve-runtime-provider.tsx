@@ -21,6 +21,7 @@ import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { projectEveMessageDisplay } from "@/lib/eve/message-display";
+import { hasPendingCreation } from "@/lib/eve/pending-create";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
@@ -42,16 +43,21 @@ const NativeObserver = ({
   controller,
   conversationId,
   sessionId,
+  selected,
 }: {
   readonly controller: LogicalChat;
   readonly conversationId: string;
   readonly sessionId: string;
+  readonly selected: boolean;
 }): null => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const display = useQuery(trpc.eve.messageDisplay.queryOptions({ sessionId }));
   const agent = useEveAgent({
     host: "/api",
+    // Every branch has an observer. Release idle HTTP connections so completed
+    // histories cannot starve creation/navigation requests; send/resume reconnect.
+    followIdle: false,
     initialSession: { sessionId, streamIndex: 0 },
     onEvent: (
       event:
@@ -103,20 +109,45 @@ const NativeObserver = ({
     },
     resume: true,
   });
-  const displayedAgent = useMemo(
-    () => ({
-      ...agent,
-      data: projectEveMessageDisplay(
-        agent.data,
-        agent.events,
-        display.data ?? []
-      ),
-    }),
-    [agent, display.data]
+  const { resume, status } = agent;
+  useEffect(() => {
+    const refreshSelected = async (): Promise<void> => {
+      if (
+        !selected ||
+        status !== "ready" ||
+        document.visibilityState !== "visible"
+      ) {
+        return;
+      }
+      try {
+        await resume();
+      } catch {
+        // The native agent exposes the error in its snapshot for the UI.
+      }
+    };
+    const refresh = (): void => {
+      void refreshSelected();
+    };
+    // Refresh only the visible selected branch; do not retain idle streams.
+    const interval = globalThis.setInterval(refresh, 10_000);
+    globalThis.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      globalThis.clearInterval(interval);
+      globalThis.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [selected, status, resume]);
+  // The native hook returns a fresh wrapper on render. Project only when its
+  // contents change, otherwise observe() publishes a new snapshot indefinitely.
+  const displayedData = useMemo(
+    () =>
+      projectEveMessageDisplay(agent.data, agent.events, display.data ?? []),
+    [agent.data, agent.events, display.data]
   );
   useEffect(() => {
-    controller.observe(conversationId, displayedAgent);
-  }, [displayedAgent, controller, conversationId]);
+    controller.observe(conversationId, { ...agent, data: displayedData });
+  }, [agent, displayedData, controller, conversationId]);
   return null;
 };
 
@@ -181,6 +212,7 @@ const RuntimeSlot = ({
               controller={runtime.controller}
               conversationId={branch.id}
               sessionId={branch.sessionId}
+              selected={active && branch.id === snapshot.conversationId}
             />
           )
       )}
@@ -242,9 +274,27 @@ const EveRuntimeProvider = ({
         staleTime: 0,
       });
       const existing = registry.current.get(identity.chatId);
+      // Keep unresolved requests visible on their source after a reload, even
+      // when the server already created a newer branch before the response was lost.
+      const pendingSource = navigate
+        ? undefined
+        : family.branches
+            .toSorted(
+              (left, right) =>
+                Number(right.id === request.id) - Number(left.id === request.id)
+            )
+            .find((branch) =>
+              hasPendingCreation(sessionStorage, request.ownerId, {
+                conversationId: branch.id,
+              })
+            );
       const controller =
         existing?.controller ??
-        new LogicalChat(identity.chatId, request.id, !navigate);
+        new LogicalChat(
+          identity.chatId,
+          pendingSource?.id ?? request.id,
+          !navigate && !pendingSource
+        );
       controller.setBranches(family.branches);
       if (existing && navigate) {
         controller.selectBranch(request.id);

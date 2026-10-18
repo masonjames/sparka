@@ -42,16 +42,48 @@ test("conversation", async () => {
     .toBeVisible();
 });
 
-test("copy conversation with an edited prompt uses a fresh sandbox", async () => {
+test("display receipts settle with a fresh native agent wrapper", async () => {
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null || sessionId === "") {
+    throw new Error("The conversation fixture must have a native session.");
+  }
+  await renderRoute(conversation, {
+    ...request,
+    events: {
+      [sessionId]: [
+        {
+          type: "message.received",
+          meta: {
+            id: "received",
+            at: "2026-10-18T10:00:00Z",
+            deliveryIds: ["delivery"],
+          },
+          data: { message: "Question", sequence: 0, turnId: "turn_0" },
+        },
+      ],
+    },
+    trpc: {
+      ...invoicesTrpc,
+      "eve.messageDisplay": [
+        { kind: "send", deliveryId: "delivery", selectedTool: null },
+      ],
+    },
+  });
+  await expect
+    .element(page.getByText("invoices_account_status_due_idx"))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message" }))
+    .toBeVisible();
+});
+
+test("edit replaces the selected message in a fresh sandbox", async () => {
   await renderRoute(conversation, request);
-  await page
-    .getByRole("button", { name: "Copy conversation with edited prompt" })
-    .first()
-    .click();
+  await page.getByRole("button", { name: "Edit message" }).first().click();
   await expect
     .element(
       page.getByText(
-        "Copy the completed conversation and send this as a new prompt. The copy starts with a fresh sandbox."
+        "Replace this message in a new branch. Later messages are not included. The branch starts with a fresh sandbox."
       )
     )
     .toBeVisible();
@@ -269,4 +301,60 @@ test("owner can answer approval while the native turn stays open", async () => {
   await expect
     .element(page.getByRole("button", { name: "Cancel", exact: true }))
     .toBeEnabled();
+});
+
+test("lost branch response keeps source recovery visible instead of selecting the newest branch", async () => {
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    "Replacement awaiting recovery",
+    invoicesConversation.initialModelId ?? undefined,
+    {
+      conversationId: invoicesConversation.id,
+      fork: { conversationId: invoicesConversation.id },
+      forkKind: "edit",
+    }
+  );
+  const otherId = "59b3709e-a5d7-4654-a52e-59b27302e30c";
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    "Other pending branch",
+    undefined,
+    {
+      conversationId: otherId,
+      fork: { conversationId: otherId },
+      forkKind: "edit",
+    }
+  );
+  const [source] = invoicesTrpc["eve.branches"].branches;
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: {
+      ...invoicesTranscripts,
+      ses_newer: Object.values(invoicesTranscripts)[0],
+    },
+    trpc: {
+      ...invoicesTrpc,
+      "eve.branches": {
+        ...invoicesTrpc["eve.branches"],
+        branches: [
+          {
+            ...source,
+            id: otherId,
+            sessionId: "ses_newer",
+            parentConversationId: source.id,
+            createdAt: new Date("2027-01-01"),
+          },
+          source,
+        ],
+      },
+    },
+  });
+  await expect
+    .element(page.getByRole("button", { name: "Recover version" }))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("region", { name: "Version recovery" }))
+    .toHaveTextContent("Replacement awaiting recovery");
 });

@@ -338,7 +338,10 @@ export const useEveFork = (
       const modelId = regeneration
         ? responseModelSelection(regeneration.response, regeneration.events)
         : undefined;
-      const fork = { conversationId };
+      const fork = {
+        conversationId,
+        beforeMessageId: boundary,
+      };
       const text = message.parts
         .filter((part: ReadonlyEveMessagePart) => part.type === "text")
         .map((part) => part.text)
