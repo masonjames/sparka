@@ -17,6 +17,7 @@ interface StorageConsumer {
 }
 interface MediaConsumer extends StorageConsumer {
   readonly requiresGateway?: readonly MediaKind[];
+  readonly requiresSandbox?: true;
 }
 
 const capabilitiesSchema = z.object({ image: z.boolean(), video: z.boolean() });
@@ -95,15 +96,31 @@ const validateMedia = (
   }
 };
 
+class SandboxRequiredError extends Error {
+  constructor() {
+    super(
+      "This tool requires sandbox infrastructure. Select --sandbox-provider vercel or daytona."
+    );
+    this.name = "SandboxRequiredError";
+  }
+}
+
 const validateProviderRequirements = async (
   cwd: string,
   target: {
     readonly gateway?: MediaGateway;
     readonly storage?: string;
+    readonly sandbox?: string;
     readonly tools: readonly MediaConsumer[];
     readonly features: readonly StorageConsumer[];
   }
 ): Promise<void> => {
+  if (target.tools.some((tool) => tool.requiresSandbox)) {
+    const sandbox = target.sandbox ?? (await readProviderId(cwd, "sandbox"));
+    if (typeof sandbox !== "string" || sandbox === "") {
+      throw new SandboxRequiredError();
+    }
+  }
   const fileConsumers = [...target.tools, ...target.features].filter((item) =>
     requiresStorage(item)
   );
@@ -154,6 +171,7 @@ const validateRequestedKind = (
 };
 
 export {
+  SandboxRequiredError,
   registryMetadataKind,
   validateRequestedKind,
   validateProviderRequirements,

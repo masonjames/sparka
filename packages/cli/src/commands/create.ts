@@ -1,3 +1,6 @@
+import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
+import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
+import type { resolveSandbox } from "#cli/registry/sandboxes";
 import {
   installPlan,
   plannedSourceTargets,
@@ -9,6 +12,7 @@ import {
   promptAssistantTools,
   promptAuth,
   promptCodeExecutionTool,
+  promptSandbox,
   promptCoreFeatures,
   promptDocumentTypes,
   promptElectron,
@@ -43,7 +47,7 @@ import { logger } from "#cli/utils/logger";
 import { observabilityItems } from "../../../registry/src/features/observability";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
-import { planInstallation } from "#cli/utils/installation-plan";
+import type { planInstallation } from "#cli/utils/installation-plan";
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
@@ -156,6 +160,7 @@ const createOptionsSchema = z.object({
   searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
+  sandboxProvider: z.string().optional(),
   target: z.string().optional(),
   urlRetrievalTool: z.string().optional(),
   videoGenerationTool: z.string().optional(),
@@ -175,6 +180,7 @@ interface CreateSetup {
   observability: Awaited<ReturnType<typeof promptObservability>>;
   plan: Awaited<ReturnType<typeof planInstallation>>;
   storage: Awaited<ReturnType<typeof promptStorage>>;
+  sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
   usesStorage: boolean;
   withElectron: boolean;
 }
@@ -425,7 +431,7 @@ const promptCreateSetup = async (
   const auth = await promptAuth(options.yes);
   const withElectron = await promptElectron(options.yes, options.electron);
 
-  const plan = await planInstallation(
+  const { plan, sandbox } = await planSandboxInstallation(
     targetDir,
     {
       features: [
@@ -440,7 +446,9 @@ const promptCreateSetup = async (
       },
       tools: toolSources,
     },
-    { documents: options.documents, fresh: true }
+    { documents: options.documents, fresh: true },
+    async (required) =>
+      options.sandboxProvider ?? (await promptSandbox(options.yes, required))
   );
 
   return {
@@ -453,6 +461,7 @@ const promptCreateSetup = async (
     observability,
     plan,
     storage,
+    sandbox,
     usesStorage,
     withElectron,
   };
@@ -531,13 +540,16 @@ const installRegistryItems = async (
     await installPlan(
       project.targetDir,
       plan,
-      { fresh: true },
+      { fresh: true, managedTargets: ["lib/sandbox/options.ts"] },
       async (): Promise<void> => {
         await configureGatewayProvider(
           project.targetDir,
           setup.gatewaySelection
         );
         await configureStorageProvider(project.targetDir, setup.storage);
+        if (setup.sandbox) {
+          await configureSandboxProvider(project.targetDir, setup.sandbox);
+        }
         installedTools = await syncTools(project.targetDir, {
           expected: plan.expected,
         });
@@ -571,6 +583,7 @@ const installRegistryItems = async (
       "lib/ai/gateway-model-defaults.ts",
       "lib/ai/models.generated.ts",
       "lib/storage-options.ts",
+      "lib/sandbox/options.ts",
       ".env.example",
     ]);
     installSpinner.succeed("Registry items installed and configured.");
@@ -607,6 +620,7 @@ const printNextSteps = (
             item.meta.chatjs.envRequirements ?? []
         ),
       ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
+      ...(setup.sandbox?.definition.envRequirements ?? []),
     ],
   });
 
@@ -727,6 +741,10 @@ export const create = new Command()
   .option(
     "--from-git <url>",
     "clone from a git repository instead of the built-in scaffold"
+  )
+  .option(
+    "--sandbox-provider <item>",
+    "optional sandbox provider: vercel, daytona or registry address"
   )
   .option(
     "--storage-provider <item>",
