@@ -1,6 +1,7 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type { EveMessageDisplayReceipt } from "./message-display";
+import type { MessageStreamEvent } from "eve/client";
 import {
   FILES_PATH,
   createFileUrl,
@@ -8,17 +9,18 @@ import {
   keyFromFileUrl,
 } from "@/lib/file-url";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
-import type { EveChannelInput } from "eve/channels/eve";
-import type { ReadonlyEveMessagePart } from "./readonly-message-types";
+import type { EveCopySeed } from "./copy-seed";
+import type {
+  ReadonlyEveMessagePart,
+  ReadonlyEveMessageMetadata,
+} from "./readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 import { eveDocumentOperations } from "./document-contracts";
 import { sharedEveMessages } from "./shared-messages";
 import { z } from "zod";
 
-type Seed = NonNullable<
-  Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
->;
+type Seed = EveCopySeed;
 type SeedPart = Seed["messages"][number]["parts"][number];
 const MIN_FILE_URL_LENGTH = 1;
 const EMPTY_CONTENT_LENGTH = 0;
@@ -34,12 +36,12 @@ const COPY_BOUNDARIES = new Set<MessageStreamEvent["type"]>([
   "session.completed",
   "session.failed",
   "turn.started",
+  "turn.waiting",
   "message.received",
   "step.started",
   "input.requested",
   "authorization.required",
   "history.seeded",
-  "history.restored",
 ]);
 const DOCUMENT_TOOLS = new Set([
   ...Object.keys(eveDocumentOperations),
@@ -56,7 +58,9 @@ const REVISION_FIELDS = new Set([
 
 class EveCopyNotReadyError extends Error {
   public constructor() {
-    super("Wait for the shared conversation to finish before saving a copy.");
+    super(
+      "Wait for the conversation to finish successfully before copying it."
+    );
     this.name = "EveCopyNotReadyError";
   }
 }
@@ -255,7 +259,7 @@ const transcriptResources = (seed: {
 const copyUserSeedMessage = (message: {
   readonly role: string;
   readonly parts: readonly ReadonlyEveMessagePart[];
-  readonly metadata?: EveMessage["metadata"];
+  readonly metadata?: ReadonlyEveMessageMetadata;
 }): Seed["messages"][number] => {
   const selectedTool = eveMessageTool(message);
   return {
@@ -275,7 +279,7 @@ const copyUserSeedMessage = (message: {
 
 const copyAssistantSeedMessage = (message: {
   readonly parts: readonly ReadonlyEveMessagePart[];
-  readonly metadata?: EveMessage["metadata"];
+  readonly metadata?: ReadonlyEveMessageMetadata;
 }): Seed["messages"][number] => ({
   role: "assistant",
 
@@ -288,10 +292,12 @@ const copyAssistantSeedMessage = (message: {
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.
  * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
+ * @param {readonly EveMessageDisplayReceipt[]} receipts Owner-scoped positive bindings for display-only selection metadata.
  * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
-  events: readonly MessageStreamEvent[]
+  events: readonly MessageStreamEvent[],
+  receipts: readonly EveMessageDisplayReceipt[] = []
 ): {
   seed: Seed;
   projectionHash: string;
@@ -307,11 +313,20 @@ const prepareEveCopyTranscript = (
   ) {
     throw new EveCopyNotReadyError();
   }
-  const messages: Seed["messages"] = sharedEveMessages(events).map(
+  const latestTurnOutcome = events.findLast(
+    (event) =>
+      event.type === "turn.completed" ||
+      event.type === "turn.failed" ||
+      event.type === "turn.cancelled"
+  );
+  if (latestTurnOutcome && latestTurnOutcome.type !== "turn.completed") {
+    throw new EveCopyNotReadyError();
+  }
+  const messages: Seed["messages"] = sharedEveMessages(events, receipts).map(
     (message: {
       readonly role: string;
       readonly parts: readonly ReadonlyEveMessagePart[];
-      readonly metadata?: EveMessage["metadata"];
+      readonly metadata?: ReadonlyEveMessageMetadata;
     }): Seed["messages"][number] => {
       if (message.role === "user") {
         return copyUserSeedMessage(message);

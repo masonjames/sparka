@@ -1,4 +1,5 @@
-import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
+import type { EveCopySeed } from "@/lib/eve/copy-seed";
+import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
@@ -382,6 +383,7 @@ const eveConversation = pgTable(
     // Immutable creation intent; retained when the project is removed.
     initialProjectId: uuid("initialProjectId"),
     initialRequest: jsonb("initialRequest").$type<unknown>(),
+    initialSeed: jsonb("initialSeed").$type<unknown>(),
     operationId: uuid("operationId").notNull(),
     ownerId: text("ownerId")
       .notNull()
@@ -454,6 +456,7 @@ const eveConversation = pgTable(
     ) or (
       ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
       (
+        (${table.forkTurnId} is null and ${table.forkMessageId} is null) or
         (${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and ${table.forkMessageId} is null) or
         (${table.forkMessageId} is not null and ${table.forkMessageId} ~ '^seed_message_(0|[1-9][0-9]{0,3})$' and ${table.forkTurnId} is null)
       ) and
@@ -472,6 +475,35 @@ const eveConversation = pgTable(
 );
 
 /** Temporary copy preparation is discarded once native history is bound. */
+const eveDispatch = pgTable(
+  "EveDispatch",
+  {
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id),
+    operationId: uuid("operationId").notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    kind: text("kind", { enum: ["create", "copy", "send"] }).notNull(),
+    intent: jsonb("intent").$type<unknown>().notNull(),
+    sessionId: text("sessionId"),
+    deliveryId: text("deliveryId"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.operationId] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveDispatch_conversation_owner_fk",
+    }),
+    check("EveDispatch_kind", sql`${table.kind} in ('create', 'copy', 'send')`),
+    check(
+      "EveDispatch_binding",
+      sql`${table.deliveryId} is null or ${table.sessionId} is not null`
+    ),
+  ]
+);
+
 const eveConversationCopy = pgTable(
   "EveConversationCopy",
   {
@@ -1032,6 +1064,7 @@ const eveSearchText = pgTable(
 );
 
 export {
+  eveDispatch,
   account,
   eveChat,
   eveChatProject,

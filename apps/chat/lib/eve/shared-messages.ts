@@ -1,17 +1,19 @@
 import type {
-  EveDynamicToolPart,
   EveMessage,
   EveMessagePart,
   MessageStreamEvent,
 } from "eve/client";
 import type {
   ReadonlyEveMessage,
+  ReadonlyEveMessageMetadata,
   ReadonlyEveMessagePart,
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { defaultMessageReducer } from "eve/client";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
+import { projectEveMessageDisplay } from "./message-display";
+import type { EveMessageDisplayReceipt } from "./message-display";
 import { responseModelReferences } from "./response-model";
 
 interface SharedEveMessage {
@@ -25,10 +27,7 @@ interface SharedEveMessage {
 
 const sharedModelId = (
   message: Pick<EveMessage, "role"> & {
-    readonly metadata?: Pick<
-      NonNullable<EveMessage["metadata"]>,
-      "modelId" | "turnId"
-    >;
+    readonly metadata?: Pick<ReadonlyEveMessageMetadata, "modelId" | "turnId">;
   },
   models: Readonly<Pick<ReadonlyMap<string, string>, "get">>
 ): string => {
@@ -48,7 +47,7 @@ const sharedModelId = (
  * @returns {EveMessagePart} A display part with approval IDs and receipt-only identities removed.
  */
 const sharedTool = (
-  part: ReadonlyNativeSurface<EveDynamicToolPart>
+  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
 ): EveMessagePart => {
   const base: Pick<typeof part, "type" | "toolCallId" | "toolName" | "input"> =
     {
@@ -176,7 +175,8 @@ const sharedEvePart = (
 };
 
 const sharedEveMessages = (
-  events: readonly MessageStreamEvent[]
+  events: readonly MessageStreamEvent[],
+  receipts: readonly EveMessageDisplayReceipt[] = []
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
@@ -184,6 +184,7 @@ const sharedEveMessages = (
   for (const event of events) {
     state = reduceEvent(state, event);
   }
+  state = projectEveMessageDisplay(state, events, receipts);
   const models = responseModelReferences(events);
   return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
     const modelId = sharedModelId(message, models);

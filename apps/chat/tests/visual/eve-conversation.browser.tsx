@@ -1,3 +1,4 @@
+import { conversationReducer } from "eve/client";
 /// <reference types="@vitest/browser-playwright" />
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
@@ -27,6 +28,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
     cancel: vi
       .fn<NativeChatAgent["cancel"]>()
       .mockRejectedValue(new Error("Unexpected cancellation")),
+    conversation: conversationReducer.initial(),
     data: { messages: [] },
     error: undefined,
     events: [],
@@ -92,7 +94,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
     await expect
       .element(
         page.getByText(
-          "Message delivery is unconfirmed. Your draft is saved in this tab.",
+          "Message delivery is unknown. This operation will not be sent again. Your draft is saved in this tab.",
           { exact: true }
         )
       )

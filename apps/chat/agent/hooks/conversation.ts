@@ -1,7 +1,3 @@
-import {
-  captureEveDocumentCheckpoint,
-  captureEveNamedDocumentCheckpoint,
-} from "../../lib/db/eve-documents";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
@@ -13,39 +9,8 @@ const conversationScopeTimeoutMilliseconds = 10_000;
 
 export default defineHook({
   events: {
-    "session.waiting": async (
-      event: Readonly<{
-        data: Readonly<{
-          checkpoint?: Readonly<{
-            checkpointId: string;
-            beforeTurnId: string;
-          }> | null;
-        }>;
-      }>,
-      context: Readonly<{
-        session: Readonly<
-          Pick<HookContext["session"], "id" | "auth" | "parent">
-        >;
-      }>
-    ) => {
-      if (context.session.parent || !event.data.checkpoint) {
-        return;
-      }
-      const scope = await resolveEveConversationScope(
-        context.session.auth.initiator?.principalId,
-        context.session.id,
-        AbortSignal.timeout(conversationScopeTimeoutMilliseconds),
-        context.session.auth.initiator?.attributes.chatjsReservationId
-      );
-      await captureEveNamedDocumentCheckpoint(
-        scope.ownerId,
-        scope.conversationId,
-        event.data.checkpoint.checkpointId,
-        Number(event.data.checkpoint.beforeTurnId.slice("turn_".length))
-      );
-    },
     "turn.started": async (
-      event: { readonly data: { readonly sequence: number } },
+      _event: { readonly data: { readonly sequence: number } },
       context: Readonly<{
         session: Readonly<
           Pick<HookContext["session"], "id" | "auth" | "parent">
@@ -70,14 +35,6 @@ export default defineHook({
       projectInstructions.update(() => ({
         content: project?.instructions ?? null,
       }));
-      // Child turn indices and checkpoint IDs belong to the child's transcript.
-      if (!context.session.parent) {
-        await captureEveDocumentCheckpoint(
-          scope.ownerId,
-          scope.conversationId,
-          event.data.sequence
-        );
-      }
     },
   },
 });

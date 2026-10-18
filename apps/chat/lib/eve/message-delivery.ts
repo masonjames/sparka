@@ -1,21 +1,17 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
-import type { UiToolName } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { draftAttachment } from "./draft";
-import { eveToolMetadata } from "./message-tool-selection";
 
-type DeliveryEvent =
-  | {
-      readonly type: "message.received";
-      readonly data: { readonly metadata?: unknown };
-    }
-  | { readonly type: Exclude<MessageStreamEvent["type"], "message.received"> };
+type DeliveryReceipt = Readonly<{
+  sessionId: string;
+  operationId: string;
+  deliveryId: string;
+}>;
 
 const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 
@@ -27,10 +23,6 @@ const pendingMessage = z.object({
   rejection: z.string().optional(),
   retryable: z.boolean().optional(),
   selectedTool: frontendToolsSchema.optional(),
-});
-
-const deliveryMetadata = z.object({
-  chatjs: z.object({ operationId: z.uuid() }),
 });
 
 type PendingEveMessage = ReadonlyNativeSurface<z.infer<typeof pendingMessage>>;
@@ -83,13 +75,13 @@ const eveMessageDelivery = {
     storage: DeliveryStorage,
     sessionId: string,
     pending: ReadonlyNativeSurface<PendingEveMessage>,
-    event: DeliveryEvent
+    receipt: DeliveryReceipt
   ): boolean => {
     if (
-      event.type !== "message.received" ||
+      receipt.sessionId !== sessionId ||
+      !isNonEmptyString(receipt.deliveryId) ||
       !isNonEmptyString(pending.operationId) ||
-      deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
-        .operationId !== pending.operationId
+      receipt.operationId !== pending.operationId
     ) {
       return false;
     }
@@ -149,37 +141,5 @@ const eveMessageDelivery = {
   },
 };
 
-/**
- * The proxy owns this metadata so caller input cannot forge an acknowledgement.
- * @param {string} operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
- * @param {UiToolName | null | undefined} selectedTool App UI tool selection, normalized to null when no tool is selected.
- * @returns {{ chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & { operationId: string; }; }} The app namespace containing the operation acknowledgement and display-safe tool selection.
- */
-const eveMessageDeliveryMetadata = (
-  operationId: string,
-  selectedTool: UiToolName | null | undefined
-): {
-  chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & {
-    operationId: string;
-  };
-} => ({
-  chatjs: {
-    ...eveToolMetadata(selectedTool).chatjs,
-    operationId: z.uuid().parse(operationId),
-  },
-});
-
-const eveMessageOperationId = (event: DeliveryEvent): string | undefined => {
-  if (event.type === "message.received") {
-    return deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
-      .operationId;
-  }
-  return undefined;
-};
-export {
-  EVE_MESSAGE_OPERATION_HEADER,
-  eveMessageDelivery,
-  eveMessageDeliveryMetadata,
-  eveMessageOperationId,
-};
-export type { ActivePendingEveMessage, PendingEveMessage };
+export { EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery };
+export type { ActivePendingEveMessage, PendingEveMessage, DeliveryReceipt };

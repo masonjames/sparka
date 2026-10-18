@@ -22,13 +22,6 @@ import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 import { resolveWorkflowWorld } from "./world-config";
 
-const checkpointLookupPath =
-  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
-
-const namedCheckpointLookupPath =
-  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/iu;
-
-const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
@@ -49,8 +42,8 @@ const authorizeDeletionRequest = async (
   }
   const workflowPostgresUrl = env.WORKFLOW_POSTGRES_URL;
   return (
-    path.endsWith("/sandbox-identity") &&
-    request.method === "GET" &&
+    path.endsWith("/local-resources") &&
+    request.method === "POST" &&
     resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
     typeof workflowPostgresUrl === "string" &&
     workflowPostgresUrl !== "" &&
@@ -68,19 +61,6 @@ const gatewaySessionPolicy = (
     method === "POST" && (compactionPath.exec(path) ?? [])[1];
   if (typeof compactionSession === "string" && compactionSession.length > 0) {
     return { sessionId: compactionSession };
-  }
-  const ordinaryCheckpoint =
-    (method === "GET" || method === "POST") &&
-    (checkpointLookupPath.exec(path) ?? [])[1];
-  const namedCheckpoint =
-    method === "GET" && (namedCheckpointLookupPath.exec(path) ?? [])[1];
-  const checkpointSession =
-    typeof ordinaryCheckpoint === "string" && ordinaryCheckpoint.length > 0
-      ? ordinaryCheckpoint
-      : namedCheckpoint;
-
-  if (typeof checkpointSession === "string" && checkpointSession.length > 0) {
-    return { sessionId: checkpointSession };
   }
   return parseSessionRequest(path, method);
 };
@@ -108,7 +88,10 @@ const readCreationReservation = async (
     reservation.ownerId !== owner ||
     reservation.state === "deleting" ||
     reservation.state === "deleted" ||
-    (command.data.seed === true) !== (reservation.creationKind === "copy")
+    (reservation.creationKind === "copy" && command.data.seed !== true) ||
+    (command.data.seed === true &&
+      reservation.creationKind !== "copy" &&
+      !isNonEmptyString(reservation.parentConversationId))
   ) {
     return null;
   }
@@ -210,12 +193,7 @@ export const authenticateEveGateway = async (
     if (!(await authorizeDeletionRequest(request, owner, path))) {
       return null;
     }
-  } else if (
-    !(
-      (path === "/eve/v1/session" && request.method === "POST") ||
-      (operationLookupPath.test(path) && request.method === "GET")
-    )
-  ) {
+  } else if (!(path === "/eve/v1/session" && request.method === "POST")) {
     const policy = gatewaySessionPolicy(path, request.method);
     if (
       !(

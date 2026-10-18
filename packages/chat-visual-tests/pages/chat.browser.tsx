@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";
 import ChatLayout from "@/app/(chat)/layout";
@@ -39,6 +39,37 @@ test("conversation", async () => {
     .toBeVisible();
   await expect
     .element(page.getByRole("textbox", { name: "Message" }))
+    .toBeVisible();
+});
+
+test("copy conversation with an edited prompt uses a fresh sandbox", async () => {
+  await renderRoute(conversation, request);
+  await page
+    .getByRole("button", { name: "Copy conversation with edited prompt" })
+    .first()
+    .click();
+  await expect
+    .element(
+      page.getByText(
+        "Copy the completed conversation and send this as a new prompt. The copy starts with a fresh sandbox."
+      )
+    )
+    .toBeVisible();
+});
+
+test("comparison explains its current history and fresh sandboxes", async () => {
+  await renderRoute(conversation, request);
+  await page.getByTestId("model-selector").click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await page.getByRole("button", { exact: true, name: "1×" }).click();
+  await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+  await userEvent.keyboard("{Escape}");
+  await expect
+    .element(
+      page.getByText(
+        "Each model receives a copy of the current completed conversation and a fresh sandbox."
+      )
+    )
     .toBeVisible();
 });
 
@@ -190,4 +221,52 @@ test("shared conversation, signed in", async () => {
   await expect
     .element(page.getByRole("region", { name: "Save shared conversation" }))
     .toBeVisible();
+});
+
+test("owner can answer approval while the native turn stays open", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    transcripts: {
+      [invoicesConversation.sessionId ?? ""]: [
+        {
+          id: "approval-message",
+          role: "assistant",
+          parts: [
+            {
+              type: "dynamic-tool",
+              toolName: "deleteDocument",
+              toolCallId: "delete-call",
+              state: "approval-requested",
+              approval: { id: "delete-request" },
+              input: { title: "Invoice notes" },
+              toolMetadata: {
+                eve: {
+                  kind: "tool-call",
+                  name: "deleteDocument",
+                  inputRequest: {
+                    requestId: "delete-request",
+                    kind: "tool-approval",
+                    prompt: "Approve Delete document?",
+                    allowFreeform: false,
+                    display: "confirmation",
+                    options: [
+                      { id: "approve", label: "Approve" },
+                      { id: "cancel", label: "Cancel" },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  });
+  await expect
+    .element(page.getByRole("button", { name: "Approve", exact: true }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByRole("button", { name: "Cancel", exact: true }))
+    .toBeEnabled();
 });

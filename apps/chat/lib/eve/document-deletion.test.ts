@@ -4,6 +4,7 @@ import {
   executeDocumentDeletion,
   requestDocumentDeletion,
 } from "../../tools/chatjs/delete-document/execute";
+import { deleteDocument } from "../../tools/chatjs/delete-document/tool";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
@@ -29,6 +30,10 @@ const input = {
   title: "Orchard notes",
 };
 const identity = {
+  attributes: {},
+  getToken: () => {
+    throw new Error("Unexpected receipt credential access");
+  },
   authenticator: "test",
   principalId: "owner",
   principalType: "user",
@@ -89,7 +94,6 @@ it("requires an owner receipt before performing the conditional deletion", async
     executeDocumentDeletion(input, {
       ...context,
       approval: {
-        requestId: "approval",
         responder: { ...identity, principalId: "other" },
       },
     })
@@ -97,7 +101,7 @@ it("requires an owner receipt before performing the conditional deletion", async
   expect(mocks.remove).not.toHaveBeenCalled();
   await executeDocumentDeletion(input, {
     ...context,
-    approval: { requestId: "approval", responder: identity },
+    approval: { responder: identity },
   });
   expect(mocks.remove).toHaveBeenCalledExactlyOnceWith(
     input,
@@ -123,8 +127,48 @@ it("rechecks kind availability after approval", async () => {
   await expect(
     executeDocumentDeletion(input, {
       ...context,
-      approval: { requestId: "approval", responder: identity },
+      approval: { responder: identity },
     })
   ).rejects.toThrow("disabled for this kind");
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+it("authorizes native deletion responses from the current owner principal only", async () => {
+  const { approval } = deleteDocument;
+  if (!approval || typeof approval === "function" || !approval.response) {
+    throw new Error("Missing deletion response policy");
+  }
+  const principal = { ...identity, attributes: {} };
+  const response = {
+    auth: {
+      getToken: vi.fn(),
+      requireAuth: () => {
+        throw new Error("Unexpected approval credential access");
+      },
+    },
+    request: {
+      callId: "call",
+      requestId: "approval",
+      principal,
+      toolName: "deleteDocument",
+      toolInput: input,
+    },
+    response: { decision: "approve", principal },
+    session: {
+      id: context.session.id,
+      initiator: principal,
+      turn: context.session.turn,
+    },
+  } satisfies Parameters<typeof approval.response>[0];
+  expect(await approval.response(response)).toEqual({ status: "allowed" });
+  expect(
+    await approval.response({
+      ...response,
+      response: {
+        decision: "approve",
+        principal: { ...principal, principalId: "other" },
+      },
+    })
+  ).toMatchObject({ status: "rejected" });
   expect(mocks.remove).not.toHaveBeenCalled();
 });

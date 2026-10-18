@@ -236,7 +236,7 @@ describe("scaffoldFromTemplate", (): void => {
     const manifest = z
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(manifestValue);
-    expect(manifest.dependencies.eve).toBe("npm:@chat-js/eve@0.61.0-chatjs.0");
+    expect(manifest.dependencies.eve).toBe("npm:@chat-js/eve@0.80.1-chatjs.2");
     const archives = {
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };
@@ -258,6 +258,9 @@ describe("scaffoldFromTemplate", (): void => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
     for (const file of [
+      "app/api/eve/[...path]/route-journal.test.ts",
+      "lib/db/eve-dispatch.test.ts",
+      "lib/eve/operation-token.test.ts",
       "tests/visual",
       "uiverify-archive",
       "tests/ui-primitives.visual.e2e.ts",
@@ -587,6 +590,8 @@ describe("scaffoldFromTemplate", (): void => {
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
     expect(workspaceConfig).not.toContain("better-sqlite3");
+    expect(workspaceConfig).toContain('"@mongodb-js/zstd": true');
+    expect(workspaceConfig).toContain("node-liblzma: true");
     expect(workspaceConfig).toContain("cbor-extract: true");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
@@ -706,7 +711,7 @@ describe("scaffoldFromTemplate", (): void => {
       ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
       expect(packageJson.dependencies.eve).toBe(
-        "npm:@chat-js/eve@0.61.0-chatjs.0"
+        "npm:@chat-js/eve@0.80.1-chatjs.2"
       );
       expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.73");
       expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(

@@ -22,7 +22,6 @@ import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { config } from "@/lib/config";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
-import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
@@ -145,15 +144,15 @@ const Part = ({
   messageId,
   isReadonly,
   part,
-  disabled,
   respond,
+  inputDisabled,
   previewDocument = false,
 }: {
   readonly previewDocument?: boolean;
   readonly messageId: string;
   readonly isReadonly: boolean;
   readonly part: ReadonlyEveMessagePart;
-  readonly disabled: boolean;
+  readonly inputDisabled: boolean;
   readonly respond: (response: InputResponse) => void;
 }): React.JSX.Element | null => {
   if (part.type === "text") {
@@ -222,7 +221,7 @@ const Part = ({
       )}
       {part.state === "approval-requested" && request ? (
         <PendingInput
-          disabled={disabled}
+          disabled={inputDisabled}
           key={request.requestId}
           request={request}
           respond={respond}
@@ -262,6 +261,7 @@ interface EveMessagesProps {
     message: ReadonlyEveMessage
   ) => string | undefined;
   readonly disabled: boolean;
+  readonly inputDisabled?: boolean;
   readonly respond: (response: InputResponse) => void;
 }
 
@@ -312,7 +312,7 @@ const AssistantFeedback = ({
             hasText(message.metadata?.turnId) ||
             hasText(message.metadata?.modelId)
           ) ||
-          !(userMessage && hasText(eveUserForkBoundary(userMessage)))
+          !(userMessage && hasText(userMessage.id))
         }
         onRetry={() => {
           if (userMessage) {
@@ -367,9 +367,7 @@ const EveMessageActions = ({
       editDisabled={
         editing
           ? editing.disabled
-          : actionsDisabled ||
-            Boolean(editor) ||
-            !hasText(eveUserForkBoundary(message))
+          : actionsDisabled || Boolean(editor) || !hasText(message.id)
       }
       isEditing={Boolean(editing)}
       isLoading={disabled && isLast && !editing}
@@ -417,6 +415,12 @@ const EveMessageActions = ({
 
 const EMPTY_SUGGESTIONS: readonly string[] = [];
 
+const responseDisabled = (
+  readonly: boolean,
+  busy: boolean,
+  override: boolean | undefined
+): boolean => readonly || (override ?? busy);
+
 const EveMessageRow = ({
   message,
   userMessage,
@@ -426,6 +430,7 @@ const EveMessageRow = ({
   isReadonly,
   disabled,
   actionsDisabled,
+  inputDisabled,
   respond,
   onEdit,
   onRegenerate,
@@ -442,7 +447,7 @@ const EveMessageRow = ({
     onEdit !== undefined &&
     !actionsDisabled &&
     !editor &&
-    hasText(eveUserForkBoundary(message));
+    hasText(message.id);
   const text = message.parts
     .filter((part: ReadonlyEveMessagePart) => part.type === "text")
     .map((part) => part.text)
@@ -508,7 +513,11 @@ const EveMessageRow = ({
           .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
           .map((part): React.JSX.Element => (
             <Part
-              disabled={disabled}
+              inputDisabled={responseDisabled(
+                isReadonly,
+                disabled,
+                inputDisabled
+              )}
               isReadonly={isReadonly}
               key={nextPartKey(part)}
               messageId={message.id}

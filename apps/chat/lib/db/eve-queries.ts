@@ -1,3 +1,4 @@
+import { dispatchEveOnce } from "./eve-dispatch";
 import {
   and,
   desc,
@@ -29,7 +30,7 @@ import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { initializeEveForkDocuments } from "./eve-documents";
+import { initializeEveCurrentCopy } from "./eve-current-copy";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 
@@ -112,17 +113,23 @@ const getBoundEveConversationForSession = async (
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
  * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
- * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state"> | null>} The durable identity and state, including tombstones, or null when no mapping exists.
+ * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state" | "parentConversationId"> | null>} The durable identity and state, including tombstones, or null when no mapping exists.
  */
 const readEveSessionMapping = async (
   identity: Readonly<{ reservationId: string } | { sessionId: string }>
 ): Promise<Pick<
   ConversationRow,
-  "creationKind" | "id" | "ownerId" | "sessionId" | "state"
+  | "creationKind"
+  | "id"
+  | "ownerId"
+  | "sessionId"
+  | "state"
+  | "parentConversationId"
 > | null> => {
   const [row] = await db
     .select({
       creationKind: eveConversation.creationKind,
+      parentConversationId: eveConversation.parentConversationId,
       id: eveConversation.id,
       ownerId: eveConversation.ownerId,
       sessionId: eveConversation.sessionId,
@@ -618,10 +625,7 @@ const reserveEveConversation = async (
       .values({
         ...value,
         chatId,
-        forkCheckpointId: fork?.checkpointId,
         forkKind: value.forkKind,
-        forkMessageId: fork?.beforeMessageId,
-        forkTurnId: fork?.beforeTurnId,
         parentConversationId: fork?.conversationId,
         rootConversationId:
           source === undefined
@@ -768,9 +772,6 @@ const matchesEveFork = (
   forkKind: typeof eveConversation.$inferSelect.forkKind
 ): boolean =>
   existing.parentConversationId === (fork?.conversationId ?? null) &&
-  existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
-  existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
-  existing.forkCheckpointId === (fork?.checkpointId ?? null) &&
   existing.forkKind === forkKind;
 
 type CreationTransaction = Parameters<
@@ -798,7 +799,7 @@ const bindConversationSession = async (
   }
   const [bound] = await tx
     .update(eveConversation)
-    .set({ initialRequest: null, sessionId, state: "bound" })
+    .set({ initialRequest: null, initialSeed: null, sessionId, state: "bound" })
     .where(
       and(
         eq(eveConversation.id, reservationId),
@@ -861,7 +862,7 @@ const assertMatchingMessageCreation = (
     !matchesEveFork(existing, fork, forkKind ?? null)
   ) {
     throw new CreationConflictError(
-      "This operation already has a different message, attachments, model, tool selection, project, or source turn."
+      "This operation already has a different message, attachments, model, tool selection, project, or source conversation."
     );
   }
   return existing;
@@ -878,7 +879,7 @@ const assertMatchingMessageCreation = (
  * @param {unknown} [initialRequest] Initial request metadata persisted with the conversation.
  * @param {string} [initialContentHash] Hash used to identify the initial content.
  * @param {string} [initialTitle] Initial title; defaults to the first message.
- * @param {EveForkInput} [fork] Source conversation and checkpoint information for a fork.
+ * @param {EveForkInput} [fork] Current completed source conversation to copy.
  * @param {typeof eveConversation.$inferInsert.forkKind} [forkKind] Fork type for the new conversation.
  * @param {string[]} [fileKeys] File keys attached to the initial message.
  * @param {string} [initialProjectId] Project to associate with a new non-fork conversation.
@@ -969,50 +970,68 @@ const createEveConversation = async (
     // This idempotent initialization commits before dispatch and acquires its own
     // document lock. Do not nest its connection inside the creation transaction.
     if (fork) {
-      await initializeEveForkDocuments(ownerId, reservation.id);
+      await initializeEveCurrentCopy(ownerId, reservation.id);
     }
     await referenceEveFiles(ownerId, reservation.id, fileKeys);
-    return await db.transaction(async (tx: CreationTransactionView) => {
-      // The reservation is already committed so native hooks can find it.
-      // Transaction locks release on worker death; creating rows need no manual repair.
-      const [lock] = await tx.execute<{
-        locked: boolean;
-      }>(
-        sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
-      );
-      if (!lock?.locked) {
-        throw new CreationConflictError(
-          "Creation is still in progress. Retry the same operation shortly.",
-          { code: "creation_in_progress" }
-        );
-      }
-      const [current] = await tx
-        .select()
-        .from(eveConversation)
-        .where(eq(eveConversation.id, reservation.id));
-      const binding = boundConversation(current);
-      if (binding) {
-        return binding;
-      }
-      if (
-        !(
-          hasQueryRow(current) &&
-          current.creationKind === "message" &&
-          (current.state === "creating" || current.state === "uncertain")
-        )
-      ) {
-        throw new CreationConflictError(
-          "This conversation can no longer be created."
-        );
-      }
-      const sessionId = await create(reservation.id);
-      return await bindConversationSession(
-        tx,
+    const dispatched = await dispatchEveOnce(
+      {
         ownerId,
-        reservation.id,
-        sessionId
-      );
-    });
+        operationId: reservation.id,
+        conversationId: reservation.id,
+        kind: "create",
+        intent: initialRequest ?? {
+          message,
+          initialModelId,
+          initialContentHash,
+          initialProjectId,
+          fork,
+          forkKind,
+        },
+      },
+      async () =>
+        await db.transaction(async (tx: CreationTransactionView) => {
+          // The reservation is already committed so native hooks can find it.
+          // Transaction locks release on worker death; creating rows need no manual repair.
+          const [lock] = await tx.execute<{
+            locked: boolean;
+          }>(
+            sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
+          );
+          if (!lock?.locked) {
+            throw new CreationConflictError(
+              "Creation is still in progress. Retry the same operation shortly.",
+              { code: "creation_in_progress" }
+            );
+          }
+          const [current] = await tx
+            .select()
+            .from(eveConversation)
+            .where(eq(eveConversation.id, reservation.id));
+          const binding = boundConversation(current);
+          if (binding) {
+            return binding;
+          }
+          if (
+            !(
+              hasQueryRow(current) &&
+              current.creationKind === "message" &&
+              (current.state === "creating" || current.state === "uncertain")
+            )
+          ) {
+            throw new CreationConflictError(
+              "This conversation can no longer be created."
+            );
+          }
+          const sessionId = await create(reservation.id);
+          return await bindConversationSession(
+            tx,
+            ownerId,
+            reservation.id,
+            sessionId
+          );
+        })
+    );
+    return { id: reservation.id, sessionId: dispatched.sessionId };
   } catch (error) {
     if (error instanceof CreationConflictError) {
       throw error;

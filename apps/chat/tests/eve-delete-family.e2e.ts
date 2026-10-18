@@ -1,3 +1,4 @@
+import "./eve-native-session.fixture";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test, vi } from "vitest";
@@ -16,24 +17,20 @@ import {
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
-import type { readLocalEveSandboxInventory } from "../lib/eve/local-sandbox-inventory";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
-// This suite exercises app-family state with synthetic native runs. Real native
-// birth receipts and filesystem proof are covered by eve-deletion-retire.
+// This suite owns app-family erasure, using synthetic native runs with no VMs.
+// Provider authority and removal are exercised by the disposable VM proof.
 vi.mock("../lib/eve/verify-local-coverage", () => ({
-  verifyLocalEveFamilyCoverage: vi.fn(),
-}));
-// Fixtures below allocate no filesystem or blob resources; keep the test local.
-vi.mock("../lib/eve/local-sandbox-fence", () => ({
-  fenceLocalEveSandboxMutations: vi.fn(),
-}));
-
-vi.mock("../lib/eve/local-sandbox-inventory", () => ({
-  readLocalEveSandboxInventory: vi
-    .fn<typeof readLocalEveSandboxInventory>()
-    .mockResolvedValue({ owned: [], unattributedDirectories: [] }),
+  verifyLocalEveFamilyCoverage: vi.fn(
+    async () =>
+      await Promise.resolve({
+        appRoot: "/fixture",
+        sessions: [],
+      })
+  ),
+  manageEveLocalResources: vi.fn(async () => await Promise.resolve(0)),
 }));
 
 vi.mock("../lib/file-storage", () => ({
@@ -92,7 +89,7 @@ const fixture = async (parentId?: string) => {
     vi.fn<() => Promise<string>>().mockResolvedValue(sessionId),
     parentId === undefined || parentId === null || parentId === ""
       ? undefined
-      : { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
+      : { fork: { conversationId: parentId } }
   );
   return { ...conversation, sessionId };
 };

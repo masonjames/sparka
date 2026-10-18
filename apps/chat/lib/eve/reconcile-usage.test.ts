@@ -351,17 +351,13 @@ it("settles newly discovered descendants before admitting the next turn", async 
     {
       data: {
         callId: "call",
-        childSessionId: "grandchild",
-        childStreamPath: "/stream",
+        streamPath: "/stream",
         name: "worker",
-        sequence: 0,
-        sessionId: "child",
-        toolName: "worker",
+        sessionId: "grandchild",
         turnId: "turn_0",
-        workflowId: "workflow",
       },
       meta: { at: "2026-09-28T00:00:00Z", id: "delegation" },
-      type: "subagent.called",
+      type: "agent.started",
     },
   ]);
   await reconcileEveOwnerUsage("owner");

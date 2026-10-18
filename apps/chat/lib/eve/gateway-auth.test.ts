@@ -66,7 +66,7 @@ const request = (path: string, method: string, secret = "fixture-secret") =>
 it.each([
   ["/eve/v1/session/session/reset", "POST"],
   ["/eve/v1/session/session/stream", "GET"],
-  ["/eve/v1/session/session/sandbox-identity", "GET"],
+  ["/eve/v1/session/session/local-resources", "POST"],
 ])(
   "allows authenticated cleanup only for the deleting owner's session: %s",
   async (path, method) => {
@@ -85,7 +85,7 @@ it.each([
   ["/eve/v1/session/session/cancel", "POST"],
   ["/eve/v1/session/session/reset", "GET"],
   ["/eve/v1/session/session/stream", "POST"],
-  ["/eve/v1/session/session/sandbox-identity", "POST"],
+  ["/eve/v1/session/session/local-resources", "GET"],
   ["/eve/v1/operation/id", "GET"],
 ])(
   "cleanup credentials cannot start work or broaden access: %s",
@@ -113,35 +113,17 @@ it("ordinary requests still require a bound session and cannot reset it", async 
     principalId: "owner",
   });
 });
-it("checkpoint readiness and capture require the source owner", async () => {
+it("rejects removed checkpoint endpoints even for the source owner", async () => {
+  mocks.owns.mockResolvedValue(true);
   const read = request(
     "/eve/v1/session/source/checkpoint?beforeTurnId=turn_0",
     "GET"
   );
   read.headers.delete("x-chatjs-deletion");
   expect(await authenticateEveGateway(read)).toBeNull();
-  mocks.owns.mockResolvedValue(true);
-  expect(await authenticateEveGateway(read)).toMatchObject({
-    principalId: "owner",
-  });
-  expect(mocks.owns).toHaveBeenCalledWith("owner", "source");
   const write = request("/eve/v1/session/source/checkpoint", "POST");
   write.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(write)).toMatchObject({
-    principalId: "owner",
-  });
-  mocks.owns.mockResolvedValue(false);
   expect(await authenticateEveGateway(write)).toBeNull();
-  const named = request(
-    `/eve/v1/session/source/checkpoint/${crypto.randomUUID()}?beforeTurnId=turn_1`,
-    "GET"
-  );
-  named.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(named)).toBeNull();
-  mocks.owns.mockResolvedValue(true);
-  expect(await authenticateEveGateway(named)).toMatchObject({
-    principalId: "owner",
-  });
 });
 
 it("internal compaction requires a gateway credential and the bound owner", async () => {
@@ -165,15 +147,15 @@ it("internal compaction requires a gateway credential and the bound owner", asyn
   expect(await authenticateEveGateway(read)).toBeNull();
 });
 
-it("ordinary owner access cannot read internal sandbox birth evidence", async () => {
-  const read = request("/eve/v1/session/session/sandbox-identity", "GET");
+it("ordinary owner access cannot manage internal sandbox resources", async () => {
+  const read = request("/eve/v1/session/session/local-resources", "POST");
   read.headers.delete("x-chatjs-deletion");
   mocks.owns.mockResolvedValue(true);
   expect(await authenticateEveGateway(read)).toBeNull();
   expect(mocks.deleting).not.toHaveBeenCalled();
 });
 it("only allows fenced descendants of an owner-matched deleting root", async () => {
-  const read = request("/eve/v1/session/child/sandbox-identity", "GET");
+  const read = request("/eve/v1/session/child/local-resources", "POST");
   read.headers.set("x-chatjs-deletion-root", "root");
   expect(await authenticateEveGateway(read)).toBeNull();
   mocks.descendant.mockResolvedValue(true);

@@ -1,14 +1,13 @@
 import type { MessageStreamEvent } from "eve/client";
+import type { EveCopySeed } from "./copy-seed";
 
 /** SDK fields this reader does not inspect remain optional and opaque. */
 type IgnoredSdkFields<Value> = Value extends object
   ? { readonly [Key in keyof Value]?: unknown }
   : unknown;
 
-type SeedMessage = Extract<
-  MessageStreamEvent,
-  { type: "history.seeded" }
->["data"]["messages"][number];
+// Accepted copy plans are indexed before native session binding.
+type SeedMessage = EveCopySeed["messages"][number];
 type IncomingMessage = Extract<
   MessageStreamEvent,
   { type: "message.received" }
@@ -25,23 +24,8 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
         >;
       }
     | {
-        readonly type: "history.restored";
-        readonly data: {
-          readonly events: readonly SearchTextEvent[];
-        } & IgnoredSdkFields<
-          Extract<MessageStreamEvent, { type: "history.restored" }>["data"]
-        >;
-      }
-    | {
         readonly type: "message.received";
-        readonly data: Parameters<
-          typeof incomingMessageSearchText
-        >[0]["data"] & {
-          readonly kind?: Extract<
-            MessageStreamEvent,
-            { type: "message.received" }
-          >["data"]["kind"];
-        };
+        readonly data: Parameters<typeof incomingMessageSearchText>[0]["data"];
         readonly meta: { readonly id: string } & IgnoredSdkFields<
           MessageStreamEvent["meta"]
         >;
@@ -58,10 +42,7 @@ type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
     | {
         readonly type: Exclude<
           MessageStreamEvent["type"],
-          | "history.seeded"
-          | "history.restored"
-          | "message.received"
-          | "message.completed"
+          "history.seeded" | "message.received" | "message.completed"
         >;
       }
   );
@@ -85,7 +66,7 @@ const eveSeedSearchText = (
       readonly type: string;
       readonly text?: string;
     } & IgnoredSdkFields<SeedMessage["parts"][number]>)[];
-  } & IgnoredSdkFields<SeedMessage>)[]
+  } & IgnoredSdkFields<SeedMessage> & { readonly id?: string })[]
 ): EveSearchText[] =>
   messages.flatMap((message, index) => {
     const text = message.parts
@@ -130,18 +111,15 @@ const incomingMessageSearchText = (event: {
 };
 
 /**
- * Immutable event identities make live delivery, restored prefixes and backfills idempotent.
+ * Immutable event identities make live delivery, seeded prefixes and backfills idempotent.
  * @param {MessageStreamEvent} event Native history or live event that may contain visible user/assistant text.
- * @returns {EveSearchText[]} Display text with stable event/seed keys, including restored history and excluding empty content.
+ * @returns {EveSearchText[]} Display text with stable event/seed keys, including seeded history and excluding empty content.
  */
 const eveEventSearchText = (event: SearchTextEvent): EveSearchText[] => {
   if (event.type === "history.seeded") {
     return eveSeedSearchText(event.data.messages);
   }
-  if (event.type === "history.restored") {
-    return event.data.events.flatMap(eveEventSearchText);
-  }
-  if (event.type === "message.received" && !event.data.kind) {
+  if (event.type === "message.received") {
     return incomingMessageSearchText(event);
   }
   if (

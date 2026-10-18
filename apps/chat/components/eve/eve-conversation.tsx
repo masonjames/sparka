@@ -1,5 +1,7 @@
 "use client";
 
+import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
+
 import { useEveFollowups } from "./use-eve-followups";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
@@ -7,7 +9,7 @@ import { withTaskCleanup } from "@/components/task-cleanup";
 import { hasText } from "@/components/text-value";
 
 import type { useEveAgent } from "eve/react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
 import {
@@ -26,7 +28,6 @@ import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
@@ -75,24 +76,6 @@ const sameComposerDraft = (
   draft.attachments.every(
     (file, index) => file.url === sent.attachments[index]?.url
   );
-
-const nextTurnBoundary = (
-  event: ReturnType<typeof useEveAgent>["events"][number] | undefined
-): string => {
-  if (
-    !(
-      event &&
-      (event.type === "turn.completed" ||
-        event.type === "turn.failed" ||
-        event.type === "turn.cancelled")
-    )
-  ) {
-    throw new Error(
-      "Wait for the conversation to finish restoring before comparing responses."
-    );
-  }
-  return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
-};
 
 const useConversationInput = (
   ownerId: string,
@@ -179,6 +162,11 @@ const conversationStatus = (
   return label;
 };
 
+const isInputResponseDisabled = (
+  status: string | undefined,
+  commandPending: boolean
+): boolean => commandPending || status === "submitted" || status === "resuming";
+
 const isExecutionBusy = (status: string | undefined): boolean =>
   status === "streaming" || status === "submitted" || status === "resuming";
 
@@ -244,6 +232,10 @@ const EveConversationEditor = ({
   const handleEditToolChange = fork.setSelectedTool;
   return (
     <div className="w-full">
+      <p className="text-muted-foreground mb-2 text-sm">
+        Copy the completed conversation and send this as a new prompt. The copy
+        starts with a fresh sandbox.
+      </p>
       <EveComposer
         autoFocus
         status={fork.busy ? "submitted" : "ready"}
@@ -299,7 +291,7 @@ const EveDeliveryRecovery = ({
     <p>
       {hasText(pendingMessage.rejection)
         ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
-        : "Message delivery is unconfirmed. Your draft is saved in this tab."}
+        : "Message delivery is unknown. This operation will not be sent again. Your draft is saved in this tab."}
     </p>
     <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
     <AttachmentList attachments={pendingMessage.attachments} />
@@ -342,7 +334,7 @@ const EveDeliveryRecovery = ({
             hasText(pendingMessage.rejection)
               ? undefined
               : new Error(
-                  "Delivery is unconfirmed. Check the conversation before sending this message again."
+                  "The original operation remains unresolved. Sending this restored draft creates a new message and may duplicate it."
                 )
           );
         }}
@@ -428,6 +420,12 @@ const EveConversationComposer = ({
   const handleDraftChange = composerDraft.setText;
   return (
     <>
+      {input.modelIds.length > 1 && (
+        <p className="text-muted-foreground mb-2 text-xs">
+          Each model receives a copy of the current completed conversation and a
+          fresh sandbox.
+        </p>
+      )}
       <EveComposer
         status={status === "resuming" ? "submitted" : status}
         disabled={
@@ -508,12 +506,11 @@ const EveConversation = ({
   if (!agent) {
     throw new Error("Native observer is not ready.");
   }
-  const acceptDelivery = delivery.accept;
-  useEffect(() => {
-    for (const event of agent.events) {
-      acceptDelivery(event);
-    }
-  }, [agent.events, acceptDelivery]);
+  const refreshDeliveryReceipt = useEveDeliveryReceipt(
+    sessionId,
+    pendingMessage,
+    delivery.accept
+  );
   const latestTurn = agent.events.findLast(
     (event) =>
       event.type === "turn.started" ||
@@ -538,8 +535,7 @@ const EveConversation = ({
     fork.editingMessageId ??
     messages.find(
       (message) =>
-        eveUserForkBoundary(message) === fork.editingBoundary &&
-        Boolean(fork.editingBoundary)
+        message.id === fork.editingBoundary && Boolean(fork.editingBoundary)
     )?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (
@@ -579,7 +575,7 @@ const EveConversation = ({
           setCommandFailure(
             error instanceof Error
               ? error
-              : new Error("Request failed. Reconnect before retrying.")
+              : new Error("Request failed. Reconnect to check its status.")
           );
         }
       },
@@ -621,6 +617,7 @@ const EveConversation = ({
           },
         });
       }, pending.operationId);
+      await refreshDeliveryReceipt();
     } catch (error) {
       if (isEveCommandRejection(error)) {
         delivery.reject(pending, error.message, isEveAdmissionBusy(error));
@@ -731,6 +728,10 @@ const EveConversation = ({
                 actionsDisabled={actionLocks.transcript}
                 conversationId={conversationId}
                 disabled={busy || commandPending}
+                inputDisabled={isInputResponseDisabled(
+                  agent.status,
+                  commandPending
+                )}
                 isReadonly={false}
                 messages={messages}
 
@@ -823,7 +824,6 @@ const EveConversation = ({
                       ? fork.compare(
                           draftMessage(suggestion, []),
                           modelIds,
-                          nextTurnBoundary(latestTurn),
                           composerDraft.selectedTool ?? undefined,
                           false
                         )
@@ -902,7 +902,6 @@ const EveConversation = ({
                     ? fork.compare(
                         draftMessage(draft, files.attachments),
                         modelIds,
-                        nextTurnBoundary(latestTurn),
                         composerDraft.selectedTool ?? undefined
                       )
                     : submitMessage(

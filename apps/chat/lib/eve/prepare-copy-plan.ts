@@ -1,4 +1,4 @@
-import { parseSessionTranscriptSeed } from "eve/transcript";
+import { parseEveCopySeed } from "./copy-seed";
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
@@ -33,7 +33,7 @@ export const prepareEveCopyPlan = async (
   readPublicFile: (key: string) => Promise<Blob>,
   origin: string
 ): Promise<EveCopyPlan> => {
-  const { documents, checkpoints } = snapshot;
+  const { documents } = snapshot;
   const resources = eveCopyDocumentResources(documents);
   const allocations = {
     files: new Map<string, string>(),
@@ -97,26 +97,8 @@ export const prepareEveCopyPlan = async (
     origin
   );
   return {
-    seed: parseSessionTranscriptSeed(seed),
+    seed: parseEveCopySeed(seed),
     files,
-    documentCheckpoints: checkpoints.map((checkpoint) => ({
-      messageIndex: checkpoint.messageIndex,
-      heads: checkpoint.heads.map(
-        (head: Readonly<{ documentId: string; revisionId: string }>) => {
-          const documentId = allocations.documents.get(head.documentId);
-          const revisionId = allocations.revisions.get(head.revisionId);
-          if (
-            typeof documentId !== "string" ||
-            documentId === "" ||
-            typeof revisionId !== "string" ||
-            revisionId === ""
-          ) {
-            throw new Error("Missing copied document boundary allocation.");
-          }
-          return { documentId, revisionId };
-        }
-      ),
-    })),
     sourceHeads: documents.map(
       (document: {
         readonly documentId: string;

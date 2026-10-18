@@ -92,3 +92,6 @@ packages/registry/registry.json
 packages/chat-visual-tests/uiverify-archive/
 packages/chat-visual-tests/**/__screenshots__/
 apps/chat/tests/visual/**/__screenshots__/
+
+apps/chat/guest/.eve/
+apps/chat/guest/.output/
