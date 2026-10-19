@@ -1,4 +1,3 @@
-import { DefaultSandbox } from "eve/sandbox";
 import { defineSandboxProvider } from "eve/sandbox/provider";
 import type {
   SandboxProviderImplementation,
@@ -233,11 +232,9 @@ const provider = defineSandboxProvider({
   environment: appSandboxProvider,
 });
 
-/** Opt-in for new isolated worlds; selection comes from the installed app provider. */
-export const createPersistentSandboxEnvironment = (
-  mode: "native" | "app"
-): SandboxEnvironment =>
-  mode === "app" ? provider.environment() : DefaultSandbox.environment();
+/** EVE consumes the installed app provider; lifecycle ownership stays in ChatJS. */
+export const createPersistentSandboxEnvironment = (): SandboxEnvironment =>
+  provider.environment();
 
 export const registerAppSandboxSession = async (
   context: Pick<SandboxProviderSessionContext, "session">

@@ -260,24 +260,6 @@ export const cleanupPersistentSession = async (
   });
 };
 
-/** Native-only installs may not have applied the opt-in lifecycle migration yet. */
-export const hasDevelopmentPersistentSandboxes = async (
-  devRunId: string
-): Promise<boolean> => {
-  const tables = await db.execute(
-    sql`select to_regclass('public."EveSandboxSession"') as relation`
-  );
-  if (tables[0]?.relation === null) {
-    return false;
-  }
-  const sessions = await db
-    .select({ id: eveSandboxSession.sessionId })
-    .from(eveSandboxSession)
-    .where(eq(eveSandboxSession.devRunId, devRunId))
-    .limit(1);
-  return sessions.length > 0;
-};
-
 export const stopDevelopmentPersistentSandboxes = async (
   devRunId: string,
   scope: SandboxScope,

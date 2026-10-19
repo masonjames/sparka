@@ -3,7 +3,6 @@ import type { SandboxProviderSessionContext } from "eve/sandbox/provider";
 import type { accessPersistentSandbox } from "./persistent-sandbox-store";
 
 const mocks = vi.hoisted(() => ({
-  auto: vi.fn(),
   register: vi.fn(),
   reserve: vi.fn(),
   access: vi.fn<typeof accessPersistentSandbox>(),
@@ -17,7 +16,6 @@ const mocks = vi.hoisted(() => ({
   write: vi.fn(),
   binding: vi.fn(),
 }));
-vi.mock("eve/sandbox", () => ({ DefaultSandbox: { environment: mocks.auto } }));
 vi.mock("../env", () => ({ env: {} }));
 vi.mock("../db/eve-queries", () => ({ readEveSessionMapping: mocks.binding }));
 vi.mock("./persistent-sandbox-store", () => ({

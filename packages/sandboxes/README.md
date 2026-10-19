@@ -25,10 +25,10 @@ This layout targets newly scaffolded apps. Earlier generated apps and allocation
 
 `@chat-js/sandboxes/persistent` adds an optional `SandboxProvider.persistent` capability. It supports explicit creation, opening an existing resource, stopping while preserving files, and deletion with confirmed absence. It includes filesystem and process operations for consumers such as EVE. Disposable `withSandbox` execution remains separate and deletes its resources after use.
 
-The installed Vercel implementation supplies this capability; Daytona currently does not. ChatJS can opt in with `persistentSandbox: "app"` in its app config. The default `"native"` continues using EVE's native selection. Use app mode only with new sessions in an isolated world; existing native bindings are not migrated. Copies receive fresh sandboxes.
+ChatJS always uses the installed app provider for EVE persistent filesystems. The Vercel implementation supplies this capability; Daytona currently does not. There is no native-provider selector or compatibility mode. Use a fresh world and the current schema; existing native bindings are not migrated. Copies receive fresh sandboxes.
 
 ChatJS owns session/resource records and checks the original provider, account, scope, and owner before access. Retirement fences cached handles as well as new opens. An interrupted create remains pending and cannot be automatically recreated or considered deleted. Pending allocations require reconciliation; changing providers does not transfer ownership.
 
-In development, app mode requires `bun dev:supervise`. The supervisor stops only its run's resources after terminating workers and retries dead-run cleanup before replacement startup. Stop preserves files, not running processes. Failed cleanup retains its local intent. Persistent resource cleanup participates in the existing local PostgreSQL conversation-deletion flow; managed-world deletion remains unavailable.
+In development, ChatJS requires `bun dev:supervise`. The supervisor stops only its run's resources after terminating workers and retries dead-run cleanup before replacement startup. Stop preserves files, not running processes. Failed cleanup retains its local intent. Persistent resource cleanup participates in the existing local PostgreSQL conversation-deletion flow; managed-world deletion remains unavailable.
 
 Distribution requires a version of this package containing the new `persistent` export before publishing the updated registry or scaffolding template. The changeset prepares that release; it does not publish it.
