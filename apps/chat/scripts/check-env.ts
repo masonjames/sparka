@@ -264,6 +264,26 @@ const validateConfiguredEnvironment = (
   const storageError = validateStorage(env);
   return [
     ...eveErrors,
+    ...(config.persistentSandboxProvider === "vercel" &&
+    !isRequirementSatisfied(
+      {
+        options: [
+          ["VERCEL_OIDC_TOKEN"],
+          ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
+        ],
+        runtimeAuth: "vercel-oidc",
+      },
+      env
+    )
+      ? [
+          {
+            feature: "EVE persistent Vercel sandbox",
+            missing: [
+              "VERCEL_OIDC_TOKEN or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
+            ],
+          },
+        ]
+      : []),
     ...sandboxEnvRequirements.flatMap((requirement) => {
       const missing = getMissingRequirement(requirement, env);
       return typeof missing === "string" && missing !== ""

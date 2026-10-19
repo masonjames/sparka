@@ -401,6 +401,12 @@ const configDescriptionSchema = z.object({
   }),
   organization: createOrganizationSchema(),
   policies: createPoliciesSchema(),
+  persistentSandboxProvider: z
+    .enum(["auto", "vercel"])
+    .default("auto")
+    .describe(
+      "EVE session filesystem provider; independent of code execution. Vercel is opt-in for new isolated sessions while native deletion support is validated."
+    ),
   pricing: pricingConfigSchema.optional(),
   services: createServicesSchema(),
 });
@@ -442,6 +448,12 @@ const configSchema = z.object({
     privacy: { title: "Privacy Policy" },
     terms: { title: "Terms of Service" },
   }),
+  persistentSandboxProvider: z
+    .enum(["auto", "vercel"])
+    .default("auto")
+    .describe(
+      "EVE session filesystem provider; independent of code execution. Vercel is opt-in for new isolated sessions while native deletion support is validated."
+    ),
   pricing: pricingConfigSchema.optional(),
   services: createServicesSchema().default({
     aiProviders: ["OpenAI", "Anthropic", "Google"],

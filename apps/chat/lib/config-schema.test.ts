@@ -70,3 +70,13 @@ test("rejects empty workflow model IDs at the configuration boundary", () => {
     }).success
   ).toBe(false);
 });
+
+test("persistent provider selection is opt-in and independent of code execution", () => {
+  expect(applyDefaults(defineConfig({})).persistentSandboxProvider).toBe(
+    "auto"
+  );
+  expect(
+    applyDefaults(defineConfig({ persistentSandboxProvider: "vercel" }))
+      .persistentSandboxProvider
+  ).toBe("vercel");
+});

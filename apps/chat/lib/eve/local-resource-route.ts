@@ -1,3 +1,4 @@
+import { config } from "@/lib/config";
 import { POST } from "eve/channels";
 import { manageLocalMicrosandboxResources } from "eve/sandbox/microsandbox";
 import { z } from "zod";
@@ -62,6 +63,13 @@ export const eveLocalResourceRoute = POST(
     const input = await readResourceRequest(request);
     if (input === null) {
       return Response.json({ error: "Invalid request" }, { status: 400 });
+    }
+    // Microsandbox absence cannot prove cleanup of another provider's resources.
+    if (config.persistentSandboxProvider === "vercel") {
+      return Response.json(
+        { error: "Persistent Vercel sandbox cleanup is not yet supported." },
+        { status: 501 }
+      );
     }
     const result = await manageLocalMicrosandboxResources(context, {
       ...input,
