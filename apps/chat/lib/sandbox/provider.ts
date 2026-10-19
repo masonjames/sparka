@@ -22,3 +22,6 @@ export const createSandboxProvider = (): SandboxProvider => {
     deleteAndConfirmAbsent: cleanup.deleteAndConfirmAbsent,
   };
 };
+
+/** Available without resolving provider credentials. */
+export const supportsPersistentSandbox = true;

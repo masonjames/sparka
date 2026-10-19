@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
+import type { PersistentSandboxProvider } from "@chat-js/sandboxes/persistent";
 import type { SandboxScope } from "@chat-js/sandboxes/provider";
 import { db } from "../db/client";
 import { evePersistentSandbox, eveSandboxSession } from "../db/schema";
@@ -10,6 +11,13 @@ interface SessionIdentity {
   ownerId: string;
   devRunId?: string;
 }
+type ResolvePersistentProvider = () => {
+  scope: SandboxScope;
+  persistent: Pick<
+    PersistentSandboxProvider,
+    "stop" | "deleteAndConfirmAbsent"
+  >;
+};
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Resource = typeof evePersistentSandbox.$inferSelect;
 const lock = async (tx: Transaction, root: string): Promise<void> => {
@@ -215,8 +223,7 @@ export const retirePersistentSession = async (
 };
 export const cleanupPersistentSession = async (
   identity: SessionIdentity,
-  scope: SandboxScope,
-  remove: (name: string) => Promise<void>
+  resolveProvider: ResolvePersistentProvider
 ): Promise<void> => {
   await db.transaction(async (tx) => {
     await lock(tx, identity.rootSessionId);
@@ -240,7 +247,6 @@ export const cleanupPersistentSession = async (
       .from(evePersistentSandbox)
       .where(eq(evePersistentSandbox.sessionId, identity.sessionId));
     for (const resource of resources) {
-      assertScope(resource, scope);
       if (resource.state === "pending") {
         throw new Error(
           "Resolve uncertain persistent sandbox allocation before deletion."
@@ -249,8 +255,10 @@ export const cleanupPersistentSession = async (
       if (resource.state === "deleted") {
         continue;
       }
+      const provider = resolveProvider();
+      assertScope(resource, provider.scope);
       // oxlint-disable-next-line eslint/no-await-in-loop -- Keep exact provider deletion and durable release ordered under the session fence.
-      await remove(resource.name);
+      await provider.persistent.deleteAndConfirmAbsent(resource.name);
       // oxlint-disable-next-line eslint/no-await-in-loop -- Do not release ownership before confirmed provider absence.
       await tx
         .update(evePersistentSandbox)
@@ -262,8 +270,7 @@ export const cleanupPersistentSession = async (
 
 export const stopDevelopmentPersistentSandboxes = async (
   devRunId: string,
-  scope: SandboxScope,
-  stop: (name: string) => Promise<void>
+  resolveProvider: ResolvePersistentProvider
 ): Promise<void> => {
   const sessions = await db
     .select()
@@ -286,7 +293,6 @@ export const stopDevelopmentPersistentSandboxes = async (
         .from(evePersistentSandbox)
         .where(eq(evePersistentSandbox.sessionId, identity.sessionId));
       for (const resource of resources) {
-        assertScope(resource, scope);
         if (resource.state === "pending") {
           throw new Error(
             "Uncertain persistent allocation needs reconciliation before shutdown is confirmed."
@@ -295,8 +301,10 @@ export const stopDevelopmentPersistentSandboxes = async (
         if (resource.state === "deleted") {
           continue;
         }
+        const provider = resolveProvider();
+        assertScope(resource, provider.scope);
         // oxlint-disable-next-line eslint/no-await-in-loop -- Provider stop must finish before detaching this development lease.
-        await stop(resource.name);
+        await provider.persistent.stop(resource.name);
       }
       await tx
         .update(eveSandboxSession)

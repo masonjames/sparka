@@ -1,4 +1,4 @@
-import { getSandboxProvider } from "../sandbox/runtime";
+import { getPersistentSandboxProvider } from "../sandbox/runtime";
 import {
   readPersistentIdentity,
   retirePersistentSession,
@@ -16,9 +16,9 @@ export const manageEveLocalResources = async (
   scope: { readonly sessionId: string; readonly rootSessionId: string },
   action: "retire" | "purge"
 ): Promise<void> => {
-  const identity = await readPersistentIdentity(scope.sessionId);
+  const saved = await readPersistentIdentity(scope.sessionId);
+  const identity = saved ?? { ...scope, ownerId };
   if (
-    !identity ||
     identity.ownerId !== ownerId ||
     identity.rootSessionId !== scope.rootSessionId
   ) {
@@ -26,15 +26,7 @@ export const manageEveLocalResources = async (
   }
   await retirePersistentSession(identity);
   if (action === "purge") {
-    const provider = getSandboxProvider();
-    if (!provider.persistent) {
-      throw new Error("Persistent cleanup provider is unavailable.");
-    }
-    await cleanupPersistentSession(
-      identity,
-      provider.scope,
-      provider.persistent.deleteAndConfirmAbsent
-    );
+    await cleanupPersistentSession(identity, getPersistentSandboxProvider);
   }
 };
 

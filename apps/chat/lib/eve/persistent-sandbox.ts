@@ -8,7 +8,11 @@ import type { SandboxEnvironment } from "eve/sandbox";
 import type { PersistentSandbox } from "@chat-js/sandboxes/persistent";
 import { z } from "zod";
 import { env } from "../env";
-import { getSandboxProvider } from "../sandbox/runtime";
+import {
+  getSandboxProvider,
+  getPersistentSandboxProvider,
+} from "../sandbox/runtime";
+import { supportsPersistentSandbox } from "../sandbox/provider";
 import { readEveSessionMapping } from "../db/eve-queries";
 import {
   accessPersistentSandbox,
@@ -59,16 +63,8 @@ const identityFor = async (
 };
 
 const remove = async (identity: SessionIdentity): Promise<void> => {
-  const infrastructure = getSandboxProvider();
-  if (!infrastructure.persistent) {
-    throw new Error("Persistent sandbox provider is unavailable.");
-  }
   await retirePersistentSession(identity);
-  await cleanupPersistentSession(
-    identity,
-    infrastructure.scope,
-    infrastructure.persistent.deleteAndConfirmAbsent
-  );
+  await cleanupPersistentSession(identity, getPersistentSandboxProvider);
 };
 
 const handle = (
@@ -239,5 +235,7 @@ export const createPersistentSandboxEnvironment = (): SandboxEnvironment =>
 export const registerAppSandboxSession = async (
   context: Pick<SandboxProviderSessionContext, "session">
 ): Promise<void> => {
-  await registerPersistentSession(await identityFor(context));
+  if (supportsPersistentSandbox) {
+    await registerPersistentSession(await identityFor(context));
+  }
 };

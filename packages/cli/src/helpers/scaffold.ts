@@ -404,6 +404,7 @@ const scaffoldFromTemplate = async (
     `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 
 export const createSandboxProvider: (() => SandboxProvider) | undefined = undefined;
+export const supportsPersistentSandbox = false;
 `
   );
   await writeFile(

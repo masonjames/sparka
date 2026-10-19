@@ -18,6 +18,10 @@ const scope = {
   accountId: "fixture",
   scopeId: "fixture",
 };
+const resolver = (operation: (name: string) => Promise<void>) => () => ({
+  scope,
+  persistent: { stop: operation, deleteAndConfirmAbsent: operation },
+});
 const sessions: string[] = [];
 const identity = () => {
   const sessionId = crypto.randomUUID();
@@ -45,7 +49,7 @@ test("interrupted creation stays unknown even after retirement; no missing looku
   );
   await retirePersistentSession(id);
   const remove = vi.fn();
-  await expect(cleanupPersistentSession(id, scope, remove)).rejects.toThrow(
+  await expect(cleanupPersistentSession(id, resolver(remove))).rejects.toThrow(
     "uncertain"
   );
   expect(remove).not.toHaveBeenCalled();
@@ -87,8 +91,8 @@ test("known create can resume without reallocation; wrong scopes and retired cac
   const remove = vi.fn(async () => {
     await Promise.resolve();
   });
-  await cleanupPersistentSession(id, scope, remove);
-  await cleanupPersistentSession(id, scope, remove);
+  await cleanupPersistentSession(id, resolver(remove));
+  await cleanupPersistentSession(id, resolver(remove));
   expect(remove).toHaveBeenCalledExactlyOnceWith(allocation.name);
 });
 test("retirement waits for an in-flight provider operation before allowing deletion", async () => {
@@ -123,10 +127,13 @@ test("retirement waits for an in-flight provider operation before allowing delet
   })();
   release.resolve(true);
   await Promise.all([writer, retired]);
-  await cleanupPersistentSession(id, scope, async () => {
-    await Promise.resolve();
-    order.push("deleted");
-  });
+  await cleanupPersistentSession(
+    id,
+    resolver(async () => {
+      await Promise.resolve();
+      order.push("deleted");
+    })
+  );
   expect(order).toEqual(["writer settled", "retired", "deleted"]);
 });
 test("shutdown stops only its dev run and retains files/ownership for resume", async () => {
@@ -144,9 +151,9 @@ test("shutdown stops only its dev run and retains files/ownership for resume", a
   const stop = vi.fn(async () => {
     await Promise.resolve();
   });
-  await stopDevelopmentPersistentSandboxes("another-run", scope, stop);
+  await stopDevelopmentPersistentSandboxes("another-run", resolver(stop));
   expect(stop).not.toHaveBeenCalled();
-  await stopDevelopmentPersistentSandboxes(id.devRunId, scope, stop);
+  await stopDevelopmentPersistentSandboxes(id.devRunId, resolver(stop));
   expect(stop).toHaveBeenCalledExactlyOnceWith(allocation.name);
   const resumed = await reservePersistentSandbox(id, scope);
   expect(resumed.create).toBe(false);
@@ -170,4 +177,52 @@ test("retiring a root blocks a child's cached handles and new allocations", asyn
       await Promise.resolve();
     })
   ).rejects.toThrow("retired");
+});
+
+test("empty and already deleted sessions require no provider, but owned resources do", async () => {
+  const id = identity();
+  const missing = vi.fn((): never => {
+    throw new Error("No provider installed");
+  });
+  await retirePersistentSession(id);
+  await cleanupPersistentSession(id, missing);
+  await stopDevelopmentPersistentSandboxes(id.devRunId, missing);
+  expect(missing).not.toHaveBeenCalled();
+
+  const owned = identity();
+  const allocation = await reservePersistentSandbox(owned, scope);
+  await accessPersistentSandbox(
+    owned,
+    scope,
+    allocation.name,
+    async () => {
+      await Promise.resolve();
+    },
+    true
+  );
+  await expect(
+    stopDevelopmentPersistentSandboxes(owned.devRunId, missing)
+  ).rejects.toThrow("No provider");
+  await retirePersistentSession(owned);
+  await expect(cleanupPersistentSession(owned, missing)).rejects.toThrow(
+    "No provider"
+  );
+  const wrong = () => ({
+    ...resolver(async () => {
+      await Promise.resolve();
+    })(),
+    scope: { ...scope, scopeId: "foreign" },
+  });
+  await expect(cleanupPersistentSession(owned, wrong)).rejects.toThrow(
+    "scope changed"
+  );
+  await cleanupPersistentSession(
+    owned,
+    resolver(async () => {
+      await Promise.resolve();
+    })
+  );
+  missing.mockClear();
+  await cleanupPersistentSession(owned, missing);
+  expect(missing).not.toHaveBeenCalled();
 });

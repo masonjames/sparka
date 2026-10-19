@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
 }));
 vi.mock("../sandbox/runtime", () => ({
-  getSandboxProvider: () => ({
+  getPersistentSandboxProvider: () => ({
     scope: { providerId: "vercel", accountId: "account", scopeId: "project" },
     persistent: { deleteAndConfirmAbsent: mocks.remove },
   }),
@@ -62,10 +62,9 @@ it("rechecks app ownership for all descendants when workflow coverage was retain
   expect(mocks.end).toHaveBeenCalledOnce();
 });
 it.each([
-  null,
   { ownerId: "foreign", sessionId: "root", rootSessionId: "root" },
   { ownerId: "owner", sessionId: "root", rootSessionId: "foreign" },
-])("rejects missing or mismatched ownership: %j", async (identity) => {
+])("rejects mismatched ownership: %j", async (identity) => {
   mocks.identity.mockResolvedValue(identity);
   await expect(
     verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
@@ -95,7 +94,24 @@ it("retires before purging and propagates unconfirmed deletion", async () => {
   );
   expect(mocks.cleanup).toHaveBeenCalledWith(
     { ownerId: "owner", sessionId: "child", rootSessionId: "root" },
-    { providerId: "vercel", accountId: "account", scopeId: "project" },
-    mocks.remove
+    expect.any(Function)
+  );
+});
+
+it("retires a verified native session that never allocated an app filesystem", async () => {
+  mocks.identity.mockResolvedValue(null);
+  await manageEveLocalResources(
+    "owner",
+    { sessionId: "child", rootSessionId: "root" },
+    "purge"
+  );
+  expect(mocks.retire).toHaveBeenCalledWith({
+    ownerId: "owner",
+    sessionId: "child",
+    rootSessionId: "root",
+  });
+  expect(mocks.cleanup).toHaveBeenCalledWith(
+    { ownerId: "owner", sessionId: "child", rootSessionId: "root" },
+    expect.any(Function)
   );
 });

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   write: vi.fn(),
   binding: vi.fn(),
 }));
+vi.mock("../sandbox/provider", () => ({ supportsPersistentSandbox: true }));
 vi.mock("../env", () => ({ env: {} }));
 vi.mock("../db/eve-queries", () => ({ readEveSessionMapping: mocks.binding }));
 vi.mock("./persistent-sandbox-store", () => ({
@@ -27,6 +28,7 @@ vi.mock("./persistent-sandbox-store", () => ({
   cleanupPersistentSession: mocks.cleanup,
 }));
 vi.mock("../sandbox/runtime", () => ({
+  getPersistentSandboxProvider: vi.fn(),
   getSandboxProvider: () => ({
     scope: { providerId: "vercel", accountId: "account", scopeId: "project" },
     persistent: {
