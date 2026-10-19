@@ -1,13 +1,9 @@
-import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 
 import { resolveWorkflowWorld } from "./world-config";
 
 export const localDeletionAvailable = (): boolean => {
-  if (
-    config.persistentSandboxProvider === "vercel" ||
-    resolveWorkflowWorld(env) === "vercel"
-  ) {
+  if (resolveWorkflowWorld(env) === "vercel") {
     return false;
   }
   try {

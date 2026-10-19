@@ -2,9 +2,25 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
 
 const mocks = vi.hoisted(() => ({
+  config: { persistentSandbox: "native" },
+  identity: vi.fn(),
+  retire: vi.fn(),
+  cleanup: vi.fn(),
   end: vi.fn(),
   fetch: vi.fn<typeof fetch>(),
   verify: vi.fn(),
+}));
+vi.mock("../config", () => ({ config: mocks.config }));
+vi.mock("../sandbox/runtime", () => ({
+  getSandboxProvider: () => ({
+    scope: {},
+    persistent: { deleteAndConfirmAbsent: vi.fn() },
+  }),
+}));
+vi.mock("./persistent-sandbox-store", () => ({
+  readPersistentIdentity: mocks.identity,
+  retirePersistentSession: mocks.retire,
+  cleanupPersistentSession: mocks.cleanup,
 }));
 vi.mock("postgres", () => ({ default: () => ({ end: mocks.end }) }));
 vi.mock("node:fs/promises", () => ({
@@ -24,6 +40,7 @@ vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 const inventories = [{ sessionId: "root", runIds: ["root", "child"] }];
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.config.persistentSandbox = "native";
   vi.stubGlobal("fetch", mocks.fetch);
   mocks.verify.mockResolvedValue(["root", "child"]);
   mocks.fetch.mockImplementation(
@@ -99,4 +116,26 @@ it("does not treat failed worker retirement as absence", async () => {
   await expect(
     verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
   ).rejects.toThrow("unconfirmed");
+});
+
+it("uses app inventory for every descendant and never claims Microsandbox absence", async () => {
+  mocks.config.persistentSandbox = "app";
+  mocks.identity.mockImplementation(
+    async (sessionId: string) =>
+      await Promise.resolve({
+        ownerId: "owner",
+        sessionId,
+        rootSessionId: "root",
+      })
+  );
+  await verifyLocalEveFamilyCoverage("owner", "/expected", inventories);
+  expect(mocks.retire).toHaveBeenCalledTimes(2);
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});
+it("rejects a missing persistent profile instead of certifying old native resources", async () => {
+  mocks.config.persistentSandbox = "app";
+  mocks.identity.mockResolvedValue(null);
+  await expect(
+    verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
+  ).rejects.toThrow("coverage is unavailable");
 });

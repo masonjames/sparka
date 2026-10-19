@@ -1,3 +1,10 @@
+import { config } from "../config";
+import { getSandboxProvider } from "../sandbox/runtime";
+import {
+  readPersistentIdentity,
+  retirePersistentSession,
+  cleanupPersistentSession,
+} from "./persistent-sandbox-store";
 import { realpath } from "node:fs/promises";
 import postgres from "postgres";
 import { z } from "zod";
@@ -26,6 +33,29 @@ export const manageEveLocalResources = async (
   scope: { readonly sessionId: string; readonly rootSessionId: string },
   action: "retire" | "purge"
 ): Promise<number> => {
+  if (config.persistentSandbox === "app") {
+    const identity = await readPersistentIdentity(scope.sessionId);
+    if (
+      !identity ||
+      identity.ownerId !== ownerId ||
+      identity.rootSessionId !== scope.rootSessionId
+    ) {
+      throw new Error("App-owned persistent sandbox coverage is unavailable.");
+    }
+    await retirePersistentSession(identity);
+    if (action === "purge") {
+      const provider = getSandboxProvider();
+      if (!provider.persistent) {
+        throw new Error("Persistent cleanup provider is unavailable.");
+      }
+      await cleanupPersistentSession(
+        identity,
+        provider.scope,
+        provider.persistent.deleteAndConfirmAbsent
+      );
+    }
+    return 0;
+  }
   const response = await fetch(
     new URL(
       `/eve/chat/v1/session/${encodeURIComponent(scope.sessionId)}/local-resources`,

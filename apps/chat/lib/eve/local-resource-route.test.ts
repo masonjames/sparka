@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
     >(),
   manage: vi.fn(),
   auth: vi.fn().mockResolvedValue({ ownerId: "owner" }),
-  config: { persistentSandboxProvider: "vercel" },
+  config: { persistentSandbox: "app" },
 }));
 vi.mock("../config", () => ({ config: mocks.config }));
 vi.mock("./gateway-auth", () => ({ authenticateEveGateway: mocks.auth }));

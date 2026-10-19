@@ -401,11 +401,11 @@ const configDescriptionSchema = z.object({
   }),
   organization: createOrganizationSchema(),
   policies: createPoliciesSchema(),
-  persistentSandboxProvider: z
-    .enum(["auto", "vercel"])
-    .default("auto")
+  persistentSandbox: z
+    .enum(["native", "app"])
+    .default("native")
     .describe(
-      "EVE session filesystem provider; independent of code execution. Vercel is opt-in for new isolated sessions while native deletion support is validated."
+      "Persistent filesystem lifecycle: native preserves existing EVE selection; app uses the installed ChatJS provider. Use app only with new sessions in an isolated world."
     ),
   pricing: pricingConfigSchema.optional(),
   services: createServicesSchema(),
@@ -448,11 +448,11 @@ const configSchema = z.object({
     privacy: { title: "Privacy Policy" },
     terms: { title: "Terms of Service" },
   }),
-  persistentSandboxProvider: z
-    .enum(["auto", "vercel"])
-    .default("auto")
+  persistentSandbox: z
+    .enum(["native", "app"])
+    .default("native")
     .describe(
-      "EVE session filesystem provider; independent of code execution. Vercel is opt-in for new isolated sessions while native deletion support is validated."
+      "Persistent filesystem lifecycle: native preserves existing EVE selection; app uses the installed ChatJS provider. Use app only with new sessions in an isolated world."
     ),
   pricing: pricingConfigSchema.optional(),
   services: createServicesSchema().default({

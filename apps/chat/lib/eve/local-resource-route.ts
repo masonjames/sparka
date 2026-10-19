@@ -65,7 +65,7 @@ export const eveLocalResourceRoute = POST(
       return Response.json({ error: "Invalid request" }, { status: 400 });
     }
     // Microsandbox absence cannot prove cleanup of another provider's resources.
-    if (config.persistentSandboxProvider === "vercel") {
+    if (config.persistentSandbox === "app") {
       return Response.json(
         { error: "Persistent Vercel sandbox cleanup is not yet supported." },
         { status: 501 }
