@@ -1,3 +1,5 @@
+import { isGuestSession } from "../lib/eve/session-identity";
+import { resolveGuestModel } from "../lib/eve/guest-model";
 import { defineAgent, defineDynamic } from "eve";
 import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
@@ -35,6 +37,9 @@ export default defineAgent({
         event: unknown,
         context: DynamicResolveContext
       ) => {
+        if (isGuestSession(context.session)) {
+          return await resolveGuestModel();
+        }
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
           selectedModel.update(() => ({ modelId }));
