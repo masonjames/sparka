@@ -82,7 +82,8 @@
     "typescript": "6.0.2",
     "uiverify": "^1.7.0",
     "ultracite": "8.0.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "zod": "4.5.4"
   },
   "overrides": {
     "//astro": "Pinned to Blume's Astro version so workspace hoisting cannot bind Blume integrations to an incompatible copy.",

@@ -1569,6 +1569,9 @@ it(
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
     ).toContain("DAYTONA_API_KEY");
+    expect(
+      await Bun.file(nodePath.join(cwd, "lib/sandbox/persistent.ts")).exists()
+    ).toBe(false);
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "lint"]);
   },
