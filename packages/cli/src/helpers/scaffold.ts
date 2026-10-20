@@ -1,3 +1,4 @@
+import { copyDevelopmentSupervisor } from "./copy-development-supervisor";
 import {
   access,
   cp,
@@ -155,6 +156,7 @@ const writePnpmWorkspaceConfig = async (
 const applyChatTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
+  await copyDevelopmentSupervisor(getRepoRoot(), destination);
   await Promise.all(
     ["components/github-link.tsx", "components/docs-link.tsx"].map(
       async (file): Promise<void> => {

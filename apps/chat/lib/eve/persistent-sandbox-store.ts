@@ -2,8 +2,15 @@ import { createHash } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import type { PersistentSandboxProvider } from "@chat-js/sandboxes/persistent";
 import type { SandboxScope } from "@chat-js/sandboxes/provider";
-import { db } from "../db/client";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { databaseConnection } from "../db/connection";
+import { env } from "../env";
 import { evePersistentSandbox, eveSandboxSession } from "../db/schema";
+
+// Remote operations hold their fence until settled; isolate them from app queries.
+const connection = databaseConnection(env);
+const db = drizzle(postgres(connection.url, { ...connection.options, max: 2 }));
 
 interface SessionIdentity {
   sessionId: string;
@@ -276,41 +283,52 @@ export const stopDevelopmentPersistentSandboxes = async (
     .select()
     .from(eveSandboxSession)
     .where(eq(eveSandboxSession.devRunId, devRunId));
+  const failures: unknown[] = [];
   for (const identity of sessions) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Stop one exact development owner's allocation at a time; keep failed ownership for retry.
-    await db.transaction(async (tx) => {
-      await lock(tx, identity.rootSessionId);
-      const currentRows = await tx
-        .select()
-        .from(eveSandboxSession)
-        .where(eq(eveSandboxSession.sessionId, identity.sessionId));
-      const current = currentRows.at(0);
-      if (current?.devRunId !== devRunId) {
-        return;
-      }
-      const resources = await tx
-        .select()
-        .from(evePersistentSandbox)
-        .where(eq(evePersistentSandbox.sessionId, identity.sessionId));
-      for (const resource of resources) {
-        if (resource.state === "pending") {
-          throw new Error(
-            "Uncertain persistent allocation needs reconciliation before shutdown is confirmed."
-          );
+    await db
+      .transaction(async (tx) => {
+        await lock(tx, identity.rootSessionId);
+        const currentRows = await tx
+          .select()
+          .from(eveSandboxSession)
+          .where(eq(eveSandboxSession.sessionId, identity.sessionId));
+        const current = currentRows.at(0);
+        if (current?.devRunId !== devRunId) {
+          return;
         }
-        if (resource.state === "deleted") {
-          continue;
+        const resources = await tx
+          .select()
+          .from(evePersistentSandbox)
+          .where(eq(evePersistentSandbox.sessionId, identity.sessionId));
+        for (const resource of resources) {
+          if (resource.state === "pending") {
+            throw new Error(
+              "Uncertain persistent allocation needs reconciliation before shutdown is confirmed."
+            );
+          }
+          if (resource.state === "deleted") {
+            continue;
+          }
+          const provider = resolveProvider();
+          assertScope(resource, provider.scope);
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Provider stop must finish before detaching this development lease.
+          await provider.persistent.stop(resource.name);
         }
-        const provider = resolveProvider();
-        assertScope(resource, provider.scope);
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Provider stop must finish before detaching this development lease.
-        await provider.persistent.stop(resource.name);
-      }
-      await tx
-        .update(eveSandboxSession)
-        .set({ devRunId: null })
-        .where(eq(eveSandboxSession.sessionId, identity.sessionId));
-    });
+        await tx
+          .update(eveSandboxSession)
+          .set({ devRunId: null })
+          .where(eq(eveSandboxSession.sessionId, identity.sessionId));
+      })
+      .catch((error: unknown) => {
+        failures.push(error);
+      });
+  }
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures,
+      `Persistent sandbox shutdown is incomplete: ${failures.map(String).join("; ")}`
+    );
   }
 };
 export type { SessionIdentity };

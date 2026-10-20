@@ -265,3 +265,21 @@ test("failed recovery prevents a replacement worker from starting", async () => 
   await expect(state.completion).rejects.toThrow("cleanup unresolved");
   expect(state.children).toHaveLength(0);
 });
+
+test("shutdown during cleanup preparation releases the intent without starting a worker", async () => {
+  const prepared = Promise.withResolvers<boolean>();
+  const prepareSandboxCleanup = vi
+    .fn<(runId: string) => Promise<void>>()
+    .mockImplementation(async () => {
+      await prepared.promise;
+    });
+  const finishSandboxCleanup = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const state = fixture({ prepareSandboxCleanup, finishSandboxCleanup });
+  state.shutdown.abort();
+  prepared.resolve(true);
+  await state.completion;
+  expect(state.children).toHaveLength(0);
+  expect(finishSandboxCleanup).toHaveBeenCalledExactlyOnceWith(
+    prepareSandboxCleanup.mock.calls[0]?.[0]
+  );
+});

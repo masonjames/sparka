@@ -12,23 +12,27 @@ const OPERATION_TIMEOUT_MS = 30_000;
 const SESSION_TIMEOUT_MS = 1_800_000;
 const NOT_FOUND = 404;
 const resolvePath = (path: string): string => posix.resolve("/workspace", path);
-const signal = (): AbortSignal => AbortSignal.timeout(OPERATION_TIMEOUT_MS);
+const signal = (upstream?: AbortSignal): AbortSignal =>
+  AbortSignal.any([
+    AbortSignal.timeout(OPERATION_TIMEOUT_MS),
+    ...(upstream ? [upstream] : []),
+  ]);
 
 const session = (sandbox: Sandbox): PersistentSandbox => {
   const read: PersistentSandbox["readBinaryFile"] = async (options) =>
     await sandbox.readFileToBuffer(
       { path: resolvePath(options.path) },
-      { signal: options.abortSignal ?? signal() }
+      { signal: signal(options.abortSignal) }
     );
   const write: PersistentSandbox["writeBinaryFile"] = async (options) => {
     const path = resolvePath(options.path);
     await sandbox.fs.mkdir(posix.dirname(path), {
       recursive: true,
-      signal: options.abortSignal ?? signal(),
+      signal: signal(options.abortSignal),
     });
     await sandbox.writeFiles(
       [{ path, content: Buffer.from(options.content) }],
-      { signal: options.abortSignal ?? signal() }
+      { signal: signal(options.abortSignal) }
     );
   };
   return {
@@ -83,20 +87,21 @@ const session = (sandbox: Sandbox): PersistentSandbox => {
       await sandbox.fs.rm(resolvePath(options.path), {
         force: options.force,
         recursive: options.recursive,
-        signal: options.abortSignal ?? signal(),
+        signal: signal(options.abortSignal),
       });
     },
     async run(options) {
+      const deadline = signal(options.abortSignal);
       const result = await sandbox.runCommand({
         cmd: "bash",
         args: ["-lc", options.command],
         cwd: resolvePath(options.workingDirectory ?? "."),
         env: options.env,
-        signal: options.abortSignal ?? signal(),
+        signal: deadline,
       });
       const [stdout, stderr] = await Promise.all([
-        result.stdout(),
-        result.stderr(),
+        result.stdout({ signal: deadline }),
+        result.stderr({ signal: deadline }),
       ]);
       return { exitCode: result.exitCode, stdout, stderr };
     },
@@ -106,61 +111,81 @@ const session = (sandbox: Sandbox): PersistentSandbox => {
         args: ["-lc", options.command],
         cwd: resolvePath(options.workingDirectory ?? "."),
         env: options.env,
-        signal: options.abortSignal ?? signal(),
+        signal: signal(options.abortSignal),
         detached: true,
       });
-      // Consume the multiplexed stream once; tee preserves output for either reader.
-      const iterator = command.logs()[Symbol.asyncIterator]();
-      interface Log {
-        stream: "stdout" | "stderr";
-        data: string;
-      }
-      const logs = new ReadableStream<Log>({
-        async pull(controller) {
-          try {
-            const next = await iterator.next();
-            if (next.done === true) {
-              controller.close();
-            } else {
-              controller.enqueue(next.value);
-            }
-          } catch (error) {
-            controller.error(error);
+      // Read remote output only on consumer demand; the app fences every pull.
+      const logs = command.logs({ signal: signal(options.abortSignal) });
+      const iterator = logs[Symbol.asyncIterator]();
+      const buffers: Record<"stdout" | "stderr", string[]> = {
+        stdout: [],
+        stderr: [],
+      };
+      const cancelled = { stdout: false, stderr: false };
+      let done = false;
+      let pending: Promise<void> | undefined;
+      const advance = async (): Promise<void> => {
+        pending ??= (async () => {
+          const next = await iterator.next();
+          if (next.done === true) {
+            done = true;
+          } else if (!cancelled[next.value.stream]) {
+            buffers[next.value.stream].push(next.value.data);
           }
-        },
-        async cancel() {
-          await iterator.return?.();
-        },
-      });
-      const [out, err] = logs.tee();
+        })();
+        const current = pending;
+        try {
+          await current;
+        } finally {
+          if (pending === current) {
+            pending = undefined;
+          }
+        }
+      };
       const encoder = new TextEncoder();
-      const stdout = out.pipeThrough(
-        new TransformStream<Log, Uint8Array>({
-          transform(log, controller) {
-            if (log.stream === "stdout") {
-              controller.enqueue(encoder.encode(log.data));
-            }
+      const output = (
+        target: "stdout" | "stderr"
+      ): ReadableStream<Uint8Array> =>
+        new ReadableStream(
+          {
+            async pull(controller) {
+              while (buffers[target].length === 0) {
+                if (done) {
+                  break;
+                }
+                // oxlint-disable-next-line eslint/no-await-in-loop -- Preserve multiplexed output order until this consumer has a chunk.
+                await advance();
+              }
+              const chunk = buffers[target].shift();
+              if (chunk === undefined) {
+                controller.close();
+              } else {
+                controller.enqueue(encoder.encode(chunk));
+              }
+            },
+            async cancel() {
+              cancelled[target] = true;
+              buffers[target] = [];
+              if (cancelled.stdout && cancelled.stderr) {
+                await iterator.return?.();
+              }
+            },
           },
-        })
-      );
-      const stderr = err.pipeThrough(
-        new TransformStream<Log, Uint8Array>({
-          transform(log, controller) {
-            if (log.stream === "stderr") {
-              controller.enqueue(encoder.encode(log.data));
-            }
-          },
-        })
-      );
+          { highWaterMark: 0 }
+        );
+      const stdout = output("stdout");
+      const stderr = output("stderr");
       return {
         stdout,
         stderr,
         async wait() {
-          const result = await command.wait();
+          const result = await command.wait({
+            signal: signal(options.abortSignal),
+          });
           return { exitCode: result.exitCode };
         },
         async kill() {
-          await command.kill();
+          await command.kill(undefined, { abortSignal: signal() });
         },
       };
     },
@@ -197,7 +222,7 @@ export const createPersistentProvider = (
         persistent: true,
         image: "vcr.vercel.com/vercel/eve/base:0.80.1",
         timeout: SESSION_TIMEOUT_MS,
-        signal: abortSignal,
+        signal: signal(abortSignal),
         ...auth,
       });
       if (sandbox.name !== name || !sandbox.persistent) {

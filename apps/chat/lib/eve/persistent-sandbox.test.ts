@@ -104,3 +104,34 @@ it("retires before deleting and keeps stop distinct from deletion", async () => 
     mocks.cleanup.mock.invocationCallOrder[0]
   );
 });
+
+it("fences cached process methods and lazy output/file reads after retirement", async () => {
+  const pull = vi.fn(
+    (controller: ReadableStreamDefaultController<Uint8Array>) => {
+      controller.enqueue(new Uint8Array([1]));
+    }
+  );
+  const output = () => new ReadableStream({ pull }, { highWaterMark: 0 });
+  const wait = vi.fn().mockResolvedValue({ exitCode: 0 });
+  const kill = vi.fn<() => Promise<void>>().mockResolvedValue();
+  mocks.create.mockResolvedValue({
+    name: "resource",
+    spawn: vi
+      .fn()
+      .mockResolvedValue({ stdout: output(), stderr: output(), wait, kill }),
+    readFile: vi.fn().mockResolvedValue(output()),
+  });
+  const result = await implementation.start(context, undefined, []);
+  const process = await result.handle.sandbox.spawn({ command: "fixture" });
+  const file = await result.handle.sandbox.readFile({ path: "fixture" });
+  expect(pull).not.toHaveBeenCalled();
+  mocks.access.mockRejectedValue(new Error("session retired"));
+  await expect(process.wait()).rejects.toThrow("retired");
+  await expect(process.kill()).rejects.toThrow("retired");
+  await expect(process.stdout.getReader().read()).rejects.toThrow("retired");
+  await expect(process.stderr.getReader().read()).rejects.toThrow("retired");
+  await expect(file?.getReader().read()).rejects.toThrow("retired");
+  expect(pull).not.toHaveBeenCalled();
+  expect(wait).not.toHaveBeenCalled();
+  expect(kill).not.toHaveBeenCalled();
+});

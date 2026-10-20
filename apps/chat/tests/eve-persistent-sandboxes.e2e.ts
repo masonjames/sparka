@@ -158,6 +158,32 @@ test("shutdown stops only its dev run and retains files/ownership for resume", a
   const resumed = await reservePersistentSandbox(id, scope);
   expect(resumed.create).toBe(false);
 });
+
+test("an unresolved allocation does not prevent stopping other sessions in the run", async () => {
+  const unresolved = identity();
+  await reservePersistentSandbox(unresolved, scope);
+  const ready = { ...identity(), devRunId: unresolved.devRunId };
+  const allocation = await reservePersistentSandbox(ready, scope);
+  await accessPersistentSandbox(
+    ready,
+    scope,
+    allocation.name,
+    async () => {
+      await Promise.resolve();
+    },
+    true
+  );
+  const stop = vi.fn<() => Promise<void>>().mockResolvedValue();
+  await expect(
+    stopDevelopmentPersistentSandboxes(unresolved.devRunId, resolver(stop))
+  ).rejects.toThrow("Uncertain");
+  expect(stop).toHaveBeenCalledExactlyOnceWith(allocation.name);
+  stop.mockClear();
+  await expect(
+    stopDevelopmentPersistentSandboxes(unresolved.devRunId, resolver(stop))
+  ).rejects.toThrow("Uncertain");
+  expect(stop).not.toHaveBeenCalled();
+});
 test("retiring a root blocks a child's cached handles and new allocations", async () => {
   const root = identity();
   const child = { ...identity(), rootSessionId: root.sessionId };

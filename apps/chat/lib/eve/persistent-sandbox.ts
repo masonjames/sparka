@@ -83,6 +83,34 @@ const handle = (
       sandbox.name,
       operation
     );
+  const stream = (
+    source: ReadableStream<Uint8Array>
+  ): ReadableStream<Uint8Array> => {
+    const reader = source.getReader();
+    return new ReadableStream(
+      {
+        async pull(controller) {
+          const next = await access(async () => await reader.read());
+          if (next.done) {
+            reader.releaseLock();
+            controller.close();
+          } else {
+            controller.enqueue(next.value);
+          }
+        },
+        async cancel(reason: unknown) {
+          try {
+            await access(async () => {
+              await reader.cancel(reason);
+            });
+          } finally {
+            reader.releaseLock();
+          }
+        },
+      },
+      { highWaterMark: 0 }
+    );
+  };
   return {
     // Fence cached handles too: EVE may retain a handle after stop/delete.
     sandbox: {
@@ -90,10 +118,25 @@ const handle = (
       resolvePath: sandbox.resolvePath,
       run: async (options) =>
         await access(async () => await sandbox.run(options)),
-      spawn: async (options) =>
-        await access(async () => await sandbox.spawn(options)),
-      readFile: async (options) =>
-        await access(async () => await sandbox.readFile(options)),
+      spawn: async (options) => {
+        const process = await access(async () => await sandbox.spawn(options));
+        return {
+          stdout: stream(process.stdout),
+          stderr: stream(process.stderr),
+          wait: async () => await access(async () => await process.wait()),
+          kill: async () => {
+            await access(async () => {
+              await process.kill();
+            });
+          },
+        };
+      },
+      readFile: async (options) => {
+        const content = await access(
+          async () => await sandbox.readFile(options)
+        );
+        return content === null ? null : stream(content);
+      },
       readBinaryFile: async (options) =>
         await access(async () => await sandbox.readBinaryFile(options)),
       readTextFile: async (options) =>
@@ -181,16 +224,17 @@ export const appSandboxProvider = (): SandboxProviderImplementation<
         if (!reservation.create) {
           return await persistent.open(reservation.name);
         }
+        const initializationSignal = AbortSignal.timeout(30_000);
         const created = await persistent.create({
           name: reservation.name,
-          signal: AbortSignal.timeout(30_000),
+          signal: initializationSignal,
         });
         for (const file of artifact) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Initialize each file before confirming the persistent allocation is ready.
           await created.writeBinaryFile({
             path: file.path,
             content: Buffer.from(file.content, "base64"),
-            abortSignal: AbortSignal.timeout(30_000),
+            abortSignal: initializationSignal,
           });
         }
         return created;

@@ -47,15 +47,19 @@ const runtime: SupervisorRuntime = {
   snapshot: () =>
     execFileSync("ps", ["-axo", "pid=,ppid=,lstart="], { encoding: "utf-8" }),
   start: (runId) =>
-    spawn(process.execPath, ["run", "dev"], {
-      detached: true,
-      env: {
-        ...process.env,
-        CHATJS_SANDBOX_DEV_RUN_ID: runId,
-        NODE_OPTIONS: "--max-old-space-size=4096",
-      },
-      stdio: "inherit",
-    }),
+    spawn(
+      process.versions.bun === undefined ? "npm" : process.execPath,
+      ["run", "dev"],
+      {
+        detached: true,
+        env: {
+          ...process.env,
+          CHATJS_SANDBOX_DEV_RUN_ID: runId,
+          NODE_OPTIONS: "--max-old-space-size=4096",
+        },
+        stdio: "inherit",
+      }
+    ),
 };
 
 const hasChildProcessId = (pid: number | undefined): pid is number =>
@@ -243,8 +247,16 @@ export const supervise = async (
       launcherStarted = undefined;
       const sandboxRunId = randomUUID();
       if (environment.prepareSandboxCleanup) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile dead runs before any replacement worker can allocate resources.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate prior cleanup intents before a replacement worker can allocate resources.
         await environment.prepareSandboxCleanup(sandboxRunId);
+      }
+      if (shutdown.aborted) {
+        if (environment.finishSandboxCleanup) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Release the prepared intent without starting a worker after shutdown.
+          await environment.finishSandboxCleanup(sandboxRunId);
+        }
+        outcome = "shutdown";
+        continue;
       }
       child = environment.start(sandboxRunId);
       try {
@@ -298,14 +310,16 @@ export const supervise = async (
 };
 
 if (import.meta.main) {
-  const origin = process.env.APP_URL;
+  const origin =
+    process.env.APP_URL ?? `http://localhost:${process.env.PORT ?? "3000"}`;
   if (
     typeof origin !== "string" ||
     origin.length === EMPTY_VALUE_LENGTH ||
     !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)
   ) {
-    throw new Error("Run through bun dev:supervise with a local worktree URL.");
+    throw new Error("Run through bun dev:supervise with a local app URL.");
   }
+  process.env.APP_URL = origin;
   const shutdown = new AbortController();
   const handleShutdownSignal = (): void => {
     shutdown.abort();

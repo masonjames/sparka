@@ -1,15 +1,25 @@
 import { execFile } from "node:child_process";
-import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import {
+  link,
+  mkdir,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import pathModule from "node:path";
 import { promisify } from "node:util";
 import { z } from "zod";
 
 // oxlint-disable-next-line typescript/strict-void-return -- Node promisify uses execFile's custom promise implementation; its ChildProcess return is intentionally ignored.
 const execute = promisify(execFile);
-const directory = pathModule.join(
-  process.cwd(),
-  "apps/chat/.eve/chatjs-cleanup"
-);
+const appDirectory = existsSync(
+  pathModule.join(process.cwd(), "chat.config.ts")
+)
+  ? process.cwd()
+  : pathModule.join(process.cwd(), "apps/chat");
+const directory = pathModule.join(appDirectory, ".eve/chatjs-cleanup");
 const intent = z.object({
   pid: z.number().int().positive(),
   started: z.string(),
@@ -23,22 +33,46 @@ const processStart = async (pid: number): Promise<string | null> => {
       ["-p", String(pid), "-o", "lstart="],
       { timeout: 5000 }
     );
-    return stdout.trim() || null;
-  } catch {
-    return null;
+    if (stdout.trim()) {
+      return stdout.trim();
+    }
+    throw new Error("Process start identity is unavailable.");
+  } catch (error) {
+    try {
+      process.kill(pid, 0);
+    } catch (probeError) {
+      if (
+        probeError instanceof Error &&
+        "code" in probeError &&
+        probeError.code === "ESRCH"
+      ) {
+        return null;
+      }
+    }
+    throw new Error("Cannot confirm supervisor process identity.", {
+      cause: error,
+    });
   }
 };
 const stop = async (runId: string): Promise<void> => {
   await execute(
     process.execPath,
     [
-      "--tsconfig-override=apps/chat/tsconfig.json",
-      "--env-file=.env.local",
-      "--env-file=.env.worktree.local",
-      "apps/chat/scripts/stop-persistent-sandboxes.ts",
+      ...(process.versions.bun === undefined
+        ? [
+            "--import=tsx",
+            "--env-file-if-exists=.env.local",
+            "--env-file-if-exists=.env.worktree.local",
+          ]
+        : [
+            "--tsconfig-override=tsconfig.json",
+            "--env-file=.env.local",
+            "--env-file=.env.worktree.local",
+          ]),
+      "scripts/stop-persistent-sandboxes.ts",
       runId,
     ],
-    { cwd: process.cwd(), timeout: deadline }
+    { cwd: appDirectory, timeout: deadline }
   );
 };
 export const finishPersistentSandboxCleanup = async (
@@ -47,7 +81,7 @@ export const finishPersistentSandboxCleanup = async (
   await stop(runId);
   await rm(pathModule.join(directory, `${runId}.json`), { force: true });
 };
-/** Recover only dead supervisor runs in this checkout; never stop another live run. */
+/** Never infer worker termination from supervisor death; preserve uncertain intents. */
 export const preparePersistentSandboxCleanup = async (
   runId: string
 ): Promise<void> => {
@@ -66,16 +100,26 @@ export const preparePersistentSandboxCleanup = async (
     if ((await processStart(saved.pid)) === saved.started) {
       continue;
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Failed cleanup retains the original intent and blocks a fresh run.
-    await finishPersistentSandboxCleanup(saved.runId);
+    throw new Error(
+      `Supervisor ${saved.runId} exited without confirming worker termination. Stop its workers and reconcile its cleanup intent before restarting.`
+    );
   }
   const started = await processStart(process.pid);
   if (started === null) {
     throw new Error("Supervisor identity unavailable.");
   }
+  const temporary = pathModule.join(directory, `${runId}.tmp`);
   await writeFile(
-    pathModule.join(directory, `${runId}.json`),
+    temporary,
     JSON.stringify({ pid: process.pid, started, runId }),
-    { flag: "wx" }
+    {
+      flag: "wx",
+    }
   );
+  try {
+    // Link publishes the complete file atomically without overwriting an intent.
+    await link(temporary, pathModule.join(directory, `${runId}.json`));
+  } finally {
+    await rm(temporary, { force: true });
+  }
 };

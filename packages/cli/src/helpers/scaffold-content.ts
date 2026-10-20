@@ -61,6 +61,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/sandbox/sandbox.test.ts",
   "lib/sandbox/sandbox-auth.test.ts",
   "lib/sandbox/sandbox-test-environment.ts",
+  "lib/sandbox/persistent.test.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
