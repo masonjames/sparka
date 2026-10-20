@@ -135,3 +135,61 @@ it("fences cached process methods and lazy output/file reads after retirement", 
   expect(wait).not.toHaveBeenCalled();
   expect(kill).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  "copies a fenced file without nesting locks and rechecks retirement (%s)",
+  async (retireDuringRead) => {
+    let locked = false;
+    let retired = false;
+    mocks.access.mockImplementation(
+      async (_identity, _scope, _name, operation) => {
+        if (locked) {
+          throw new Error("nested session lock");
+        }
+        if (retired) {
+          throw new Error("session retired");
+        }
+        locked = true;
+        try {
+          return await operation();
+        } finally {
+          locked = false;
+        }
+      }
+    );
+    const source = new ReadableStream<Uint8Array>(
+      {
+        pull(controller) {
+          controller.enqueue(new Uint8Array([1, 2, 3]));
+          controller.close();
+          retired = retireDuringRead;
+        },
+      },
+      { highWaterMark: 0 }
+    );
+    mocks.create.mockResolvedValue({
+      name: "resource",
+      readFile: vi.fn().mockResolvedValue(source),
+      writeBinaryFile: mocks.write,
+    });
+    const result = await implementation.start(context, undefined, []);
+    const content = await result.handle.sandbox.readFile({ path: "source" });
+    if (content === null) {
+      throw new Error("Missing fixture file");
+    }
+    const copy = result.handle.sandbox.writeFile({
+      path: "destination",
+      content,
+    });
+    if (retireDuringRead) {
+      await expect(copy).rejects.toThrow("retired");
+      expect(mocks.write).not.toHaveBeenCalled();
+    } else {
+      await copy;
+      expect(mocks.write).toHaveBeenCalledWith({
+        path: "destination",
+        content: new Uint8Array([1, 2, 3]),
+      });
+    }
+  }
+);

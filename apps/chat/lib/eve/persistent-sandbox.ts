@@ -142,8 +142,12 @@ const handle = (
       readTextFile: async (options) =>
         await access(async () => await sandbox.readTextFile(options)),
       writeFile: async (options) => {
+        // The source may be another fenced read; consume it before locking the write.
+        const content = new Uint8Array(
+          await new Response(options.content).arrayBuffer()
+        );
         await access(async () => {
-          await sandbox.writeFile(options);
+          await sandbox.writeBinaryFile({ ...options, content });
         });
       },
       writeBinaryFile: async (options) => {
