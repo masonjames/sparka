@@ -8,6 +8,7 @@ import {
   eveChat,
   eveConversation,
   eveGuest,
+  eveWorkspace,
   guestRuntimeSession,
   guestRuntimeRate,
   user,
@@ -205,6 +206,7 @@ test("legacy read-only inventory ignores accounts and fully deleted guest famili
   const ownerId = randomUUID();
   const chatId = randomUUID();
   const conversationId = randomUUID();
+  const workspaceId = randomUUID();
   await database.insert(user).values({
     id: ownerId,
     email: `${ownerId}@example.test`,
@@ -213,8 +215,10 @@ test("legacy read-only inventory ignores accounts and fully deleted guest famili
   await database
     .insert(eveChat)
     .values({ id: chatId, ownerId, title: "Fixture" });
+  await database.insert(eveWorkspace).values({ id: workspaceId, ownerId });
   await database.insert(eveConversation).values({
     id: conversationId,
+    workspaceId,
     chatId,
     ownerId,
     operationId: randomUUID(),

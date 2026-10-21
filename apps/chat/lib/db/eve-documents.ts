@@ -1,3 +1,5 @@
+import { eveDeletionScope } from "./eve-deletion-scope";
+import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -120,13 +122,15 @@ const purgeEveFamilyDocuments = async (
         .where(
           and(
             eq(eveConversation.ownerId, ownerId),
-            eq(eveConversation.chatId, rootId)
+            eveDeletionScope(ownerId, rootId)
           )
         )
         .orderBy(eveConversation.id);
       if (
         family.length === 0 ||
-        family.some((row) => row.state !== "deleting")
+        family.some(
+          (row) => row.state !== "deleting" && row.state !== "deleted"
+        )
       ) {
         throw new Error(
           "The entire conversation family must be pending deletion."
@@ -171,8 +175,7 @@ const purgeEveFamilyDocuments = async (
             inArray(eveNamedDocumentCheckpoint.conversationId, ids)
           )
         );
-      // Keep the FK constraints intact: unexpected references from a surviving
-      // conversation fail the transaction instead of destroying its ancestry.
+      // Remove this member's pointers before computing surviving ancestry.
       await tx
         .delete(eveDocumentCheckpointEntry)
         .where(
@@ -202,7 +205,10 @@ const purgeEveFamilyDocuments = async (
         .where(
           and(
             eq(eveDocumentRevision.ownerId, ownerId),
-            inArray(eveDocumentRevision.conversationId, ids)
+            inArray(
+              eveDocumentRevision.id,
+              unretainedEveDocumentRevisionIds(ownerId, ids)
+            )
           )
         );
     }
@@ -396,19 +402,21 @@ const saveEveDocumentRevision = async (
  * @param {string} ownerId - Owner authorized to inspect the selected conversation.
  * @param {string} conversationId - Conversation whose current document head selects ancestry.
  * @param {string} documentId - Document identity scoped to that conversation head.
+ * @param {Pick<typeof db, "select">} reader - Existing transaction when capturing a consistent fork; defaults to the database.
  * @returns {Promise< Pick< typeof eveDocumentRevision.$inferSelect, "createdAt" | "id" | "kind" | "parentRevisionId" | "title" | "turnIndex" >[] >} Oldest-to-newest revision summaries, or no summaries when no head exists.
  */
 const getEveDocumentHistory = async (
   ownerId: string,
   conversationId: string,
-  documentId: string
+  documentId: string,
+  reader: Pick<typeof db, "select"> = db
 ): Promise<
   Pick<
     typeof eveDocumentRevision.$inferSelect,
     "createdAt" | "id" | "kind" | "parentRevisionId" | "title" | "turnIndex"
   >[]
 > => {
-  const headRows = await db
+  const headRows = await reader
     .select({ revisionId: eveDocumentHead.revisionId })
     .from(eveDocumentHead)
     .innerJoin(
@@ -429,7 +437,7 @@ const getEveDocumentHistory = async (
   if (!head) {
     return [];
   }
-  const revisions = await db
+  const revisions = await reader
     .select({
       createdAt: eveDocumentRevision.createdAt,
       id: eveDocumentRevision.id,
