@@ -79,3 +79,6 @@ apps/electron/branding.json
 
 # Local Dagger image exports and evidence
 /artifacts/
+
+# Repository-pinned Dagger CLI (verified by scripts/bootstrap-dagger.sh).
+.tools/
