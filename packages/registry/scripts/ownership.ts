@@ -72,7 +72,7 @@ const files = await Promise.all(
         : "";
     const role = fileRole(file.path, source);
     const included =
-      shouldCopyChatAppFile(file.path) &&
+      shouldCopyChatAppFile(file.path.split("/").join(path.sep)) &&
       !file.path.startsWith("lib/db/migrations/");
     const imports =
       present && role !== "test" && included && source !== ""
@@ -95,7 +95,7 @@ const files = await Promise.all(
       ...file,
       present,
       role,
-      scaffoldIncluded: included,
+      templateCopyEligible: included,
       crossings,
       unresolvedImports: imports.unresolved,
       unclassifiedImports: imports.edges.filter((edge) => !byPath.has(edge.to)),
@@ -129,7 +129,7 @@ const summary = {
 const result = process.argv.includes("--json")
   ? {
       scope:
-        "tracked reference app; current demo selection; static local imports",
+        "present tracked and non-ignored untracked reference-app files plus claimed targets; current demo selection; static local imports",
       summary,
       files,
     }

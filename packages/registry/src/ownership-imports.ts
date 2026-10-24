@@ -40,6 +40,17 @@ const localImports = (source: string, file: string): string[] => {
   );
 };
 
+const localImportTarget = (relativePath: string): string | undefined => {
+  const target = relativePath.replaceAll("\\", "/");
+  return path.win32.isAbsolute(target) ||
+    path.posix.isAbsolute(target) ||
+    target === ".." ||
+    target.startsWith("../") ||
+    target.includes("node_modules/")
+    ? undefined
+    : target;
+};
+
 const resolveImports = (
   file: string,
   source: string,
@@ -56,21 +67,22 @@ const resolveImports = (
       ts.sys
     ).resolvedModule;
     if (resolved) {
-      const target = path.relative(root, resolved.resolvedFileName);
-      if (!target.startsWith("../") && !target.includes("node_modules/")) {
-        edges.push({ from: file, to: target });
+      const target = localImportTarget(
+        path.relative(root, resolved.resolvedFileName)
+      );
+      if (target !== undefined) {
+        edges.push({ from: file.replaceAll("\\", "/"), to: target });
       }
     } else if (
       specifier.endsWith(".css") &&
       ts.sys.fileExists(path.resolve(root, path.dirname(file), specifier))
     ) {
-      edges.push({
-        from: file,
-        to: path.relative(
-          root,
-          path.resolve(root, path.dirname(file), specifier)
-        ),
-      });
+      const target = localImportTarget(
+        path.relative(root, path.resolve(root, path.dirname(file), specifier))
+      );
+      if (target !== undefined) {
+        edges.push({ from: file.replaceAll("\\", "/"), to: target });
+      }
     } else {
       unresolved.push(specifier);
     }
@@ -78,4 +90,4 @@ const resolveImports = (
   return { edges, unresolved };
 };
 
-export { localImports, resolveImports };
+export { localImports, localImportTarget, resolveImports };
