@@ -1,5 +1,7 @@
 # Issue #704: `no-underscore-dangle` audit
 
+The tables below retain the paths and hashes from the pinned audit. After the plugin reorganization, the MCP implementation lives at `packages/registry/src/plugins/mcp/src/oauth/mcp-client.ts`, with its installed copy at `apps/chat/plugins/mcp/oauth/mcp-client.ts`.
+
 ## Scope and provenance
 
 - Issue: https://github.com/FranciscoMoretti/chat-js/issues/704
