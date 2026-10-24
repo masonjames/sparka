@@ -1,8 +1,10 @@
+import { rejects } from "node:assert/strict";
 import { expect, mock, test } from "bun:test";
 
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import { OpenAICompatibleGateway } from "./openai-compatible/gateway";
+import { LiteLLMGateway } from "./litellm/gateway";
 import { OpenAIGateway } from "./openai/gateway";
 import { OpenRouterGateway } from "./openrouter/gateway";
 
@@ -216,3 +218,43 @@ test("OpenRouter preserves capability tag order and explicit empty-tag fields", 
   }
   expect(plainModel.tags).toBeUndefined();
 });
+
+for (const { Adapter, urlKey, otherUrlKey } of [
+  {
+    Adapter: LiteLLMGateway,
+    urlKey: "LITELLM_BASE_URL",
+    otherUrlKey: "OPENAI_COMPATIBLE_BASE_URL",
+  },
+  {
+    Adapter: OpenAICompatibleGateway,
+    urlKey: "OPENAI_COMPATIBLE_BASE_URL",
+    otherUrlKey: "LITELLM_BASE_URL",
+  },
+]) {
+  test.each([undefined, ""])(
+    `${Adapter.name} treats absent or empty URLs as missing configuration: %p`,
+    async (baseURL): Promise<void> => {
+      const fetch = mock();
+      const gateway = new Adapter({
+        env: { [urlKey]: baseURL, [otherUrlKey]: "https://unused.example" },
+        fetch,
+        getFallbackModels: (): AiGatewayModel[] => [fallback],
+      });
+      expect(await gateway.fetchModels()).toEqual([fallback]);
+      expect(fetch).not.toHaveBeenCalled();
+      expect(() => gateway.createLanguageModel("model")).toThrow(
+        "is not configured"
+      );
+    }
+  );
+  test(`${Adapter.name} still rejects malformed nonempty URLs`, async (): Promise<void> => {
+    const gateway = new Adapter({
+      env: {
+        [urlKey]: "invalid",
+        [otherUrlKey]: "https://unused.example",
+      },
+    });
+    await rejects(gateway.fetchModels());
+    expect(() => gateway.createLanguageModel("model")).toThrow();
+  });
+}
