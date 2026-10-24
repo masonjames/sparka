@@ -7,25 +7,21 @@ test("partial tool and workflow overrides retain required sibling defaults", () 
   const input = defineConfig({
     ai: {
       gateway: gatewayType,
-      tools: { deepResearch: { allowClarification: false } },
+      tools: { followupSuggestions: { enabled: true } },
       workflows: { title: gatewayModelDefaults.workflows.chat },
     },
   });
   const config = applyDefaults(input);
-  expect(config.ai.tools.deepResearch).toMatchObject({
-    allowClarification: false,
-    defaultModel: gatewayModelDefaults.tools.deepResearch.defaultModel,
-    finalReportModel: gatewayModelDefaults.tools.deepResearch.finalReportModel,
+  expect(config.ai.tools.followupSuggestions).toEqual({
+    enabled: true,
+    default: gatewayModelDefaults.roles.fast,
   });
-  expect(config.ai.tools.code.edits).toBe(
-    gatewayModelDefaults.tools.code.edits
-  );
   expect(config.ai.workflows).toMatchObject({
     chat: gatewayModelDefaults.workflows.chat,
     title: gatewayModelDefaults.workflows.chat,
   });
   expect(input).toHaveProperty("ai.tools", {
-    deepResearch: { allowClarification: false },
+    followupSuggestions: { enabled: true },
   });
   expect(defineConfig(input)).toBe(input);
 });
@@ -43,7 +39,7 @@ test("readonly config inputs preserve selections without changing the source", (
     gatewayModelDefaults.workflows.title,
   ]);
   expect(config.ai.tools.followupSuggestions).toEqual({
-    default: gatewayModelDefaults.tools.followupSuggestions.default,
+    default: gatewayModelDefaults.roles.fast,
     enabled: true,
   });
   expect(input.ai.tools.followupSuggestions).toEqual({ enabled: true });

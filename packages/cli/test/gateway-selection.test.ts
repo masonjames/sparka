@@ -54,6 +54,10 @@ const archive = nodePath.join(
 );
 
 const removeFixtureFiles = async (): Promise<void> => {
+  if (process.env.CHATJS_KEEP_GATEWAY_FIXTURE === "1") {
+    process.stderr.write(`Preserved gateway fixture: ${root}\n`);
+    return;
+  }
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const cleanupTimeout = Promise.withResolvers<never>();
   try {
@@ -714,11 +718,6 @@ const verifyOptionalToolFiles = async (
       nodePath.join(cwd, "tests/eve-sandbox-lifecycle.e2e.ts")
     ).exists()
   ).toBe(false);
-  if (gateway === "vercel" || gateway === "acme") {
-    expect(
-      await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")
-    ).toMatch(/image:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u);
-  }
   expect(
     await Bun.file(
       nodePath.join(cwd, "tools/platform/generate-video.ts")
@@ -734,11 +733,6 @@ const verifyOptionalToolFiles = async (
       nodePath.join(cwd, "tools/chatjs/generate-video/tool.ts")
     ).exists()
   ).toBe(gateway === "vercel");
-  if (gateway === "vercel") {
-    expect(
-      await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")
-    ).toMatch(/video:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u);
-  }
   expect(
     await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")
   ).not.toMatch(/(?:image|video):\s*\{[^}]*\benabled:/u);
@@ -1060,7 +1054,7 @@ import { applyDefaults, aiConfigSchema } from "./lib/config-schema";
 import assert from "node:assert/strict";
 assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
-assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, ${gateway === "vercel"});
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, workflows: { ...applyDefaults(config).ai.workflows, chat: "" } }).success, false);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { default: "" } } }).success, false);
@@ -1068,7 +1062,7 @@ ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, false);
 assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { default: "unsupported" } } }).success, false);`
 }
 
@@ -1119,7 +1113,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
       ).toBe(true);
       expect(
         await readFile(nodePath.join(cwd, "lib/sandbox/adapter.ts"), "utf-8")
-      ).toContain('from "@/lib/env"');
+      ).toContain('from "./vercel-sandbox-env"');
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
       expect(
@@ -1386,7 +1380,12 @@ for (const installAtCreation of [false, true]) {
     );
     expect(
       await readFile(nodePath.join(cwd, "lib/db/schema.ts"), "utf-8")
-    ).toContain('"McpConnector"');
+    ).not.toContain('"McpConnector"');
+    expect(
+      await Bun.file(
+        nodePath.join(cwd, "features/mcp/db/mcp-schema.ts")
+      ).exists()
+    ).toBe(installAtCreation);
     expect(
       await Bun.file(
         nodePath.join(cwd, "components/eve/eve-mcp-result.tsx")
@@ -1400,6 +1399,18 @@ for (const installAtCreation of [false, true]) {
       await run(cwd, ["node", cliEntry, "add", "mcp", "--yes"]);
     }
     expect(await Bun.file(nodePath.join(cwd, source)).exists()).toBe(true);
+    expect(
+      await readFile(
+        nodePath.join(cwd, "features/mcp/db/mcp-schema.ts"),
+        "utf-8"
+      )
+    ).toContain('"McpConnector"');
+    expect(
+      await readFile(
+        nodePath.join(cwd, "features/installed-database.ts"),
+        "utf-8"
+      )
+    ).toContain("features/mcp/db/mcp-schema.ts");
     expect(
       await readFile(
         nodePath.join(cwd, "features/installed-routers.ts"),
