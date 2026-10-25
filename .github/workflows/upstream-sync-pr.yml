@@ -23,6 +23,12 @@ jobs:
           ref: main
           fetch-depth: 0
           persist-credentials: false
+      - name: Bootstrap reviewed Dagger before merging upstream
+        id: dagger
+        shell: bash
+        run: |
+          dagger_bin="$(PROJECT_DAGGER_INSTALL_ROOT="$RUNNER_TEMP/dagger" ./scripts/bootstrap-dagger.sh)"
+          printf 'binary=%s\n' "$dagger_bin" >> "$GITHUB_OUTPUT"
       - name: Prepare direct merge
         id: merge
         env:
@@ -51,18 +57,16 @@ jobs:
           echo 'needed=true' >> "$GITHUB_OUTPUT"
       - name: Validate merged candidate with Dagger
         if: steps.merge.outputs.needed == 'true'
-        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
-        with:
-          version: v0.21.9
-          verb: call
-          args: check
+        shell: bash
+        env:
+          DAGGER_BIN: ${{ steps.dagger.outputs.binary }}
+        run: '"$DAGGER_BIN" --engine=image+docker://registry.dagger.io/engine:v1.0.0-beta.21 call check'
       - name: Build and smoke-test merged candidate with Dagger
         if: steps.merge.outputs.needed == 'true'
-        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
-        with:
-          version: v0.21.9
-          verb: call
-          args: smoke
+        shell: bash
+        env:
+          DAGGER_BIN: ${{ steps.dagger.outputs.binary }}
+        run: '"$DAGGER_BIN" --engine=image+docker://registry.dagger.io/engine:v1.0.0-beta.21 call smoke'
       - name: Publish draft PR
         if: steps.merge.outputs.needed == 'true'
         env:

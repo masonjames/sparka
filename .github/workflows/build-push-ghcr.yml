@@ -19,15 +19,22 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+      - name: Bootstrap reviewed Dagger without publication credentials
+        id: dagger
+        shell: bash
+        run: |
+          dagger_bin="$(PROJECT_DAGGER_INSTALL_ROOT="$RUNNER_TEMP/dagger" ./scripts/bootstrap-dagger.sh)"
+          printf 'binary=%s\n' "$dagger_bin" >> "$GITHUB_OUTPUT"
       - name: Check and publish exact revision
         id: candidate
-        uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77 # v8.4.1
+        shell: bash
         env:
+          DAGGER_BIN: ${{ steps.dagger.outputs.binary }}
           GHCR_TOKEN: ${{ github.token }}
-        with:
-          version: v0.21.9
-          verb: call
-          args: publish --revision=${{ github.sha }} --registry-username=${{ github.actor }} --registry-token=env:GHCR_TOKEN
+        run: |
+          image="$("$DAGGER_BIN" --engine=image+docker://registry.dagger.io/engine:v1.0.0-beta.21 call publish --revision="$GITHUB_SHA" --registry-username="$GITHUB_ACTOR" --registry-token=env:GHCR_TOKEN)"
+          [[ "$image" =~ ^ghcr\.io/masonjames/sparka@sha256:[0-9a-f]{64}$ ]]
+          printf 'output=%s\n' "$image" >> "$GITHUB_OUTPUT"
       - name: Record immutable candidate for Dockhand review
         env:
           IMAGE: ${{ steps.candidate.outputs.output }}
