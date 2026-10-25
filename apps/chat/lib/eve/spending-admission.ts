@@ -1,4 +1,4 @@
-import { getBalanceCents } from "@/lib/db/credits";
+import { canSpend } from "@/composition/generated/installed-billing";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
 
 /** Repair recorded usage before checking the balance. This does not reserve funds. */
@@ -7,5 +7,5 @@ export const canStartPaidTurn = async (
   sessionId?: string
 ): Promise<boolean> => {
   await reconcileEveOwnerUsage(ownerId, sessionId);
-  return (await getBalanceCents(ownerId)) > 0;
+  return await canSpend(ownerId);
 };

@@ -1,18 +1,28 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act, createContext, useContext } from "react";
+import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { creditsClient } from "@/plugins/credits/client-plugin";
 import "./sandbox.css";
 
+const installation = vi.hoisted(
+  (): { summaries: { id: string; Component: ComponentType }[] } => ({
+    summaries: [],
+  })
+);
 const Balance = createContext<{
   balanceCents: number | undefined;
   isError: boolean;
 }>({ balanceCents: undefined, isError: false });
-vi.mock("@/hooks/use-credits", () => ({
+vi.mock("@/composition/generated/installed-account-ui", () => ({
+  installedAccountSummaries: installation.summaries,
+}));
+vi.mock("@/plugins/credits/use-credits", () => ({
   useGetCredits: () => useContext(Balance),
 }));
 vi.mock("@/lib/auth-client", () => ({ default: {} }));
@@ -39,49 +49,76 @@ const states = [
   { label: "Loading", balanceCents: undefined, isError: false },
   { label: "Failed refresh with stale data", balanceCents: 50, isError: true },
 ];
-test("account balance distinguishes amounts, pending reads and failures", async () => {
-  const container = document.createElement("div");
-  document.body.append(container);
-  const root = createRoot(container);
-  try {
-    await act(async () => {
-      await Promise.resolve();
-      root.render(
-        <div className="grid gap-4 p-6">
-          {states.map(({ label, ...balance }) => (
-            <section key={label} className="w-64">
-              <h2>{label}</h2>
-              <Balance value={balance}>
-                <SidebarProvider className="min-h-0">
-                  <SidebarUserNav />
-                </SidebarProvider>
-              </Balance>
-            </section>
-          ))}
-        </div>
-      );
-    });
-    for (const text of [
-      "0.50",
-      "0.00",
-      "-0.17",
-      "Loading balance…",
-      "Balance unavailable",
-    ]) {
-      // oxlint-disable-next-line no-await-in-loop -- Each distinct state must render before the shared gallery capture.
-      await expect.element(page.getByText(text, { exact: true })).toBeVisible();
+test.each([true, false])(
+  "account menu with credits installed: %s",
+  async (enabled) => {
+    installation.summaries.splice(0);
+    if (enabled) {
+      installation.summaries.push({
+        id: "credits",
+        Component: creditsClient().accountSummary,
+      });
     }
-    await expect
-      .poll(
-        () => page.getByRole("img", { name: "Fixture user" }).elements().length
-      )
-      .toBe(states.length);
-    await takeSnapshot("credit-balance-states");
-  } finally {
-    await act(async () => {
-      await Promise.resolve();
-      root.unmount();
-    });
-    container.remove();
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        root.render(
+          <div className="grid gap-4 p-6">
+            {(enabled ? states : states.slice(0, 1)).map(
+              ({ label, ...balance }) => (
+                <section key={label} className="w-64">
+                  <h2>{enabled ? label : "Credits not installed"}</h2>
+                  <Balance value={balance}>
+                    <SidebarProvider className="min-h-0">
+                      <SidebarUserNav />
+                    </SidebarProvider>
+                  </Balance>
+                </section>
+              )
+            )}
+          </div>
+        );
+      });
+      if (enabled) {
+        await expect
+          .element(page.getByText("0.50", { exact: true }))
+          .toBeVisible();
+        await expect
+          .element(page.getByText("-0.17", { exact: true }))
+          .toBeVisible();
+        expect(page.getByText("0.00", { exact: true }).elements()).toHaveLength(
+          1
+        );
+        await expect
+          .element(page.getByText("Loading balance…", { exact: true }))
+          .toBeVisible();
+        await expect
+          .element(page.getByText("Balance unavailable", { exact: true }))
+          .toBeVisible();
+      } else {
+        await expect.element(page.getByText("Fixture user")).toBeVisible();
+        await expect
+          .element(page.getByText("0.50", { exact: true }))
+          .not.toBeInTheDocument();
+      }
+      await expect
+        .poll(
+          () =>
+            page.getByRole("img", { name: "Fixture user" }).elements().length
+        )
+        .toBe(enabled ? states.length : 1);
+      await takeSnapshot(
+        enabled ? "credits-account-states" : "account-without-credits"
+      );
+    } finally {
+      await act(async () => {
+        await Promise.resolve();
+        root.unmount();
+      });
+      container.remove();
+    }
   }
-});
+);

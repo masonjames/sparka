@@ -1,3 +1,4 @@
+import { creditsItem } from "../../../registry/src/plugins/credits/manifest";
 import { modelPreferencesItem } from "../../../registry/src/plugins/model-preferences/manifest";
 import { searchItem } from "../../../registry/src/plugins/search/manifest";
 import { projectsItem } from "../../../registry/src/plugins/projects/manifest";
@@ -43,6 +44,55 @@ const fixture = async (): Promise<string> => {
     )
   );
   return root;
+};
+const registrationDiagnostics = (root: string, name: string): string[] => {
+  const program = ts.createProgram({
+    rootNames: [path.join(root, `composition/generated/installed-${name}.ts`)],
+    options: {
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      noEmit: true,
+      paths: { "@/*": [`${root}/*`], react: [`${root}/lib/react.ts`] },
+      skipLibCheck: true,
+      strict: true,
+      target: ts.ScriptTarget.ESNext,
+      types: [],
+    },
+  });
+  return ts
+    .getPreEmitDiagnostics(program)
+    .map((diagnostic) =>
+      ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+    );
+};
+const runRegistration = async (
+  root: string,
+  name: string,
+  assertions: string
+): Promise<{ exitCode: number; stderr: string }> => {
+  const tsconfig = path.join(root, "tsconfig.json");
+  await writeFile(
+    tsconfig,
+    JSON.stringify({ compilerOptions: { paths: { "@/*": [`${root}/*`] } } })
+  );
+  const build = await Bun.build({
+    entrypoints: [
+      path.join(root, `composition/generated/installed-${name}.ts`),
+    ],
+    target: "bun",
+    tsconfig,
+  });
+  expect(build.success).toBe(true);
+  const source = await build.outputs[0]?.text();
+  expect(source).toBeString();
+  await writeFile(path.join(root, "compiled-registration.mjs"), source ?? "");
+  const runner = path.join(root, "check-registration.mjs");
+  await writeFile(
+    runner,
+    `import { strict as assert } from "node:assert";\nimport * as registration from "./compiled-registration.mjs";\n${assertions}`
+  );
+  const result = Bun.spawnSync([process.execPath, runner]);
+  return { exitCode: result.exitCode, stderr: result.stderr.toString() };
 };
 const install = async (root: string): Promise<void> => {
   await Promise.all(
@@ -550,7 +600,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
 });
 
-for (const key of ["eve", "credits"]) {
+for (const key of ["eve"]) {
   test(`plugin router ${key} cannot replace a core router or partially edit UI`, async () => {
     const root = await fixture();
     await initializePluginUi(root);
@@ -732,4 +782,156 @@ test("absent model visibility preserves defaults; conflicting providers fail bef
     /Only one plugin may supply model visibility/u
   );
   expect(await readFile(target, "utf-8")).toBe(before);
+});
+
+test("credits registers native billing and account UI; removing it restores optional defaults", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  await Promise.all(
+    (creditsItem.files ?? []).map(async (file) => {
+      const target = path.join(root, file.target?.replace(/^~\//u, "") ?? "");
+      await mkdir(path.dirname(target), { recursive: true });
+      await cp(
+        path.resolve(import.meta.dir, "../../../registry", file.path),
+        target
+      );
+    })
+  );
+  await writeFile(
+    path.join(root, "plugins/credits/chatjs.json"),
+    JSON.stringify(creditsItem.meta?.chatjs)
+  );
+  await syncPlugins(root, { expected: ["credits"] });
+  const registration = async (name: string): Promise<string> =>
+    await readFile(
+      path.join(root, `composition/generated/installed-${name}.ts`),
+      "utf-8"
+    );
+  expect(await registration("billing")).toContain("@/plugins/credits/billing");
+  expect(await registration("billing")).not.toContain("server-plugin");
+  expect(await registration("account-ui")).toContain(
+    "plugin0().accountSummary"
+  );
+  expect(await registration("database")).toContain(
+    "plugins/credits/credits-schema"
+  );
+  expect(await registration("routers")).toContain(
+    "credits: plugin0().routers.credits"
+  );
+  await rm(path.join(root, "plugins/credits"), { recursive: true });
+  await syncPlugins(root);
+  expect(await registration("billing")).toContain("Promise.resolve(true)");
+  expect(await registration("billing")).not.toContain("@/plugins/");
+  expect(await registration("account-ui")).not.toContain("@/plugins/");
+});
+
+test.each(["usageBilling", "canSpend", "UsageBilling"])(
+  "billing export %s compiles without collisions and preserves its receiver",
+  async (exportName) => {
+    const root = await fixture();
+    const directory = path.join(root, "plugins/custom-billing");
+    await mkdir(directory, { recursive: true });
+    await mkdir(path.join(root, "lib"), { recursive: true });
+    await writeFile(
+      path.join(root, "lib/usage-billing-contracts.ts"),
+      "export interface UsageBilling { canSpend: (ownerId: string) => Promise<boolean> }"
+    );
+    await writeFile(
+      path.join(directory, "billing.ts"),
+      `export const ${exportName} = { allowedOwner: "allowed", canSpend(ownerId: string) { return Promise.resolve(ownerId === this.allowedOwner); } };`
+    );
+    await writeFile(
+      path.join(directory, "chatjs.json"),
+      JSON.stringify({
+        contractVersion: 1,
+        kind: "plugin",
+        id: "custom-billing",
+        files: ["plugins/custom-billing/billing.ts"],
+        billing: { export: exportName },
+      })
+    );
+    await syncPlugins(root);
+    expect(registrationDiagnostics(root, "billing")).toEqual([]);
+    expect(
+      await runRegistration(
+        root,
+        "billing",
+        'assert.equal(await registration.canSpend("allowed"), true);\nassert.equal(await registration.canSpend("denied"), false);'
+      )
+    ).toEqual({ exitCode: 0, stderr: "" });
+  }
+);
+
+test.each([true, false])(
+  "account summary registration validates optional factory contributions (provided=%s)",
+  async (provided) => {
+    const root = await fixture();
+    const directory = path.join(root, "plugins/custom-summary");
+    await mkdir(directory, { recursive: true });
+    await mkdir(path.join(root, "lib"), { recursive: true });
+    await writeFile(
+      path.join(root, "lib/react.ts"),
+      "export type ComponentType = () => unknown;"
+    );
+    await writeFile(
+      path.join(directory, "client-plugin.ts"),
+      `import type { ComponentType } from "react";
+interface ChatClientPlugin { readonly accountSummary?: ComponentType }
+export const customClient = (): ChatClientPlugin => (${provided ? "{ accountSummary: () => null }" : "{}"});`
+    );
+    await writeFile(
+      path.join(directory, "chatjs.json"),
+      JSON.stringify({
+        contractVersion: 1,
+        kind: "plugin",
+        id: "custom-summary",
+        files: ["plugins/custom-summary/client-plugin.ts"],
+        client: { export: "customClient", accountSummary: true },
+      })
+    );
+    await syncPlugins(root);
+    expect(registrationDiagnostics(root, "account-ui")).toEqual([]);
+    const result = await runRegistration(
+      root,
+      "account-ui",
+      "assert.equal(registration.installedAccountSummaries[0].Component(), null);"
+    );
+    if (provided) {
+      expect(result.exitCode).toBe(0);
+    } else {
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain(
+        'Plugin "custom-summary" declares accountSummary but does not provide it.'
+      );
+    }
+  }
+);
+
+test("two billing contributors fail before any registration is written", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  const file = path.join(root, "composition/generated/installed-billing.ts");
+  const before = await readFile(file, "utf-8");
+  await Promise.all(
+    ["first", "second"].map(async (id) => {
+      const directory = path.join(root, "plugins", id);
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        path.join(directory, "billing.ts"),
+        "export const billing = {};"
+      );
+      await writeFile(
+        path.join(directory, "chatjs.json"),
+        JSON.stringify({
+          contractVersion: 1,
+          kind: "plugin",
+          id,
+          files: [`plugins/${id}/billing.ts`],
+          billing: { export: "billing" },
+        })
+      );
+    })
+  );
+  await rejects(syncPlugins(root), /Only one plugin may supply usage billing/u);
+  expect(await readFile(file, "utf-8")).toBe(before);
 });

@@ -1,10 +1,10 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { MCPClient } from "../plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
-import { userCredit } from "../lib/db/schema";
 import { mcpConnector, mcpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { discoverEveMcpTools } from "../plugins/mcp/runtime/mcp-tools";

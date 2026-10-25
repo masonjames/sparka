@@ -12,7 +12,7 @@ import { createEveConversationOperation } from "./create-conversation-operation"
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
 const mocks = vi.hoisted(() => ({
-  getBalanceCents: vi.fn(),
+  canSpend: vi.fn(),
   prepareMessage: vi.fn<() => Promise<string>>(),
   creation: vi.fn(),
   guest: vi.fn<typeof readEveGuestOwner>(),
@@ -47,8 +47,8 @@ vi.mock("@/lib/db/eve-queries", () => ({
 vi.mock("@/lib/db/eve-guests", () => ({
   readEveGuestOwner: mocks.guest,
 }));
-vi.mock("@/lib/db/credits", () => ({
-  getBalanceCents: mocks.getBalanceCents,
+vi.mock("@/composition/generated/installed-billing", () => ({
+  canSpend: mocks.canSpend,
 }));
 vi.mock("@/lib/db/eve-files", () => ({ assertEveFilesOwned: vi.fn() }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: vi.fn() }));
@@ -73,7 +73,7 @@ const input = {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.getBalanceCents.mockResolvedValue(50);
+  mocks.canSpend.mockResolvedValue(true);
   mocks.prepareMessage.mockResolvedValue("prepared comparison");
   mocks.guest.mockResolvedValue(null);
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
@@ -98,7 +98,7 @@ it("creates an idle seed then journals the first send separately", async () => {
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(200);
   expect(mocks.reconcile.mock.invocationCallOrder[0]).toBeLessThan(
-    mocks.getBalanceCents.mock.invocationCallOrder[0]
+    mocks.canSpend.mock.invocationCallOrder[0]
   );
   expect(
     JSON.parse(z.string().parse(mocks.request.mock.calls[0]?.[2]?.body))

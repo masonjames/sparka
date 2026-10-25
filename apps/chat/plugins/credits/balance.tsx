@@ -1,7 +1,7 @@
 "use client";
 
 import { DollarSign } from "lucide-react";
-import { useGetCredits } from "@/hooks/use-credits";
+import { useGetCredits } from "./use-credits";
 
 const CENTS_PER_DOLLAR = 100;
 const DISPLAY_DECIMALS = 2;

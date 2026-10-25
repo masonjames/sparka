@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { setTimeout as delay } from "node:timers/promises";
 import { mkdir } from "node:fs/promises";
 
@@ -7,7 +8,7 @@ import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 

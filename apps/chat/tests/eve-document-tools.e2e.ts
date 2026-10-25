@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
@@ -12,7 +13,6 @@ import {
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentRevision,
-  userCredit,
 } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";

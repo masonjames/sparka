@@ -1,3 +1,4 @@
+import { usageBilling } from "@/composition/generated/installed-billing";
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
 import { databaseConnection } from "./connection";
@@ -8,13 +9,7 @@ import postgres from "postgres";
 import { z } from "zod";
 import { isDeepStrictEqual } from "node:util";
 
-import {
-  eveConversation,
-  eveGuest,
-  eveUsage,
-  user,
-  userCredit,
-} from "./schema";
+import { eveConversation, eveGuest, eveUsage, user } from "./schema";
 
 const ZERO_CENTS = 0;
 const MINIMUM_COST_USD = 0;
@@ -117,6 +112,9 @@ const debitTurnUsage = async (
     readonly eventId: string;
   }
 ): Promise<void> => {
+  if (!usageBilling) {
+    return;
+  }
   // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
   const [totals] = await tx
     .select({
@@ -133,10 +131,7 @@ const debitTurnUsage = async (
     );
   const delta = (totals?.due ?? ZERO_CENTS) - (totals?.paid ?? ZERO_CENTS);
   if (delta > ZERO_CENTS) {
-    await tx
-      .update(userCredit)
-      .set({ balanceCents: sql`${userCredit.balanceCents} - ${delta}` })
-      .where(eq(userCredit.userId, input.ownerId));
+    await usageBilling.debit(tx, { ownerId: input.ownerId, cents: delta });
     await tx
       .update(eveUsage)
       .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })
@@ -150,7 +145,7 @@ const debitTurnUsage = async (
  * @param {string} input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
  * @param {string} input.sessionId Native session whose turn cost is recorded.
  * @param {string} input.turnId Native turn whose decimal costs are rounded and charged together.
- * @param {string} input.ownerId Owner whose credit or guest quota identity scopes the record.
+ * @param {string} input.ownerId Registered or guest owner whose identity scopes the record.
  * @param {number | undefined} input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
  * @param {string | undefined} input.generationId Optional provider generation identifier used for later reconciliation.
  * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
@@ -171,8 +166,8 @@ const recordEveUsage = async (input: {
   ) {
     throw new Error("Invalid Eve usage evidence.");
   }
-  // A known cost and its debit commit together. Replaying that same evidence
-  // needs no credit-row lock or another turn-total calculation.
+  // A known cost and any installed debit commit together. Replaying that same
+  // evidence needs no owner lock or another turn-total calculation.
   const [settled] = await db
     .select()
     .from(eveUsage)
@@ -208,15 +203,16 @@ const recordEveUsage = async (input: {
       .for("update");
     const isGuest = Boolean(guest);
     if (!isGuest) {
-      await tx
-        .insert(userCredit)
-        .values({ userId: input.ownerId })
-        .onConflictDoNothing();
-      await tx
-        .select()
-        .from(userCredit)
-        .where(eq(userCredit.userId, input.ownerId))
+      // Receipt deduplication must remain serialized even with no billing plugin.
+      const [owner] = await tx
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.id, input.ownerId))
         .for("update");
+      const hasOwner = Boolean(owner);
+      if (!hasOwner) {
+        throw new Error("Usage requires a registered owner or guest.");
+      }
     }
     const costUsd =
       input.costUsd === undefined
@@ -261,8 +257,7 @@ const recordEveUsage = async (input: {
     } else {
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
-    // Guest admission spends message quota. Keep provider costs without granting
-    // signup credit or mixing monetary debits into that separate allowance.
+    // Keep guest provider costs as evidence without creating a monetary balance.
     if (!isGuest) {
       await debitTurnUsage(tx, input);
     }

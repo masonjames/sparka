@@ -1,9 +1,10 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import type { Request, Response, TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveConversation, userCredit } from "../lib/db/schema";
+import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";

@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -5,7 +6,7 @@ import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, userCredit } from "../lib/db/schema";
+import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";

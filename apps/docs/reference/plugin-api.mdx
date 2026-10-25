@@ -15,9 +15,10 @@ Keep server and browser import graphs separate:
 | --- | --- | --- |
 | `server-plugin.ts` | `ChatPlugin` | tRPC routers, instrumentation |
 | `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
-| `client-plugin.ts` | `ChatClientPlugin` | Composer controls, settings, layout, uploads, model visibility, chat UI |
+| `billing.ts` | `UsageBilling` | Spending admission and transactional debits, safe for EVE and Next.js |
+| `client-plugin.ts` | `ChatClientPlugin` | Composer controls, settings, layout, uploads, model visibility, chat UI, account summary |
 
-Keep `chat.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
+Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
 Factories return concrete types with `satisfies`. Sync generates static imports and registrations from the descriptor without executing server factories during installation.
 
@@ -95,12 +96,23 @@ Client actions receive the logical chat `id` and, when available, the exact `con
 
 Both callbacks run inside the core deletion transaction under its lifecycle lock. A failure rolls back database cleanup. Use the supplied transaction. Removing a project detaches its chats without deleting their sessions.
 
+## Usage billing
+
+Declare `billing: { export: "creditsBilling" }` in the descriptor and export a `UsageBilling` object from `billing.ts`. Sync allows at most one billing contributor. The generated `installed-billing.ts` provides `canSpend(ownerId)` and an optional `usageBilling` object; without a contribution, admission resolves to `true` and core skips monetary debits.
+
+`canSpend(ownerId)` checks admission; it does not reserve funds. `debit(tx, { ownerId, cents })` applies a positive whole-cent debit using the supplied transaction. Core has already locked the registered owner, deduplicated evidence, and calculated the unpaid rounded turn total. A failure rolls back the receipt, debit, and settlement marker together. Do not open another transaction or call external services from `debit`.
+
+Core owns durable usage evidence, per-turn rounding, `chargedCents`, and reconciliation. The plugin owns balance storage and spending policy. Guest message quotas bypass monetary billing. Locking the core user row keeps receipt ingestion serialized even when no billing table exists.
+
+The [Credits plugin](../plugins/credits) uses this contract. Native EVE imports the billing entry directly; keep routers and Next.js request helpers in the server entry. Billing installation does not backfill old usage automatically; newly reconciled receipts can still settle an existing turn's unpaid total.
+
 ## Client placements
 
 | Contribution | Purpose |
 | --- | --- |
 | `composerControls` | Composer controls with stable IDs |
 | `settingsItems` | Settings navigation |
+| `accountSummary` | A no-prop component beneath the signed-in user name in the sidebar |
 | `layout` | A no-prop layout component |
 | `uploads` | Attachment selection and upload behavior |
 | `useModelVisibility` | Hook returning enabled model IDs from core defaults |
@@ -113,6 +125,8 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 | `chat.Suggestions` | Suggestions beneath the last editable message |
 
 Plugin components own fetching, mutations, cache invalidation, loading, errors, and dialogs. Core renders normal React components. Composer and settings order remain app-owned arrays. Only one plugin supplies uploads. A settings item with ID `models` also supplies the Models shortcut in the sidebar and the Add Models link in the picker. Removing that item hides both shortcuts.
+
+Declare `client.accountSummary: true` to register a component beneath the signed-in user name. Each summary owns its queries. Set query `meta: { refreshOnTurnEnd: true }` to refresh it when a turn completes, fails, or is cancelled. With no contributions, the sidebar renders only the user name.
 
 ### Model visibility
 
@@ -152,4 +166,4 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
 
 The complete descriptor lists every installed file. Use distinctive filenames such as `project-schema.ts` to avoid registry import-rewriting ambiguity with host files.
 
-Generated modules register routers, database schemas, instrumentation, layout, uploads, and chat contributions. Edit factories and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.
+Generated modules register routers, database schemas, instrumentation, layout, uploads, account summaries, billing, and chat contributions. Edit factories and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.

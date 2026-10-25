@@ -1,3 +1,4 @@
+import { creditsItem } from "./credits/manifest";
 import { modelPreferencesItem } from "./model-preferences/manifest";
 import { sharingItem } from "./sharing/manifest";
 import { aiTitlesItem } from "./ai-titles/manifest";
@@ -14,6 +15,7 @@ export const pluginItems = [
   feedbackItem,
   followupSuggestionsItem,
   searchItem,
+  creditsItem,
   modelPreferencesItem,
   aiTitlesItem,
   sharingItem,

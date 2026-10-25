@@ -33,8 +33,8 @@ vi.mock("../lib/eve/conversation-title", () => ({
   eveConversationTitleFallback: (): string => "Recovery",
 }));
 
-vi.mock("../lib/db/credits", () => ({
-  getBalanceCents: vi.fn<() => Promise<number>>().mockResolvedValue(50),
+vi.mock("../composition/generated/installed-billing", () => ({
+  canSpend: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
 }));
 
 vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({

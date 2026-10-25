@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   dispatch: vi.fn(),
   release: vi.fn(),
   bound: vi.fn(),
-  getBalanceCents: vi.fn(),
+  canSpend: vi.fn(),
   eveRequest: vi.fn(),
   prepare: vi.fn(),
   principal: vi.fn(),
@@ -39,7 +39,9 @@ vi.mock("@/lib/db/eve-dispatch", () => ({
 vi.mock("@/lib/db/eve-guests", () => ({
   releaseEveGuestMessage: mocks.release,
 }));
-vi.mock("@/lib/db/credits", () => ({ getBalanceCents: mocks.getBalanceCents }));
+vi.mock("@/composition/generated/installed-billing", () => ({
+  canSpend: mocks.canSpend,
+}));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
 }));
@@ -83,7 +85,7 @@ const request = (headers: Readonly<Record<string, string>> = {}): Request =>
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.bound.mockResolvedValue({ id: "conversation" });
-  mocks.getBalanceCents.mockResolvedValue(50);
+  mocks.canSpend.mockResolvedValue(true);
   mocks.prepare.mockResolvedValue("prepared");
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.eveRequest.mockResolvedValue(
@@ -152,7 +154,7 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
 });
 
 test("still rejects a known insufficient balance before dispatch", async () => {
-  mocks.getBalanceCents.mockResolvedValue(0);
+  mocks.canSpend.mockResolvedValue(false);
   const response = await POST(
     request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }),
     {
@@ -187,7 +189,7 @@ test("forwards bounded history with the owner and browser cancellation signal", 
   );
   // oxlint-enable unicorn/no-useless-undefined
   expect(mocks.prepare).not.toHaveBeenCalled();
-  expect(mocks.getBalanceCents).not.toHaveBeenCalled();
+  expect(mocks.canSpend).not.toHaveBeenCalled();
 });
 
 test.each([

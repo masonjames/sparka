@@ -1,8 +1,7 @@
-import "server-only";
 import { eq } from "drizzle-orm";
 
-import { db } from "./client";
-import { userCredit } from "./schema";
+import { db } from "@/lib/db/client";
+import { userCredit } from "./credits-schema";
 
 const NO_CREDITS = 0;
 const FIRST_CREDIT_ROW_INDEX = 0;

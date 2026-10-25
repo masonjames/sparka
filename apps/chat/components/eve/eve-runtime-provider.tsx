@@ -87,7 +87,7 @@ const NativeObserver = ({
         event.type === "turn.cancelled"
       ) {
         void queryClient.invalidateQueries({
-          queryKey: trpc.credits.getAvailableCredits.queryKey(),
+          predicate: (query) => query.meta?.refreshOnTurnEnd === true,
         });
       }
       if (

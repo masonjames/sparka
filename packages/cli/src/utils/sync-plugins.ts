@@ -202,6 +202,8 @@ const pluginRegistrationTargets = [
   "installed-database",
   "installed-chat",
   "installed-chat-ui",
+  "installed-billing",
+  "installed-account-ui",
 ].map((name) => `composition/generated/${name}.ts`);
 
 const assertPluginDependencies = (
@@ -222,7 +224,7 @@ const assertPluginDependencies = (
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["credits", "eve"]);
+  const routers = new Set(["eve"]);
   const controls = new Set([
     "canvas",
     "web-search",
@@ -232,6 +234,7 @@ const assertUniqueContributions = (
   ]);
   const settings = new Set(["general"]);
   let uploads = false;
+  let billing = false;
   let modelVisibility = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
@@ -245,6 +248,12 @@ const assertUniqueContributions = (
         }
         seen.add(key);
       }
+    }
+    if (plugin.billing) {
+      if (billing) {
+        throw new Error("Only one plugin may supply usage billing.");
+      }
+      billing = true;
     }
     if (plugin.client?.modelVisibility) {
       if (modelVisibility) {
@@ -272,6 +281,30 @@ const imports = (
         `import { ${plugin[side]?.export} as plugin${index} } from "@/plugins/${plugin.id}/${side}-plugin";`
     )
     .join("\n");
+
+const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
+  const plugin = plugins.find((candidate) => candidate.billing);
+  const billing = plugin?.billing;
+  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/plugins/${plugin?.id}/billing";` : ""}
+import type { UsageBilling } from "@/lib/usage-billing-contracts";
+export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling" : "undefined"};
+export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend.bind(pluginBilling)" : "() => Promise.resolve(true)"};`;
+};
+
+const accountSummaryRegistration = (
+  plugins: readonly PluginDefinition[]
+): string => `${imports(plugins, "client")}
+import type { ComponentType } from "react";
+${plugins
+  .map(
+    (
+      plugin,
+      index
+    ) => `const accountSummary${index} = plugin${index}().accountSummary;
+if (!accountSummary${index}) throw new Error('Plugin "${plugin.id}" declares accountSummary but does not provide it.');`
+  )
+  .join("\n")}
+export const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${plugins.map((plugin, index) => `{ id: "${plugin.id}", Component: accountSummary${index} }`).join(", ")}];`;
 
 const syncPlugins = async (
   cwd: string,
@@ -351,7 +384,10 @@ const syncPlugins = async (
   );
   const chat = plugins.filter((plugin) => plugin.chat);
   const chatUi = plugins.filter((plugin) => plugin.client?.chat);
+  const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
   const contents = [
+    ["installed-billing", billingRegistration(plugins)],
+    ["installed-account-ui", accountSummaryRegistration(accountUi)],
     [
       "installed-model-visibility",
       `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,

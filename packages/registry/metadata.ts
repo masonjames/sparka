@@ -151,6 +151,7 @@ const pluginDefinitionSchema = z.object({
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
   chat: z.object({ export: identifier }).optional(),
+  billing: z.object({ export: identifier }).optional(),
   server: z
     .object({
       export: identifier,
@@ -165,6 +166,7 @@ const pluginDefinitionSchema = z.object({
       settingsItems: z.array(pluginIdSchema).default([]),
       chat: z.literal(true).optional(),
       layout: z.literal(true).optional(),
+      accountSummary: z.literal(true).optional(),
       uploads: z.literal(true).optional(),
       modelVisibility: z.literal(true).optional(),
     })

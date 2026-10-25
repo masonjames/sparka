@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -17,7 +18,6 @@ import {
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentRevision,
-  userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { purgeEveNativeSession } from "../lib/eve/lifecycle/postgres/eve-native-purge";

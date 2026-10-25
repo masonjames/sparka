@@ -36,7 +36,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { CreditBalance } from "@/components/credit-balance";
+import { installedAccountSummaries } from "@/composition/generated/installed-account-ui";
 
 import authClient from "@/lib/auth-client";
 
@@ -136,7 +136,9 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 <span className="truncate font-medium">
                   {user.name || user.email}
                 </span>
-                <CreditBalance />
+                {installedAccountSummaries.map(({ id, Component }) => (
+                  <Component key={id} />
+                ))}
               </div>
               <ChevronsUpDown
                 className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}

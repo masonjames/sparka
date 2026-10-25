@@ -15,7 +15,7 @@ vi.mock("@/lib/auth-client", () => ({ default: auth }));
 vi.mock("@/lib/electron-auth", () => ({
   isElectronRenderer: (): boolean => auth.electron,
 }));
-vi.mock("@/hooks/use-credits", () => ({
+vi.mock("@/plugins/credits/use-credits", () => ({
   useGetCredits: (): { balanceCents: number; isError: boolean } => ({
     balanceCents: 0,
     isError: false,

@@ -1,3 +1,4 @@
+import { creditsItem } from "./src/plugins/credits/manifest";
 import { modelPreferencesItem } from "./src/plugins/model-preferences/manifest";
 import { sharingItem } from "./src/plugins/sharing/manifest";
 import { aiTitlesItem } from "./src/plugins/ai-titles/manifest";
@@ -208,6 +209,7 @@ const registry = registrySchema.parse({
     feedbackItem,
     followupSuggestionsItem,
     searchItem,
+    creditsItem,
     modelPreferencesItem,
     aiTitlesItem,
     sharingItem,
