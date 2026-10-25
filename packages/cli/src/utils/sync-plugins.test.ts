@@ -776,6 +776,57 @@ test("credits registers native billing and account UI; removing it restores opti
   expect(await registration("account-ui")).not.toContain("@/plugins/");
 });
 
+test.each(["usageBilling", "canSpend", "UsageBilling"])(
+  "billing export %s does not collide with generated bindings",
+  async (exportName) => {
+    const root = await fixture();
+    const directory = path.join(root, "plugins/custom-billing");
+    await mkdir(directory, { recursive: true });
+    await mkdir(path.join(root, "lib"), { recursive: true });
+    await writeFile(
+      path.join(root, "lib/usage-billing-contracts.ts"),
+      "export interface UsageBilling { canSpend: () => Promise<boolean> }"
+    );
+    await writeFile(
+      path.join(directory, "billing.ts"),
+      `export const ${exportName} = { canSpend: async () => false };`
+    );
+    await writeFile(
+      path.join(directory, "chatjs.json"),
+      JSON.stringify({
+        contractVersion: 1,
+        kind: "plugin",
+        id: "custom-billing",
+        files: ["plugins/custom-billing/billing.ts"],
+        billing: { export: exportName },
+      })
+    );
+    await syncPlugins(root);
+    const program = ts.createProgram({
+      rootNames: [
+        path.join(root, "composition/generated/installed-billing.ts"),
+      ],
+      options: {
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler,
+        noEmit: true,
+        paths: { "@/*": [`${root}/*`] },
+        skipLibCheck: true,
+        strict: true,
+        target: ts.ScriptTarget.ESNext,
+        types: [],
+      },
+    });
+    expect(
+      ts
+        .getPreEmitDiagnostics(program)
+        .map((diagnostic) =>
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+        )
+    ).toEqual([]);
+  }
+);
+
 test("two billing contributors fail before any registration is written", async () => {
   const root = await fixture();
   await initializePluginUi(root);

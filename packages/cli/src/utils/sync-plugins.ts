@@ -285,10 +285,10 @@ const imports = (
 const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
   const plugin = plugins.find((candidate) => candidate.billing);
   const billing = plugin?.billing;
-  return `${billing ? `import { ${billing.export} } from "@/plugins/${plugin?.id}/billing";` : ""}
+  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/plugins/${plugin?.id}/billing";` : ""}
 import type { UsageBilling } from "@/lib/usage-billing-contracts";
-export const usageBilling: UsageBilling | undefined = ${billing?.export ?? "undefined"};
-export const canSpend: UsageBilling["canSpend"] = ${billing ? `${billing.export}.canSpend` : "() => Promise.resolve(true)"};`;
+export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling" : "undefined"};
+export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend" : "() => Promise.resolve(true)"};`;
 };
 
 const syncPlugins = async (
