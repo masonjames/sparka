@@ -86,7 +86,6 @@ export const POST = async (
     modelId: GUEST_POLICY.modelId,
     ipHash,
     credentialExpiresAt: new Date(claims.expiresAt),
-    messageLimit: GUEST_POLICY.messageLimit,
     requestsPerMinute: GUEST_POLICY.requestsPerMinute,
     sessionsPerHour: GUEST_POLICY.sessionsPerHour,
   });

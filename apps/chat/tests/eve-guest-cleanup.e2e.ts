@@ -26,7 +26,6 @@ afterAll(async () => {
 test("expired root claims are bounded, disjoint, fair and preserve owner identities", async () => {
   const guest = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
-    messageLimit: 10,
     tokenHash: createEveGuestCredential().tokenHash,
   });
   owners.push(guest.ownerId);
@@ -126,7 +125,6 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
 test("expiry selects the whole chat even after its root conversation was deleted", async () => {
   const guest = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
-    messageLimit: 10,
     tokenHash: createEveGuestCredential().tokenHash,
   });
   owners.push(guest.ownerId);

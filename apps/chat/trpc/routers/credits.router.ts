@@ -1,4 +1,4 @@
-import { getCredits } from "@/lib/db/credits";
+import { getBalanceCents } from "@/lib/db/credits";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const creditsRouter = createTRPCRouter({
@@ -8,8 +8,8 @@ export const creditsRouter = createTRPCRouter({
     }: {
       readonly ctx: { readonly user: { readonly id: string } };
     }) => {
-      const credits = await getCredits(ctx.user.id);
-      return { credits };
+      const balanceCents = await getBalanceCents(ctx.user.id);
+      return { balanceCents };
     }
   ),
 });

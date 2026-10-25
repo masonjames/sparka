@@ -8,7 +8,6 @@ const availableTools: readonly string[] = [];
 export const ANONYMOUS_LIMITS = {
   AVAILABLE_MODELS: availableModels,
   AVAILABLE_TOOLS: availableTools,
-  CREDITS: anonConfig.credits,
   RATE_LIMIT: {
     REQUESTS_PER_MINUTE: anonConfig.rateLimit.requestsPerMinute,
     REQUESTS_PER_MONTH: anonConfig.rateLimit.requestsPerMonth,

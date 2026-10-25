@@ -292,9 +292,9 @@ test("native MCP executes and its saved result survives connector removal and re
       .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: session.user.id })
+      .values({ balanceCents: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({
@@ -431,9 +431,9 @@ test("stopping a pending MCP call closes its transport and permits another messa
       .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: session.user.id })
+      .values({ balanceCents: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({

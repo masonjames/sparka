@@ -82,6 +82,15 @@ const NativeObserver = ({
           }
     ) => {
       if (
+        event.type === "turn.completed" ||
+        event.type === "turn.failed" ||
+        event.type === "turn.cancelled"
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: trpc.credits.getAvailableCredits.queryKey(),
+        });
+      }
+      if (
         event.type === "turn.completed" &&
         pendingEveMetadataMutations(queryClient) === 0
       ) {

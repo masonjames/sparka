@@ -1,3 +1,4 @@
+import { route } from "./route";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
@@ -609,3 +610,44 @@ test.each(["desktop", "mobile"] as const)(
       .toBeEnabled();
   }
 );
+
+test("completed, failed and cancelled turns refresh the displayed credit balance", async () => {
+  await renderRoute(conversation, { ...request, viewports: ["desktop"] });
+  await expect.element(page.getByText("8.42", { exact: true })).toBeVisible();
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null) {
+    throw new Error("The fixture needs a session.");
+  }
+  const onEvent = route.agentEventHandlers.get(sessionId);
+  const event = invoicesFollowupEvents[sessionId]?.find(
+    (candidate) => candidate.type === "turn.completed"
+  );
+  if (!onEvent || !event) {
+    throw new Error("The runtime must subscribe before completing the turn.");
+  }
+  const endings = [
+    event,
+    {
+      ...event,
+      type: "turn.failed",
+      data: {
+        ...event.data,
+        code: "provider_error",
+        message: "Fixture failure",
+      },
+    },
+    { ...event, type: "turn.cancelled" },
+  ] as const;
+  for (const [index, ending] of endings.entries()) {
+    const balanceCents = 420 - index;
+    route.trpc["credits.getAvailableCredits"] = { balanceCents };
+    onEvent(ending);
+    // oxlint-disable-next-line no-await-in-loop -- Each terminal event must refresh the mounted balance before emitting the next one; one gallery capture covers the unchanged layout.
+    await expect
+      .element(page.getByText((balanceCents / 100).toFixed(2), { exact: true }))
+      .toBeVisible();
+  }
+  await expect
+    .element(page.getByText("8.42", { exact: true }))
+    .not.toBeInTheDocument();
+});

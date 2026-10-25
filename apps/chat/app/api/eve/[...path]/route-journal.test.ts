@@ -8,7 +8,7 @@ const postgres = new PGlite();
 vi.mock("@/lib/db/client", () => ({ db: drizzle(postgres) }));
 const mocks = vi.hoisted(() => ({
   bound: vi.fn(),
-  canSpend: vi.fn(),
+  getBalanceCents: vi.fn(),
   eveRequest: vi.fn(),
   prepare: vi.fn(),
   principal: vi.fn(),
@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   referenceFiles: vi.fn(),
 }));
 
-vi.mock("@/lib/db/credits", () => ({ canSpend: mocks.canSpend }));
+vi.mock("@/lib/db/credits", () => ({ getBalanceCents: mocks.getBalanceCents }));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
 }));
@@ -78,7 +78,7 @@ beforeAll(async () => {
     VALUES ('${conversationId}','${conversationId}','${conversationId}','owner','${conversationId}','Test','native','bound');`);
   mocks.bound.mockResolvedValue({ id: conversationId });
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
-  mocks.canSpend.mockResolvedValue(true);
+  mocks.getBalanceCents.mockResolvedValue(50);
   mocks.prepare.mockResolvedValue("prepared");
 }, 30_000);
 afterAll(async () => {

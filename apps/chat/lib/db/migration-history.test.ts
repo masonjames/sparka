@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { readFileSync } from "node:fs";
 
 import { describe, expect, test } from "vitest";
@@ -5,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import {
   KNOWN_CHATJS_TABLE_NAMES,
   getMigrationHistoryProblem,
+  requiresGuestBalanceMigrationRollout,
 } from "./migration-history";
 
 const baseline = { createdAt: 2, hash: "eve" };
@@ -113,4 +115,48 @@ describe("getMigrationHistoryProblem", () => {
       })
     ).toMatch(/unknown/u);
   });
+});
+
+// Use the actual journal identity so renumbering the migration cannot silently
+// remove the deployment guard.
+const journal = z
+  .object({ entries: z.array(z.object({ tag: z.string(), when: z.number() })) })
+  .parse(
+    JSON.parse(
+      readFileSync(
+        new URL("migrations/meta/_journal.json", import.meta.url),
+        "utf-8"
+      )
+    )
+  );
+const guestRemoval = {
+  createdAt:
+    journal.entries.find((entry) => entry.tag === "0021_glorious_chameleon")
+      ?.when ?? 0,
+  hash: "guest-removal",
+};
+test("requires draining old consumers only when the guest-column drop is pending", () => {
+  const available = [baseline, guestRemoval];
+  expect(
+    requiresGuestBalanceMigrationRollout({ applied: [baseline], available })
+  ).toBe(true);
+  expect(
+    requiresGuestBalanceMigrationRollout({
+      applied: [baseline],
+      available,
+      coordinated: true,
+    })
+  ).toBe(false);
+  expect(requiresGuestBalanceMigrationRollout({ applied: [], available })).toBe(
+    false
+  );
+  expect(
+    requiresGuestBalanceMigrationRollout({ applied: available, available })
+  ).toBe(false);
+  expect(
+    requiresGuestBalanceMigrationRollout({
+      applied: [baseline],
+      available: [baseline, next],
+    })
+  ).toBe(false);
 });

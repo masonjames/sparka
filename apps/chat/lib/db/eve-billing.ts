@@ -135,7 +135,7 @@ const debitTurnUsage = async (
   if (delta > ZERO_CENTS) {
     await tx
       .update(userCredit)
-      .set({ credits: sql`${userCredit.credits} - ${delta}` })
+      .set({ balanceCents: sql`${userCredit.balanceCents} - ${delta}` })
       .where(eq(userCredit.userId, input.ownerId));
     await tx
       .update(eveUsage)

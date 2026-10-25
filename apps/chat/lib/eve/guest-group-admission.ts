@@ -55,7 +55,6 @@ export const admitGuestResponseGroup = async (
     inputs,
     {
       expiresAt: new Date(Date.now() + ANONYMOUS_LIMITS.SESSION_DURATION),
-      messageLimit: ANONYMOUS_LIMITS.CREDITS,
       tokenHash: principal.tokenHash,
     },
     async (tx) =>
@@ -72,7 +71,7 @@ export const admitGuestResponseGroup = async (
       error:
         result.status === "conflict"
           ? "This comparison has different content."
-          : "Guest message limit reached. Sign in to continue.",
+          : "Guest rate limit reached. Try again later or sign in.",
     },
     { status: result.status === "conflict" ? 409 : 429 }
   );

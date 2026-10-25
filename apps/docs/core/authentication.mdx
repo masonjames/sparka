@@ -143,14 +143,22 @@ Sessions are stored in Postgres. A short-lived cookie cache reduces database hit
 
 ## Anonymous Users
 
-Users can start chatting without signing in. Anonymous sessions are tracked in a browser cookie rather than the database.
+Users can start a temporary text conversation without signing in. Guests have **no credit balance** and are never charged against registered-user balances.
 
-Configure limits in `chat.config.ts`:
+The disposable guest runtime uses a signed credential and a stored policy in `GuestRuntimeSession`. Its server-owned limits live in `lib/eve/session-policy.ts`:
+
+- A fixed inexpensive model with no tools or files.
+- Five messages per minute and five session creations per hour, shared by IP.
+- A one-hour credential lifetime and 24-hour session retention.
+- Limits on individual message size, cumulative input, and model output.
+
+There is no per-session message-count allowance. Reaching a rate limit temporarily prevents more work. Reaching an input-size limit requires a new conversation. Signing in does not automatically migrate the temporary transcript into saved chat history.
+
+The older account-backed guest route still uses the IP windows configured in `chat.config.ts`:
 
 ```typescript title="chat.config.ts"
 anonymous: {
-  credits: 10,             // message credits before sign-up prompt
-  availableTools: [],      // tools anonymous users can call
+  availableTools: [],
   rateLimit: {
     requestsPerMinute: 5,
     requestsPerMonth: 10,
@@ -158,18 +166,7 @@ anonymous: {
 },
 ```
 
-Available models for anonymous users are set separately:
-
-```typescript title="chat.config.ts"
-ai: {
-  anonymousModels: [
-    "google/gemini-2.5-flash-lite",
-    "openai/gpt-5-nano",
-  ],
-},
-```
-
-When credits run out or rate limits are hit, the API returns a prompt to sign up. When an anonymous user signs in, their anonymous session is cleared — prior anonymous chat history is not migrated to the database.
+`requestsPerMonth` means a fixed 30-day window. These windows are shared by IP, so changing a guest cookie does not reset them. Matching operation retries reuse their reservation, and a proven unaccepted request releases its rate capacity. The obsolete `anonymous.credits` setting and stored guest message balances have been removed.
 
 ---
 
@@ -177,7 +174,7 @@ When credits run out or rate limits are hit, the API returns a prompt to sign up
 
 Public routes (auth callbacks, shared chats, landing pages) are accessible without signing in. All other routes redirect unauthenticated users to `/login`.
 
-The chat API is public at the middleware level — anonymous session validation and credit enforcement happen inside the route handler.
+The chat API is public at the middleware level. Guest identity validation and usage-limit enforcement happen inside the route handler.
 
 ---
 

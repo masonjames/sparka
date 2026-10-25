@@ -268,7 +268,7 @@ test("exhausted credits block new messages but permit rejecting an approval", as
   try {
     await db
       .update(userCredit)
-      .set({ credits: 0 })
+      .set({ balanceCents: 0 })
       .where(eq(userCredit.userId, owner.id));
     await page.reload();
     await page.getByRole("button", { exact: true, name: "Cancel" }).click();
@@ -290,7 +290,7 @@ test("exhausted credits block new messages but permit rejecting an approval", as
   } finally {
     await db
       .update(userCredit)
-      .set({ credits: balance.credits })
+      .set({ balanceCents: balance.balanceCents })
       .where(eq(userCredit.userId, owner.id));
   }
 });

@@ -1,41 +1,20 @@
 import { defineConfig } from "@/lib/config-schema";
 
 const isProd = process.env.NODE_ENV === "production";
-const PRODUCTION_ANONYMOUS_CREDITS = 10;
-const DEVELOPMENT_ANONYMOUS_CREDITS = 1000;
 const PRODUCTION_REQUESTS_PER_MINUTE = 5;
 const DEVELOPMENT_REQUESTS_PER_MINUTE = 60;
 const PRODUCTION_REQUESTS_PER_MONTH = 10;
 const DEVELOPMENT_REQUESTS_PER_MONTH = 1000;
 const MAX_ATTACHMENT_BYTES = 1_048_576;
 
-const getAnonymousLimits = (
-  production: boolean
-): Readonly<{
-  credits: number;
-  rateLimit: Readonly<{
-    requestsPerMinute: number;
-    requestsPerMonth: number;
-  }>;
-}> => {
-  if (production) {
-    return {
-      credits: PRODUCTION_ANONYMOUS_CREDITS,
-      rateLimit: {
-        requestsPerMinute: PRODUCTION_REQUESTS_PER_MINUTE,
-        requestsPerMonth: PRODUCTION_REQUESTS_PER_MONTH,
-      },
-    };
-  }
-  return {
-    credits: DEVELOPMENT_ANONYMOUS_CREDITS,
-    rateLimit: {
-      requestsPerMinute: DEVELOPMENT_REQUESTS_PER_MINUTE,
-      requestsPerMonth: DEVELOPMENT_REQUESTS_PER_MONTH,
-    },
-  };
+const anonymousRateLimit = {
+  requestsPerMinute: isProd
+    ? PRODUCTION_REQUESTS_PER_MINUTE
+    : DEVELOPMENT_REQUESTS_PER_MINUTE,
+  requestsPerMonth: isProd
+    ? PRODUCTION_REQUESTS_PER_MONTH
+    : DEVELOPMENT_REQUESTS_PER_MONTH,
 };
-const anonymousLimits = getAnonymousLimits(isProd);
 
 /**
  * ChatJS Configuration
@@ -97,8 +76,7 @@ const config = defineConfig({
   },
   anonymous: {
     availableTools: [],
-    credits: anonymousLimits.credits,
-    rateLimit: anonymousLimits.rateLimit,
+    rateLimit: anonymousRateLimit,
   },
   appDescription:
     "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",

@@ -2,7 +2,6 @@
 
 import {
   ChevronsUpDown,
-  DollarSign,
   LogIn,
   LogOut,
   Moon,
@@ -37,7 +36,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useGetCredits } from "@/hooks/use-credits";
+import { CreditBalance } from "@/components/credit-balance";
 
 import authClient from "@/lib/auth-client";
 
@@ -49,13 +48,10 @@ import { signOutAndNavigate } from "@/lib/sign-out";
 import { useSession } from "@/providers/session-provider";
 
 const USER_INITIALS_LENGTH = 2;
-const CREDIT_UNITS_PER_DOLLAR = 100;
-const CREDIT_DISPLAY_DECIMAL_PLACES = 2;
 
 export const SidebarUserNav = (): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const { data: session, isPending } = useSession();
-  const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
   const { isMobile, state } = useSidebar();
@@ -140,12 +136,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 <span className="truncate font-medium">
                   {user.name || user.email}
                 </span>
-                <span className="flex items-center gap-1 truncate text-xs">
-                  <DollarSign className="size-3" />
-                  {((credits ?? 0) / CREDIT_UNITS_PER_DOLLAR).toFixed(
-                    CREDIT_DISPLAY_DECIMAL_PLACES
-                  )}
-                </span>
+                <CreditBalance />
               </div>
               <ChevronsUpDown
                 className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}

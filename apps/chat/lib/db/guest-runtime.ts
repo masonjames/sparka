@@ -63,12 +63,10 @@ export const createGuestRuntimeSession = async (input: {
   modelId: string;
   ipHash: string;
   credentialExpiresAt: Date;
-  messageLimit: number;
   requestsPerMinute: number;
   sessionsPerHour: number;
 }) => {
   hash.parse(input.ipHash);
-  positiveLimit.parse(input.messageLimit);
   positiveLimit.parse(input.requestsPerMinute);
   positiveLimit.parse(input.sessionsPerHour);
   z.string().min(1).parse(input.ownerId);
@@ -91,7 +89,6 @@ export const createGuestRuntimeSession = async (input: {
         modelId: input.modelId,
         ipHash: input.ipHash,
         credentialExpiresAt: input.credentialExpiresAt,
-        messageLimit: input.messageLimit,
       })
       .returning();
     if (typeof guest !== "object") {
@@ -161,7 +158,7 @@ export const reserveGuestRuntimeMessage = async (input: {
   requestsPerMinute: number;
   inputCharacters: number;
   maxInputCharacters: number;
-}): Promise<"ready" | "unavailable" | "exhausted" | "rate-limited"> => {
+}): Promise<"ready" | "unavailable" | "input-limit" | "rate-limited"> => {
   positiveLimit.parse(input.requestsPerMinute);
   positiveLimit.parse(input.inputCharacters);
   positiveLimit.parse(input.maxInputCharacters);
@@ -183,11 +180,10 @@ export const reserveGuestRuntimeMessage = async (input: {
       return "unavailable";
     }
     if (
-      guest.messagesUsed >= guest.messageLimit ||
       guest.inputCharactersUsed + input.inputCharacters >
-        input.maxInputCharacters
+      input.maxInputCharacters
     ) {
-      return "exhausted";
+      return "input-limit";
     }
     const bucket = await rateBucket(tx, guest.ipHash, "message");
     if (bucket.requests >= input.requestsPerMinute) {
@@ -197,7 +193,6 @@ export const reserveGuestRuntimeMessage = async (input: {
     await tx
       .update(guestRuntimeSession)
       .set({
-        messagesUsed: sql`${guestRuntimeSession.messagesUsed} + 1`,
         inputCharactersUsed: sql`${guestRuntimeSession.inputCharactersUsed} + ${input.inputCharacters}`,
       })
       .where(eq(guestRuntimeSession.id, guest.id));

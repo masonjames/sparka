@@ -36,7 +36,7 @@ interface GuestRateWindow {
   startsAt: Date;
 }
 type GuestRatePeriods = ReadonlyNativeSurface<ReturnType<typeof windows>>;
-type GuestAdmissionStatus = "unavailable" | "exhausted" | "rate-limited";
+type GuestAdmissionStatus = "unavailable" | "rate-limited";
 type GuestAdmissionFailure = {
   [Status in GuestAdmissionStatus]: Readonly<{
     status: Status;
@@ -45,7 +45,7 @@ type GuestAdmissionFailure = {
 }[GuestAdmissionStatus];
 type GuestAdmissionResult =
   | GuestAdmissionFailure
-  | Readonly<{ guest: typeof eveGuest.$inferSelect; status: "ready" }>;
+  | Readonly<{ status: "ready" }>;
 type GuestReservationResult =
   | GuestAdmissionFailure
   | Readonly<{ status: "conflict"; reservationId?: undefined }>
@@ -90,12 +90,10 @@ const windows = (now: ReadonlyNativeSurface<Date>): GuestRateWindow[] =>
 const createEveGuest = async (
   input: ReadonlyNativeSurface<{
     tokenHash: string;
-    messageLimit: number;
     expiresAt: Date;
   }>
 ): Promise<typeof eveGuest.$inferSelect> => {
   hash.parse(input.tokenHash);
-  z.number().int().nonnegative().parse(input.messageLimit);
   if (
     !Number.isFinite(input.expiresAt.getTime()) ||
     input.expiresAt <= new Date()
@@ -111,7 +109,7 @@ const createEveGuest = async (
     });
     const [guest] = await tx
       .insert(eveGuest)
-      .values({ ...input, ownerId, remainingMessages: input.messageLimit })
+      .values({ ...input, ownerId })
       .returning();
     return guest;
   });
@@ -141,7 +139,6 @@ const readExistingEveGuestMessage = async (
 };
 interface GuestBootstrap {
   tokenHash: string;
-  messageLimit: number;
   expiresAt: Date;
 }
 type GuestReservationInput = z.infer<typeof reservation>;
@@ -153,7 +150,6 @@ const validateReservation = (
   reservation.parse(input);
   if (bootstrap) {
     hash.parse(bootstrap.tokenHash);
-    z.number().int().nonnegative().parse(bootstrap.messageLimit);
     if (
       eveGuestOwnerId(bootstrap.tokenHash) !== input.ownerId ||
       !Number.isFinite(bootstrap.expiresAt.getTime()) ||
@@ -209,7 +205,6 @@ const admissionGuest = async (
   bootstrap:
     | ReadonlyNativeSurface<{
         tokenHash: string;
-        messageLimit: number;
         expiresAt: Date;
       }>
     | undefined,
@@ -224,9 +219,6 @@ const admissionGuest = async (
     if (bootstrap.expiresAt <= now) {
       return { status: "unavailable" } as const;
     }
-    if (bootstrap.messageLimit === EMPTY_QUOTA) {
-      return { status: "exhausted" } as const;
-    }
     if (!(await rateAvailable(tx, input, windows(now)))) {
       return { status: "rate-limited" } as const;
     }
@@ -240,14 +232,13 @@ const admissionGuest = async (
       .values({
         ...bootstrap,
         ownerId: input.ownerId,
-        remainingMessages: bootstrap.messageLimit,
       })
       .returning();
   }
   if (!hasQueryRow(guest) || guest.expiresAt <= now) {
     return { status: "unavailable" } as const;
   }
-  return { guest, status: "ready" } as const;
+  return { status: "ready" } as const;
 };
 
 const reserveMessage = async (
@@ -267,7 +258,6 @@ const reserveMessage = async (
   if (admission.status !== "ready") {
     return admission;
   }
-  const { guest } = admission;
   const identity = and(
     eq(eveGuestMessage.ownerId, input.ownerId),
     eq(eveGuestMessage.operationId, input.operationId)
@@ -281,9 +271,6 @@ const reserveMessage = async (
       reservationId: existing.reservationId,
       status: "replay",
     } as const;
-  }
-  if (guest.remainingMessages === EMPTY_QUOTA) {
-    return { status: "exhausted" } as const;
   }
   const periods = windows(now);
   if (!(await rateAvailable(tx, input, periods))) {
@@ -307,10 +294,6 @@ const reserveMessage = async (
         eveGuestRate.startsAt,
       ],
     });
-  await tx
-    .update(eveGuest)
-    .set({ remainingMessages: sql`${eveGuest.remainingMessages} - 1` })
-    .where(eq(eveGuest.ownerId, input.ownerId));
   const reservationId = randomUUID();
   await tx
     .insert(eveGuestMessage)
@@ -405,7 +388,7 @@ const reserveEveGuestMessages = async <Admission = undefined>(
         status: "reserved" | "replay";
       }[] = [];
       for (const input of inputs) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Each candidate consumes the shared guest balance and IP windows in this transaction; stop at the first rejection before reserving another candidate.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Each candidate consumes the shared IP windows in this transaction; stop at the first rejection before reserving another candidate.
         const result = await reserveMessage(tx, input, bootstrap);
         if (result.status !== "reserved" && result.status !== "replay") {
           throw new GuestBatchRejectedError(result);
@@ -498,10 +481,6 @@ const releaseMessage = async (
     if (!hasQueryRow(released)) {
       return false;
     }
-    await tx
-      .update(eveGuest)
-      .set({ remainingMessages: sql`${eveGuest.remainingMessages} + 1` })
-      .where(eq(eveGuest.ownerId, ownerId));
     await tx
       .update(eveGuestRate)
       .set({ requests: sql`${eveGuestRate.requests} - 1` })

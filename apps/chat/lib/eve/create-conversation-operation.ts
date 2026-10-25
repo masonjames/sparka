@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { canSpend } from "@/lib/db/credits";
+import { canStartPaidTurn } from "@/lib/eve/spending-admission";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import { getEveCreation } from "@/lib/db/eve-queries";
@@ -13,7 +13,6 @@ import { executeEveConversationCreation } from "./execute-conversation-creation"
 import { eveMessageFileKeys } from "./file-references";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-import { reconcileEveOwnerUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
 import {
   EveUsageReconciliationBusyError,
@@ -74,14 +73,14 @@ export const createEveConversationOperation = async (
           { status: 400 }
         );
       }
-      if ((await readEveGuestOwner(ownerId)) === null) {
-        await reconcileEveOwnerUsage(ownerId);
-        if (!(await canSpend(ownerId))) {
-          return Response.json(
-            { error: "Insufficient credits" },
-            { status: 402 }
-          );
-        }
+      if (
+        (await readEveGuestOwner(ownerId)) === null &&
+        !(await canStartPaidTurn(ownerId))
+      ) {
+        return Response.json(
+          { error: "Insufficient credits" },
+          { status: 402 }
+        );
       }
     }
   } catch (error) {

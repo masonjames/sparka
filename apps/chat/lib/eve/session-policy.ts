@@ -7,7 +7,6 @@ export const guestModelIdForGateway = (gateway: string): string =>
 export const GUEST_POLICY = {
   version: "1",
   modelId: guestModelIdForGateway(config.ai.gateway),
-  messageLimit: 10,
   requestsPerMinute: 5,
   sessionsPerHour: 5,
   credentialDurationMs: 3_600_000,

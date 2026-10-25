@@ -1,11 +1,15 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-import type { UsageInfo } from "@/lib/credits/cost-accumulator";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { createToolUsage } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
+
+interface TokenUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+}
 
 // Gateway records are Zod-parsed or generated literals; retain the selected pricing object while skipping an unused full ModelData projection.
 const pricingForModel = (
@@ -44,12 +48,12 @@ interface EveToolCost {
   addImageCost: (
     modelId: string,
     count: number,
-    usage: Readonly<UsageInfo>,
+    usage: Readonly<TokenUsage>,
     source: string
   ) => void;
   addLLMCost: (
     modelId: string,
-    tokens: Readonly<UsageInfo>,
+    tokens: Readonly<TokenUsage>,
     source: string
   ) => void;
   totalUsd: ToolUsage["totalUsd"];
@@ -68,7 +72,7 @@ export const createEveToolCost = (
   addImageCost(
     modelId: string,
     count: number,
-    _usage: Readonly<UsageInfo>,
+    _usage: Readonly<TokenUsage>,
     _source: string
   ): void {
     usage.addDeferredCost(async () => {
@@ -85,7 +89,7 @@ export const createEveToolCost = (
   },
   addLLMCost(
     modelId: string,
-    tokens: Readonly<UsageInfo>,
+    tokens: Readonly<TokenUsage>,
     _source: string
   ): void {
     usage.addDeferredCost(async () => {
