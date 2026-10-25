@@ -288,7 +288,7 @@ const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
   return `${billing ? `import { ${billing.export} as pluginBilling } from "@/plugins/${plugin?.id}/billing";` : ""}
 import type { UsageBilling } from "@/lib/usage-billing-contracts";
 export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling" : "undefined"};
-export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend" : "() => Promise.resolve(true)"};`;
+export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend.bind(pluginBilling)" : "() => Promise.resolve(true)"};`;
 };
 
 const accountSummaryRegistration = (

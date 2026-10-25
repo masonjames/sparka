@@ -7,15 +7,21 @@ Use Credits to give registered users a starting balance, check it before paid wo
 
 ## Installation
 
-If your existing database still needs migration 0021, drain older app and worker processes before applying it. After `bun db:generate`, run `bun db:migrate --coordinated`, then deploy matching app and worker versions. For a new database, or one where migration 0021 is already applied, use the commands below.
+If your existing database still needs migration 0021, plan a coordinated rollout. Older app and worker processes must stop before that migration runs.
+
+Install the plugin and generate its schema changes in every case:
 
 ```bash
 bunx @chat-js/cli@latest add credits
 bun db:generate
-bun db:migrate
 ```
 
-The CLI registers the `credits` router, billing policy, account summary, and `UserCredit` schema. Review generated SQL before applying it. The reference app already includes Credits; extracting it preserves the existing table and data without a new migration.
+Review the generated SQL, then choose the migration command:
+
+- For a new database, or one where migration 0021 is already applied, run `bun db:migrate`.
+- For an existing database that still needs migration 0021, drain older app and worker processes, run `bun db:migrate --coordinated`, then deploy matching app and worker versions.
+
+The CLI registers the `credits` router, billing policy, account summary, and `UserCredit` schema. The reference app already includes Credits. Extracting it preserves the existing table and data without a new migration.
 
 ## Usage
 

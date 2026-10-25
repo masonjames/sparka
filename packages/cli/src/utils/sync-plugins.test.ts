@@ -65,6 +65,35 @@ const registrationDiagnostics = (root: string, name: string): string[] => {
       ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
     );
 };
+const runRegistration = async (
+  root: string,
+  name: string,
+  assertions: string
+): Promise<{ exitCode: number; stderr: string }> => {
+  const tsconfig = path.join(root, "tsconfig.json");
+  await writeFile(
+    tsconfig,
+    JSON.stringify({ compilerOptions: { paths: { "@/*": [`${root}/*`] } } })
+  );
+  const build = await Bun.build({
+    entrypoints: [
+      path.join(root, `composition/generated/installed-${name}.ts`),
+    ],
+    target: "bun",
+    tsconfig,
+  });
+  expect(build.success).toBe(true);
+  const source = await build.outputs[0]?.text();
+  expect(source).toBeString();
+  await writeFile(path.join(root, "compiled-registration.mjs"), source ?? "");
+  const runner = path.join(root, "check-registration.mjs");
+  await writeFile(
+    runner,
+    `import { strict as assert } from "node:assert";\nimport * as registration from "./compiled-registration.mjs";\n${assertions}`
+  );
+  const result = Bun.spawnSync([process.execPath, runner]);
+  return { exitCode: result.exitCode, stderr: result.stderr.toString() };
+};
 const install = async (root: string): Promise<void> => {
   await Promise.all(
     (mcpItem.files ?? []).map(async (file) => {
@@ -797,7 +826,7 @@ test("credits registers native billing and account UI; removing it restores opti
 });
 
 test.each(["usageBilling", "canSpend", "UsageBilling"])(
-  "billing export %s does not collide with generated bindings",
+  "billing export %s compiles without collisions and preserves its receiver",
   async (exportName) => {
     const root = await fixture();
     const directory = path.join(root, "plugins/custom-billing");
@@ -805,11 +834,11 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
     await mkdir(path.join(root, "lib"), { recursive: true });
     await writeFile(
       path.join(root, "lib/usage-billing-contracts.ts"),
-      "export interface UsageBilling { canSpend: () => Promise<boolean> }"
+      "export interface UsageBilling { canSpend: (ownerId: string) => Promise<boolean> }"
     );
     await writeFile(
       path.join(directory, "billing.ts"),
-      `export const ${exportName} = { canSpend: async () => false };`
+      `export const ${exportName} = { allowedOwner: "allowed", canSpend(ownerId: string) { return Promise.resolve(ownerId === this.allowedOwner); } };`
     );
     await writeFile(
       path.join(directory, "chatjs.json"),
@@ -823,6 +852,13 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
     );
     await syncPlugins(root);
     expect(registrationDiagnostics(root, "billing")).toEqual([]);
+    expect(
+      await runRegistration(
+        root,
+        "billing",
+        'assert.equal(await registration.canSpend("allowed"), true);\nassert.equal(await registration.canSpend("denied"), false);'
+      )
+    ).toEqual({ exitCode: 0, stderr: "" });
   }
 );
 
@@ -855,34 +891,16 @@ export const customClient = (): ChatClientPlugin => (${provided ? "{ accountSumm
     );
     await syncPlugins(root);
     expect(registrationDiagnostics(root, "account-ui")).toEqual([]);
-    const tsconfig = path.join(root, "tsconfig.json");
-    await writeFile(
-      tsconfig,
-      JSON.stringify({ compilerOptions: { paths: { "@/*": [`${root}/*`] } } })
+    const result = await runRegistration(
+      root,
+      "account-ui",
+      "assert.equal(registration.installedAccountSummaries[0].Component(), null);"
     );
-    const build = await Bun.build({
-      entrypoints: [
-        path.join(root, "composition/generated/installed-account-ui.ts"),
-      ],
-      target: "bun",
-      tsconfig,
-    });
-    expect(build.success).toBe(true);
-    const source = await build.outputs[0]?.text();
-    expect(source).toContain("installedAccountSummaries");
-    const compiled = path.join(root, "compiled-account-ui.mjs");
-    await writeFile(compiled, source ?? "");
-    const runner = path.join(root, "check-account-ui.mjs");
-    await writeFile(
-      runner,
-      'import { strict as assert } from "node:assert";\nimport { installedAccountSummaries } from "./compiled-account-ui.mjs";\nassert.equal(installedAccountSummaries[0].Component(), null);'
-    );
-    const result = Bun.spawnSync([process.execPath, runner]);
     if (provided) {
       expect(result.exitCode).toBe(0);
     } else {
       expect(result.exitCode).not.toBe(0);
-      expect(result.stderr.toString()).toContain(
+      expect(result.stderr).toContain(
         'Plugin "custom-summary" declares accountSummary but does not provide it.'
       );
     }

@@ -2,5 +2,6 @@
 import { creditsBilling as pluginBilling } from "@/plugins/credits/billing";
 import type { UsageBilling } from "@/lib/usage-billing-contracts";
 const usageBilling: UsageBilling | undefined = pluginBilling;
-const canSpend: UsageBilling["canSpend"] = pluginBilling.canSpend;
+const canSpend: UsageBilling["canSpend"] =
+  pluginBilling.canSpend.bind(pluginBilling);
 export { usageBilling, canSpend };
