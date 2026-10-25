@@ -174,7 +174,7 @@ anonymous: {
 
 Public routes (auth callbacks, shared chats, landing pages) are accessible without signing in. All other routes redirect unauthenticated users to `/login`.
 
-The chat API is public at the middleware level — guest identity validation and usage-limit enforcement happen inside the route handler.
+The chat API is public at the middleware level. Guest identity validation and usage-limit enforcement happen inside the route handler.
 
 ---
 
