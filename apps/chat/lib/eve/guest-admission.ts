@@ -235,7 +235,6 @@ const admitGuestCreation = async (
     },
     {
       expiresAt: new Date(Date.now() + ANONYMOUS_LIMITS.SESSION_DURATION),
-      messageLimit: ANONYMOUS_LIMITS.CREDITS,
       tokenHash: principal.tokenHash,
     }
   );
@@ -248,7 +247,7 @@ const admitGuestCreation = async (
       error:
         reservation.status === "conflict"
           ? "This operation has different content."
-          : "Guest message limit reached. Sign in to continue.",
+          : "Guest rate limit reached. Try again later or sign in.",
     },
     {
       status:

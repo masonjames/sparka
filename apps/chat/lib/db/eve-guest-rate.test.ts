@@ -44,7 +44,6 @@ const createReservation = async (
 ) => {
   const guest = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
-    messageLimit: 10,
     tokenHash: createEveGuestCredential().tokenHash,
   });
   return {

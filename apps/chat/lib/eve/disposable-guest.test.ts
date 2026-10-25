@@ -185,9 +185,9 @@ test("a valid signature cannot bypass missing, revoked or mismatched stored poli
   }
 });
 
-test("message exhaustion and rate limiting deny execution at the shared channel", async () => {
+test("input limits and rate limiting deny execution at the shared channel", async () => {
   const token = issueGuestCredential(claims());
-  for (const status of ["exhausted", "rate-limited", "unavailable"]) {
+  for (const status of ["input-limit", "rate-limited", "unavailable"]) {
     store.reserve.mockResolvedValue(status);
     expect(
       // oxlint-disable-next-line eslint/no-await-in-loop -- Each case changes the shared database mock before checking authorization.

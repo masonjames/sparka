@@ -107,7 +107,7 @@ const admitGuestMessage = async (
     );
   }
   return rejectEveCommand(
-    "Guest message limit reached. Sign in to continue.",
+    "Guest rate limit reached. Try again later or sign in.",
     HTTP_TOO_MANY_REQUESTS
   );
 };

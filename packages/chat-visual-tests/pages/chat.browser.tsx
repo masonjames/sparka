@@ -1,3 +1,5 @@
+import { act } from "react";
+import { route } from "./route";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
@@ -609,3 +611,28 @@ test.each(["desktop", "mobile"] as const)(
       .toBeEnabled();
   }
 );
+
+test("a completed turn refreshes the displayed credit balance", async () => {
+  await renderRoute(conversation, { ...request, viewports: ["desktop"] });
+  await expect.element(page.getByText("8.42", { exact: true })).toBeVisible();
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null) {
+    throw new Error("The fixture needs a session.");
+  }
+  const onEvent = route.agentEventHandlers.get(sessionId);
+  const event = invoicesFollowupEvents[sessionId]?.find(
+    (candidate) => candidate.type === "turn.completed"
+  );
+  if (!onEvent || !event) {
+    throw new Error("The runtime must subscribe before completing the turn.");
+  }
+  route.trpc["credits.getAvailableCredits"] = { balanceCents: 420 };
+  await act(async () => {
+    onEvent(event);
+    await Promise.resolve();
+  });
+  await expect.element(page.getByText("4.20", { exact: true })).toBeVisible();
+  await expect
+    .element(page.getByText("8.42", { exact: true }))
+    .not.toBeInTheDocument();
+});

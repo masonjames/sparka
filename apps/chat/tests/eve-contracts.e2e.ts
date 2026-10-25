@@ -60,7 +60,7 @@ afterAll(async () => {
 test("billing replay is atomic, rounds per turn and preserves unknown costs", async () => {
   await db
     .insert(userCredit)
-    .values({ credits: 50, userId: owner })
+    .values({ balanceCents: 50, userId: owner })
     .onConflictDoNothing();
   const sessionId = crypto.randomUUID();
   const eventId = crypto.randomUUID();
@@ -79,7 +79,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
-  expect(balance?.credits).toBe(49);
+  expect(balance?.balanceCents).toBe(49);
   const unknown = {
     ...entry,
     costUsd: undefined,
@@ -98,7 +98,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
-  expect(balance?.credits).toBe(47);
+  expect(balance?.balanceCents).toBe(47);
   expect(await recordEveUsage(unknown)).toBe(true);
   await expect(recordEveUsage({ ...entry, costUsd: 0.5 })).rejects.toThrow(
     "amount changed"

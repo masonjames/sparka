@@ -323,18 +323,18 @@ it("separates maintenance and preserves missing or crash-lost receipts without b
   ).rejects.toThrow("no durable intent");
 });
 
-it("admits unknown costs while enforcing stored-guest quota without monetary credit", async () => {
+it("admits unknown costs while enforcing guest rate limits without monetary credit", async () => {
   await postgres.exec(`
     INSERT INTO "user" (id,name,email) VALUES ('guest','guest','guest');
-    INSERT INTO "EveGuest" ("ownerId","tokenHash","expiresAt","messageLimit","remainingMessages")
-    VALUES ('guest',repeat('a',64),now() + interval '1 day',5,5);
+    INSERT INTO "EveGuest" ("ownerId","tokenHash","expiresAt")
+    VALUES ('guest',repeat('a',64),now() + interval '1 day');
   `);
   const input = {
     ipHash: "c".repeat(64),
     operationId: "00000000-0000-4000-8000-000000000003",
     ownerId: "guest",
     requestHash: "b".repeat(64),
-    requestsPerMinute: 10,
+    requestsPerMinute: 1,
     requestsPerMonth: 100,
   };
   await recordEveUsage({
@@ -347,19 +347,12 @@ it("admits unknown costs while enforcing stored-guest quota without monetary cre
   expect(await reserveEveGuestMessage(input)).toMatchObject({
     status: "reserved",
   });
-  const quota = await postgres.query(
-    'SELECT "remainingMessages" FROM "EveGuest" WHERE "ownerId" = \'guest\''
-  );
-  expect(quota.rows).toEqual([{ remainingMessages: 4 }]);
-  await postgres.exec(
-    'UPDATE "EveGuest" SET "remainingMessages" = 0 WHERE "ownerId" = \'guest\''
-  );
   expect(
     await reserveEveGuestMessage({
       ...input,
       operationId: "00000000-0000-4000-8000-000000000004",
     })
-  ).toMatchObject({ status: "exhausted" });
+  ).toMatchObject({ status: "rate-limited" });
   const credit = await postgres.query(
     'SELECT * FROM "UserCredit" WHERE "userId" = \'guest\''
   );

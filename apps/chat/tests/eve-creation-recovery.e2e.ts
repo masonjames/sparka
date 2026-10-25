@@ -34,7 +34,7 @@ vi.mock("../lib/eve/conversation-title", () => ({
 }));
 
 vi.mock("../lib/db/credits", () => ({
-  canSpend: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
+  getBalanceCents: vi.fn<() => Promise<number>>().mockResolvedValue(50),
 }));
 
 vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({

@@ -30,7 +30,6 @@ vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: {
     AVAILABLE_MODELS: ["cheap", "other-cheap"],
     AVAILABLE_TOOLS: [],
-    CREDITS: 10,
     RATE_LIMIT: { REQUESTS_PER_MINUTE: 5, REQUESTS_PER_MONTH: 10 },
     SESSION_DURATION: 60_000,
   },
@@ -263,7 +262,6 @@ it("binds quota to the complete creation intent and retains native operation rep
       requestsPerMinute: 5,
     }),
     expect.objectContaining({
-      messageLimit: 10,
       tokenHash: principal.tokenHash,
     })
   );

@@ -22,6 +22,7 @@ export const route: {
   /** The error the replayed EVE session reports, as when the last reply failed. */
   agentError: string | null;
   agentStatus: "ready" | "streaming";
+  agentEventHandlers: Map<string, (event: MessageStreamEvent) => void>;
   events: Record<string, readonly MessageStreamEvent[]>;
   cookies: Record<string, string>;
   /** The sign-in method this browser remembers using last. */
@@ -40,6 +41,7 @@ export const route: {
 } = {
   agentError: null,
   agentStatus: "ready",
+  agentEventHandlers: new Map(),
   events: {},
   cookies: {},
   lastLoginMethod: null,

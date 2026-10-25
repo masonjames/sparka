@@ -16,7 +16,10 @@ vi.mock("@/lib/electron-auth", () => ({
   isElectronRenderer: (): boolean => auth.electron,
 }));
 vi.mock("@/hooks/use-credits", () => ({
-  useGetCredits: (): { credits: number } => ({ credits: 0 }),
+  useGetCredits: (): { balanceCents: number; isError: boolean } => ({
+    balanceCents: 0,
+    isError: false,
+  }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: (): object => ({}) }));
 vi.mock("@/providers/session-provider", () => ({

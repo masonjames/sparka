@@ -1,4 +1,4 @@
-import type { EveMessage } from "eve/client";
+import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { MotionGlobalConfig } from "motion/react";
 import type { AnchorHTMLAttributes } from "react";
 import superjson, { serialize } from "superjson";
@@ -165,10 +165,15 @@ vi.mock("eve/react", () => {
   return {
     useEveAgent: ({
       initialSession,
+      onEvent,
     }: {
       initialSession?: { sessionId: string };
+      onEvent?: (event: MessageStreamEvent) => void;
     }) => {
       const sessionId = initialSession?.sessionId ?? "";
+      if (onEvent) {
+        route.agentEventHandlers.set(sessionId, onEvent);
+      }
       const messages =
         route.transcripts[sessionId] ?? emptyTranscript(sessionId);
       const agent = agents.get(messages) ?? {

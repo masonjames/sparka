@@ -81,6 +81,11 @@ const NativeObserver = ({
             };
           }
     ) => {
+      if (event.type === "turn.completed") {
+        void queryClient.invalidateQueries({
+          queryKey: trpc.credits.getAvailableCredits.queryKey(),
+        });
+      }
       if (
         event.type === "turn.completed" &&
         pendingEveMetadataMutations(queryClient) === 0

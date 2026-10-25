@@ -57,7 +57,7 @@ type User = InferSelectModel<typeof user>;
 
 const userCredit = pgTable("UserCredit", {
   /** Balance in cents. Default = $0.50 */
-  credits: integer("credits")
+  balanceCents: integer("credits")
     .notNull()
     .default(INITIAL_USER_CREDIT_BALANCE_CENTS),
   userId: text("userId")
@@ -110,8 +110,6 @@ const guestRuntimeSession = pgTable(
     credentialExpiresAt: timestamp("credentialExpiresAt", {
       withTimezone: true,
     }).notNull(),
-    messageLimit: integer("messageLimit").notNull(),
-    messagesUsed: integer("messagesUsed").notNull().default(0),
     inputCharactersUsed: integer("inputCharactersUsed").notNull().default(0),
     cleanupAttemptedAt: timestamp("cleanupAttemptedAt", { withTimezone: true }),
     deletedAt: timestamp("deletedAt", { withTimezone: true }),
@@ -120,10 +118,6 @@ const guestRuntimeSession = pgTable(
     check(
       "GuestRuntimeSession_state",
       sql`${columns.state} in ('active', 'deleting', 'deleted')`
-    ),
-    check(
-      "GuestRuntimeSession_balance",
-      sql`${columns.messagesUsed} >= 0 and ${columns.messagesUsed} <= ${columns.messageLimit}`
     ),
     check(
       "GuestRuntimeSession_ip_hash",
@@ -167,18 +161,12 @@ const eveGuest = pgTable(
       .defaultNow()
       .notNull(),
     expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
-    messageLimit: integer("messageLimit").notNull(),
     ownerId: text("ownerId")
       .primaryKey()
       .references(() => user.id, { onDelete: "cascade" }),
-    remainingMessages: integer("remainingMessages").notNull(),
     tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
   },
   (columns) => [
-    check(
-      "EveGuest_message_balance",
-      sql`${columns.remainingMessages} >= 0 and ${columns.remainingMessages} <= ${columns.messageLimit}`
-    ),
     check("EveGuest_token_hash", sql`${columns.tokenHash} ~ '^[0-9a-f]{64}$'`),
     index("EveGuest_expiry_idx").on(columns.expiresAt),
   ]

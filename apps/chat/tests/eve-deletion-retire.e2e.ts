@@ -51,9 +51,9 @@ test("internal retirement settles usage after access revocation and is retryable
     .parse(await authSessionResponse.json()).user.id;
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: owner })
+    .values({ balanceCents: 1000, userId: owner })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const created = await page.request.post("/api/agent-conversations", {
@@ -124,7 +124,7 @@ test("internal retirement settles usage after access revocation and is retryable
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
-  expect(after.credits).toBe(before.credits);
+  expect(after.balanceCents).toBe(before.balanceCents);
   const prepared = await prepareEveFamilyDeletion(owner, binding.id);
   expect(prepared?.runIds).toContain(binding.sessionId);
   expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
@@ -205,7 +205,7 @@ test("internal retirement settles usage after access revocation and is retryable
       .select()
       .from(userCredit)
       .where(eq(userCredit.userId, owner));
-    expect(settled.credits).toBe(after.credits);
+    expect(settled.balanceCents).toBe(after.balanceCents);
   } finally {
     await native.end();
   }
@@ -238,9 +238,9 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     .parse(await authSessionResponse.json()).user.id;
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: owner })
+    .values({ balanceCents: 1000, userId: owner })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const { origin } = new URL(page.url());

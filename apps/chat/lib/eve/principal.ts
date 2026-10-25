@@ -8,7 +8,6 @@ export type EvePrincipal =
       ownerId: string;
       tokenHash: string;
       state: "pending" | "active";
-      remainingMessages?: number;
     };
 
 /** Disposable guests never enter application ownership, billing, or history routes.
