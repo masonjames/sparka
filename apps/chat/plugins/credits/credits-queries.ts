@@ -1,8 +1,7 @@
-import "server-only";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-import { db } from "./client";
-import { userCredit } from "./schema";
+import { db } from "@/lib/db/client";
+import { userCredit } from "./credits-schema";
 
 const NO_CREDITS = 0;
 const FIRST_CREDIT_ROW_INDEX = 0;
@@ -45,19 +44,4 @@ const canSpend = async (userId: string): Promise<boolean> => {
   return credits > NO_CREDITS;
 };
 
-/**
- * Subtract credits without enforcing a minimum balance, allowing in-progress operations to finish.
- * @param {string} userId - User whose credit row is created if missing and then debited.
- * @param {number} amount - Amount in cents to subtract; this helper does not require a positive amount or sufficient balance.
- * @returns {Promise<void>} Resolves after the balance update; database failures reject.
- */
-const deductCredits = async (userId: string, amount: number): Promise<void> => {
-  await ensureUserCreditRow(userId);
-  await db
-    .update(userCredit)
-    .set({
-      credits: sql`${userCredit.credits} - ${amount}`,
-    })
-    .where(eq(userCredit.userId, userId));
-};
-export { canSpend, deductCredits, getCredits };
+export { canSpend, getCredits };

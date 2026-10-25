@@ -121,11 +121,12 @@ lib/
 │   ├── schema.ts      # Drizzle schema
 │   ├── queries.ts     # Database queries for application metadata
 │   ├── eve-queries.ts # EVE conversation metadata and ownership queries
-│   ├── credits.ts     # Credit balance queries
 │   └── client.ts      # Database connection
 ├── eve/               # Gateway, message, copy, and lifecycle contracts
 └── artifacts/         # Client artifact metadata helpers
 ```
+
+Credit balances live in `plugins/credits/`. Core usage evidence and reconciliation stay in `lib/db/eve-billing.ts` and `lib/eve/`.
 
 ## Configuration Flow
 

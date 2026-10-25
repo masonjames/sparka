@@ -18,7 +18,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-const INITIAL_USER_CREDIT_BALANCE_CENTS = 50;
 const INITIAL_USAGE_STREAM_INDEX = 0;
 const NO_USAGE_CHARGE_CENTS = 0;
 const WORKFLOW_BACKEND_SINGLETON_ID = 1;
@@ -54,19 +53,6 @@ const user = pgTable("user", {
 });
 
 type User = InferSelectModel<typeof user>;
-
-const userCredit = pgTable("UserCredit", {
-  /** Balance in cents. Default = $0.50 */
-  credits: integer("credits")
-    .notNull()
-    .default(INITIAL_USER_CREDIT_BALANCE_CENTS),
-  userId: text("userId")
-    .primaryKey()
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-});
-
-type UserCredit = InferSelectModel<typeof userCredit>;
 
 const userModelPreference = pgTable(
   "UserModelPreference",
@@ -1001,14 +987,7 @@ export {
   schema,
   session,
   user,
-  userCredit,
   userModelPreference,
   verification,
 };
-export type {
-  EveChat,
-  EveDocumentRevision,
-  User,
-  UserCredit,
-  UserModelPreference,
-};
+export type { EveChat, EveDocumentRevision, User, UserModelPreference };

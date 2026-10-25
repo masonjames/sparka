@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 
 import type { ConsoleMessage, TestInfo } from "@playwright/test";
@@ -8,7 +9,7 @@ import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { listEveSubagents } from "../lib/db/eve-subagents";
-import { eveConversation, eveUsage, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";

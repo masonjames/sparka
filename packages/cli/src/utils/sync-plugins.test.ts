@@ -1,3 +1,4 @@
+import { creditsItem } from "../../../registry/src/plugins/credits/manifest";
 import { searchItem } from "../../../registry/src/plugins/search/manifest";
 import { projectsItem } from "../../../registry/src/plugins/projects/manifest";
 import { feedbackItem } from "../../../registry/src/plugins/feedback/manifest";
@@ -549,7 +550,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
 });
 
-for (const key of ["eve", "settings", "credits"]) {
+for (const key of ["eve", "settings"]) {
   test(`plugin router ${key} cannot replace a core router or partially edit UI`, async () => {
     const root = await fixture();
     await initializePluginUi(root);
@@ -685,3 +686,73 @@ test.each([
     ).toContain(`plugins/${item.name}/${schema}`);
   }
 );
+
+test("credits registers native billing and account UI; removing it restores optional defaults", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  await Promise.all(
+    (creditsItem.files ?? []).map(async (file) => {
+      const target = path.join(root, file.target?.replace(/^~\//u, "") ?? "");
+      await mkdir(path.dirname(target), { recursive: true });
+      await cp(
+        path.resolve(import.meta.dir, "../../../registry", file.path),
+        target
+      );
+    })
+  );
+  await writeFile(
+    path.join(root, "plugins/credits/chatjs.json"),
+    JSON.stringify(creditsItem.meta?.chatjs)
+  );
+  await syncPlugins(root, { expected: ["credits"] });
+  const registration = async (name: string): Promise<string> =>
+    await readFile(
+      path.join(root, `composition/generated/installed-${name}.ts`),
+      "utf-8"
+    );
+  expect(await registration("billing")).toContain("@/plugins/credits/billing");
+  expect(await registration("billing")).not.toContain("server-plugin");
+  expect(await registration("account-ui")).toContain(
+    "plugin0().accountSummary"
+  );
+  expect(await registration("database")).toContain(
+    "plugins/credits/credits-schema"
+  );
+  expect(await registration("routers")).toContain(
+    "credits: plugin0().routers.credits"
+  );
+  await rm(path.join(root, "plugins/credits"), { recursive: true });
+  await syncPlugins(root);
+  expect(await registration("billing")).toContain("Promise.resolve(true)");
+  expect(await registration("billing")).not.toContain("@/plugins/");
+  expect(await registration("account-ui")).not.toContain("@/plugins/");
+});
+
+test("two billing contributors fail before any registration is written", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  const file = path.join(root, "composition/generated/installed-billing.ts");
+  const before = await readFile(file, "utf-8");
+  await Promise.all(
+    ["first", "second"].map(async (id) => {
+      const directory = path.join(root, "plugins", id);
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        path.join(directory, "billing.ts"),
+        "export const billing = {};"
+      );
+      await writeFile(
+        path.join(directory, "chatjs.json"),
+        JSON.stringify({
+          contractVersion: 1,
+          kind: "plugin",
+          id,
+          files: [`plugins/${id}/billing.ts`],
+          billing: { export: "billing" },
+        })
+      );
+    })
+  );
+  await rejects(syncPlugins(root), /Only one plugin may supply usage billing/u);
+  expect(await readFile(file, "utf-8")).toBe(before);
+});

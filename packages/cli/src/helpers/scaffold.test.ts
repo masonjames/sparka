@@ -332,6 +332,7 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/eve/verify-local-coverage.test.ts",
       "lib/db/eve-document-capabilities.test.ts",
       "lib/db/eve-model-ledger.test.ts",
+      "lib/db/eve-billing.test.ts",
       "lib/db/eve-sandbox-run-coverage.test.ts",
       "evals/my-eval.eval.ts",
       "lib/ai/eval-agent.ts",

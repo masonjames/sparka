@@ -1,4 +1,4 @@
-import { getCredits } from "@/lib/db/credits";
+import { getCredits } from "./credits-queries";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const creditsRouter = createTRPCRouter({

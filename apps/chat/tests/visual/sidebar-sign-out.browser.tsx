@@ -15,7 +15,7 @@ vi.mock("@/lib/auth-client", () => ({ default: auth }));
 vi.mock("@/lib/electron-auth", () => ({
   isElectronRenderer: (): boolean => auth.electron,
 }));
-vi.mock("@/hooks/use-credits", () => ({
+vi.mock("@/plugins/credits/use-credits", () => ({
   useGetCredits: (): { credits: number } => ({ credits: 0 }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: (): object => ({}) }));

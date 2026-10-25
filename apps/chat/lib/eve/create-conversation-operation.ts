@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { canSpend } from "@/lib/db/credits";
+import { canSpend } from "@/composition/generated/installed-billing";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import { getEveCreation } from "@/lib/db/eve-queries";

@@ -35,6 +35,7 @@ test("home signed in lists projects and chat history", async () => {
     .element(page.getByText("Onboarding email sequence ideas"))
     .toBeVisible();
   await expect.element(page.getByText("Maya Chen")).toBeVisible();
+  await expect.element(page.getByText("8.42", { exact: true })).toBeVisible();
 });
 
 test("home for a new account with no chats or projects", async () => {

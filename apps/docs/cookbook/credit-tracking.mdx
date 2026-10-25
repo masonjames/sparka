@@ -12,7 +12,7 @@ flowchart LR
     Event[EVE event] --> Hook[agent/hooks/billing.ts]
     Hook --> Usage[lib/eve/usage.ts]
     Usage --> Ledger[Eve billing ledger]
-    Ledger --> Credits[Credit availability]
+    Ledger --> Credits[Optional Credits debit]
     Stream[Authoritative EVE stream] --> Reconcile[lib/eve/reconcile-usage.ts]
     Reconcile --> Ledger
 ```
@@ -21,7 +21,9 @@ flowchart LR
 
 `lib/eve/reconcile-usage.ts` reads only the unprocessed suffix of the native stream and advances a durable cursor after successful reconciliation. If a completed provider cost cannot be resolved, admission stops until the evidence is reconciled.
 
-`lib/db/credits.ts` owns credit storage and availability checks, including `canSpend`. The usage ledger is evidence for those decisions. A positive balance gate does not reserve a concurrent budget for work that has already started.
+[Credits](../plugins/credits) owns balance storage and availability checks in `plugins/credits/`. Core calls its native-safe `billing.ts` policy through generated registrations. Debits use the same transaction as receipt ingestion and settlement markers. A positive balance gate does not reserve a concurrent budget for work that has already started.
+
+Without Credits, core still deduplicates and reconciles receipts, but does not create or debit balances. Guest message quotas remain separate.
 
 ## Related
 

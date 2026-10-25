@@ -201,6 +201,8 @@ const pluginRegistrationTargets = [
   "installed-database",
   "installed-chat",
   "installed-chat-ui",
+  "installed-billing",
+  "installed-account-ui",
 ].map((name) => `composition/generated/${name}.ts`);
 
 const assertPluginDependencies = (
@@ -221,7 +223,7 @@ const assertPluginDependencies = (
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["credits", "eve", "settings"]);
+  const routers = new Set(["eve", "settings"]);
   const controls = new Set([
     "canvas",
     "web-search",
@@ -231,6 +233,7 @@ const assertUniqueContributions = (
   ]);
   const settings = new Set(["general", "models"]);
   let uploads = false;
+  let billing = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
       [plugin.server?.routers ?? [], routers, "router"],
@@ -243,6 +246,12 @@ const assertUniqueContributions = (
         }
         seen.add(key);
       }
+    }
+    if (plugin.billing) {
+      if (billing) {
+        throw new Error("Only one plugin may supply usage billing.");
+      }
+      billing = true;
     }
     if (plugin.client?.uploads) {
       if (uploads) {
@@ -264,6 +273,15 @@ const imports = (
         `import { ${plugin[side]?.export} as plugin${index} } from "@/plugins/${plugin.id}/${side}-plugin";`
     )
     .join("\n");
+
+const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
+  const plugin = plugins.find((candidate) => candidate.billing);
+  const billing = plugin?.billing;
+  return `${billing ? `import { ${billing.export} } from "@/plugins/${plugin?.id}/billing";` : ""}
+import type { UsageBilling } from "@/lib/usage-billing-contracts";
+export const usageBilling: UsageBilling | undefined = ${billing?.export ?? "undefined"};
+export const canSpend: UsageBilling["canSpend"] = ${billing ? `${billing.export}.canSpend` : "() => Promise.resolve(true)"};`;
+};
 
 const syncPlugins = async (
   cwd: string,
@@ -340,7 +358,13 @@ const syncPlugins = async (
   const uploads = plugins.filter((plugin) => plugin.client?.uploads);
   const chat = plugins.filter((plugin) => plugin.chat);
   const chatUi = plugins.filter((plugin) => plugin.client?.chat);
+  const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
   const contents = [
+    ["installed-billing", billingRegistration(plugins)],
+    [
+      "installed-account-ui",
+      `${imports(accountUi, "client")}\nimport type { ComponentType } from "react";\nexport const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${accountUi.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().accountSummary }`).join(", ")}];`,
+    ],
     [
       "installed-chat",
       `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,

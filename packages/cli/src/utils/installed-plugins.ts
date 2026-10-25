@@ -56,6 +56,7 @@ const readInstalledPlugins = async (
             ...definition.files,
             ...(definition.server ? [`plugins/${id}/server-plugin.ts`] : []),
             ...(definition.chat ? [`plugins/${id}/chat.ts`] : []),
+            ...(definition.billing ? [`plugins/${id}/billing.ts`] : []),
             ...(definition.client ? [`plugins/${id}/client-plugin.ts`] : []),
             ...(definition.environmentValidation === undefined
               ? []

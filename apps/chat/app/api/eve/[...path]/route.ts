@@ -14,7 +14,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { UiToolName } from "@/lib/ai/types";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { frontendToolsSchema } from "@/lib/ai/types";
-import { canSpend } from "@/lib/db/credits";
+import { canSpend } from "@/composition/generated/installed-billing";
 import { releaseEveGuestMessage } from "@/lib/db/eve-guests";
 import { env } from "@/lib/env";
 import { referenceEveFiles } from "@/lib/db/eve-files";

@@ -2,6 +2,7 @@
 export const installedPlugins: ReadonlySet<string> = new Set([
   "ai-titles",
   "attachment-uploads",
+  "credits",
   "feedback",
   "followup-suggestions",
   "langfuse",

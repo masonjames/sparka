@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -21,7 +22,6 @@ import {
   eveUsage,
   session,
   user,
-  userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import {

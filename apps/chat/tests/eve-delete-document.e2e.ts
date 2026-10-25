@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 
@@ -7,7 +8,7 @@ import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveDocumentHead, userCredit } from "../lib/db/schema";
+import { eveConversation, eveDocumentHead } from "../lib/db/schema";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
 

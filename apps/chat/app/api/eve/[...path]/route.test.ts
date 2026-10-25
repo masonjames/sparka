@@ -39,7 +39,9 @@ vi.mock("@/lib/db/eve-dispatch", () => ({
 vi.mock("@/lib/db/eve-guests", () => ({
   releaseEveGuestMessage: mocks.release,
 }));
-vi.mock("@/lib/db/credits", () => ({ canSpend: mocks.canSpend }));
+vi.mock("@/composition/generated/installed-billing", () => ({
+  canSpend: mocks.canSpend,
+}));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
 }));

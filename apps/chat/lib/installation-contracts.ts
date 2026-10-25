@@ -9,7 +9,6 @@ import type { DraftAttachment } from "@/lib/eve/draft";
 
 /** Preserve inferred procedure types: use `satisfies`, never annotate the map. */
 type InstalledRouters = Record<string, AnyTRPCRouter> & {
-  credits?: never;
   eve?: never;
   settings?: never;
 };

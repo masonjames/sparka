@@ -16,7 +16,9 @@ const mocks = vi.hoisted(() => ({
   referenceFiles: vi.fn(),
 }));
 
-vi.mock("@/lib/db/credits", () => ({ canSpend: mocks.canSpend }));
+vi.mock("@/composition/generated/installed-billing", () => ({
+  canSpend: mocks.canSpend,
+}));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
 }));

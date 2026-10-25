@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";
@@ -11,7 +12,7 @@ import {
   withManagedUsageReconciliation,
 } from "../lib/db/eve-billing";
 import { createEveConversation } from "../lib/db/eve-queries";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveModelLedger } from "../lib/db/eve-model-ledger";
 import { createToolResult } from "../lib/eve/tool-result";

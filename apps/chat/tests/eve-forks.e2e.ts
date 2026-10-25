@@ -1,10 +1,11 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";

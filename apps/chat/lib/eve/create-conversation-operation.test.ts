@@ -47,7 +47,7 @@ vi.mock("@/lib/db/eve-queries", () => ({
 vi.mock("@/lib/db/eve-guests", () => ({
   readEveGuestOwner: mocks.guest,
 }));
-vi.mock("@/lib/db/credits", () => ({
+vi.mock("@/composition/generated/installed-billing", () => ({
   canSpend: mocks.canSpend,
 }));
 vi.mock("@/lib/db/eve-files", () => ({ assertEveFilesOwned: vi.fn() }));

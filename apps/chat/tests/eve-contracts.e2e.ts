@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import {
   getPublicEveConversation,
   setSharing,
@@ -13,7 +14,6 @@ import {
   eveConversation,
   eveUsage,
   user,
-  userCredit,
 } from "../lib/db/schema";
 import { setTimeout as delay } from "node:timers/promises";
 

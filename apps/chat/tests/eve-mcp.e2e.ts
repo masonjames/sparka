@@ -1,3 +1,4 @@
+import { userCredit } from "@/plugins/credits/credits-schema";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { once } from "node:events";
@@ -12,7 +13,6 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { MCPClient } from "../plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
-import { userCredit } from "../lib/db/schema";
 import { mcpConnector } from "@/plugins/mcp/db/mcp-schema";
 import { env } from "../lib/env";
 import {

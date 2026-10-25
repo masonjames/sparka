@@ -144,6 +144,7 @@ export default defineConfig({
             "/plugins/feedback",
             "/plugins/search",
             "/plugins/ai-titles",
+            "/plugins/credits",
             "/plugins/sharing",
             "/plugins/followup-suggestions",
             "/plugins/mcp",
