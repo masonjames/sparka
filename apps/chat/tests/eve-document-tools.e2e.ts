@@ -95,9 +95,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     .parse(await authSessionResponse.json());
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: session.user.id })
+    .values({ balanceCents: 1000, userId: session.user.id })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const created = await page.request.post("/api/agent-conversations", {

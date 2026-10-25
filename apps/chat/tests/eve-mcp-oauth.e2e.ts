@@ -34,9 +34,9 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: owner.id })
+      .values({ balanceCents: 1000, userId: owner.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({

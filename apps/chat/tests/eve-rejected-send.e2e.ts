@@ -47,7 +47,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   try {
     await db
       .update(userCredit)
-      .set({ credits: 0 })
+      .set({ balanceCents: 0 })
       .where(eq(userCredit.userId, conversation.ownerId));
     await composer.fill(unsent);
     const rejected = page.waitForResponse(
@@ -94,7 +94,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   } finally {
     await db
       .update(userCredit)
-      .set({ credits: balance.credits })
+      .set({ balanceCents: balance.balanceCents })
       .where(eq(userCredit.userId, conversation.ownerId));
   }
   await page.getByRole("button", { exact: true, name: "Send" }).click();

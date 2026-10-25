@@ -1,3 +1,4 @@
+import { TrpcFixtureError } from "./route";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 
@@ -85,4 +86,22 @@ test("home signed in with the sidebar collapsed", async () => {
       document.querySelector('[data-state="collapsed"][data-side="left"]')
     )
     .not.toBeNull();
+});
+
+test("home shows an unavailable balance instead of a false zero", async () => {
+  await renderRoute(home, {
+    ...signedIn,
+    viewports: ["desktop"],
+    trpc: {
+      ...signedInTrpc,
+      "credits.getAvailableCredits": new TrpcFixtureError(
+        "INTERNAL_SERVER_ERROR",
+        "Balance lookup unavailable"
+      ),
+    },
+  });
+  await expect.element(page.getByText("Balance unavailable")).toBeVisible();
+  await expect
+    .element(page.getByText("0.00", { exact: true }))
+    .not.toBeInTheDocument();
 });

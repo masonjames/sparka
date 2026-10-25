@@ -10,6 +10,7 @@ const selections = [
   "feedback",
   "followup-suggestions",
   "search",
+  "model-preferences",
   "ai-titles",
   "sharing",
   "credits",
@@ -21,6 +22,7 @@ const pluginTables = [
   "EveVote",
   "EveFollowup",
   "EveSearchText",
+  "UserModelPreference",
 ];
 const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   none: [],
@@ -28,6 +30,7 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   feedback: ["EveVote"],
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
+  "model-preferences": ["UserModelPreference"],
   "ai-titles": [],
   sharing: [],
   credits: ["UserCredit"],
@@ -133,7 +136,7 @@ import { chatLinks } from "./lib/chat-plugins";
 import { usageBilling, canSpend } from "./composition/generated/installed-billing";
 assert.equal(usageBilling !== undefined, ${selection === "credits"});
 ${selection === "none" ? 'assert.equal(await canSpend("fixture-owner"), true);' : ""}
-assert.equal(installedChatPlugins.length, ${selection === "none" || selection === "credits" ? 0 : 1});
+assert.equal(installedChatPlugins.length, ${selection === "none" || selection === "credits" || selection === "model-preferences" ? 0 : 1});
 assert.deepEqual(await chatLinks("fixture-owner", []), new Map());
 for (const plugin of installedChatPlugins) {
   assert.equal(typeof plugin.${lifecycleMethod}, "function");

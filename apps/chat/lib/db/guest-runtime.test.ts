@@ -46,7 +46,6 @@ const input = () => ({
   modelId: "openai/gpt-5-nano",
   ipHash: randomUUID().replaceAll("-", "").repeat(2),
   credentialExpiresAt: new Date(Date.now() + 3_600_000),
-  messageLimit: 2,
   requestsPerMinute: 5,
   sessionsPerHour: 5,
 });
@@ -75,7 +74,7 @@ test("policy pins ownership and session without creating an account", async () =
   ).toBe(false);
   expect(await readGuestRuntimePolicy(guest.id, "other")).toBeNull();
 });
-test("concurrent admissions cannot exceed session budget", async () => {
+test("concurrent admissions enforce IP rate limits without a session balance", async () => {
   const guest = await create();
   const outcomes = await Promise.all(
     Array.from(
@@ -84,14 +83,14 @@ test("concurrent admissions cannot exceed session budget", async () => {
         await reserveGuestRuntimeMessage({
           sessionId: guest.sessionId,
           ownerId: guest.ownerId,
-          requestsPerMinute: 100,
+          requestsPerMinute: 2,
           inputCharacters: 10,
           maxInputCharacters: 24_000,
         })
     )
   );
   expect(outcomes.filter((value) => value === "ready")).toHaveLength(2);
-  expect(outcomes.filter((value) => value === "exhausted")).toHaveLength(6);
+  expect(outcomes.filter((value) => value === "rate-limited")).toHaveLength(6);
 });
 test("IP rate limits span sessions and hourly creation", async () => {
   const seed = input();
@@ -126,7 +125,7 @@ test("IP rate limits span sessions and hourly creation", async () => {
     })
   ).toBe("rate-limited");
   const secondPolicy = await readGuestRuntimeSession(second.sessionId);
-  expect(secondPolicy?.messagesUsed).toBe(0);
+  expect(secondPolicy?.inputCharactersUsed).toBe(0);
 });
 test("credential expiry and wrong owner prevent admission", async () => {
   const guest = await create();
@@ -195,10 +194,9 @@ test("cumulative input budget is atomic and denied inputs do not consume quota",
     reserveGuestRuntimeMessage(request),
     reserveGuestRuntimeMessage(request),
   ]);
-  expect(outcomes.toSorted()).toEqual(["exhausted", "ready"]);
+  expect(outcomes.toSorted()).toEqual(["input-limit", "ready"]);
   const policy = await readGuestRuntimeSession(guest.sessionId);
   expect(policy?.inputCharactersUsed).toBe(8);
-  expect(policy?.messagesUsed).toBe(1);
 });
 
 test("legacy read-only inventory ignores accounts and fully deleted guest families", async () => {
@@ -229,8 +227,6 @@ test("legacy read-only inventory ignores accounts and fully deleted guest famili
   await database.insert(eveGuest).values({
     ownerId,
     expiresAt: new Date(0),
-    messageLimit: 1,
-    remainingMessages: 0,
     tokenHash: "f".repeat(64),
   });
   expect(await hasExpiredEveGuestFamilies()).toBe(true);
@@ -252,4 +248,24 @@ test("pruning drains more than one old rate batch and retains live limits", asyn
   const rows = await database.select().from(guestRuntimeRate);
   expect(rows.some((row) => row.ipHash.startsWith("expired-"))).toBe(false);
   expect(rows.some((row) => row.ipHash === "live-rate")).toBe(true);
+});
+
+test("one guest can send beyond the former ten-message cap while within rate and input limits", async () => {
+  const guest = await create();
+  const outcomes = await Promise.all(
+    Array.from(
+      { length: 12 },
+      async () =>
+        await reserveGuestRuntimeMessage({
+          sessionId: guest.sessionId,
+          ownerId: guest.ownerId,
+          requestsPerMinute: 20,
+          inputCharacters: 10,
+          maxInputCharacters: 24_000,
+        })
+    )
+  );
+  expect(outcomes).toEqual(Array.from({ length: 12 }, () => "ready"));
+  const policy = await readGuestRuntimeSession(guest.sessionId);
+  expect(policy?.inputCharactersUsed).toBe(120);
 });

@@ -15,12 +15,15 @@ const installation = vi.hoisted(
     summaries: [],
   })
 );
-const Balance = createContext<number | undefined>(undefined);
+const Balance = createContext<{
+  balanceCents: number | undefined;
+  isError: boolean;
+}>({ balanceCents: undefined, isError: false });
 vi.mock("@/composition/generated/installed-account-ui", () => ({
   installedAccountSummaries: installation.summaries,
 }));
 vi.mock("@/plugins/credits/use-credits", () => ({
-  useGetCredits: () => ({ credits: useContext(Balance) }),
+  useGetCredits: () => useContext(Balance),
 }));
 vi.mock("@/lib/auth-client", () => ({ default: {} }));
 vi.mock("@/lib/electron-auth", () => ({ isElectronRenderer: () => false }));
@@ -40,10 +43,11 @@ vi.mock("@/providers/session-provider", () => ({
 }));
 
 const states = [
-  { label: "Starting balance", credits: 50 },
-  { label: "Depleted", credits: 0 },
-  { label: "Overdraft", credits: -17 },
-  { label: "Loading or unavailable", credits: undefined },
+  { label: "Starting balance", balanceCents: 50, isError: false },
+  { label: "Depleted", balanceCents: 0, isError: false },
+  { label: "Overdraft", balanceCents: -17, isError: false },
+  { label: "Loading", balanceCents: undefined, isError: false },
+  { label: "Failed refresh with stale data", balanceCents: 50, isError: true },
 ];
 test.each([true, false])(
   "account menu with credits installed: %s",
@@ -64,10 +68,10 @@ test.each([true, false])(
         root.render(
           <div className="grid gap-4 p-6">
             {(enabled ? states : states.slice(0, 1)).map(
-              ({ label, credits }) => (
+              ({ label, ...balance }) => (
                 <section key={label} className="w-64">
                   <h2>{enabled ? label : "Credits not installed"}</h2>
-                  <Balance value={credits}>
+                  <Balance value={balance}>
                     <SidebarProvider className="min-h-0">
                       <SidebarUserNav />
                     </SidebarProvider>
@@ -86,8 +90,14 @@ test.each([true, false])(
           .element(page.getByText("-0.17", { exact: true }))
           .toBeVisible();
         expect(page.getByText("0.00", { exact: true }).elements()).toHaveLength(
-          2
+          1
         );
+        await expect
+          .element(page.getByText("Loading balance…", { exact: true }))
+          .toBeVisible();
+        await expect
+          .element(page.getByText("Balance unavailable", { exact: true }))
+          .toBeVisible();
       } else {
         await expect.element(page.getByText("Fixture user")).toBeVisible();
         await expect

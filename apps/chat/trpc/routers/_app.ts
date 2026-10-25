@@ -2,7 +2,6 @@ import { installedRouters } from "@/composition/generated/installed-routers";
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { eveRouter } from "./eve.router";
-import { settingsRouter } from "./settings.router";
 
 /**
  * This is the primary router for your server.
@@ -13,7 +12,6 @@ import { settingsRouter } from "./settings.router";
 const appRouter = createTRPCRouter({
   eve: eveRouter,
   ...installedRouters,
-  settings: settingsRouter,
 });
 
 // Export the type definition for the API.

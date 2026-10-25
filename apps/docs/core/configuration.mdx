@@ -92,7 +92,7 @@ bunx @chat-js/cli@latest create minimal-chat --yes --no-documents --no-mcp --no-
 
 ## Runtime policy and credentials
 
-Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. `anonymous` configures guest model/tool access, credits and rate limits. Retention additionally needs an operational cleanup schedule and lifecycle support.
+Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. `anonymous` configures the older guest route's IP rate limits. Disposable sessions use the server-owned policy in `lib/eve/session-policy.ts`, including model, input-size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
 
 `features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature. Branding, organization/legal text and pricing display are also runtime configuration.
 

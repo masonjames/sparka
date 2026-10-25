@@ -145,7 +145,7 @@ const debitTurnUsage = async (
  * @param {string} input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
  * @param {string} input.sessionId Native session whose turn cost is recorded.
  * @param {string} input.turnId Native turn whose decimal costs are rounded and charged together.
- * @param {string} input.ownerId Owner whose credit or guest quota identity scopes the record.
+ * @param {string} input.ownerId Registered or guest owner whose identity scopes the record.
  * @param {number | undefined} input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
  * @param {string | undefined} input.generationId Optional provider generation identifier used for later reconciliation.
  * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
@@ -257,8 +257,7 @@ const recordEveUsage = async (input: {
     } else {
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
-    // Guest admission spends message quota. Keep provider costs without granting
-    // signup credit or mixing monetary debits into that separate allowance.
+    // Keep guest provider costs as evidence without creating a monetary balance.
     if (!isGuest) {
       await debitTurnUsage(tx, input);
     }

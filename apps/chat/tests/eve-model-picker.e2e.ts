@@ -37,9 +37,9 @@ test("the single-model picker dispatches and retains the selected native model",
       .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: user.id })
+      .values({ balanceCents: 1000, userId: user.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
     await page.goto("/");

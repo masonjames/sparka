@@ -1,11 +1,11 @@
 import { eq, sql } from "drizzle-orm";
 import type { UsageBilling } from "@/lib/usage-billing-contracts";
-import { canSpend } from "./credits-queries";
+import { getBalanceCents } from "./credits-queries";
 import { userCredit } from "./credits-schema";
 
 /** Core supplies its usage transaction, with the registered owner already locked. */
 export const creditsBilling = {
-  canSpend,
+  canSpend: async (ownerId) => (await getBalanceCents(ownerId)) > 0,
   debit: async (tx, { ownerId, cents }) => {
     await tx
       .insert(userCredit)
@@ -13,7 +13,7 @@ export const creditsBilling = {
       .onConflictDoNothing();
     await tx
       .update(userCredit)
-      .set({ credits: sql`${userCredit.credits} - ${cents}` })
+      .set({ balanceCents: sql`${userCredit.balanceCents} - ${cents}` })
       .where(eq(userCredit.userId, ownerId));
   },
 } satisfies UsageBilling;

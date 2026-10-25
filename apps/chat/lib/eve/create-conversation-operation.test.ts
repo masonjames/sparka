@@ -97,6 +97,9 @@ it("creates an idle seed then journals the first send separately", async () => {
   mocks.send.mockImplementation(async (_input, dispatch) => await dispatch());
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(200);
+  expect(mocks.reconcile.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.canSpend.mock.invocationCallOrder[0]
+  );
   expect(
     JSON.parse(z.string().parse(mocks.request.mock.calls[0]?.[2]?.body))
   ).toEqual({ operationId: input.operationId, seed: true });

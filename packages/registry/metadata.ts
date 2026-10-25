@@ -168,6 +168,7 @@ const pluginDefinitionSchema = z.object({
       layout: z.literal(true).optional(),
       accountSummary: z.literal(true).optional(),
       uploads: z.literal(true).optional(),
+      modelVisibility: z.literal(true).optional(),
     })
     .optional(),
 });

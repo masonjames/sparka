@@ -164,7 +164,6 @@ const anonymousConfigObjectSchema = z.object({
   availableTools: z
     .array(toolName())
     .describe("Tools available to anonymous users"),
-  credits: z.number().describe("Message credits for anonymous users"),
   rateLimit: z
     .object({
       requestsPerMinute: z.number(),
@@ -175,7 +174,6 @@ const anonymousConfigObjectSchema = z.object({
 
 const ANONYMOUS_DEFAULTS: z.input<typeof anonymousConfigObjectSchema> = {
   availableTools: [],
-  credits: 10,
   rateLimit: {
     requestsPerMinute: 5,
     requestsPerMonth: 10,

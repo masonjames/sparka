@@ -149,12 +149,12 @@ export const chatsIn = (
 
 /** The procedures every signed-in page reads through the chat layout and sidebar. */
 export const signedInTrpc = {
-  "credits.getAvailableCredits": { credits: 842 },
+  "credits.getAvailableCredits": { balanceCents: 842 },
   "eve.list": (input: { projectId?: string | null }) => chatsIn(history, input),
   "mcp.listConnected": [],
   "project.list": projects,
   "project.forChat": null,
-  "settings.getModelPreferences": [],
+  "modelPreferences.getModelPreferences": [],
 };
 
 const invoicesChatId = history.items[1]?.id ?? "";

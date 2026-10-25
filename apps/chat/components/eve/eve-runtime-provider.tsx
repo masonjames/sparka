@@ -82,6 +82,15 @@ const NativeObserver = ({
           }
     ) => {
       if (
+        event.type === "turn.completed" ||
+        event.type === "turn.failed" ||
+        event.type === "turn.cancelled"
+      ) {
+        void queryClient.invalidateQueries({
+          predicate: (query) => query.meta?.refreshOnTurnEnd === true,
+        });
+      }
+      if (
         event.type === "turn.completed" &&
         pendingEveMetadataMutations(queryClient) === 0
       ) {

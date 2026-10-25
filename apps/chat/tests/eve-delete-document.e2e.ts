@@ -44,9 +44,9 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   );
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: session.user.id })
+    .values({ balanceCents: 1000, userId: session.user.id })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   await page.context().addCookies([

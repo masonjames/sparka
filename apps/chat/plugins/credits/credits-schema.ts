@@ -5,7 +5,7 @@ const INITIAL_USER_CREDIT_BALANCE_CENTS = 50;
 
 const userCredit = pgTable("UserCredit", {
   /** Balance in cents. Default = $0.50 */
-  credits: integer("credits")
+  balanceCents: integer("credits")
     .notNull()
     .default(INITIAL_USER_CREDIT_BALANCE_CENTS),
   userId: text("userId")

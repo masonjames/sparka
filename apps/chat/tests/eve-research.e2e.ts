@@ -101,9 +101,9 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   );
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: session.user.id })
+    .values({ balanceCents: 1000, userId: session.user.id })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const created = await page.evaluate(

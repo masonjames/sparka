@@ -14,7 +14,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { UiToolName } from "@/lib/ai/types";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { frontendToolsSchema } from "@/lib/ai/types";
-import { canSpend } from "@/composition/generated/installed-billing";
+import { canStartPaidTurn } from "@/lib/eve/spending-admission";
 import { releaseEveGuestMessage } from "@/lib/db/eve-guests";
 import { env } from "@/lib/env";
 import { referenceEveFiles } from "@/lib/db/eve-files";
@@ -28,7 +28,6 @@ import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
-import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
   safeStreamQuery,
@@ -80,8 +79,7 @@ const checkTurnAdmission = async (
       selectedTool: command.selectedTool,
     });
   }
-  await reconcileEveOwnerUsage(principal.ownerId, sessionId);
-  if (!(await canSpend(principal.ownerId))) {
+  if (!(await canStartPaidTurn(principal.ownerId, sessionId))) {
     return rejectEveCommand("Insufficient credits", HTTP_PAYMENT_REQUIRED);
   }
   return undefined;

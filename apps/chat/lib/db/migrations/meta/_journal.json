@@ -148,6 +148,13 @@
       "when": 1792919362764,
       "tag": "0020_organic_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792944480400,
+      "tag": "0021_glorious_chameleon",
+      "breakpoints": true
     }
   ]
 }

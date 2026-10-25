@@ -54,28 +54,6 @@ const user = pgTable("user", {
 
 type User = InferSelectModel<typeof user>;
 
-const userModelPreference = pgTable(
-  "UserModelPreference",
-  {
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    enabled: boolean("enabled").notNull(),
-    modelId: varchar("modelId", { length: 256 }).notNull(),
-    updatedAt: timestamp("updatedAt")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (columns) => [
-    index("UserModelPreference_user_id_idx").on(columns.userId),
-    primaryKey({ columns: [columns.userId, columns.modelId] }),
-  ]
-);
-
-type UserModelPreference = InferSelectModel<typeof userModelPreference>;
-
 // Disposable runtime policy records never create an application account.
 const guestRuntimeSession = pgTable(
   "GuestRuntimeSession",
@@ -96,8 +74,6 @@ const guestRuntimeSession = pgTable(
     credentialExpiresAt: timestamp("credentialExpiresAt", {
       withTimezone: true,
     }).notNull(),
-    messageLimit: integer("messageLimit").notNull(),
-    messagesUsed: integer("messagesUsed").notNull().default(0),
     inputCharactersUsed: integer("inputCharactersUsed").notNull().default(0),
     cleanupAttemptedAt: timestamp("cleanupAttemptedAt", { withTimezone: true }),
     deletedAt: timestamp("deletedAt", { withTimezone: true }),
@@ -106,10 +82,6 @@ const guestRuntimeSession = pgTable(
     check(
       "GuestRuntimeSession_state",
       sql`${columns.state} in ('active', 'deleting', 'deleted')`
-    ),
-    check(
-      "GuestRuntimeSession_balance",
-      sql`${columns.messagesUsed} >= 0 and ${columns.messagesUsed} <= ${columns.messageLimit}`
     ),
     check(
       "GuestRuntimeSession_ip_hash",
@@ -153,18 +125,12 @@ const eveGuest = pgTable(
       .defaultNow()
       .notNull(),
     expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
-    messageLimit: integer("messageLimit").notNull(),
     ownerId: text("ownerId")
       .primaryKey()
       .references(() => user.id, { onDelete: "cascade" }),
-    remainingMessages: integer("remainingMessages").notNull(),
     tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
   },
   (columns) => [
-    check(
-      "EveGuest_message_balance",
-      sql`${columns.remainingMessages} >= 0 and ${columns.remainingMessages} <= ${columns.messageLimit}`
-    ),
     check("EveGuest_token_hash", sql`${columns.tokenHash} ~ '^[0-9a-f]{64}$'`),
     index("EveGuest_expiry_idx").on(columns.expiresAt),
   ]
@@ -987,7 +953,6 @@ export {
   schema,
   session,
   user,
-  userModelPreference,
   verification,
 };
-export type { EveChat, EveDocumentRevision, User, UserModelPreference };
+export type { EveChat, EveDocumentRevision, User };

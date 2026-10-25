@@ -16,6 +16,7 @@ import { createEveConversation } from "../lib/db/eve-queries";
 import { reserveEveResponseGroupInTransaction } from "../lib/db/eve-response-groups";
 import {
   eveConversation,
+  eveDispatch,
   eveGuest,
   eveGuestMessage,
   eveGuestRate,
@@ -48,15 +49,22 @@ const findEveGuest = async (
   return undefined;
 };
 
-const guest = async (messageLimit = 10) => {
+const guest = async () => {
   const credential = createEveGuestCredential();
   const row = await createEveGuest({
     expiresAt: new Date(Date.now() + 60_000),
-    messageLimit,
     tokenHash: credential.tokenHash,
   });
   owners.push(row.ownerId);
   return row;
+};
+
+const rateCounts = async (ipHash: string): Promise<number[]> => {
+  const rows = await db
+    .select()
+    .from(eveGuestRate)
+    .where(eq(eveGuestRate.ipHash, ipHash));
+  return rows.map((row) => row.requests);
 };
 
 const request = (ownerId: string) => {
@@ -75,6 +83,7 @@ const request = (ownerId: string) => {
 afterAll(async () => {
   if (owners.length > 0) {
     await db.delete(eveUsage).where(inArray(eveUsage.ownerId, owners));
+    await db.delete(eveDispatch).where(inArray(eveDispatch.ownerId, owners));
     await db
       .delete(eveConversation)
       .where(inArray(eveConversation.ownerId, owners));
@@ -120,8 +129,6 @@ test("concurrent replay reserves once and rejects changed request content", asyn
   expect(attempts.filter((result) => result.status === "replay")).toHaveLength(
     7
   );
-  const guestAfterReplay = await findEveGuest(row.tokenHash);
-  expect(guestAfterReplay?.remainingMessages).toBe(9);
   const rates = await db
     .select()
     .from(eveGuestRate)
@@ -137,9 +144,9 @@ test("concurrent replay reserves once and rejects changed request content", asyn
   ).toEqual({ status: "conflict" });
 });
 
-test("distinct concurrent sends cannot overspend the guest balance", async () => {
-  const row = await guest(1);
-  const input = request(row.ownerId);
+test("distinct concurrent sends cannot exceed the IP rate limit", async () => {
+  const row = await guest();
+  const input = { ...request(row.ownerId), requestsPerMinute: 1 };
   const results = await Promise.all(
     Array.from(
       { length: 6 },
@@ -154,13 +161,11 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
     1
   );
   expect(
-    results.filter((result) => result.status === "exhausted")
+    results.filter((result) => result.status === "rate-limited")
   ).toHaveLength(5);
-  const guestAfterCompetingSends = await findEveGuest(row.tokenHash);
-  expect(guestAfterCompetingSends?.remainingMessages).toBe(0);
 });
 
-test("IP quotas survive cookie replacement and rejected limits spend no guest balance", async () => {
+test("IP quotas survive cookie replacement and rejected sends consume no capacity", async () => {
   const first = await guest();
   const second = await guest();
   const input = { ...request(first.ownerId), requestsPerMonth: 1 };
@@ -173,8 +178,6 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
       ownerId: second.ownerId,
     })
   ).toEqual({ status: "rate-limited" });
-  const secondGuestAfterRateLimit = await findEveGuest(second.tokenHash);
-  expect(secondGuestAfterRateLimit?.remainingMessages).toBe(10);
   const ipQuotaRowsAfterLimit = await db
     .select()
     .from(eveGuestRate)
@@ -231,8 +234,7 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
     )
   );
   expect(releases.filter(Boolean)).toHaveLength(1);
-  const guestAfterConcurrentRelease = await findEveGuest(row.tokenHash);
-  expect(guestAfterConcurrentRelease?.remainingMessages).toBe(10);
+  expect(await rateCounts(input.ipHash)).toEqual([0, 0]);
   const retry = await reserveEveGuestMessage(input);
   if (retry.status !== "reserved") {
     throw new Error("Expected a retry reservation");
@@ -259,12 +261,10 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
       retry.reservationId
     )
   ).toBe(false);
-  const guestAfterRetryCommit = await findEveGuest(row.tokenHash);
-  expect(guestAfterRetryCommit?.remainingMessages).toBe(9);
 });
 
 test("committing and releasing the same attempt are mutually exclusive", async () => {
-  const row = await guest(1);
+  const row = await guest();
   const input = request(row.ownerId);
   const held = await reserveEveGuestMessage(input);
   if (held.status !== "reserved") {
@@ -275,10 +275,7 @@ test("committing and releasing the same attempt are mutually exclusive", async (
     releaseEveGuestMessage(row.ownerId, input.operationId, held.reservationId),
   ]);
   expect(results.filter(Boolean)).toHaveLength(1);
-  const guestAfterCommitReleaseRace = await findEveGuest(row.tokenHash);
-  expect(guestAfterCommitReleaseRace?.remainingMessages).toBe(
-    results[0] ? 0 : 1
-  );
+  expect(await rateCounts(input.ipHash)).toEqual(results[0] ? [1, 1] : [0, 0]);
 });
 
 test("guest provider accounting survives expiry and replay without creating monetary credit", async () => {
@@ -319,7 +316,6 @@ test("first admission creates one guest and reserves once across different IPs",
   const input = request(ownerId);
   const bootstrap = {
     expiresAt: new Date(Date.now() + 60_000),
-    messageLimit: 2,
     tokenHash: credential.tokenHash,
   };
   const attempts = await Promise.all(
@@ -338,7 +334,7 @@ test("first admission creates one guest and reserves once across different IPs",
     5
   );
   const bootstrappedGuest = await findEveGuest(credential.tokenHash);
-  expect(bootstrappedGuest?.remainingMessages).toBe(1);
+  expect(bootstrappedGuest?.ownerId).toBe(ownerId);
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toHaveLength(
     1
   );
@@ -347,7 +343,7 @@ test("first admission creates one guest and reserves once across different IPs",
   ).toEqual([]);
 });
 
-test.each(["rate", "balance"])(
+test.each(["minute", "month"])(
   "denied first admission for %s creates no account or quota rows",
   async (denial) => {
     const credential = createEveGuestCredential();
@@ -357,17 +353,15 @@ test.each(["rate", "balance"])(
     const result = await reserveEveGuestMessage(
       {
         ...input,
-        requestsPerMinute: denial === "rate" ? 0 : 100,
+        requestsPerMinute: denial === "minute" ? 0 : 100,
+        requestsPerMonth: denial === "month" ? 0 : 100,
       },
       {
         expiresAt: new Date(Date.now() + 60_000),
-        messageLimit: denial === "balance" ? 0 : 2,
         tokenHash: credential.tokenHash,
       }
     );
-    expect(result.status).toBe(
-      denial === "rate" ? "rate-limited" : "exhausted"
-    );
+    expect(result.status).toBe("rate-limited");
     expect(await findEveGuest(credential.tokenHash)).toBeUndefined();
     expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual(
       []
@@ -381,26 +375,25 @@ test.each(["rate", "balance"])(
   }
 );
 
-test("bootstrap cannot replace an expired identity or reset its balance", async () => {
-  const row = await guest(1);
-  const input = request(row.ownerId);
+test("bootstrap cannot replace an expired identity or reset IP limits", async () => {
+  const row = await guest();
+  const input = { ...request(row.ownerId), requestsPerMinute: 1 };
   await reserveEveGuestMessage(input);
   const bootstrap = {
     expiresAt: new Date(Date.now() + 60_000),
-    messageLimit: 50,
     tokenHash: row.tokenHash,
   };
   const expiredBootstrapReservation = await reserveEveGuestMessage(
-    request(row.ownerId),
+    { ...input, operationId: crypto.randomUUID() },
     bootstrap
   );
-  expect(expiredBootstrapReservation.status).toBe("exhausted");
+  expect(expiredBootstrapReservation.status).toBe("rate-limited");
   await db
     .update(eveGuest)
     .set({ expiresAt: new Date(0) })
     .where(eq(eveGuest.ownerId, row.ownerId));
   const repeatedBootstrapReservation = await reserveEveGuestMessage(
-    request(row.ownerId),
+    { ...input, operationId: crypto.randomUUID() },
     bootstrap
   );
   expect(repeatedBootstrapReservation.status).toBe("unavailable");
@@ -413,16 +406,15 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
   const credential = createEveGuestCredential();
   const ownerId = eveGuestOwnerId(credential.tokenHash);
   owners.push(ownerId);
-  const first = request(ownerId);
+  const first = { ...request(ownerId), requestsPerMinute: 1 };
   const result = await reserveEveGuestMessages(
     [first, { ...first, operationId: crypto.randomUUID() }],
     {
       expiresAt: new Date(Date.now() + 60_000),
-      messageLimit: 1,
       tokenHash: credential.tokenHash,
     }
   );
-  expect(result).toEqual({ status: "exhausted" });
+  expect(result).toEqual({ status: "rate-limited" });
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual([]);
   expect(
     await db
@@ -439,8 +431,8 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
 });
 
 test("failed mixed replay/new comparison leaves prior admission intact and rolls back new debits", async () => {
-  const row = await guest(2);
-  const first = request(row.ownerId);
+  const row = await guest();
+  const first = { ...request(row.ownerId), requestsPerMinute: 2 };
   const accepted = await reserveEveGuestMessage(first);
   expect(accepted.status).toBe("reserved");
   const result = await reserveEveGuestMessages([
@@ -448,13 +440,11 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     { ...first, operationId: crypto.randomUUID() },
     { ...first, operationId: crypto.randomUUID() },
   ]);
-  expect(result).toEqual({ status: "exhausted" });
+  expect(result).toEqual({ status: "rate-limited" });
   expect(await reserveEveGuestMessage(first)).toEqual({
     ...accepted,
     status: "replay",
   });
-  const guestAfterMixedReplay = await findEveGuest(row.tokenHash);
-  expect(guestAfterMixedReplay?.remainingMessages).toBe(1);
   const entries = await db
     .select()
     .from(eveGuestMessage)
@@ -472,7 +462,7 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
 });
 
 test("concurrent comparison retries debit each distinct candidate exactly once", async () => {
-  const row = await guest(2);
+  const row = await guest();
   const first = request(row.ownerId);
   const inputs = [first, { ...first, operationId: crypto.randomUUID() }];
   const results = await Promise.all(
@@ -536,8 +526,6 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
         )
     )
   ).toHaveLength(1);
-  const guestAfterConcurrentComparison = await findEveGuest(row.tokenHash);
-  expect(guestAfterConcurrentComparison?.remainingMessages).toBe(0);
   const ipQuotaRowsAfterComparison = await db
     .select()
     .from(eveGuestRate)
@@ -550,7 +538,7 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
 });
 
 test("comparison rate limits roll back all candidates and reject duplicate operation IDs", async () => {
-  const row = await guest(10);
+  const row = await guest();
   const first = { ...request(row.ownerId), requestsPerMinute: 1 };
   expect(
     await reserveEveGuestMessages([
@@ -558,8 +546,6 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
       { ...first, operationId: crypto.randomUUID() },
     ])
   ).toEqual({ status: "rate-limited" });
-  const guestAfterComparisonRateLimit = await findEveGuest(row.tokenHash);
-  expect(guestAfterComparisonRateLimit?.remainingMessages).toBe(10);
   expect(
     await db
       .select()
@@ -602,7 +588,6 @@ test("comparison persistence failure rolls back guest identity and every quota r
       ),
       {
         expiresAt: new Date(Date.now() + 60_000),
-        messageLimit: 2,
         tokenHash: credential.tokenHash,
       },
       async (tx) =>
@@ -625,7 +610,7 @@ test("comparison persistence failure rolls back guest identity and every quota r
 });
 
 test("refunded guest creation cannot dispatch late, while a new admission can recover", async () => {
-  const row = await guest(1);
+  const row = await guest();
   const input = request(row.ownerId);
   const original = await reserveEveGuestMessage(input);
   if (original.status !== "reserved") {
@@ -669,15 +654,13 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
       retry.reservationId
     )
   ).toBe(false);
-  const guestAfterCreationRefund = await findEveGuest(row.tokenHash);
-  expect(guestAfterCreationRefund?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
 
 test.each([0, 1, 2, 3])(
   "creation claims and refunds serialize without a free native dispatch (attempt %i)",
   async () => {
-    const row = await guest(1);
+    const row = await guest();
     const input = request(row.ownerId);
     const quota = await reserveEveGuestMessage(input);
     if (quota.status !== "reserved") {
@@ -703,19 +686,17 @@ test.each([0, 1, 2, 3])(
     if (refund.value) {
       expect(creation.status).toBe("rejected");
       expect(dispatch).not.toHaveBeenCalled();
-      const guestAfterRefundWins = await findEveGuest(row.tokenHash);
-      expect(guestAfterRefundWins?.remainingMessages).toBe(1);
+      expect(await rateCounts(input.ipHash)).toEqual([0, 0]);
     } else {
       expect(creation.status).toBe("fulfilled");
       expect(dispatch).toHaveBeenCalledTimes(1);
-      const guestAfterCreationWins = await findEveGuest(row.tokenHash);
-      expect(guestAfterCreationWins?.remainingMessages).toBe(0);
+      expect(await rateCounts(input.ipHash)).toEqual([1, 1]);
     }
   }
 );
 
 test("committed quota without a creation journal cannot authorize a new dispatch", async () => {
-  const row = await guest(1);
+  const row = await guest();
   const input = request(row.ownerId);
   const quota = await reserveEveGuestMessage(input);
   if (quota.status !== "reserved") {

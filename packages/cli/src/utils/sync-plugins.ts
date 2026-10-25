@@ -196,6 +196,7 @@ const pluginRegistrationTargets = [
   "installed",
   "installed-routers",
   "installed-uploads",
+  "installed-model-visibility",
   "installed-layout",
   "installed-instrumentation",
   "installed-database",
@@ -223,7 +224,7 @@ const assertPluginDependencies = (
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["eve", "settings"]);
+  const routers = new Set(["eve"]);
   const controls = new Set([
     "canvas",
     "web-search",
@@ -231,9 +232,10 @@ const assertUniqueContributions = (
     "image",
     "video",
   ]);
-  const settings = new Set(["general", "models"]);
+  const settings = new Set(["general"]);
   let uploads = false;
   let billing = false;
+  let modelVisibility = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
       [plugin.server?.routers ?? [], routers, "router"],
@@ -252,6 +254,12 @@ const assertUniqueContributions = (
         throw new Error("Only one plugin may supply usage billing.");
       }
       billing = true;
+    }
+    if (plugin.client?.modelVisibility) {
+      if (modelVisibility) {
+        throw new Error("Only one plugin may supply model visibility.");
+      }
+      modelVisibility = true;
     }
     if (plugin.client?.uploads) {
       if (uploads) {
@@ -356,6 +364,9 @@ const syncPlugins = async (
   );
   const layout = plugins.filter((plugin) => plugin.client?.layout);
   const uploads = plugins.filter((plugin) => plugin.client?.uploads);
+  const modelVisibility = plugins.filter(
+    (plugin) => plugin.client?.modelVisibility
+  );
   const chat = plugins.filter((plugin) => plugin.chat);
   const chatUi = plugins.filter((plugin) => plugin.client?.chat);
   const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
@@ -364,6 +375,10 @@ const syncPlugins = async (
     [
       "installed-account-ui",
       `${imports(accountUi, "client")}\nimport type { ComponentType } from "react";\nexport const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${accountUi.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().accountSummary }`).join(", ")}];`,
+    ],
+    [
+      "installed-model-visibility",
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
     ],
     [
       "installed-chat",

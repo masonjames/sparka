@@ -36,9 +36,9 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     // The guarded test database uses virtual application credits for paid-tool tests.
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: session.user.id })
+      .values({ balanceCents: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
 
