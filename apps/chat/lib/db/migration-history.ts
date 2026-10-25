@@ -88,10 +88,13 @@ const GUEST_BALANCE_REMOVAL_TIMESTAMP = 1_792_944_480_400;
 const requiresGuestBalanceMigrationRollout = ({
   applied,
   available,
+  coordinated = false,
 }: ReadonlyNativeSurface<{
   readonly applied: MigrationIdentity[];
   readonly available: MigrationIdentity[];
+  readonly coordinated?: boolean;
 }>): boolean =>
+  !coordinated &&
   applied.length > NO_RECORDED_MIGRATIONS &&
   available.some(
     (entry) => entry.createdAt === GUEST_BALANCE_REMOVAL_TIMESTAMP

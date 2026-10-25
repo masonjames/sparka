@@ -140,6 +140,13 @@ test("requires draining old consumers only when the guest-column drop is pending
   expect(
     requiresGuestBalanceMigrationRollout({ applied: [baseline], available })
   ).toBe(true);
+  expect(
+    requiresGuestBalanceMigrationRollout({
+      applied: [baseline],
+      available,
+      coordinated: true,
+    })
+  ).toBe(false);
   expect(requiresGuestBalanceMigrationRollout({ applied: [], available })).toBe(
     false
   );
