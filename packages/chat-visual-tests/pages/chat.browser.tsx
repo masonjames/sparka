@@ -1,4 +1,3 @@
-import { act } from "react";
 import { route } from "./route";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
@@ -612,7 +611,7 @@ test.each(["desktop", "mobile"] as const)(
   }
 );
 
-test("a completed turn refreshes the displayed credit balance", async () => {
+test("completed, failed and cancelled turns refresh the displayed credit balance", async () => {
   await renderRoute(conversation, { ...request, viewports: ["desktop"] });
   await expect.element(page.getByText("8.42", { exact: true })).toBeVisible();
   const { sessionId } = invoicesConversation;
@@ -626,12 +625,28 @@ test("a completed turn refreshes the displayed credit balance", async () => {
   if (!onEvent || !event) {
     throw new Error("The runtime must subscribe before completing the turn.");
   }
-  route.trpc["credits.getAvailableCredits"] = { balanceCents: 420 };
-  await act(async () => {
-    onEvent(event);
-    await Promise.resolve();
-  });
-  await expect.element(page.getByText("4.20", { exact: true })).toBeVisible();
+  const endings = [
+    event,
+    {
+      ...event,
+      type: "turn.failed",
+      data: {
+        ...event.data,
+        code: "provider_error",
+        message: "Fixture failure",
+      },
+    },
+    { ...event, type: "turn.cancelled" },
+  ] as const;
+  for (const [index, ending] of endings.entries()) {
+    const balanceCents = 420 - index;
+    route.trpc["credits.getAvailableCredits"] = { balanceCents };
+    onEvent(ending);
+    // oxlint-disable-next-line no-await-in-loop -- Each terminal event must refresh the mounted balance before emitting the next one; one gallery capture covers the unchanged layout.
+    await expect
+      .element(page.getByText((balanceCents / 100).toFixed(2), { exact: true }))
+      .toBeVisible();
+  }
   await expect
     .element(page.getByText("8.42", { exact: true }))
     .not.toBeInTheDocument();
