@@ -45,6 +45,26 @@ const fixture = async (): Promise<string> => {
   );
   return root;
 };
+const registrationDiagnostics = (root: string, name: string): string[] => {
+  const program = ts.createProgram({
+    rootNames: [path.join(root, `composition/generated/installed-${name}.ts`)],
+    options: {
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      noEmit: true,
+      paths: { "@/*": [`${root}/*`], react: [`${root}/lib/react.ts`] },
+      skipLibCheck: true,
+      strict: true,
+      target: ts.ScriptTarget.ESNext,
+      types: [],
+    },
+  });
+  return ts
+    .getPreEmitDiagnostics(program)
+    .map((diagnostic) =>
+      ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+    );
+};
 const install = async (root: string): Promise<void> => {
   await Promise.all(
     (mcpItem.files ?? []).map(async (file) => {
@@ -802,28 +822,70 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
       })
     );
     await syncPlugins(root);
-    const program = ts.createProgram({
-      rootNames: [
-        path.join(root, "composition/generated/installed-billing.ts"),
+    expect(registrationDiagnostics(root, "billing")).toEqual([]);
+  }
+);
+
+test.each([true, false])(
+  "account summary registration validates optional factory contributions (provided=%s)",
+  async (provided) => {
+    const root = await fixture();
+    const directory = path.join(root, "plugins/custom-summary");
+    await mkdir(directory, { recursive: true });
+    await mkdir(path.join(root, "lib"), { recursive: true });
+    await writeFile(
+      path.join(root, "lib/react.ts"),
+      "export type ComponentType = () => unknown;"
+    );
+    await writeFile(
+      path.join(directory, "client-plugin.ts"),
+      `import type { ComponentType } from "react";
+interface ChatClientPlugin { readonly accountSummary?: ComponentType }
+export const customClient = (): ChatClientPlugin => (${provided ? "{ accountSummary: () => null }" : "{}"});`
+    );
+    await writeFile(
+      path.join(directory, "chatjs.json"),
+      JSON.stringify({
+        contractVersion: 1,
+        kind: "plugin",
+        id: "custom-summary",
+        files: ["plugins/custom-summary/client-plugin.ts"],
+        client: { export: "customClient", accountSummary: true },
+      })
+    );
+    await syncPlugins(root);
+    expect(registrationDiagnostics(root, "account-ui")).toEqual([]);
+    const tsconfig = path.join(root, "tsconfig.json");
+    await writeFile(
+      tsconfig,
+      JSON.stringify({ compilerOptions: { paths: { "@/*": [`${root}/*`] } } })
+    );
+    const build = await Bun.build({
+      entrypoints: [
+        path.join(root, "composition/generated/installed-account-ui.ts"),
       ],
-      options: {
-        module: ts.ModuleKind.ESNext,
-        moduleResolution: ts.ModuleResolutionKind.Bundler,
-        noEmit: true,
-        paths: { "@/*": [`${root}/*`] },
-        skipLibCheck: true,
-        strict: true,
-        target: ts.ScriptTarget.ESNext,
-        types: [],
-      },
+      target: "bun",
+      tsconfig,
     });
-    expect(
-      ts
-        .getPreEmitDiagnostics(program)
-        .map((diagnostic) =>
-          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
-        )
-    ).toEqual([]);
+    expect(build.success).toBe(true);
+    const source = await build.outputs[0]?.text();
+    expect(source).toContain("installedAccountSummaries");
+    const compiled = path.join(root, "compiled-account-ui.mjs");
+    await writeFile(compiled, source ?? "");
+    const runner = path.join(root, "check-account-ui.mjs");
+    await writeFile(
+      runner,
+      'import { strict as assert } from "node:assert";\nimport { installedAccountSummaries } from "./compiled-account-ui.mjs";\nassert.equal(installedAccountSummaries[0].Component(), null);'
+    );
+    const result = Bun.spawnSync([process.execPath, runner]);
+    if (provided) {
+      expect(result.exitCode).toBe(0);
+    } else {
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr.toString()).toContain(
+        'Plugin "custom-summary" declares accountSummary but does not provide it.'
+      );
+    }
   }
 );
 

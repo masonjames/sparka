@@ -7,6 +7,8 @@ Use Credits to give registered users a starting balance, check it before paid wo
 
 ## Installation
 
+If your existing database still needs migration 0021, drain older app and worker processes before applying it. After `bun db:generate`, run `bun db:migrate --coordinated`, then deploy matching app and worker versions. For a new database, or one where migration 0021 is already applied, use the commands below.
+
 ```bash
 bunx @chat-js/cli@latest add credits
 bun db:generate

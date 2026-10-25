@@ -291,6 +291,21 @@ export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling
 export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend" : "() => Promise.resolve(true)"};`;
 };
 
+const accountSummaryRegistration = (
+  plugins: readonly PluginDefinition[]
+): string => `${imports(plugins, "client")}
+import type { ComponentType } from "react";
+${plugins
+  .map(
+    (
+      plugin,
+      index
+    ) => `const accountSummary${index} = plugin${index}().accountSummary;
+if (!accountSummary${index}) throw new Error('Plugin "${plugin.id}" declares accountSummary but does not provide it.');`
+  )
+  .join("\n")}
+export const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${plugins.map((plugin, index) => `{ id: "${plugin.id}", Component: accountSummary${index} }`).join(", ")}];`;
+
 const syncPlugins = async (
   cwd: string,
   options: Readonly<{
@@ -372,10 +387,7 @@ const syncPlugins = async (
   const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
   const contents = [
     ["installed-billing", billingRegistration(plugins)],
-    [
-      "installed-account-ui",
-      `${imports(accountUi, "client")}\nimport type { ComponentType } from "react";\nexport const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${accountUi.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().accountSummary }`).join(", ")}];`,
-    ],
+    ["installed-account-ui", accountSummaryRegistration(accountUi)],
     [
       "installed-model-visibility",
       `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
