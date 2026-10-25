@@ -16,7 +16,7 @@ export const useGetCredits = (): {
   const { data: creditsData, isError } = useQuery({
     ...trpc.credits.getAvailableCredits.queryOptions(),
     enabled: isAuthenticated,
-    meta: { refreshOnTurnComplete: true },
+    meta: { refreshOnTurnEnd: true },
   });
 
   return {
