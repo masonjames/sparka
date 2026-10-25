@@ -105,8 +105,8 @@ const runMigrate = async (): Promise<void> => {
     }
 
     if (
-      process.argv.includes("--deployment") &&
       requiresGuestBalanceMigrationRollout({
+        coordinated: process.argv.includes("--coordinated"),
         applied: applied.map((entry) => ({
           createdAt: Number(entry.createdAt),
           hash: entry.hash,
@@ -118,7 +118,7 @@ const runMigrate = async (): Promise<void> => {
       })
     ) {
       throw new Error(
-        "Migration 0021 requires a coordinated rollout. Automatic deployment migration stopped before changing the database. Drain older app and worker processes, run bun db:migrate explicitly, then deploy the matching app and worker revision. See lib/db/migrations/README.md."
+        "Migration 0021 requires a coordinated rollout. Migration stopped before changing the database. Drain older app and worker processes, run bun db:migrate --coordinated explicitly, then deploy the matching app and worker revision. See lib/db/migrations/README.md."
       );
     }
 

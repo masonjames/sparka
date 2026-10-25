@@ -10,6 +10,6 @@ To move to this baseline, back up the existing database and provision a fresh em
 
 `0021_glorious_chameleon` drops four guest message-balance columns. Older app and worker versions still read or update them. This migration requires a coordinated rollout and is not safe during a rolling deployment.
 
-Automatic production deployment migration stops before applying any pending migrations when an existing database still needs 0021. An empty database can initialize normally. After the migration has been applied explicitly, deployment builds resume normally.
+Every migration invocation stops before applying any pending migrations when an existing database still needs 0021, unless the operator explicitly passes `--coordinated`. This covers Vercel, Render build scripts, and setup commands. An empty database can initialize normally. After the migration has been applied explicitly, deployment builds resume normally.
 
-For an existing production database, prepare the matching app and worker revision, back up the database, stop incoming traffic, and drain older app and worker processes. Run `bun db:migrate` explicitly against that database, then deploy the matching app and worker and restore traffic. Do not resume an older revision against the migrated schema. Preview databases must remain isolated from production.
+For an existing production database, prepare the matching app and worker revision, back up the database, stop incoming traffic, and drain older app and worker processes. Run `bun db:migrate --coordinated` explicitly against that database, then deploy the matching app and worker and restore traffic. Do not resume an older revision against the migrated schema. Preview databases must remain isolated from production.
