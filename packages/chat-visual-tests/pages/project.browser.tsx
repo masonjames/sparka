@@ -3,6 +3,7 @@ import { page } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
 import ProjectPage from "@/app/(chat)/project/[projectId]/page";
+import { prepareCreation } from "@/lib/eve/pending-create";
 
 import {
   chatsIn,
@@ -11,6 +12,7 @@ import {
   launchProject,
   signedIn,
   signedInTrpc,
+  session,
 } from "./fixtures";
 import { renderRoute } from "./render";
 import { TrpcFixtureError, route } from "./route";
@@ -42,6 +44,17 @@ test("project with instructions and chats", async () => {
     .element(page.getByText("Press release first draft"))
     .toBeVisible();
   await expect.element(page.getByText("✓")).toBeInTheDocument();
+  const histories = [...route.queryClients].flatMap((client) =>
+    client
+      .getQueryCache()
+      .findAll()
+      .filter((query) => {
+        const key = JSON.stringify(query.queryKey);
+        return key.includes('"eve","list"') && key.includes(launchProject.id);
+      })
+  );
+  expect(histories).toHaveLength(1);
+  expect(histories[0]?.getObserversCount()).toBeGreaterThanOrEqual(2);
 });
 
 test("project instructions being edited", async () => {
@@ -66,6 +79,23 @@ test("project before its first chat", async () => {
     .toBeVisible();
   await expect
     .element(page.getByText("No chats in this project"))
+    .toBeVisible();
+});
+
+test("project restores its pending payload using a storage-only scope", async () => {
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    "Keep this launch plan",
+    undefined,
+    { context: { key: `project:${launchProject.id}`, label: "project" } },
+    undefined,
+    { projectId: launchProject.id }
+  );
+  await renderRoute(project, request);
+  await expect.element(page.getByText("Keep this launch plan")).toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Retry creation" }))
     .toBeVisible();
 });
 

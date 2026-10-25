@@ -1,24 +1,31 @@
+import type * as SessionModule from "@/providers/session-provider";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
-import { beforeEach, expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { commands, page } from "vitest/browser";
 
 import { EveRuntimeRoute } from "@/components/eve/eve-runtime-provider";
 import { NewEveConversation } from "@/components/eve/new-eve-conversation";
 import { mountNative } from "@/tests/visual/native-eve-fixture";
-import {
-  getServerCalls,
-  setServerRegistration,
-} from "@/tests/visual/native-eve-services";
 import { unmount } from "@/tests/visual/primitive-mount";
-import { RegisteredEveProjects } from "@/tests/visual/registered-projects";
+import { PluginSidebar } from "@/components/plugin-chat-ui";
+
+const registrationState = vi.hoisted(() => ({ present: true }));
+vi.mock("@/providers/session-provider", async (importOriginal) => ({
+  ...(await importOriginal<typeof SessionModule>()),
+  useSession: () => ({
+    data: registrationState.present ? { user: { id: "fixture-user" } } : null,
+    isPending: false,
+  }),
+}));
 
 beforeEach((): void => {
   localStorage.clear();
+  registrationState.present = true;
 });
 for (const scene of [
   { name: "welcome", projectId: "" },
-  { name: "project", projectId: "fixture-project" },
+  { name: "project", projectId: "00000000-0000-4000-8000-000000000001" },
 ]) {
   test(`native new conversation ${scene.name}`, async () => {
     await commands.modelAssets();
@@ -26,7 +33,9 @@ for (const scene of [
       <div className="mx-auto flex min-h-0 w-full flex-col p-2 md:max-w-3xl">
         <NewEveConversation
           ownerId="fixture-user"
-          projectId={scene.projectId}
+          creationInput={
+            scene.projectId ? { projectId: scene.projectId } : undefined
+          }
         />
       </div>
     );
@@ -98,11 +107,9 @@ const serverRegistrations: readonly ("registered" | "missing")[] = [
   "missing",
 ];
 for (const registration of serverRegistrations) {
-  test(`native server projects ${registration}`, async () => {
-    setServerRegistration(registration);
-    const projects = await RegisteredEveProjects();
-    expect(getServerCalls()).toEqual(["headers", `auth:${registration}`]);
-    const state = await mountNative(projects);
+  test(`native plugin projects ${registration}`, async () => {
+    registrationState.present = registration === "registered";
+    const state = await mountNative(<PluginSidebar />);
     try {
       await verifyServerProjects(registration, state.requests);
       await takeSnapshot(`server-projects-${registration}`);

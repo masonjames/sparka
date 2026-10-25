@@ -1,3 +1,4 @@
+import type { ChatClientIntegration } from "./chat-plugin-contracts";
 import type { ComposerControl } from "@/components/composer/control";
 import type { SettingsItem } from "@/components/settings/settings-item";
 import type {
@@ -17,6 +18,7 @@ interface ChatPlugin {
 /** Use satisfies to retain each plugin's inferred contributions. */
 interface ChatClientPlugin {
   readonly id: string;
+  readonly chat?: ChatClientIntegration;
   readonly composerControls?: readonly ComposerControl[];
   readonly settingsItems?: readonly SettingsItem[];
   readonly layout?: InstalledLayoutComponent;

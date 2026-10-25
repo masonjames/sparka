@@ -150,6 +150,7 @@ const pluginDefinitionSchema = z.object({
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
+  chat: z.object({ export: identifier }).optional(),
   server: z
     .object({
       export: identifier,
@@ -162,6 +163,7 @@ const pluginDefinitionSchema = z.object({
       export: identifier,
       composerControls: z.array(pluginIdSchema).default([]),
       settingsItems: z.array(pluginIdSchema).default([]),
+      chat: z.literal(true).optional(),
       layout: z.literal(true).optional(),
       uploads: z.literal(true).optional(),
     })
