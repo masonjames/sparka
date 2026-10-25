@@ -43,8 +43,11 @@ test("general settings", async () => {
 test("model settings list every available model", async () => {
   await renderRoute(settings(<ModelsPage />), request("/settings/models"));
   await expect
+    .element(page.getByRole("link", { name: "Models", exact: true }).first())
+    .toHaveAttribute("href", "/settings/models");
+  await expect
     .element(page.getByRole("link", { name: "Models Registry" }))
-    .toBeVisible();
+    .not.toBeInTheDocument();
   await expect.element(page.getByText(/^[1-9]\d* models$/u)).toBeVisible();
   await expect.element(page.getByText("GPT-5 mini").first()).toBeVisible();
 });

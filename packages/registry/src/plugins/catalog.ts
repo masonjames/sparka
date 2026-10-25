@@ -1,3 +1,4 @@
+import { modelPreferencesItem } from "./model-preferences/manifest";
 import { sharingItem } from "./sharing/manifest";
 import { aiTitlesItem } from "./ai-titles/manifest";
 import { searchItem } from "./search/manifest";
@@ -13,6 +14,7 @@ export const pluginItems = [
   feedbackItem,
   followupSuggestionsItem,
   searchItem,
+  modelPreferencesItem,
   aiTitlesItem,
   sharingItem,
   mcpItem,

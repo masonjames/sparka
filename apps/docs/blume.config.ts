@@ -143,6 +143,7 @@ export default defineConfig({
             "/plugins/projects",
             "/plugins/feedback",
             "/plugins/search",
+            "/plugins/model-preferences",
             "/plugins/ai-titles",
             "/plugins/sharing",
             "/plugins/followup-suggestions",
