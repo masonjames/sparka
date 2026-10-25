@@ -10,6 +10,7 @@ import { databaseConnection } from "./connection";
 import {
   KNOWN_CHATJS_TABLE_NAMES,
   getMigrationHistoryProblem,
+  requiresGuestBalanceMigrationRollout,
 } from "./migration-history";
 
 config({
@@ -100,6 +101,24 @@ const runMigrate = async (): Promise<void> => {
     if (typeof historyProblem === "string" && historyProblem !== "") {
       throw new Error(
         `${historyProblem}\n\nMigrations stopped before changing the database. Keep this database untouched if it contains EVE data. Create a backup, provision a fresh empty database for this EVE-only scaffold, and update DATABASE_URL and DATABASE_MIGRATION_URL to that database before retrying.`
+      );
+    }
+
+    if (
+      process.argv.includes("--deployment") &&
+      requiresGuestBalanceMigrationRollout({
+        applied: applied.map((entry) => ({
+          createdAt: Number(entry.createdAt),
+          hash: entry.hash,
+        })),
+        available: migrations.map((entry) => ({
+          createdAt: entry.folderMillis,
+          hash: entry.hash,
+        })),
+      })
+    ) {
+      throw new Error(
+        "Migration 0021 requires a coordinated rollout. Automatic deployment migration stopped before changing the database. Drain older app and worker processes, run bun db:migrate explicitly, then deploy the matching app and worker revision. See lib/db/migrations/README.md."
       );
     }
 
