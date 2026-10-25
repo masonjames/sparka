@@ -17,6 +17,8 @@ import {
   invoicesShared,
   invoicesTranscripts,
   invoicesTrpc,
+  invoicesFollowupEvents,
+  invoicesFollowupTrpc,
   launchProject,
   session,
   signedIn,
@@ -536,4 +538,20 @@ test("conversation with saved private feedback", async () => {
     .toHaveAttribute("aria-pressed", "true");
   await expect.element(page.getByTestId("message-upvote")).toBeDisabled();
   await expect.element(page.getByTestId("message-downvote")).toBeEnabled();
+});
+
+test("conversation with persisted follow-up suggestions", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    events: invoicesFollowupEvents,
+    trpc: invoicesFollowupTrpc,
+  });
+  await expect
+    .element(
+      page.getByRole("button", { name: "How do I measure the improvement?" })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("group", { name: "Related questions" }))
+    .toBeVisible();
 });

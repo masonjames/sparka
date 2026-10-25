@@ -8,8 +8,14 @@ const postgres = new PGlite();
 vi.mock("server-only", () => ({}));
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("../env", () => ({ env: {} }));
+vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+  checkDeletedWorkspaceMemberships: vi
+    .fn<() => Promise<void>>()
+    .mockResolvedValue(),
+}));
+const { completeEveConversationDeletion } = await import("./eve-deletion");
 const { claimEveFollowup, finishEveFollowup, getEveFollowup } =
-  await import("./queries");
+  await import("@/plugins/followup-suggestions/followup-queries");
 const chatId = "00000000-0000-4000-8000-000000000001";
 const branchId = "00000000-0000-4000-8000-000000000002";
 beforeAll(async () => {
@@ -102,6 +108,42 @@ it("does not collide when another branch reuses a turn number", async () => {
     "Why?",
     "How?",
   ]);
+});
+it("cleans only deleted-session suggestions when the logical chat survives", async () => {
+  await claimEveFollowup("owner", "root", "turn", "completion");
+  await finishEveFollowup("owner", chatId, "completion", [
+    "Next?",
+    "Why?",
+    "How?",
+  ]);
+  await claimEveFollowup("owner", "branch", "turn", "branch-completion");
+  await finishEveFollowup("owner", chatId, "branch-completion", [
+    "Branch next?",
+  ]);
+  await postgres.exec(
+    `UPDATE "EveConversation" SET state='deleting' WHERE id='${branchId}'`
+  );
+  await completeEveConversationDeletion("owner", branchId);
+  expect(await getEveFollowup("owner", chatId, "branch-completion")).toBeNull();
+  const afterDeletion = await postgres.query(
+    'SELECT * FROM "EveFollowup" WHERE "eventId" = $1',
+    ["branch-completion"]
+  );
+  expect(afterDeletion.rows).toEqual([]);
+  expect(await getEveFollowup("owner", chatId, "completion")).toEqual([
+    "Next?",
+    "Why?",
+    "How?",
+  ]);
+  await finishEveFollowup("owner", chatId, "branch-completion", [
+    "Late result",
+  ]);
+  expect(await getEveFollowup("owner", chatId, "branch-completion")).toBeNull();
+  const afterLateFinish = await postgres.query(
+    'SELECT * FROM "EveFollowup" WHERE "eventId" = $1',
+    ["branch-completion"]
+  );
+  expect(afterLateFinish.rows).toEqual([]);
 });
 it("fences new claims and reads after deletion begins", async () => {
   await postgres.exec(

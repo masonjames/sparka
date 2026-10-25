@@ -6,7 +6,7 @@ import type { AppRouter } from "@/trpc/routers/_app";
 
 import { assetDataUri } from "../../registry/src/tools/_shared/visual";
 import { TrpcFixtureError } from "./route";
-import type { ServerData } from "./route";
+import type { ServerData, route } from "./route";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type HistoryPage = NonNullable<ServerData["conversations"]>;
@@ -469,4 +469,36 @@ export const launchChats: HistoryPage = {
     ),
   ],
   nextCursor: null,
+};
+
+export const invoicesFollowupEvents: typeof route.events = {
+  [invoicesSessionId]: [
+    {
+      type: "turn.completed",
+      data: { turnId: "turn_0", sequence: 2 },
+      meta: { id: "completed-invoices", at: "2026-10-18T10:00:00Z" },
+    },
+  ],
+};
+export const invoicesFollowupTrpc = {
+  ...invoicesTrpc,
+  "followupSuggestions.get": (input: {
+    conversationId: string;
+    eventId: string;
+  }) => {
+    if (
+      input.conversationId !== invoicesConversation.id ||
+      input.eventId !== "completed-invoices"
+    ) {
+      return new TrpcFixtureError(
+        "NOT_FOUND",
+        "Unexpected follow-up completion identity"
+      );
+    }
+    return [
+      "How do I measure the improvement?",
+      "What about partial indexes?",
+      "Does column order matter?",
+    ];
+  },
 };
