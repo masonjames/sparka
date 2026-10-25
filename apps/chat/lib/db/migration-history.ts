@@ -82,5 +82,25 @@ const getMigrationHistoryProblem = ({
   }
   return "This database uses a migration history from before the EVE-only baseline.";
 };
-export { getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES };
+// Journal timestamp for 0021_glorious_chameleon: older app/worker versions
+// still read the guest columns it drops. Fresh databases have no old consumers.
+const GUEST_BALANCE_REMOVAL_TIMESTAMP = 1_792_944_480_400;
+const requiresGuestBalanceMigrationRollout = ({
+  applied,
+  available,
+}: ReadonlyNativeSurface<{
+  readonly applied: MigrationIdentity[];
+  readonly available: MigrationIdentity[];
+}>): boolean =>
+  applied.length > NO_RECORDED_MIGRATIONS &&
+  available.some(
+    (entry) => entry.createdAt === GUEST_BALANCE_REMOVAL_TIMESTAMP
+  ) &&
+  !applied.some((entry) => entry.createdAt === GUEST_BALANCE_REMOVAL_TIMESTAMP);
+
+export {
+  getMigrationHistoryProblem,
+  KNOWN_CHATJS_TABLE_NAMES,
+  requiresGuestBalanceMigrationRollout,
+};
 export type { MigrationIdentity };
