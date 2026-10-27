@@ -5,13 +5,17 @@ import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "./globals.css";
+import components from "@/components.json";
+import { DirectionProvider } from "@/components/ui/direction";
 import React from "react";
 import { Toaster } from "sonner";
 
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
 import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { installedLayoutComponents } from "@/composition/generated/installed-layout";
 import { config } from "@/lib/config";
+import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
 
 const metadata: Metadata = {
@@ -35,17 +39,15 @@ const viewport = {
 const geist = Geist({
   display: "swap",
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-sans",
 });
 
 const geistMono = Geist_Mono({
   display: "swap",
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
 });
 
-const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
-const DARK_THEME_COLOR = "hsl(240deg 10% 3.92%)";
 const THEME_COLOR_SCRIPT = `\
 (function() {
   var html = document.documentElement;
@@ -56,8 +58,7 @@ const THEME_COLOR_SCRIPT = `\
     document.head.appendChild(meta);
   }
   function updateThemeColor() {
-    var isDark = html.classList.contains('dark');
-    meta.setAttribute('content', isDark ? '${DARK_THEME_COLOR}' : '${LIGHT_THEME_COLOR}');
+    meta.setAttribute('content', getComputedStyle(html).getPropertyValue('--background').trim());
   }
   var observer = new MutationObserver(updateThemeColor);
   observer.observe(html, { attributes: true, attributeFilter: ['class'] });
@@ -70,11 +71,12 @@ const RootLayout = ({
   readonly children: ReadonlyReactNode;
 }): React.JSX.Element => (
   <html
-    className={`${geist.variable} ${geistMono.variable}`}
+    className={cn(geist.variable, geistMono.variable, "font-sans")}
     // `next-themes` injects an extra classname to the body element to avoid
     // visual flicker before hydration. Hence the `suppressHydrationWarning`
     // prop is necessary to avoid the React hydration mismatch warning.
     // https://github.com/pacocoursey/next-themes?tab=readme-ov-file#with-app
+    dir={components.rtl ? "rtl" : "ltr"}
     lang="en"
     suppressHydrationWarning
   >
@@ -97,17 +99,21 @@ const RootLayout = ({
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="afterInteractive"
       />
-      <NuqsAdapter>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          disableTransitionOnChange
-          enableSystem
-        >
-          <Toaster position="top-center" />
-          {children}
-        </ThemeProvider>
-      </NuqsAdapter>
+      <DirectionProvider direction={components.rtl ? "rtl" : "ltr"}>
+        <NuqsAdapter>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            disableTransitionOnChange
+            enableSystem
+          >
+            <TooltipProvider>
+              <Toaster position="top-center" />
+              {children}
+            </TooltipProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
+      </DirectionProvider>
       {installedLayoutComponents.map(
         ({
           id,

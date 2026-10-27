@@ -153,7 +153,10 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
 };
 
 const shouldCopyChatAppFile = (relativePath: string): boolean =>
-  shouldCopyAppFile(relativePath) && !isRepositoryOnlyFile(relativePath);
+  shouldCopyAppFile(relativePath) &&
+  !relativePath.endsWith("-visual-fixture.tsx") &&
+  !relativePath.endsWith(".visual.css") &&
+  !isRepositoryOnlyFile(relativePath);
 
 const shouldCopyElectronFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&

@@ -459,9 +459,13 @@ export { sandboxId, sandboxEnvRequirements };
     "Template package.json"
   );
   const consumerManifest = parsePackageJson(JSON.stringify(manifest));
-  manifest.dependencies = selectCoreDependencies(
+  const dependencies = selectCoreDependencies(
     consumerManifest.dependencies ?? {}
   );
+  // The chosen gateway installs its runtime contract after native init. Keep
+  // the fresh scaffold free of workspace locators before that handoff.
+  delete dependencies["@chat-js/gateways"];
+  manifest.dependencies = dependencies;
   manifest.devDependencies = selectCoreDependencies(
     consumerManifest.devDependencies ?? {}
   );

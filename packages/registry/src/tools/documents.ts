@@ -111,7 +111,8 @@ const documentItems: RegistryItem[] = [
     ]),
     meta: {
       chatjs: toolDefinitionSchema.parse({
-        contractVersion: 1,
+        contractVersion: 2,
+        uiBase: "base",
         documentKind: kind,
         documentActions: true,
         config: { key: kind },
@@ -150,7 +151,8 @@ const savedCodeExecutionItem: RegistryItem = {
   ]),
   meta: {
     chatjs: toolDefinitionSchema.parse({
-      contractVersion: 1,
+      contractVersion: 2,
+      uiBase: "base",
       documentRunExport: "EveDocumentRun",
       id: "saved-code-execution",
       kind: "tool",

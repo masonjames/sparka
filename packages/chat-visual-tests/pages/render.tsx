@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Suspense } from "react";
@@ -23,7 +24,12 @@ const THEMES = ["light", "dark"] as const;
 type Viewport = keyof typeof VIEWPORTS;
 
 let mounted:
-  | { root: Root; ui: ReactNode; viewports: readonly Viewport[] }
+  | {
+      root: Root;
+      ui: ReactNode;
+      viewports: readonly Viewport[];
+      allowPendingSidebar: boolean;
+    }
   | undefined;
 
 const tree = (ui: ReactNode, theme: (typeof THEMES)[number]) => (
@@ -35,7 +41,9 @@ const tree = (ui: ReactNode, theme: (typeof THEMES)[number]) => (
       forcedTheme={theme}
     >
       <Toaster position="top-center" />
-      <Suspense>{ui}</Suspense>
+      <TooltipProvider>
+        <Suspense>{ui}</Suspense>
+      </TooltipProvider>
     </ThemeProvider>
   </NuqsTestingAdapter>
 );
@@ -45,10 +53,13 @@ export const renderRoute = async (
   ui: ReactNode,
   {
     viewports = ["desktop", "mobile"],
+    allowPendingSidebar = false,
     ...request
   }: Partial<Omit<typeof route, "queryClients">> & {
     /** Limit to the viewports where this state looks different from its neighbours. */
     viewports?: readonly Viewport[];
+    /** Only loading-state fixtures intentionally retain the sidebar Suspense fallback. */
+    allowPendingSidebar?: boolean;
   } = {}
 ) => {
   disableAutoSnapshot();
@@ -73,7 +84,7 @@ export const renderRoute = async (
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
-  mounted = { root, ui, viewports };
+  mounted = { root, ui, viewports, allowPendingSidebar };
   onTestFinished(() => {
     mounted = undefined;
     root.unmount();
@@ -97,7 +108,11 @@ const layout = () =>
 
 // The sidebar's credits and projects load independently of what a test asserts on,
 // and the conversation's stick-to-bottom scroll keeps moving after its content shows.
-const settled = async (theme: (typeof THEMES)[number], width: number) => {
+const settled = async (
+  theme: (typeof THEMES)[number],
+  width: number,
+  allowPendingSidebar: boolean
+) => {
   // The theme class and the resize land after render() and page.viewport() return.
   await expect
     .poll(
@@ -118,8 +133,27 @@ const settled = async (theme: (typeof THEMES)[number], width: number) => {
   await expect
     .poll(
       () => {
+        // Check readiness on every stable-layout sample: a viewport change can
+        // mount the sidebar fallback after an earlier one-shot check passed.
+        const sidebarReady =
+          allowPendingSidebar ||
+          document.querySelector(
+            '[data-slot="sidebar"] [data-slot="skeleton"]'
+          ) === null;
+        const transcriptReady = [
+          ...document.querySelectorAll<HTMLElement>(
+            '[data-slot="message-scroller-viewport"]'
+          ),
+        ].every(
+          (viewport) =>
+            viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
+            2
+        );
         const current = layout();
-        unchanged = current === previous ? unchanged + 1 : 0;
+        unchanged =
+          sidebarReady && transcriptReady && current === previous
+            ? unchanged + 1
+            : 0;
         previous = current;
         return unchanged;
       },
@@ -133,14 +167,14 @@ export const captureVariants = async () => {
   if (!mounted) {
     return;
   }
-  const { root, ui, viewports } = mounted;
+  const { root, ui, viewports, allowPendingSidebar } = mounted;
   /* oxlint-disable eslint/no-await-in-loop -- Each variant resizes and renders the same page; settle and capture it before the next variant changes that shared state. */
   for (const viewport of viewports) {
     const size = VIEWPORTS[viewport];
     await page.viewport(size.width, size.height);
     for (const theme of THEMES) {
       root.render(tree(ui, theme));
-      await settled(theme, size.width);
+      await settled(theme, size.width, allowPendingSidebar);
       await takeSnapshot(`${viewport}-${theme}`);
     }
   }

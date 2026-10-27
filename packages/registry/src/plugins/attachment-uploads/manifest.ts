@@ -32,7 +32,8 @@ const attachmentUploadsItem: RegistryItem = {
   })),
   meta: {
     chatjs: pluginDefinitionSchema.parse({
-      contractVersion: 1,
+      contractVersion: 2,
+      uiBase: "base",
       id: "attachment-uploads",
       kind: "plugin",
       files: attachmentUploadFiles,
@@ -42,6 +43,7 @@ const attachmentUploadsItem: RegistryItem = {
         uploads: true,
       },
       requiresStorage: true,
+      requiresPersistentSandbox: true,
     }),
   },
   name: "attachment-uploads",
