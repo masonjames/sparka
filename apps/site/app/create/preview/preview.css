@@ -23,12 +23,17 @@
   }
 }
 
-/* Keep the preview's existing Tailwind monospace stack when referencing the
-   host theme for upstream @apply utilities. */
+/* Keep upstream @apply fonts connected to the preview's preset variables,
+   rather than the host theme's inline Geist aliases. */
 @theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
+  --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
 

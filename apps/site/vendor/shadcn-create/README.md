@@ -33,6 +33,6 @@ Run `bun apps/site/scripts/generate-create-preview.ts` to sync both libraries an
 
 Explicit preview adaptations:
 
-- Redirect component and icon imports locally, and stylesheet references to the site's existing theme definitions. `preview.css` supplies the upstream `no-scrollbar` utility and missing sidebar token aliases, and preserves the existing Tailwind monospace stack when referencing the host theme.
+- Redirect component and icon imports locally, and stylesheet references to the site's existing theme definitions. `preview.css` supplies the upstream `no-scrollbar` utility and missing sidebar token aliases, and preserves the preview's preset font variables and Tailwind font stacks when referencing the host theme.
 - Apply the pinned shadcn `transformDirection` to TSX and to each CSS `@apply` utility list, parsed with PostCSS. This preserves logical spacing and directional icons without creating separate RTL variants. The preview root keeps the selected library's native DirectionProvider. Generated app direction still comes from `components.json.rtl`.
 - Keep native Base `render` and Radix `asChild` trigger APIs in the ChatJS scene composition. ChatJS scenes, installation synchronization, controls, and CLI handoff remain authored integration code.

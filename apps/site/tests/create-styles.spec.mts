@@ -127,7 +127,7 @@ for (const base of ["base", "radix"] as const) {
             window.location.origin
           );
         },
-        { style, menuColor }
+        { style, menuColor, font: "inter" }
       );
       await expect(frame.getByTestId("chat-preview")).toHaveAttribute(
         "data-style",
@@ -151,6 +151,13 @@ for (const base of ["base", "radix"] as const) {
         });
       await expect(draft).toHaveValue(
         "Keep my draft while changing the preset"
+      );
+      // Portaled menus and upstream @apply utilities must use the preset font,
+      // even when the host site's theme defines a different inline font alias.
+      await expect(popup).toHaveCSS("font-family", /inter/iu);
+      await expect(frame.locator('[data-slot="code-block-title"]')).toHaveCSS(
+        "font-family",
+        /inter/iu
       );
     }
     await frame
