@@ -11,8 +11,8 @@ import { ToolOutput } from "../../../chat/components/part/tool-data";
 import { startingInstallation } from "../create-model";
 import { IconLibraryContext, PreviewIcon } from "./icons";
 import { usePreviewDesignSystem } from "./design-system-context";
-import { native } from "./ui/native";
-import { native as nativeRadix } from "./ui/native-radix";
+import * as native from "./ui/base";
+import * as nativeRadix from "./ui/radix";
 import "../../app/create/preview/preview.css";
 
 export const ChatPreview = () => {
@@ -36,12 +36,9 @@ export const ChatPreview = () => {
   const uploads = installation.plugins.includes("attachment-uploads");
   const radix = params.base === "radix";
   const direction = params.rtl ? "rtl" : "ltr";
-  const ui = radix ? nativeRadix[preset.style] : native[preset.style];
-  const menu = ui.menus[preset.menuColor];
-  const BaseDropdownMenuTrigger =
-    native[preset.style].menus[preset.menuColor].DropdownMenuTrigger;
-  const RadixDropdownMenuTrigger =
-    nativeRadix[preset.style].menus[preset.menuColor].DropdownMenuTrigger;
+  const ui = radix ? nativeRadix : native;
+  const BaseDropdownMenuTrigger = native.DropdownMenuTrigger;
+  const RadixDropdownMenuTrigger = nativeRadix.DropdownMenuTrigger;
   const {
     Button,
     CodeBlock,
@@ -77,7 +74,7 @@ export const ChatPreview = () => {
     DropdownMenuLabel,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
-  } = menu;
+  } = ui;
 
   useEffect(() => {
     const announceReady = () => {
@@ -642,8 +639,8 @@ export const ChatPreview = () => {
       </div>
     </IconLibraryContext>
   );
-  const BaseDirectionProvider = native[preset.style].DirectionProvider;
-  const RadixDirectionProvider = nativeRadix[preset.style].DirectionProvider;
+  const BaseDirectionProvider = native.DirectionProvider;
+  const RadixDirectionProvider = nativeRadix.DirectionProvider;
   return radix ? (
     <RadixDirectionProvider dir={direction}>{content}</RadixDirectionProvider>
   ) : (
