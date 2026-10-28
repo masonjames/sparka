@@ -79,11 +79,11 @@ const config = defineConfig({
     rateLimit: anonymousRateLimit,
   },
   appDescription:
-    "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",
-  appName: "ChatJS",
-  appPrefix: "chatjs",
-  appTitle: "ChatJS - The prod ready AI chat app",
-  appUrl: "https://www.demo.chatjs.dev",
+    "AI chat with 120+ models for members of masonjames.com. Sign in with your masonjames.com membership.",
+  appName: "Chat by Mason James",
+  appPrefix: "chat",
+  appTitle: "Chat by Mason James - AI chat for members",
+  appUrl: "https://chat.masonjames.com",
   attachments: {
     acceptedTypes: {
       "application/pdf": [".pdf"],
@@ -96,14 +96,14 @@ const config = defineConfig({
   },
   authentication: {
     // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-    github: true,
+    github: false,
     // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
-    google: true,
+    google: false,
     // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
-    vercel: true,
+    vercel: false,
   },
   desktopApp: {
-    enabled: true,
+    enabled: false,
   },
   features: {
     parallelResponses: true,
@@ -115,10 +115,10 @@ const config = defineConfig({
   },
   organization: {
     contact: {
-      legalEmail: "legal@chatjs.dev",
-      privacyEmail: "privacy@chatjs.dev",
+      legalEmail: "legal@masonjames.com",
+      privacyEmail: "privacy@masonjames.com",
     },
-    name: "ChatJS",
+    name: "Mason James",
   },
   policies: {
     privacy: {
@@ -149,8 +149,8 @@ const config = defineConfig({
       "Morph",
       "ZAI",
     ],
-    hosting: "Vercel",
-    paymentProcessors: [],
+    hosting: "Hetzner (Dokploy on Docker Swarm)",
+    paymentProcessors: ["Stripe, through masonjames.com memberships"],
   },
 });
 export default config;
