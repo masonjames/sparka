@@ -1,6 +1,6 @@
 # Re-platform plan: chat.masonjames.com on current chat-js
 
-Companion to [ADR 001](adr/001-chatjs-replatform-and-paid-access-bridge.md). Nothing below starts until Mason answers the decisions listed at the end of the ADR.
+Companion to [ADR 001](adr/001-chatjs-replatform-and-paid-access-bridge.md). Mason answered the decisions listed at the end of the ADR on 2026-10-28 (every recommendation accepted); the answers are recorded in the ADR's status and decisions sections.
 
 ## Ground rules for every phase
 
@@ -13,10 +13,10 @@ Companion to [ADR 001](adr/001-chatjs-replatform-and-paid-access-bridge.md). Not
 
 - Size: M. Builder: Codex Sol (high). Reviewer: Opus 5.5.
 - Branch `replatform/main`, created on GitHub at upstream `76fedbed` (upstream's own commits, unmodified; the fork's old history stays on today's `main`).
-- Adds, as signed commits: `apps/chat/chat.config.ts` branding (app name, URL `https://chat.masonjames.com`, organization and legal copy, `authentication` flags per decision 6, `desktopApp.enabled: false`, `services.hosting: "Hetzner"`); `README.md` fork notice; `docs/adr/001-...`, `docs/replatform-plan.md`, a rewritten `docs/deployment.md` skeleton; `scripts/check-fork.mjs` rewritten to assert the new contract (membership plugin present, no Stripe or Ghost dependency, no magic link, R2 adapter selected). Deletes upstream-only workflows that must not run in the fork (`release.yml`, `electron-release.yml`, `uiverify-*.yml`, `preview-database-cleanup.yml`, `docs.yml`) and the `apps/electron`, `apps/site`, `apps/docs`, `apps/videos` and `prototypes` workspaces if the root `bun install` still resolves without them; if not, they stay and the Dockerfile excludes them.
-- Tests and gate: upstream `test:types` and `apps/chat` unit tests pass in the worktree; `scripts/check-fork.mjs` passes; `bun run --cwd apps/chat check-env` lists exactly the expected variables.
-- Done when the PR to `main` is open with the gate lines in its body, and the ADR and plan live on the new root.
-- Attended step after merge review (Mason): rename `main` to `legacy-main`, promote `replatform/main` to `main` and make it the default branch. Phases 1 to 4 target `main` afterwards.
+- Adds, as signed commits: `apps/chat/chat.config.ts` branding (app name, URL `https://chat.masonjames.com`, organization and legal copy, `authentication` flags per decision 6, `desktopApp.enabled: false`, `services.hosting: "Hetzner"`); `README.md` fork notice; `docs/adr/001-...`, `docs/replatform-plan.md`, a rewritten `docs/deployment.md` skeleton; `scripts/check-fork.mjs` rewritten to assert the new contract (no Stripe, Resend or Ghost dependency, no magic link or password sign-in, providers off, documents present, migration journal consistent; the "membership plugin present" and "R2 adapter selected" assertions are added by phases 3 and 2 when those files exist). No upstream workspace or workflow is deleted: deleting an upstream file turns every later upstream edit of it into a modify/delete conflict. Upstream-only workflows (`release.yml`, `electron-release.yml`, `docs.yml`, `preview-database-cleanup.yml`, `uiverify-chat.yml`, `uiverify-create.yml`, `uiverify-docs.yml`, `uiverify-registry.yml`, `uiverify-upload.yml`) stay in the tree and are disabled in the repository's Actions settings instead.
+- Tests and gate: upstream `test:types` and `apps/chat` unit tests pass in the worktree; `scripts/check-fork.mjs` and its `--self-test` pass; `bun run --cwd apps/chat check-env` is run and its output reconciled with the environment table in `docs/deployment.md` (on this root it reports the provider, storage and sandbox requirements that phases 1 to 3 change; see the deployment doc).
+- Done when the PR is open with the gate lines in its body, and the ADR and plan live on the new root.
+- Attended step after merge review (Mason): rename `main` to `legacy-main`, promote `replatform/main` to `main` and make it the default branch; disable the upstream-only workflows listed above in the Actions settings. Phases 1 to 4 target `replatform/main` until the rename, then `main`.
 
 ## Phase 1: container and Dagger gate
 

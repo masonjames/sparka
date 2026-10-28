@@ -1,77 +1,177 @@
+// Fork contract for masonjames/sparka. Run `node scripts/check-fork.mjs` from the
+// repository root, or `node scripts/check-fork.mjs --self-test` to prove that every
+// assertion fails on a broken input.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-/** @param {string} path File path relative to the repository root. */
 const read = (path) => readFileSync(path, "utf-8");
-/**
- * @param {unknown} value Parsed JSON value.
- * @returns {value is Record<string, unknown>} Whether value is an object.
- */
 const isObject = (value) => typeof value === "object" && value !== null;
+const MIGRATION_TAG = /^\d{4}_[a-z0-9_]+$/u;
 
-try {
-  /** @type {unknown} */
-  const pkg = JSON.parse(read("apps/chat/package.json"));
-  assert.ok(isObject(pkg), "Invalid app package");
-  for (const section of ["dependencies", "devDependencies"]) {
-    const deps = pkg[section];
-    assert.ok(deps === undefined || isObject(deps), `Invalid ${section}`);
-    for (const name of [
-      "stripe",
-      "resend",
-      "@tryghost/admin-api",
-      "@aws-sdk/client-s3",
-    ]) {
-      assert.ok(
-        !deps || !Object.hasOwn(deps, name),
-        `${section}: remove ${name}`
-      );
-    }
-  }
-  const config = read("apps/chat/chat.config.ts");
-  assert.ok(config.includes("https://chat.masonjames.com"), "Fork URL missing");
+/** Remove comments and string literals so the checks only see code. */
+const codeOnly = (source) =>
+  source
+    .replace(/\/\*[\s\S]*?\*\//gu, "")
+    .replace(/\/\/[^\n]*/gu, "")
+    .replace(
+      /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/gu,
+      '""'
+    );
+
+/** The body of `key: { ... }` in the config literal (no nested braces). */
+const block = (code, key) => {
+  const match = new RegExp(`\\b${key}\\s*:\\s*\\{([^{}]*)\\}`, "u").exec(code);
+  assert.ok(match, `chat.config.ts: ${key} block not found`);
+  return match[1];
+};
+
+export const checkConfig = (source) => {
+  assert.ok(
+    /\bappUrl\s*:\s*"https:\/\/chat\.masonjames\.com"/u.test(source),
+    "chat.config.ts: appUrl must be https://chat.masonjames.com"
+  );
+  const code = codeOnly(source);
+  const authentication = block(code, "authentication");
   for (const provider of ["github", "google", "vercel"]) {
-    assert.ok(config.includes(`${provider}: false`), `${provider} must be off`);
+    assert.ok(
+      new RegExp(`\\b${provider}\\s*:\\s*false\\b`, "u").test(authentication),
+      `chat.config.ts: authentication.${provider} must be false`
+    );
   }
   assert.ok(
-    /desktopApp\s*:\s*\{[^}]*\benabled\s*:\s*false\b/u.test(config),
-    "desktopApp.enabled must be false"
+    /\benabled\s*:\s*false\b/u.test(block(code, "desktopApp")),
+    "chat.config.ts: desktopApp.enabled must be false"
   );
-  const auth = read("apps/chat/lib/auth.ts");
-  for (const legacy of ["magicLink", "crossSubDomainCookies"]) {
-    assert.ok(!auth.includes(legacy), `Legacy auth found: ${legacy}`);
+};
+
+export const checkPackage = (source) => {
+  const pkg = JSON.parse(source);
+  assert.ok(isObject(pkg), "apps/chat/package.json: not an object");
+  for (const section of ["dependencies", "devDependencies"]) {
+    const deps = pkg[section] ?? {};
+    assert.ok(isObject(deps), `apps/chat/package.json: invalid ${section}`);
+    for (const name of ["stripe", "resend", "@tryghost/admin-api"]) {
+      assert.ok(!Object.hasOwn(deps, name), `${section}: remove ${name}`);
+    }
   }
-  for (const path of [
-    "docs/adr/001-chatjs-replatform-and-paid-access-bridge.md",
-    "docs/replatform-plan.md",
-    "docs/deployment.md",
+};
+
+export const checkAuth = (source) => {
+  for (const legacy of [
+    "magicLink",
+    "emailAndPassword",
+    "crossSubDomainCookies",
   ]) {
-    assert.ok(read(path).trim().length > 0, `Empty document: ${path}`);
+    assert.ok(
+      !source.includes(legacy),
+      `lib/auth.ts: legacy auth found: ${legacy}`
+    );
+  }
+};
+
+export const checkJournal = (source, readSql) => {
+  const journal = JSON.parse(source);
+  assert.ok(
+    isObject(journal) && Array.isArray(journal.entries),
+    "journal: invalid"
+  );
+  const tags = new Set();
+  let lastIdx = -1;
+  for (const entry of journal.entries) {
+    assert.ok(isObject(entry), "journal: invalid entry");
+    const { tag, idx } = entry;
+    assert.ok(
+      typeof tag === "string" && MIGRATION_TAG.test(tag),
+      `journal: invalid tag ${tag}`
+    );
+    assert.ok(
+      Number.isInteger(idx) && idx > lastIdx,
+      `journal: idx must increase at ${tag}`
+    );
+    lastIdx = idx;
+    assert.ok(!tags.has(tag), `journal: duplicate tag ${tag}`);
+    tags.add(tag);
+    assert.ok(readSql(tag).trim().length > 0, `journal: empty SQL for ${tag}`);
+  }
+};
+
+const DOCUMENTS = [
+  "docs/adr/001-chatjs-replatform-and-paid-access-bridge.md",
+  "docs/replatform-plan.md",
+  "docs/deployment.md",
+];
+
+const selfTest = () => {
+  const valid = read("apps/chat/chat.config.ts");
+  checkConfig(valid);
+  const broken = [
+    [
+      valid.replace('"https://chat.masonjames.com"', '"https://example.com"'),
+      "appUrl",
+    ],
+    [valid.replace("github: false", "github: true"), "github"],
+    [
+      valid.replace("google: false", "google: true, // google: false"),
+      "google",
+    ],
+    [
+      valid.replace(
+        /desktopApp:\s*\{\s*enabled:\s*false/u,
+        "desktopApp: {\n    enabled: true, // enabled: false"
+      ),
+      "desktopApp",
+    ],
+  ];
+  for (const [source, name] of broken) {
+    assert.notEqual(source, valid, `self-test: ${name} fixture unchanged`);
+    assert.throws(
+      () => checkConfig(source),
+      `self-test: ${name} check did not fail`
+    );
+  }
+  assert.throws(
+    () => checkPackage('{"dependencies":{"stripe":"1"}}'),
+    "self-test: stripe"
+  );
+  assert.throws(() => checkAuth("magicLink({"), "self-test: magicLink");
+  assert.throws(
+    () => checkJournal('{"entries":[{"idx":0,"tag":"../x"}]}', () => "x"),
+    "self-test: tag"
+  );
+  assert.throws(
+    () =>
+      checkJournal(
+        '{"entries":[{"idx":1,"tag":"0001_a"},{"idx":0,"tag":"0002_b"}]}',
+        () => "x"
+      ),
+    "self-test: idx"
+  );
+  console.log("Fork contract self-test passed");
+};
+
+const main = () => {
+  checkPackage(read("apps/chat/package.json"));
+  checkConfig(read("apps/chat/chat.config.ts"));
+  checkAuth(read("apps/chat/lib/auth.ts"));
+  for (const path of DOCUMENTS) {
+    assert.ok(read(path).trim().length > 0, `empty document: ${path}`);
   }
   const migrations = "apps/chat/lib/db/migrations";
-  /** @type {unknown} */
-  const journal = JSON.parse(read(`${migrations}/meta/_journal.json`));
-  assert.ok(isObject(journal), "Invalid migration journal");
-  assert.ok(Array.isArray(journal.entries), "Journal entries must be an array");
-  /** @type {{entries: unknown[]}} */
-  const { entries } = journal;
-  const tags = new Set();
-  for (const entry of entries) {
-    assert.ok(isObject(entry), "Invalid migration entry");
-    const { tag } = entry;
-    assert.ok(
-      typeof tag === "string" && tag.length > 0,
-      "Invalid migration tag"
-    );
-    assert.ok(!tags.has(tag), `Duplicate migration tag: ${tag}`);
-    tags.add(tag);
-    assert.ok(
-      read(`${migrations}/${tag}.sql`).trim().length > 0,
-      `Empty SQL: ${tag}`
-    );
-  }
+  checkJournal(read(`${migrations}/meta/_journal.json`), (tag) =>
+    read(`${migrations}/${tag}.sql`)
+  );
   console.log("Fork contract passed");
+};
+
+try {
+  if (process.argv.includes("--self-test")) {
+    selfTest();
+  } else {
+    main();
+  }
 } catch (error) {
-  console.error(`Fork contract failed: ${error.message}`);
+  console.error(
+    `Fork contract failed: ${error instanceof Error ? error.message : String(error)}`
+  );
   process.exitCode = 1;
 }

@@ -1,6 +1,6 @@
 # ADR 001: Re-platform chat.masonjames.com onto current chat-js with a Paid Access bridge
 
-- Status: proposed, waiting for Mason's decisions (listed at the end)
+- Status: accepted. Mason accepted every recommendation as written on 2026-10-28 (see "Decisions for Mason" at the end for the recorded answers). Amended the same day after the phase 0 review: decision 12 keeps upstream-only workflows instead of deleting them.
 - Date: 2026-10-28
 - Scope: `masonjames/sparka` (the app), with one small companion change in `masonjames/masonjames.com`
 - Companion document: [docs/replatform-plan.md](../replatform-plan.md)
@@ -9,7 +9,7 @@
 
 chat.masonjames.com is a fork of `FranciscoMoretti/chat-js`. The fork's merge base with upstream is `18db694b` (2026-09-05, 754 commits behind upstream `76fedbed` on 2026-10-28). Since then upstream removed its old runtime in favour of an "EVE-only" layout, reset the Drizzle migrations to a new baseline that rejects earlier histories, moved credits into an optional plugin, dropped magic-link and email-and-password sign-in, and ships no Dockerfile.
 
-The fork's subscription bridge is built on Ghost and Stripe webhooks that no longer match how masonjames.com sells memberships. The site now runs the `emdash-paid-access` plugin (Mason's own plugin, GPL, `/Users/masonjames/Projects/emdash-paid-access`), which keeps the member's identity in a plugin-owned session and reads entitlement live from Stripe.
+The fork's subscription bridge is built on Ghost and Stripe webhooks that no longer match how masonjames.com sells memberships. The site now runs the `emdash-paid-access` plugin (Mason's own plugin, GPL, `github.com/masonjames/emdash-paid-access`), which keeps the member's identity in a plugin-owned session and reads entitlement live from Stripe.
 
 Mason decided on 2026-10-28 to re-platform onto current chat-js, build a new bridge to Paid Access memberships, and carry no legacy data: fresh database, no chat history, no old credits, no Ghost or Stripe bridge. Production today is an old security-patched image run by a manual Compose file on platform-core; platform-infra records it as `sparka-ai-chat` with promotion blocked until a pinned digest and a governed manifest exist.
 
@@ -186,8 +186,8 @@ No webhook event log is needed because no webhooks arrive. The migration is name
 - `apps/chat/chat.config.ts` (branding, provider flags, legal copy) and `apps/chat/plugins/membership/**`
 - `apps/chat/lib/storage-provider.ts` and `lib/storage-options.ts` as installed by the registry item
 - `Dockerfile`, `deployment/dokploy/**` (entry and cleanup loop scripts), `.dagger/**`, `dagger.json`
-- `.github/workflows/upstream-sync-pr.yml` and `build-push-ghcr.yml`; upstream-only release and publishing workflows are deleted on the new root instead of guarded
-- `docs/deployment.md`, `docs/adr/**`, `docs/replatform-plan.md`, `README.md` fork notice, `scripts/check-fork.mjs` rewritten for the new contract
+- `.github/workflows/upstream-sync-pr.yml` and `build-push-ghcr.yml`; upstream-only release and publishing workflows (`release.yml`, `electron-release.yml`, `docs.yml`, `preview-database-cleanup.yml`, the five `uiverify-*.yml`) stay in the tree untouched and are disabled in the repository's Actions settings, because deleting or guarding them would conflict with every later upstream edit
+- `docs/deployment.md`, `docs/adr/**`, `docs/replatform-plan.md`, `README.md` fork notice, `scripts/check-fork.mjs` rewritten for the new contract, `scripts/bootstrap-dagger.sh` (phase 1)
 - One migration file and journal entry per bridge schema change
 
 Fix the sync workflow in the same change set: merge from a `main` that descends from upstream (decision 1), report failures with `gh api repos/.../issues` under `continue-on-error` so the conflict list is never lost, open the draft PR only after the adapted Dagger `check` and `smoke` pass, and keep the daily schedule. The first dispatched run after the new root is the proof that both the permission anomaly and the conflict storm are gone.
@@ -220,9 +220,11 @@ Fix the sync workflow in the same change set: merge from a `main` that descends 
 
 ## Decisions for Mason
 
-1. New root for `main` (decision 1): rename today's `main` to `legacy-main` and promote the upstream-rooted branch, or insist on a merge commit (unsigned) that keeps one history.
-2. Identity handoff (decision 2): site-minted signed handoff (recommended) or a new lookup-by-email route in emdash-paid-access with OAuth sign-in.
-3. Allowance amounts per plan slug and the 35-day grace window (decision 4).
-4. Google and GitHub sign-in off (recommended) or on (decision 6).
-5. No code sandbox for the proof of concept (recommended) or Vercel Sandbox now (decision 11).
-6. Retention period for the old database before deletion (decision 14).
+Answered by Mason on 2026-10-28: "Accept every recommendation in ADR 001 as written: new root for main, site-minted handoff, default allowance amounts and 35-day grace, Google and GitHub off, no sandbox, keep the old database 30 days."
+
+1. New root for `main` (decision 1): rename today's `main` to `legacy-main` and promote the upstream-rooted branch, or insist on a merge commit (unsigned) that keeps one history. Answer: new root.
+2. Identity handoff (decision 2): site-minted signed handoff (recommended) or a new lookup-by-email route in emdash-paid-access with OAuth sign-in. Answer: site-minted handoff.
+3. Allowance amounts per plan slug and the 35-day grace window (decision 4). Answer: the default amounts the membership plugin ships with, and 35 days.
+4. Google and GitHub sign-in off (recommended) or on (decision 6). Answer: off. Open point found in phase 0: upstream's `check-env` (run by `prebuild`) refuses a configuration with no enabled and credentialed provider, so phase 1 must either bypass that prebuild step in the fork's build or keep one provider on; see the deployment doc.
+5. No code sandbox for the proof of concept (recommended) or Vercel Sandbox now (decision 11). Answer: none.
+6. Retention period for the old database before deletion (decision 14). Answer: 30 days.
