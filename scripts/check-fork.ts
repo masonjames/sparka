@@ -56,11 +56,8 @@ const FIXTURE_DIRECTORY = "apps/chat";
 
 const configSchema = z.object({
   appUrl: z.string(),
-  authentication: z.object({
-    github: z.boolean(),
-    google: z.boolean(),
-    vercel: z.boolean(),
-  }),
+  // Every provider, including any that a future upstream sync adds.
+  authentication: z.record(z.string(), z.boolean()),
   desktopApp: z.object({ enabled: z.boolean() }),
 });
 const manifestSchema = z.object({
@@ -88,7 +85,14 @@ const checkConfigModule = async (modulePath: string): Promise<void> => {
     APP_URL,
     `chat.config.ts: appUrl must be ${APP_URL}`
   );
-  for (const provider of ["github", "google", "vercel"] as const) {
+  const providers = Object.keys(config.authentication);
+  for (const provider of ["github", "google", "vercel"]) {
+    assert.ok(
+      providers.includes(provider),
+      `chat.config.ts: authentication.${provider} missing`
+    );
+  }
+  for (const provider of providers) {
     assert.equal(
       config.authentication[provider],
       false,
@@ -190,6 +194,13 @@ const leftoverFixtures = (): string[] =>
   readdirSync(FIXTURE_DIRECTORY).filter((file) =>
     file.startsWith(FIXTURE_PREFIX)
   );
+const refuseLeftoverFixtures = (): void => {
+  assert.deepEqual(
+    leftoverFixtures(),
+    [],
+    `leftover self-test fixtures in ${FIXTURE_DIRECTORY}; remove them`
+  );
+};
 
 /** Write a modified copy of the config beside the real one so `@/` still resolves. */
 const withFixture = async (
@@ -210,11 +221,7 @@ const withFixture = async (
 };
 
 const selfTest = async (): Promise<void> => {
-  assert.deepEqual(
-    leftoverFixtures(),
-    [],
-    `self-test: remove leftover fixtures in ${FIXTURE_DIRECTORY} first`
-  );
+  refuseLeftoverFixtures();
   const valid = read(CONFIG_PATH);
   await checkConfigModule(CONFIG_PATH);
   const edit = (from: string, to: string): string => {
@@ -269,6 +276,16 @@ const selfTest = async (): Promise<void> => {
       "desktop",
       edit("enabled: false", "enabled: true"),
       /desktopApp\.enabled must be false/u,
+    ],
+    [
+      "newprovider",
+      edit("vercel: false,", "vercel: false,\n    extra: true,"),
+      /authentication\.extra must be false/u,
+    ],
+    [
+      "missing",
+      edit("    github: false,\n", ""),
+      /authentication\.github missing/u,
     ],
     ["shape", "export default 1;\n", /default export is not a config/u],
   ];
@@ -377,15 +394,21 @@ const selfTest = async (): Promise<void> => {
   await expectFailure(() => {
     checkDocument("docs/x.md", " \n");
   }, /empty document: docs\/x\.md/u);
+  const stray = path.join(
+    FIXTURE_DIRECTORY,
+    `${FIXTURE_PREFIX}${process.pid}-stray.ts`
+  );
+  writeFileSync(stray, "export default 1;\n");
+  try {
+    await expectFailure(refuseLeftoverFixtures, /leftover self-test fixtures/u);
+  } finally {
+    unlinkSync(stray);
+  }
   console.log("Fork contract self-test passed");
 };
 
 const main = async (): Promise<void> => {
-  assert.deepEqual(
-    leftoverFixtures(),
-    [],
-    `leftover self-test fixtures in ${FIXTURE_DIRECTORY}; remove them`
-  );
+  refuseLeftoverFixtures();
   for (const file of MANIFESTS) {
     checkManifest(file, read(file));
   }
