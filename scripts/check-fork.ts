@@ -1,93 +1,114 @@
 // Fork contract for masonjames/sparka. Run `bun scripts/check-fork.ts` from the
-// repository root. `bun scripts/check-fork.ts --self-test` runs one negative
+// repository root. `bun scripts/check-fork.ts --self-test` evaluates one broken
 // fixture per assertion and requires the assertion's own message.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { z } from "zod";
 
-const EXACTLY_ONE = 1;
 const EMPTY_LENGTH = 0;
-const NO_INDEX_YET = -1;
-const MIGRATION_TAG = /^\d{4}_[a-z0-9_]+$/u;
-// One pass, leftmost match wins, so a `//` inside a string is never a comment.
-const TOKENS =
-  /(?<literal>"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|\/\*[\s\S]*?\*\/|\/\/[^\n]*/gu;
+const FIRST_INDEX = 0;
+const NEXT_INDEX = 1;
+const MIGRATION_TAG = /^(?<index>\d{4})_[a-z0-9_]+$/u;
+const APP_URL = "https://chat.masonjames.com";
 const LEGACY_DEPENDENCIES = ["stripe", "resend", "@tryghost/admin-api"];
 const LEGACY_AUTH = ["magicLink", "emailAndPassword", "crossSubDomainCookies"];
+const MANIFESTS = ["package.json", "apps/chat/package.json"];
+const DEPENDENCY_SECTIONS = [
+  "dependencies",
+  "devDependencies",
+  "optionalDependencies",
+  "peerDependencies",
+] as const;
 const DOCUMENTS = [
   "docs/adr/001-chatjs-replatform-and-paid-access-bridge.md",
   "docs/replatform-plan.md",
   "docs/deployment.md",
 ];
 const MIGRATIONS = "apps/chat/lib/db/migrations";
+/** Upstream's EVE baseline history; the migration runner rejects any other prefix. */
+const UPSTREAM_TAGS = [
+  "0000_eve_baseline",
+  "0001_brainy_the_stranger",
+  "0002_nappy_caretaker",
+  "0003_ambitious_oracle",
+  "0004_misty_next_avengers",
+  "0005_managed_workflow_safeguards",
+  "0006_unpriced_usage_index",
+  "0007_kind_charles_xavier",
+  "0008_mysterious_excalibur",
+  "0009_absent_the_hunter",
+  "0010_omniscient_junta",
+  "0011_followup_chat_index",
+  "0012_aberrant_joseph",
+  "0013_current_copy_seed",
+  "0014_current_copy_ancestry",
+  "0015_conscious_gorilla_man",
+  "0016_large_zeigeist",
+  "0017_flimsy_whiplash",
+  "0018_shallow_tyrannus",
+  "0019_woozy_wither",
+  "0020_organic_black_panther",
+  "0021_glorious_chameleon",
+];
+const CONFIG_PATH = "apps/chat/chat.config.ts";
+const FIXTURE_DIRECTORY = "apps/chat";
 
-const packageSchema = z.object({
+const configSchema = z.object({
+  appUrl: z.string(),
+  authentication: z.object({
+    github: z.boolean(),
+    google: z.boolean(),
+    vercel: z.boolean(),
+  }),
+  desktopApp: z.object({ enabled: z.boolean() }),
+});
+const manifestSchema = z.object({
   dependencies: z.record(z.string(), z.string()).optional(),
   devDependencies: z.record(z.string(), z.string()).optional(),
+  optionalDependencies: z.record(z.string(), z.string()).optional(),
+  peerDependencies: z.record(z.string(), z.string()).optional(),
 });
 const journalSchema = z.object({
   entries: z.array(z.object({ idx: z.number().int(), tag: z.string() })),
 });
 
-const read = (path: string): string => readFileSync(path, "utf-8");
+const read = (file: string): string => readFileSync(file, "utf-8");
 
-/** Source without comments; string literals are kept. */
-const withoutComments = (source: string): string =>
-  source.replace(TOKENS, (match, literal: string | undefined) => literal ?? "");
-/** Source without comments and with every string literal replaced by "". */
-const codeOnly = (source: string): string =>
-  source.replace(TOKENS, (match, literal: string | undefined) =>
-    literal === undefined ? "" : '""'
+/** Evaluate a config module and check what the app will actually run with. */
+const checkConfigModule = async (modulePath: string): Promise<void> => {
+  const loaded: unknown = await import(path.resolve(modulePath));
+  const parsed = configSchema.safeParse(
+    z.object({ default: z.unknown() }).parse(loaded).default
   );
-
-/** The body of `key: { ... }` in the config literal (no nested braces). */
-const block = (code: string, key: string): string => {
-  const match = new RegExp(`\\b${key}\\s*:\\s*\\{(?<body>[^{}]*)\\}`, "u").exec(
-    code
-  );
-  const body = match?.groups?.body;
-  assert.ok(body !== undefined, `chat.config.ts: ${key} block not found`);
-  return body;
-};
-
-/** `key: false` followed by `,` or `}` and nothing else. */
-const isFalse = (body: string, key: string): boolean =>
-  new RegExp(`\\b${key}\\s*:\\s*false\\s*[,}]`, "u").test(`${body}}`);
-
-const checkConfig = (source: string): void => {
-  const appUrls = withoutComments(source).match(/\bappUrl\s*:[^\n]*/gu) ?? [];
+  assert.ok(parsed.success, "chat.config.ts: default export is not a config");
+  const config = parsed.data;
   assert.equal(
-    appUrls.length,
-    EXACTLY_ONE,
-    "chat.config.ts: exactly one appUrl key"
+    config.appUrl,
+    APP_URL,
+    `chat.config.ts: appUrl must be ${APP_URL}`
   );
-  assert.ok(
-    /^appUrl\s*:\s*"https:\/\/chat\.masonjames\.com"\s*,?\s*$/u.test(
-      appUrls[0] ?? ""
-    ),
-    "chat.config.ts: appUrl must be https://chat.masonjames.com"
-  );
-  const code = codeOnly(source);
-  const authentication = block(code, "authentication");
-  for (const provider of ["github", "google", "vercel"]) {
-    assert.ok(
-      isFalse(authentication, provider),
+  for (const provider of ["github", "google", "vercel"] as const) {
+    assert.equal(
+      config.authentication[provider],
+      false,
       `chat.config.ts: authentication.${provider} must be false`
     );
   }
-  assert.ok(
-    isFalse(block(code, "desktopApp"), "enabled"),
+  assert.equal(
+    config.desktopApp.enabled,
+    false,
     "chat.config.ts: desktopApp.enabled must be false"
   );
 };
 
-const checkPackage = (source: string): void => {
-  const parsed = packageSchema.safeParse(JSON.parse(source));
-  assert.ok(parsed.success, "apps/chat/package.json: invalid manifest");
-  for (const section of ["dependencies", "devDependencies"] as const) {
+const checkManifest = (file: string, source: string): void => {
+  const parsed = manifestSchema.safeParse(JSON.parse(source));
+  assert.ok(parsed.success, `${file}: invalid manifest`);
+  for (const section of DEPENDENCY_SECTIONS) {
     const names = Object.keys(parsed.data[section] ?? {});
     for (const name of LEGACY_DEPENDENCIES) {
-      assert.ok(!names.includes(name), `${section}: remove ${name}`);
+      assert.ok(!names.includes(name), `${file} ${section}: remove ${name}`);
     }
   }
 };
@@ -103,16 +124,33 @@ const checkAuth = (source: string): void => {
 
 const checkJournal = (
   source: string,
+  sqlFiles: readonly string[],
   readSql: (tag: string) => string
 ): void => {
   const parsed = journalSchema.safeParse(JSON.parse(source));
   assert.ok(parsed.success, "journal: invalid shape");
+  const { entries } = parsed.data;
+  assert.ok(
+    entries.length >= UPSTREAM_TAGS.length,
+    "journal: shorter than upstream"
+  );
+  for (const [index, tag] of UPSTREAM_TAGS.entries()) {
+    assert.equal(
+      entries[index]?.tag,
+      tag,
+      `journal: entry ${index} must be ${tag}`
+    );
+  }
   const tags = new Set<string>();
-  let lastIdx = NO_INDEX_YET;
-  for (const { tag, idx } of parsed.data.entries) {
-    assert.ok(MIGRATION_TAG.test(tag), `journal: invalid tag ${tag}`);
-    assert.ok(idx > lastIdx, `journal: idx must increase at ${tag}`);
-    lastIdx = idx;
+  for (const [position, { tag, idx }] of entries.entries()) {
+    const index = MIGRATION_TAG.exec(tag)?.groups?.index;
+    assert.ok(index !== undefined, `journal: invalid tag ${tag}`);
+    assert.equal(idx, position, `journal: idx must be ${position} at ${tag}`);
+    assert.equal(
+      Number(index),
+      idx,
+      `journal: tag prefix must equal idx at ${tag}`
+    );
     assert.ok(!tags.has(tag), `journal: duplicate tag ${tag}`);
     tags.add(tag);
     assert.ok(
@@ -120,145 +158,233 @@ const checkJournal = (
       `journal: empty SQL for ${tag}`
     );
   }
+  for (const file of sqlFiles) {
+    assert.ok(tags.has(file.replace(/\.sql$/u, "")), `journal: orphan ${file}`);
+  }
 };
 
-const checkDocument = (path: string, source: string): void => {
-  assert.ok(source.trim().length > EMPTY_LENGTH, `empty document: ${path}`);
+const checkDocument = (file: string, source: string): void => {
+  assert.ok(source.trim().length > EMPTY_LENGTH, `empty document: ${file}`);
 };
 
-const expectFailure = (run: () => void, message: RegExp): void => {
-  assert.throws(() => {
-    run();
+const expectFailure = async (
+  run: () => Promise<void> | void,
+  message: RegExp
+): Promise<void> => {
+  await assert.rejects(async () => {
+    await run();
   }, message);
 };
 
 const sql = (): string => "select 1";
-const blankSql = (): string => " \n";
+const blankSqlFor =
+  (blank: string) =>
+  (tag: string): string =>
+    tag === blank ? " \n" : "select 1";
+const journalOf = (tags: readonly string[]): string =>
+  JSON.stringify({ entries: tags.map((tag, idx) => ({ idx, tag })) });
 
-const selfTest = (): void => {
-  const valid = read("apps/chat/chat.config.ts");
-  checkConfig(valid);
-  const edit = (from: string | RegExp, to: string): string => {
+/** Write a modified copy of the config beside the real one so `@/` still resolves. */
+const withFixture = async (
+  name: string,
+  source: string,
+  run: (modulePath: string) => Promise<void>
+): Promise<void> => {
+  const file = path.join(FIXTURE_DIRECTORY, `.check-fork-fixture-${name}.ts`);
+  writeFileSync(file, source);
+  try {
+    await run(file);
+  } finally {
+    unlinkSync(file);
+  }
+};
+
+const selfTest = async (): Promise<void> => {
+  const valid = read(CONFIG_PATH);
+  await checkConfigModule(CONFIG_PATH);
+  const edit = (from: string, to: string): string => {
     const changed = valid.replace(from, to);
-    assert.notEqual(
-      changed,
-      valid,
-      `self-test fixture unchanged: ${String(from)}`
-    );
+    assert.notEqual(changed, valid, `self-test fixture unchanged: ${from}`);
     return changed;
   };
-  const configCases: readonly (readonly [string, RegExp])[] = [
+  const configCases: readonly (readonly [string, string, RegExp])[] = [
     [
-      edit(
-        'appUrl: "https://chat.masonjames.com"',
-        'appUrl: "https://example.com", // appUrl: "https://chat.masonjames.com"'
-      ),
+      "url",
+      edit(`appUrl: "${APP_URL}"`, 'appUrl: "https://example.com"'),
       /appUrl must be/u,
     ],
     [
-      edit("appName:", 'appUrl: "https://chat.masonjames.com",\n  appName:'),
-      /exactly one appUrl/u,
-    ],
-    [
+      "github",
       edit("github: false", "github: true"),
       /authentication\.github must be false/u,
     ],
     [
-      edit("google: false", "google: true, // google: false"),
+      "spread",
+      edit(
+        "vercel: false,\n  },",
+        "vercel: false,\n    ...{ google: true },\n  },"
+      ),
       /authentication\.google must be false/u,
     ],
     [
-      edit("vercel: false", "vercel: false || true"),
+      "toplevel",
+      edit(
+        "desktopApp: {",
+        '...{ appUrl: "https://example.com" },\n  desktopApp: {'
+      ),
+      /appUrl must be/u,
+    ],
+    [
+      "decoy",
+      edit(
+        "const config = defineConfig({",
+        "const realAuth = { github: false, google: false, vercel: true };\nconst config = defineConfig({\n  authentication: realAuth,"
+      ).replace(/\n {2}authentication: \{[^}]*\},/u, ""),
       /authentication\.vercel must be false/u,
     ],
     [
+      "quoted",
       edit(
-        /desktopApp:\s*\{\s*enabled:\s*false/u,
-        "desktopApp: {\n    enabled: false ? false : true"
+        "desktopApp: {",
+        '"appUrl": "https://example.com",\n  desktopApp: {'
       ),
+      /appUrl must be/u,
+    ],
+    [
+      "desktop",
+      edit("enabled: false", "enabled: true"),
       /desktopApp\.enabled must be false/u,
     ],
-    [edit("authentication: {", "auth: {"), /authentication block not found/u],
+    ["shape", "export default 1;\n", /default export is not a config/u],
   ];
-  for (const [source, message] of configCases) {
-    expectFailure(() => {
-      checkConfig(source);
-    }, message);
+  for (const [name, source, message] of configCases) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Fixtures share one file name space; run them in sequence.
+    await withFixture(name, source, async (file) => {
+      await expectFailure(async () => {
+        await checkConfigModule(file);
+      }, message);
+    });
   }
-  const packageCases: readonly (readonly [string, RegExp])[] = [
+  const manifestCases: readonly (readonly [string, RegExp])[] = [
     ["[]", /invalid manifest/u],
     ['{"dependencies":1}', /invalid manifest/u],
-    ['{"dependencies":{"stripe":"1"}}', /dependencies: remove stripe/u],
-    ['{"dependencies":{"resend":"1"}}', /remove resend/u],
+    ['{"dependencies":{"stripe":"1"}}', /x dependencies: remove stripe/u],
+    ['{"devDependencies":{"resend":"1"}}', /x devDependencies: remove resend/u],
     [
-      '{"devDependencies":{"@tryghost/admin-api":"1"}}',
-      /devDependencies: remove @tryghost\/admin-api/u,
+      '{"optionalDependencies":{"@tryghost/admin-api":"1"}}',
+      /x optionalDependencies: remove @tryghost\/admin-api/u,
+    ],
+    [
+      '{"peerDependencies":{"stripe":"1"}}',
+      /x peerDependencies: remove stripe/u,
     ],
   ];
-  for (const [source, message] of packageCases) {
-    expectFailure(() => {
-      checkPackage(source);
+  for (const [source, message] of manifestCases) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Sequential by design.
+    await expectFailure(() => {
+      checkManifest("x", source);
     }, message);
   }
   for (const legacy of LEGACY_AUTH) {
-    expectFailure(
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Sequential by design.
+    await expectFailure(
       () => {
         checkAuth(`x ${legacy} y`);
       },
       new RegExp(`legacy auth found: ${legacy}`, "u")
     );
   }
-  const journalCases: readonly (readonly [string, RegExp, () => string])[] = [
-    ["[]", /invalid shape/u, sql],
-    ['{"entries":[1]}', /invalid shape/u, sql],
-    ['{"entries":[{"idx":"0","tag":"0000_a"}]}', /invalid shape/u, sql],
-    ['{"entries":[{"idx":0,"tag":"../x"}]}', /invalid tag/u, sql],
+  const upstream = [...UPSTREAM_TAGS];
+  const files = upstream.map((tag) => `${tag}.sql`);
+  checkJournal(journalOf(upstream), files, sql);
+  const journalCases: readonly (readonly [
+    string,
+    readonly string[],
+    () => string,
+    RegExp,
+  ])[] = [
+    ["[]", files, sql, /invalid shape/u],
     [
-      '{"entries":[{"idx":1,"tag":"0001_a"},{"idx":0,"tag":"0002_b"}]}',
-      /idx must increase at 0002_b/u,
+      '{"entries":[{"idx":"0","tag":"0000_eve_baseline"}]}',
+      files,
       sql,
+      /invalid shape/u,
     ],
     [
-      '{"entries":[{"idx":0,"tag":"0000_a"},{"idx":1,"tag":"0000_a"}]}',
-      /duplicate tag 0000_a/u,
+      journalOf(upstream.slice(FIRST_INDEX, NEXT_INDEX)),
+      files,
       sql,
+      /shorter than upstream/u,
     ],
     [
-      '{"entries":[{"idx":0,"tag":"0000_a"}]}',
-      /empty SQL for 0000_a/u,
-      blankSql,
+      journalOf([...upstream.slice(FIRST_INDEX, -NEXT_INDEX), "0021_other"]),
+      files,
+      sql,
+      /entry 21 must be 0021_glorious_chameleon/u,
+    ],
+    [journalOf([...upstream, "../x"]), files, sql, /invalid tag/u],
+    [
+      journalOf([...upstream, "0023_skip"]),
+      files,
+      sql,
+      /tag prefix must equal idx at 0023_skip/u,
+    ],
+    [
+      JSON.stringify({
+        entries: [...upstream, "0022_a"].map((tag, idx) => ({
+          idx: idx === upstream.length ? idx + NEXT_INDEX : idx,
+          tag,
+        })),
+      }),
+      files,
+      sql,
+      /idx must be 22 at 0022_a/u,
+    ],
+    [
+      journalOf([...upstream, "0022_a"]),
+      files,
+      blankSqlFor("0022_a"),
+      /empty SQL for 0022_a/u,
+    ],
+    [
+      journalOf(upstream),
+      [...files, "0022_orphan.sql"],
+      sql,
+      /orphan 0022_orphan\.sql/u,
     ],
   ];
-  for (const [source, message, readSql] of journalCases) {
-    expectFailure(() => {
-      checkJournal(source, readSql);
+  for (const [source, sqlFiles, readSql, message] of journalCases) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Sequential by design.
+    await expectFailure(() => {
+      checkJournal(source, sqlFiles, readSql);
     }, message);
   }
-  expectFailure(() => {
+  await expectFailure(() => {
     checkDocument("docs/x.md", " \n");
   }, /empty document: docs\/x\.md/u);
   console.log("Fork contract self-test passed");
 };
 
-const main = (): void => {
-  checkPackage(read("apps/chat/package.json"));
-  checkConfig(read("apps/chat/chat.config.ts"));
-  checkAuth(read("apps/chat/lib/auth.ts"));
-  for (const path of DOCUMENTS) {
-    checkDocument(path, read(path));
+const main = async (): Promise<void> => {
+  for (const file of MANIFESTS) {
+    checkManifest(file, read(file));
   }
-  checkJournal(read(`${MIGRATIONS}/meta/_journal.json`), (tag) =>
+  await checkConfigModule(CONFIG_PATH);
+  checkAuth(read("apps/chat/lib/auth.ts"));
+  for (const file of DOCUMENTS) {
+    checkDocument(file, read(file));
+  }
+  const sqlFiles = readdirSync(MIGRATIONS).filter((file) =>
+    file.endsWith(".sql")
+  );
+  checkJournal(read(`${MIGRATIONS}/meta/_journal.json`), sqlFiles, (tag) =>
     read(`${MIGRATIONS}/${tag}.sql`)
   );
   console.log("Fork contract passed");
 };
 
 try {
-  if (process.argv.includes("--self-test")) {
-    selfTest();
-  } else {
-    main();
-  }
+  await (process.argv.includes("--self-test") ? selfTest() : main());
 } catch (error) {
   console.error(
     `Fork contract failed: ${error instanceof Error ? error.message : String(error)}`
