@@ -1,6 +1,6 @@
 // Fork contract for masonjames/sparka. Run `bun scripts/check-fork.ts` from the
 // repository root. `bun scripts/check-fork.ts --self-test` evaluates one broken
-// fixture per assertion and requires the assertion's own message.
+// fixture per reachable assertion and requires the assertion's own message.
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -146,12 +146,13 @@ const checkJournal = (
     const index = MIGRATION_TAG.exec(tag)?.groups?.index;
     assert.ok(index !== undefined, `journal: invalid tag ${tag}`);
     assert.equal(idx, position, `journal: idx must be ${position} at ${tag}`);
+    // Two equal tags cannot both satisfy "idx equals position", so no
+    // separate duplicate-tag assertion is reachable.
     assert.equal(
       Number(index),
       idx,
       `journal: tag prefix must equal idx at ${tag}`
     );
-    assert.ok(!tags.has(tag), `journal: duplicate tag ${tag}`);
     tags.add(tag);
     assert.ok(
       readSql(tag).trim().length > EMPTY_LENGTH,
@@ -184,13 +185,22 @@ const blankSqlFor =
 const journalOf = (tags: readonly string[]): string =>
   JSON.stringify({ entries: tags.map((tag, idx) => ({ idx, tag })) });
 
+const FIXTURE_PREFIX = ".check-fork-fixture-";
+const leftoverFixtures = (): string[] =>
+  readdirSync(FIXTURE_DIRECTORY).filter((file) =>
+    file.startsWith(FIXTURE_PREFIX)
+  );
+
 /** Write a modified copy of the config beside the real one so `@/` still resolves. */
 const withFixture = async (
   name: string,
   source: string,
   run: (modulePath: string) => Promise<void>
 ): Promise<void> => {
-  const file = path.join(FIXTURE_DIRECTORY, `.check-fork-fixture-${name}.ts`);
+  const file = path.join(
+    FIXTURE_DIRECTORY,
+    `${FIXTURE_PREFIX}${process.pid}-${name}.ts`
+  );
   writeFileSync(file, source);
   try {
     await run(file);
@@ -200,6 +210,11 @@ const withFixture = async (
 };
 
 const selfTest = async (): Promise<void> => {
+  assert.deepEqual(
+    leftoverFixtures(),
+    [],
+    `self-test: remove leftover fixtures in ${FIXTURE_DIRECTORY} first`
+  );
   const valid = read(CONFIG_PATH);
   await checkConfigModule(CONFIG_PATH);
   const edit = (from: string, to: string): string => {
@@ -258,7 +273,7 @@ const selfTest = async (): Promise<void> => {
     ["shape", "export default 1;\n", /default export is not a config/u],
   ];
   for (const [name, source, message] of configCases) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Fixtures share one file name space; run them in sequence.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each fixture replaces the evaluated config; run them in sequence.
     await withFixture(name, source, async (file) => {
       await expectFailure(async () => {
         await checkConfigModule(file);
@@ -366,6 +381,11 @@ const selfTest = async (): Promise<void> => {
 };
 
 const main = async (): Promise<void> => {
+  assert.deepEqual(
+    leftoverFixtures(),
+    [],
+    `leftover self-test fixtures in ${FIXTURE_DIRECTORY}; remove them`
+  );
   for (const file of MANIFESTS) {
     checkManifest(file, read(file));
   }
