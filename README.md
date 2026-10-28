@@ -14,7 +14,7 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you an EVE-native 
 
 ## This fork
 
-This repository is `masonjames/sparka`, the fork that runs https://chat.masonjames.com for members of masonjames.com. Upstream is https://github.com/FranciscoMoretti/chat-js; the fork is intended to track it daily once the sync workflow is on the default branch. Sign-in and guest access differ from the list below: see ADR 001, decision 6. The fork-owned surface is listed in [ADR 001, decision 12](docs/adr/001-chatjs-replatform-and-paid-access-bridge.md#12-staying-close-to-upstream). Deployment is documented in [docs/deployment.md](docs/deployment.md). Everything below this section is upstream's README.
+This repository is `masonjames/sparka`, the fork that runs https://chat.masonjames.com for members of masonjames.com. Upstream is https://github.com/FranciscoMoretti/chat-js; the fork is intended to track it daily once the sync workflow is on the default branch. Sign-in and guest access differ from the list below: see ADR 001, decisions 6 and 10. The fork-owned surface is listed in [ADR 001, decision 12](docs/adr/001-chatjs-replatform-and-paid-access-bridge.md#12-staying-close-to-upstream). Deployment is documented in [docs/deployment.md](docs/deployment.md). Everything below this section is upstream's README.
 
 <br />
 
