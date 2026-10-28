@@ -24,7 +24,7 @@ This is a proof of concept with low priority against Q4 goals. It must still be 
 - `app/api/webhooks/{ghost,stripe}/route.ts`, `app/api/auth/{magic-link,validate}/route.ts`: webhook receivers and a cross-subdomain session validator for other `*.masonjames.com` apps.
 - `lib/auth.ts`: Better Auth with Google, GitHub, Vercel, email-and-password, Resend magic-link and `crossSubDomainCookies`. `lib/app-url.ts`: cookie-domain and trusted-origin derivation. `lib/storage-provider.ts`: R2 through the S3 adapter (`files-sdk/s3`).
 - Migrations `0032_entitlements_webhooks` and `0046_fork_entitlements` add `Entitlement` and `WebhookEvent` tables with unique `(source, externalId)` and `(source, eventId)` keys.
-- `Dockerfile` (Node 22, standalone Next), `docker-entrypoint.sh` (runs migrations at start), `.dagger/src/sparka/main.py` (check, migrations, build, smoke, publish), `docs/deployment.md`, `scripts/check-fork.mjs` (asserts the legacy contract: Stripe, Ghost, magic link, R2).
+- `Dockerfile` (Node 22, standalone Next), `docker-entrypoint.sh` (runs migrations at start), `.dagger/src/sparka/main.py` (check, migrations, build, smoke, publish), `docs/deployment.md`, `scripts/check-fork.ts` (asserts the legacy contract: Stripe, Ghost, magic link, R2).
 
 ### emdash-paid-access (what a membership is, and what can be verified from outside)
 
@@ -77,9 +77,9 @@ Each decision gives one recommendation, a confidence, and the alternatives consi
 
 **Recommendation.** "Sign in with masonjames.com": a signed handoff token minted by the site for a signed-in member, consumed by a small Better Auth plugin in the chat.
 
-- The site adds one route, `/account/chat/`, that requires a Paid Access session, calls `Astro.locals.paidAccess.segments()` to learn the member's plan slugs, and redirects to `https://chat.masonjames.com/api/auth/paid-access/callback?token=...`.
+- The site adds one route, `/account/chat/`, that requires a Paid Access session, calls `Astro.locals.paidAccess.segments()` to learn the member's plan slugs, and hands the token to `https://chat.masonjames.com/api/auth/paid-access/callback` with an auto-submitting POST form, so the token never appears in a URL, a log line or a Referer header.
 - The token is `base64url(payload).base64url(signature)` with an Ed25519 signature (Node's built-in `crypto`, no dependency). Payload: `sub` (normalized member email), `plans` (slugs), `iat`, `exp` (5 minutes), `nonce`, `aud` (`chat.masonjames.com`), `iss` (`masonjames.com`). The site holds the private key; the chat holds only the public key, so a compromised chat cannot mint memberships.
-- The chat's Better Auth plugin verifies signature, audience, expiry and single-use nonce, finds or creates the user by email, stores the membership snapshot (decision 5), creates the session with Better Auth's internal adapter and sets the cookie. This is the same mechanism Better Auth's own magic-link plugin uses.
+- The chat's Better Auth plugin verifies signature, audience, expiry and single-use nonce, finds or creates the user by email, stores the membership snapshot (decision 5), creates the session with Better Auth's internal adapter and sets the cookie. A token is bound to the browser that started the handoff (a short-lived state cookie set by the chat's login page and echoed in the token's `nonce`), so a member cannot sign a victim into the member's own account by forwarding a link; phase 3 tests cover replay, expiry, audience and this login-CSRF path. This is the same mechanism Better Auth's own magic-link plugin uses.
 - The site's existing "Member chat" link points at the chat; the chat's login page shows one button that sends the member to `/account/chat/` on the site.
 
 **Why.** It is the only option that needs no change to the Paid Access plugin, keeps the member identity exactly as the site knows it (the email that owns the Stripe customer), and never exposes a broad credential to the chat. It also removes the email-mismatch problem that OAuth sign-in would have (a member whose Stripe email is not a Google or GitHub account).
@@ -100,7 +100,7 @@ Each decision gives one recommendation, a confidence, and the alternatives consi
 
 **Recommendation.**
 
-- The bridge keeps a fork-owned table `plugins/membership/allowances.ts` mapping plan slug to a monthly allowance in cents (the credits plugin bills in cents). The slugs and amounts are Mason's to set; a slug that is not in the table grants the default allowance, and `free` grants nothing.
+- The bridge keeps a fork-owned table `plugins/membership/allowances.ts` mapping plan slug to a monthly allowance in cents (the credits plugin bills in cents). The table is an allowlist: a slug that is not in it grants nothing, and `free` is never in it. The amounts in cents per slug are Mason's to state in writing before the phase 3 PR merges; until he does, the table ships empty and no member receives credits.
 - Renewal: each calendar month, the first chat request by an entitled member grants that month's allowance (balance is set to `max(balance, allowance)`, never accumulated). Grants are recorded in a ledger keyed `(userId, period, reason)` so a retried request cannot grant twice.
 - Lapse: the snapshot carries `expiresAt` = 35 days after the handoff (one billing month plus grace). Spending requires a non-expired snapshot with at least one paid plan. When it expires the member is sent back through the site, which re-reads Stripe; a lapsed member simply does not get a new token with plans. Balance is not clawed back, but cannot be spent without a current membership.
 - Refund or cancellation: Stripe ends the subscription, Paid Access stops asserting the plan, and the next handoff (at most 35 days later) lapses the chat membership. There is no instant revocation in this design.
@@ -184,10 +184,13 @@ No webhook event log is needed because no webhooks arrive. The migration is name
 **Recommendation.** Keep the fork surface to this list and nothing else:
 
 - `apps/chat/chat.config.ts` (branding, provider flags, legal copy) and `apps/chat/plugins/membership/**`
+- `apps/chat/lib/auth.ts` (one line registering the handoff plugin) and `apps/chat/components/auth-providers.tsx` (the sign-in button that sends members to masonjames.com)
+- `apps/chat/package.json` and `bun.lock` (adapter and plugin dependencies), `apps/chat/composition/generated/*` (regenerated by `chat-js sync`)
+- Deleted upstream plugins: `apps/chat/plugins/credits/**` (replaced by membership), `plugins/langfuse/**`, `plugins/vercel-analytics/**`, `plugins/vercel-speed-insights/**`, and the installed Vercel sandbox files under `apps/chat/lib/sandbox/**`. An upstream edit to a deleted plugin produces a modify/delete conflict on sync; the resolution rule is to keep the deletion.
 - `apps/chat/lib/storage-provider.ts` and `lib/storage-options.ts` as installed by the registry item
 - `Dockerfile`, `deployment/dokploy/**` (entry and cleanup loop scripts), `.dagger/**`, `dagger.json`
 - `.github/workflows/upstream-sync-pr.yml` and `build-push-ghcr.yml`; upstream-only release and publishing workflows (`release.yml`, `electron-release.yml`, `docs.yml`, `preview-database-cleanup.yml`, the five `uiverify-*.yml`) stay in the tree untouched and are disabled in the repository's Actions settings, because deleting or guarding them would conflict with every later upstream edit
-- `docs/deployment.md`, `docs/adr/**`, `docs/replatform-plan.md`, `README.md` fork notice, `scripts/check-fork.mjs` rewritten for the new contract, `scripts/bootstrap-dagger.sh` (phase 1)
+- `docs/deployment.md`, `docs/adr/**`, `docs/replatform-plan.md`, `README.md` fork notice, `scripts/check-fork.ts` rewritten for the new contract, `scripts/bootstrap-dagger.sh` (phase 1)
 - One migration file and journal entry per bridge schema change
 
 Fix the sync workflow in the same change set: merge from a `main` that descends from upstream (decision 1), report failures with `gh api repos/.../issues` under `continue-on-error` so the conflict list is never lost, open the draft PR only after the adapted Dagger `check` and `smoke` pass, and keep the daily schedule. The first dispatched run after the new root is the proof that both the permission anomaly and the conflict storm are gone.
@@ -214,7 +217,7 @@ Fix the sync workflow in the same change set: merge from a `main` that descends 
 
 - Members sign in through masonjames.com; the chat has no account creation of its own.
 - Membership changes reach the chat within one handoff, at most 35 days after a lapse.
-- The fork can merge upstream daily again; conflicts are limited to the files listed in decision 12.
+- The fork can merge upstream daily again; conflicts are expected only in the files listed in decision 12, and the deleted upstream plugins there resolve by keeping the deletion.
 - Two attended changes outside this repository are required: the site route and key (masonjames.com) and the new governed manifest and catalog row (platform-infra).
 - The security-patched production image keeps running until cutover; rollback is "repoint Dokploy at the old service", since the databases are separate.
 
@@ -224,7 +227,7 @@ Answered by Mason on 2026-10-28: "Accept every recommendation in ADR 001 as writ
 
 1. New root for `main` (decision 1): rename today's `main` to `legacy-main` and promote the upstream-rooted branch, or insist on a merge commit (unsigned) that keeps one history. Answer: new root.
 2. Identity handoff (decision 2): site-minted signed handoff (recommended) or a new lookup-by-email route in emdash-paid-access with OAuth sign-in. Answer: site-minted handoff.
-3. Allowance amounts per plan slug and the 35-day grace window (decision 4). Answer: the default amounts the membership plugin ships with, and 35 days.
+3. Allowance amounts per plan slug and the 35-day grace window (decision 4). Answer: 35 days. The amounts remain open: Mason's words were "default allowance amounts", but no default exists until the membership plugin is written, so the phase 3 PR must carry the cents per slug that Mason states in writing, and the allowlist ships empty until then.
 4. Google and GitHub sign-in off (recommended) or on (decision 6). Answer: off. Open point found in phase 0: upstream's `check-env` (run by `prebuild`) refuses a configuration with no enabled and credentialed provider, so phase 1 must either bypass that prebuild step in the fork's build or keep one provider on; see the deployment doc.
 5. No code sandbox for the proof of concept (recommended) or Vercel Sandbox now (decision 11). Answer: none.
 6. Retention period for the old database before deletion (decision 14). Answer: 30 days.

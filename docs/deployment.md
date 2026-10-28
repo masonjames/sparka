@@ -2,7 +2,7 @@
 
 ## Layout
 
-The app lives in `apps/chat` on the EVE-only chat-js layout. One container runs `next start --hostname 0.0.0.0 --port 3000` and the EVE agent child started by the pinned integration on loopback `127.0.0.1:4274`. Keep the full source-clone build output, including Next `.next`, the child's `.output`, and `node_modules`. `/api/health` checks the database and child; readiness requires HTTP 200, with a 90-second start period. The initial deployment has no code execution sandbox. An hourly cleanup service uses the same image and calls `node apps/chat/scripts/cleanup.ts` with `CRON_SECRET`.
+The app lives in `apps/chat` on the EVE-only chat-js layout. One container runs `next start --hostname 0.0.0.0 --port 3000` and the EVE agent child started by the pinned integration on loopback `127.0.0.1:4274`. Keep the full source-clone build output, including Next `.next`, the child's `.output`, and `node_modules`. `/api/health` checks the database and child; readiness requires HTTP 200, with a 90-second start period. The initial deployment has no code execution sandbox. An hourly cleanup service uses the same image and calls `node apps/chat/scripts/cleanup.ts` (an upstream script, present at that path on this root) with `CRON_SECRET`; the script calls `/api/cron/cleanup` with a bearer token and exits non-zero on partial work.
 
 ## Environment contract
 
@@ -34,7 +34,7 @@ What `bun run --cwd apps/chat check-env` reports on this root with an empty envi
 - `sandbox (vercel): VERCEL_OIDC_TOKEN or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN`: phase 2 uninstalls the sandbox (ADR decision 11).
 - `aiGateway (vercel): AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN`: set in the table above.
 - `fileStorage (vercel-blob)`: phase 2 replaces Vercel Blob with the S3 adapter for R2.
-- `authentication: At least one auth provider must be enabled and configured`: upstream's check-env, which `prebuild` runs, requires one enabled OAuth provider with credentials. With every provider off (ADR decision 6) the fork's phase 1 build must run `eve:build` and `next build` directly instead of `bun run build`, or Mason keeps one provider on. Until phase 3 lands the handoff, this branch has no sign-in path and must not be deployed.
+- `authentication: At least one auth provider must be enabled and configured`: upstream's check-env, which `prebuild` runs, requires one enabled OAuth provider with credentials. With every provider off (ADR decision 6) the fork's phase 1 build must run `eve:build` and `next build` directly instead of `bun run build`, which skips all of check-env (the EVE, gateway and storage checks too, so the Dagger gate must then validate those variables itself), or Mason keeps one provider on. Mason decides in the phase 1 report. Until phase 3 lands the handoff, this branch has no sign-in path and must not be deployed.
 - `tools.tavily-search: TAVILY_API_KEY`, `tools.retrieve-url: FIRECRAWL_API_KEY`: optional, as in the table.
 - `plugins.langfuse: LANGFUSE_PUBLIC_KEY + LANGFUSE_SECRET_KEY`: phase 2 removes the Langfuse plugin unless Mason wants it.
 - `plugins.mcp: MCP_ENCRYPTION_KEY`: optional, as in the table.
@@ -59,10 +59,10 @@ The intended daily `upstream-sync-pr.yml` workflow opens a draft PR on `codex/up
 - `apps/chat/lib/storage-provider.ts` and `apps/chat/lib/storage-options.ts`, as installed by the registry item.
 - `Dockerfile`, `deployment/dokploy/**`, `.dagger/**`, and `dagger.json`.
 - `.github/workflows/upstream-sync-pr.yml` and `.github/workflows/build-push-ghcr.yml`.
-- `docs/deployment.md`, `docs/adr/**`, `docs/replatform-plan.md`, the `README.md` fork notice, `scripts/check-fork.mjs`, and `scripts/bootstrap-dagger.sh` (phase 1).
+- `docs/deployment.md`, `docs/adr/**`, `docs/replatform-plan.md`, the `README.md` fork notice, `scripts/check-fork.ts`, and `scripts/bootstrap-dagger.sh` (phase 1).
 - One migration file and journal entry per bridge schema change.
 
-Every upstream workspace and workflow stays in the tree. The upstream-only workflows `release.yml`, `electron-release.yml`, `docs.yml`, `preview-database-cleanup.yml`, `uiverify-chat.yml`, `uiverify-create.yml`, `uiverify-docs.yml`, `uiverify-registry.yml` and `uiverify-upload.yml` must be disabled in the repository's Actions settings when `replatform/main` becomes `main`; otherwise a push to `main` triggers Changesets, npm, Electron and docs release jobs without their secrets. That step is part of the attended promotion in the plan.
+Every upstream workspace and workflow stays in the tree. The upstream-only workflows `release.yml`, `electron-release.yml`, `docs.yml`, `preview-database-cleanup.yml`, `uiverify-chat.yml`, `uiverify-create.yml`, `uiverify-docs.yml`, `uiverify-registry.yml` and `uiverify-upload.yml` must be disabled in the repository's Actions settings before the first phase PR is merged. Their triggers on this root: `release.yml` and `electron-release.yml` run on push to `main`; `docs.yml`, `uiverify-chat.yml`, `uiverify-create.yml`, `uiverify-docs.yml` and `uiverify-registry.yml` run on every pull request (the UI Verify ones only for matching paths), `uiverify-upload.yml` runs after them, and `preview-database-cleanup.yml` runs on `pull_request_target` when a PR closes. The fork repository holds no Actions secrets or variables (checked 2026-10-28 with the GitHub API), so these jobs can only fail or skip; disabling them removes the noise and the standing risk that a later secret under an upstream name would give them something to act on. That step is part of the attended promotion in the plan.
 
 ## Production approval
 
