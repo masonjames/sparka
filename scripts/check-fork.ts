@@ -11,7 +11,14 @@ const FIRST_INDEX = 0;
 const NEXT_INDEX = 1;
 const MIGRATION_TAG = /^(?<index>\d{4})_[a-z0-9_]+$/u;
 const APP_URL = "https://chat.masonjames.com";
-const LEGACY_DEPENDENCIES = ["stripe", "resend", "@tryghost/admin-api"];
+const LEGACY_DEPENDENCIES = [
+  "stripe",
+  "@stripe/stripe-js",
+  "@better-auth/stripe",
+  "resend",
+  "@tryghost/admin-api",
+  "@tryghost/content-api",
+];
 const LEGACY_AUTH = ["magicLink", "emailAndPassword", "crossSubDomainCookies"];
 const MANIFESTS = ["package.json", "apps/chat/package.json"];
 const DEPENDENCY_SECTIONS = [

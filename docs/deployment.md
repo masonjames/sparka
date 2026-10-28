@@ -25,6 +25,7 @@ All values are set in the Dokploy managed environment, never the repository. The
 | `TAVILY_API_KEY` | Optional | Search integration | Dokploy managed environment |
 | `FIRECRAWL_API_KEY` | Optional | Web extraction integration | Dokploy managed environment |
 | `MCP_ENCRYPTION_KEY` | Optional | MCP credential encryption | Dokploy managed environment |
+| `MEMBERSHIP_HANDOFF_PUBLIC_KEY` | Required from phase 3 | Ed25519 public key that verifies masonjames.com handoff tokens; the private key never leaves the site | Dokploy managed environment |
 
 The S3 adapter's variable names for the private R2 bucket and credentials are filled in by phase 2 after installing the registry item. Those values also belong in the Dokploy managed environment. Anonymous guests are refused while `TRUSTED_CLIENT_IP_HEADER` is unset; signed-in use is unaffected.
 
@@ -34,7 +35,7 @@ What `bun run --cwd apps/chat check-env` reports on this root with an empty envi
 - `sandbox (vercel): VERCEL_OIDC_TOKEN or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN`: phase 2 uninstalls the sandbox (ADR decision 11).
 - `aiGateway (vercel): AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN`: set in the table above.
 - `fileStorage (vercel-blob)`: phase 2 replaces Vercel Blob with the S3 adapter for R2.
-- `authentication: At least one auth provider must be enabled and configured`: upstream's check-env, which `prebuild` runs, requires one enabled OAuth provider with credentials. With every provider off (ADR decision 6) the fork's phase 1 build must run `eve:build` and `next build` directly instead of `bun run build`, which skips all of check-env (the EVE, gateway and storage checks too, so the Dagger gate must then validate those variables itself), or Mason keeps one provider on. Mason decides in the phase 1 report. Until phase 3 lands the handoff, this branch has no sign-in path and must not be deployed.
+- `authentication: At least one auth provider must be enabled and configured`: upstream's check-env, which `prebuild` runs, requires one enabled OAuth provider with credentials. With every provider off (ADR decision 6) the fork's phase 1 build must run `eve:build` and `next build` directly instead of `bun run build`, which skips all of check-env (the EVE, gateway and storage checks too, so the Dagger gate must then validate those variables itself), or Mason reverses decision 6 and keeps one provider on, which would also change the fork check and the provider flags. Mason decides in the phase 1 report; the plan's phase 1 gate validates the environment variables that bypassing check-env would otherwise skip. Until phase 3 lands the handoff, this branch has no sign-in path and must not be deployed.
 - `tools.tavily-search: TAVILY_API_KEY`, `tools.retrieve-url: FIRECRAWL_API_KEY`: optional, as in the table.
 - `plugins.langfuse: LANGFUSE_PUBLIC_KEY + LANGFUSE_SECRET_KEY`: phase 2 removes the Langfuse plugin unless Mason wants it.
 - `plugins.mcp: MCP_ENCRYPTION_KEY`: optional, as in the table.
