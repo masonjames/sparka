@@ -1,6 +1,8 @@
 // Fork contract for masonjames/sparka. Run `bun scripts/check-fork.ts` from the
 // repository root. `bun scripts/check-fork.ts --self-test` evaluates one broken
 // fixture per reachable assertion and requires the assertion's own message.
+// The self-test writes short-lived fixture files into apps/chat, so run it in
+// the gate, not beside `bun dev` or another watcher of that directory.
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -281,7 +283,10 @@ const selfTest = async (): Promise<void> => {
     ],
     [
       "desktop",
-      edit("enabled: false", "enabled: true"),
+      edit(
+        "desktopApp: {\n    enabled: false",
+        "desktopApp: {\n    enabled: true"
+      ),
       /desktopApp\.enabled must be false/u,
     ],
     [
